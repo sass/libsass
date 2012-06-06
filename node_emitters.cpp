@@ -299,9 +299,17 @@ namespace Sass {
         return "!important";
       } break;
       
-      case value_schema: {
+      case value_schema:
+      case identifier_schema: {
         string result;
-        for (size_t i = 0, S = size(); i < S; ++i) result += at(i).to_string();
+        for (size_t i = 0, S = size(); i < S; ++i) {
+          if (at(i).type() == string_constant) {
+            result += at(i).token().unquote();
+          }
+          else {
+            result += at(i).to_string();
+          }
+        }
         return result;
       } break;
       
@@ -381,8 +389,9 @@ namespace Sass {
         
       case rule: {
         buf << endl << string(2*depth, ' ');
-        at(0).emit_nested_css(buf, depth); // property
-        at(1).emit_nested_css(buf, depth); // values
+        buf << to_string();
+        // at(0).emit_nested_css(buf, depth); // property
+        // at(1).emit_nested_css(buf, depth); // values
         buf << ";";
       } break;
         

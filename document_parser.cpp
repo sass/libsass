@@ -568,16 +568,20 @@ namespace Sass {
 
   Node Document::parse_rule() {
     Node rule(context.new_Node(Node::rule, path, line, 2));
-    if (!lex< sequence< optional< exactly<'*'> >, identifier > >()) {
-      lex< spaces_and_comments >(); // get the line number right
+    if (peek< sequence< optional< exactly<'*'> >, identifier_schema > >()) {
+      rule << parse_identifier_schema();
+    }
+    else if (lex< sequence< optional< exactly<'*'> >, identifier > >()) {
+      rule << context.new_Node(Node::property, path, line, lexed);
+    }
+    else {
       throw_syntax_error("invalid property name");
     }
-    rule << context.new_Node(Node::property, path, line, lexed);
     if (!lex< exactly<':'> >()) throw_syntax_error("property \"" + lexed.to_string() + "\" must be followed by a ':'");
     rule << parse_list();
     return rule;
   }
-  
+
   Node Document::parse_list()
   {
     return parse_comma_list();
@@ -914,6 +918,46 @@ namespace Sass {
       }
       else {
         throw_syntax_error("error parsing interpolated value");
+      }
+    }
+    schema.should_eval() = true;
+    return schema;
+  }
+
+  Node Document::parse_identifier_schema()
+  {    
+    lex< sequence< optional< exactly<'*'> >, identifier_schema > >();
+    Token id(lexed);
+    const char* i = id.begin;
+    // see if there any interpolants
+    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(id.begin, id.end);
+    if (!p) {
+      return context.new_Node(Node::string_constant, path, line, id);
+    }
+    
+    Node schema(context.new_Node(Node::identifier_schema, path, line, 1));
+    while (i < id.end) {
+      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, id.end);
+      if (p) {
+        if (i < p) {
+          schema << context.new_Node(Node::identifier, path, line, Token::make(i, p)); // accumulate the preceding segment if it's nonempty
+        }
+        const char* j = find_first_in_interval< exactly<rbrace> >(p, id.end); // find the closing brace
+        if (j) {
+          // parse the interpolant and accumulate it
+          Node interp_node(Document::make_from_token(context, Token::make(p+2, j), path, line).parse_list());
+          interp_node.should_eval() = true;
+          schema << interp_node;
+          i = j+1;
+        }
+        else {
+          // throw an error if the interpolant is unterminated
+          throw_syntax_error("unterminated interpolant inside interpolated identifier " + id.to_string());
+        }
+      }
+      else { // no interpolants left; add the last segment if nonempty
+        if (i < id.end) schema << context.new_Node(Node::identifier, path, line, Token::make(i, id.end));
+        break;
       }
     }
     schema.should_eval() = true;
