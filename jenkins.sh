@@ -4,3 +4,5 @@
 [ ! -d $CLIBS_HOME ] && mkdir -p $CLIBS_HOME
 
 make install PREFIX=$CLIBS_HOME
+
+# comment
