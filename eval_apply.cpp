@@ -377,7 +377,7 @@ namespace Sass {
         Node fake_mixin(new_Node(Node::mixin, expr.path(), expr.line(), 3));
         Node fake_param(new_Node(Node::parameters, expr.path(), expr.line(), 1));
         fake_mixin << new_Node(Node::none, "", 0, 0) << (fake_param << expr[0]) << expr[2];
-        Node list(expr[1]);
+        Node list(eval(expr[1], prefix, env, f_env, new_Node, ctx));
         // If the list isn't really a list, make a singleton out of it.
         if (list.type() != Node::space_list && list.type() != Node::comma_list) {
           list = (new_Node(Node::space_list, list.path(), list.line(), 1) << list);
@@ -405,6 +405,11 @@ namespace Sass {
           expr += apply_mixin(fake_mixin, fake_arg, prefix, env, f_env, new_Node, ctx, true);
           ev_pred = eval(pred, prefix, env, f_env, new_Node, ctx);
         }
+      } break;
+
+      case Node::warning: {
+        expr[0] = eval(expr[0], prefix, env, f_env, new_Node, ctx);
+        return expr;
       } break;
 
       default: {
@@ -491,8 +496,52 @@ namespace Sass {
       acc.pop_back();
       acc << new_Node(acc.path(), acc.line(), r, g, b, a);
     }
+    else if (lhs.type() == Node::concatenation && rhs.type() == Node::concatenation) {
+      if (op == Node::add) {
+        lhs += rhs;
+      }
+      else {
+        acc << new_Node(op, acc.path(), acc.line(), Token::make());
+        acc << rhs;
+      }
+    }
+    else if (lhs.type() == Node::concatenation && rhs.type() == Node::string_constant) {
+      if (op == Node::add) {
+        lhs << rhs;
+      }
+      else {
+        acc << new_Node(op, acc.path(), acc.line(), Token::make());
+        acc << rhs;
+      }
+    }
+    else if (lhs.type() == Node::string_constant && rhs.type() == Node::concatenation) {
+      if (op == Node::add) {
+        Node new_cat(new_Node(Node::concatenation, lhs.path(), lhs.line(), 1 + rhs.size()));
+        new_cat << lhs;
+        new_cat += rhs;
+        acc.pop_back();
+        acc << new_cat;
+      }
+      else {
+        acc << new_Node(op, acc.path(), acc.line(), Token::make());
+        acc << rhs;
+      }
+    }
+    else if (lhs.type() == Node::string_constant && rhs.type() == Node::string_constant) {
+      if (op == Node::add) {
+        Node new_cat(new_Node(Node::concatenation, lhs.path(), lhs.line(), 2));
+        new_cat << lhs << rhs;
+        acc.pop_back();
+        acc << new_cat;
+      }
+      else {
+        acc << new_Node(op, acc.path(), acc.line(), Token::make());
+        acc << rhs;
+      }
+    }
     else {
       // TO DO: disallow division and multiplication on lists
+      if (op == Node::sub) acc << new_Node(Node::sub, acc.path(), acc.line(), Token::make());
       acc.push_back(rhs);
     }
 
@@ -730,7 +779,10 @@ namespace Sass {
 
         case Node::each_directive: {
           Node iter_var(stm[0]);
-          Node list(stm[1]);
+          Node list(eval(stm[1], Node(), bindings, ctx.function_env, new_Node, ctx));
+          if (list.type() != Node::comma_list && list.type() != Node::space_list) {
+            list = (new_Node(Node::space_list, list.path(), list.line(), 1) << list);
+          }
           Node each_body(stm[2]);
           Environment each_env; // re-use this env for each iteration
           each_env.link(bindings);

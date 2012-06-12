@@ -502,6 +502,99 @@ namespace Sass {
     Node join_3(const vector<Token>& parameters, map<Token, Node>& bindings, Node_Factory& new_Node) {
       return join_impl(parameters, bindings, true, new_Node);
     }
+
+    Node append_impl(const vector<Token>& parameters, map<Token, Node>& bindings, bool has_sep, Node_Factory& new_Node) {
+      Node list(bindings[parameters[0]]);
+      switch (list.type())
+      {
+        case Node::space_list:
+        case Node::comma_list:
+        case Node::nil: {
+          // do nothing
+        } break;
+        // if the first arg isn't a list, wrap it in a singleton
+        default: {
+          list = (new_Node(Node::space_list, list.path(), list.line(), 1) << list);
+        } break;
+      }
+      Node::Type sep_type = list.type();
+      if (has_sep) {
+        string sep_string = bindings[parameters[2]].token().unquote();
+        if (sep_string == "comma")      sep_type = Node::comma_list;
+        else if (sep_string == "space") sep_type = Node::space_list;
+        else if (sep_string == "auto")  sep_type = list.type();
+        else throw_eval_error("third argument to append must be 'space', 'comma', or 'auto'", list.path(), list.line());
+      }
+      Node new_list(new_Node(sep_type, list.path(), list.line(), list.size() + 1));
+      new_list += list;
+      new_list << bindings[parameters[1]];
+      return new_list;
+    }
+
+    Function_Descriptor append_2_descriptor =
+    { "append", "$list", "$val", 0 };
+    Node append_2(const vector<Token>& parameters, map<Token, Node>& bindings, Node_Factory& new_Node) {
+      return append_impl(parameters, bindings, false, new_Node);
+    }
+
+    Function_Descriptor append_3_descriptor =
+    { "append", "$list", "$val", "$separator", 0 };
+    Node append_3(const vector<Token>& parameters, map<Token, Node>& bindings, Node_Factory& new_Node) {
+      return append_impl(parameters, bindings, true, new_Node);
+    }
+
+    Node compact(const vector<Token>& parameters, map<Token, Node>& bindings, Node_Factory& new_Node) {
+      size_t num_args     = bindings.size();
+      Node::Type sep_type = Node::comma_list;
+      Node list;
+      Node arg1(bindings[parameters[0]]);
+      if (num_args == 1 && (arg1.type() == Node::space_list ||
+                            arg1.type() == Node::comma_list ||
+                            arg1.type() == Node::nil)) {
+        list = new_Node(arg1.type(), arg1.path(), arg1.line(), arg1.size());
+        list += arg1;
+      }
+      else {
+        list = new_Node(sep_type, arg1.path(), arg1.line(), num_args);
+        for (size_t i = 0; i < num_args; ++i) {
+          list << bindings[parameters[i]];
+        }
+      }
+      Node new_list(new_Node(list.type(), list.path(), list.line(), 0));
+      for (size_t i = 0, S = list.size(); i < S; ++i) {
+        if ((list[i].type() != Node::boolean) || list[i].boolean_value()) {
+          new_list << list[i];
+        }
+      }
+      return new_list.size() ? new_list : new_Node(Node::nil, list.path(), list.line(), 0);
+    }
+
+    Function_Descriptor compact_1_descriptor =
+    { "compact", "$arg1", 0 };
+    Function_Descriptor compact_2_descriptor =
+    { "compact", "$arg1", "$arg2", 0 };
+    Function_Descriptor compact_3_descriptor =
+    { "compact", "$arg1", "$arg2", "$arg3", 0 };
+    Function_Descriptor compact_4_descriptor =
+    { "compact", "$arg1", "$arg2", "$arg3", "$arg4", 0 };
+    Function_Descriptor compact_5_descriptor =
+    { "compact", "$arg1", "$arg2", "$arg3", "$arg4", "$arg5", 0 };
+    Function_Descriptor compact_6_descriptor =
+    { "compact", "$arg1", "$arg2", "$arg3", "$arg4", "$arg5", 
+                 "$arg6", 0 };
+    Function_Descriptor compact_7_descriptor =
+    { "compact", "$arg1", "$arg2", "$arg3", "$arg4", "$arg5", 
+                 "$arg6", "$arg7", 0 };
+    Function_Descriptor compact_8_descriptor =
+    { "compact", "$arg1", "$arg2", "$arg3", "$arg4", "$arg5", 
+                 "$arg6", "$arg7", "$arg8", 0 };
+    Function_Descriptor compact_9_descriptor =
+    { "compact", "$arg1", "$arg2", "$arg3", "$arg4", "$arg5", 
+                 "$arg6", "$arg7", "$arg8", "$arg9", 0 };
+    Function_Descriptor compact_10_descriptor =
+    { "compact", "$arg1", "$arg2", "$arg3", "$arg4", "$arg5", 
+                 "$arg6", "$arg7", "$arg8", "$arg9", "$arg10", 0 };
+
     
     // Introspection Functions /////////////////////////////////////////////
     

@@ -134,6 +134,7 @@ namespace Sass {
       textual_hex,
       color_name,
       string_constant,
+      concatenation,
       number,
       numeric_percentage,
       numeric_dimension,
@@ -160,6 +161,8 @@ namespace Sass {
       while_directive,
       return_directive,
       content_directive,
+
+      warning,
 
       variable,
       assignment
@@ -218,7 +221,7 @@ namespace Sass {
     bool operator>(Node rhs) const;
     bool operator>=(Node rhs) const;
 
-    string to_string() const;
+    string to_string(Type inside_of = none) const;
     void emit_nested_css(stringstream& buf, size_t depth, bool at_toplevel = false, bool in_media_query = false);
     void emit_propset(stringstream& buf, size_t depth, const string& prefix);
     void echo(stringstream& buf, size_t depth = 0);
@@ -265,7 +268,8 @@ namespace Sass {
       has_backref(false),
       from_variable(false),
       should_eval(false),
-      is_unquoted(false)
+      is_unquoted(false),
+      has_been_extended(false)
     { }
     
     bool is_numeric()
@@ -292,7 +296,8 @@ namespace Sass {
         case Node::comment:
         case Node::css_import:
         case Node::rule:
-        case Node::propset:   has_statements = true; break;
+        case Node::propset:
+        case Node::warning:   has_statements = true; break;
 
         case Node::media_query:
         case Node::ruleset:   has_blocks     = true; break;

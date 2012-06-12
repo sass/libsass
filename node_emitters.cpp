@@ -15,7 +15,7 @@ using std::endl;
 
 namespace Sass {
 
-  string Node::to_string() const
+  string Node::to_string(Type inside_of) const
   {
     switch (type())
     {
@@ -110,7 +110,7 @@ namespace Sass {
       } break;
 
       case rule: {
-        string result(at(0).to_string());
+        string result(at(0).to_string(property));
         result += ": ";
         result += at(1).to_string();
         return result;
@@ -140,9 +140,7 @@ namespace Sass {
       case term: {
         string result(at(0).to_string());
         for (size_t i = 1, S = size(); i < S; ++i) {
-          if (!(at(i).type() == add ||
-                // at(i).type == sub ||  // another edge case -- consider uncommenting
-                at(i).type() == mul)) {
+          if (at(i).type() != add && at(i).type() != mul) {
             result += at(i).to_string();
           }
         }
@@ -162,7 +160,6 @@ namespace Sass {
         stringstream ss;
         ss << "@import url(";
         ss << at(0).to_string();
-        // cerr << content.token.to_string() << endl;
         ss << ")";
         return ss.str();
       }
@@ -307,7 +304,7 @@ namespace Sass {
             result += at(i).token().unquote();
           }
           else {
-            result += at(i).to_string();
+            result += at(i).to_string(identifier_schema);
           }
         }
         return result;
@@ -325,6 +322,30 @@ namespace Sass {
           }
         }
         return result;
+      } break;
+
+      case concatenation: {
+        string result;
+        for (size_t i = 0, S = size(); i < S; ++i) {
+          result += at(i).to_string().substr(1, at(i).token().length()-2);
+        }
+        if (inside_of == identifier_schema || inside_of == property) return result;
+        else               return "\"" + result + "\"";
+      } break;
+
+      case warning: {
+        string prefix("WARNING: ");
+        string indent("         ");
+        Node contents(at(0));
+        string result(contents.to_string());
+        if (contents.type() == string_constant || contents.type() == string_schema) {
+          result = result.substr(1, result.size()-2); // unquote if it's a single string
+        }
+        // These cerrs aren't log lines! They're supposed to be here!
+        cerr << prefix << result << endl;
+        cerr << indent << "on line " << at(0).line() << " of " << at(0).path();
+        cerr << endl << endl;
+        return "";
       } break;
       
       default: {
@@ -357,7 +378,7 @@ namespace Sass {
           buf << " {";
           for (size_t i = 0, S = block.size(); i < S; ++i) {
             Type stm_type = block[i].type();
-            if (stm_type == comment || stm_type == rule || stm_type == css_import || stm_type == propset) {
+            if (stm_type == comment || stm_type == rule || stm_type == css_import || stm_type == propset || stm_type == warning) {
               block[i].emit_nested_css(buf, depth+1);
             }
           }
