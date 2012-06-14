@@ -1,0 +1,9 @@
+autoscan: warning: missing AC_PROG_AWK wanted by: 
+	ltmain.sh:7068
+	ltmain.sh:7070
+autoscan: warning: missing AC_PROG_LN_S wanted by: 
+	ltmain.sh:2149
+	ltmain.sh:3720
+	ltmain.sh:9170
+autoscan: warning: missing AC_PROG_RANLIB wanted by: 
+	ltmain.sh:2455
