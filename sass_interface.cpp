@@ -39,7 +39,6 @@ extern "C" {
 
   void sass_free_folder_context(sass_folder_context* ctx)
   {
-    if (ctx->output_path) free(ctx->output_path);
     if (ctx->error_message) free(ctx->error_message);
 
     free(ctx);
