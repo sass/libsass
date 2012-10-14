@@ -12,7 +12,7 @@ all: $(OBJECTS)
 	ar rvs libsass.a $(OBJECTS)
 
 shared: $(OBJECTS)
-	$(CC) -shared -o libsass.so *.o
+	$(CC) -shared $(LDFLAGS) -o libsass.so $(OBJECTS)
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@
