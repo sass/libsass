@@ -1,4 +1,5 @@
 #include <exception>
+#include "AssemblyInfo.hpp"
 #include "sass_interface.h"
 #include "StringToANSI.hpp"
 #include "SassInterface.hpp"
@@ -16,7 +17,7 @@ namespace NSass
 			ctx -> source_string = MarshalConstString(sassContext -> SourceString);
 			if (sassContext -> Options)
 			{
-				ctx -> options.output_style = (int)sassContext -> Options -> OutputStyle;
+				ctx -> options.output_style = sassContext -> Options -> OutputStyle;
 				ctx -> options.source_comments = sassContext -> Options -> SourceComments;
 				ctx -> options.include_paths = MarshalString(sassContext -> Options -> IncludePaths);
 				ctx -> options.image_path = MarshalString(sassContext -> Options -> ImagePath);
@@ -59,7 +60,7 @@ namespace NSass
 			ctx -> input_path = MarshalString(sassFileContext -> InputPath);
 			if (sassFileContext -> Options)
 			{
-				ctx -> options.output_style = (int)sassFileContext -> Options -> OutputStyle;
+				ctx -> options.output_style = sassFileContext -> Options -> OutputStyle;
 				ctx -> options.source_comments = sassFileContext -> Options -> SourceComments;
 				ctx -> options.include_paths = MarshalString(sassFileContext -> Options -> IncludePaths);
 				ctx -> options.image_path = MarshalString(sassFileContext -> Options -> ImagePath);
@@ -104,7 +105,7 @@ namespace NSass
 			//ctx -> output_path = MarshalString(sassFolderContext -> OutputPath);
 			if (sassFolderContext -> Options)
 			{
-				ctx -> options.output_style = (int)sassFolderContext -> Options -> OutputStyle;
+				ctx -> options.output_style = sassFolderContext -> Options -> OutputStyle;
 				ctx -> options.source_comments = sassFolderContext -> Options -> SourceComments;
 				ctx -> options.include_paths = MarshalString(sassFolderContext -> Options -> IncludePaths);
 				ctx -> options.image_path = MarshalString(sassFolderContext -> Options -> ImagePath);

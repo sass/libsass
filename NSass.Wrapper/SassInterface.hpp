@@ -1,13 +1,13 @@
-#include "SassOptions.hpp"
+#include "ISassInterface.hpp"
 
 namespace NSass
 {
-	public ref class SassInterface
+	public ref class SassInterface : ISassInterface
 	{
 		public:
-			int Compile(SassContext^ sassContext);
-			int Compile(SassFileContext^ sassFileContext);
+			virtual int Compile(SassContext^ sassContext);
+			virtual int Compile(SassFileContext^ sassFileContext);
 			// Folder context isn't implemented in core libsass library now
-			/*int Compile(SassFolderContext^ sassFolderContext);*/
+			/*virtual int Compile(SassFolderContext^ sassFolderContext);*/
 	};
 }

@@ -1,6 +1,3 @@
-/Debug
-/NSass.LibSass/Debug
-/NSass.Wrapper/Debug
 /NSass.LibSass/NSass.LibSass.vcxproj.filters
 /NSass.LibSass/NSass.LibSass.vcxproj.user
 /NSass.Wrapper/NSass.Wrapper.vcxproj.filters
@@ -8,8 +5,8 @@
 /NSass.opensdf
 /NSass.sdf
 /NSass.v11.suo
-
-/x64
-
-/NSass.Wrapper/x64
-/NSass.LibSass/x64
+/NSass.sln.DotSettings.user
+/NSass.Core/obj/
+/NSass.LibSass/obj/
+/NSass.Wrapper/obj/
+/bin/
