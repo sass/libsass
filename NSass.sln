@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NSass.Core", "NSass.Core\NS
 		{E8F67215-DF8D-43A2-AC03-F7E79B863095} = {E8F67215-DF8D-43A2-AC03-F7E79B863095}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NSass.Handler", "NSass.Handler\NSass.Handler.csproj", "{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,6 +66,18 @@ Global
 		{8C59FFCA-D91C-4477-9F74-F4FC07DC9C48}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{8C59FFCA-D91C-4477-9F74-F4FC07DC9C48}.Release|Win32.ActiveCfg = Release|Any CPU
 		{8C59FFCA-D91C-4477-9F74-F4FC07DC9C48}.Release|x64.ActiveCfg = Release|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Release|Win32.ActiveCfg = Release|Any CPU
+		{F5CC1718-8761-426C-9929-8ACA1D6E8CE7}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

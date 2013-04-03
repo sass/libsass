@@ -6,7 +6,8 @@
 /NSass.sdf
 /NSass.v11.suo
 /NSass.sln.DotSettings.user
-/NSass.Core/obj/
 /NSass.LibSass/obj/
 /NSass.Wrapper/obj/
+/NSass.Core/obj/
+/NSass.Handler/obj/
 /bin/

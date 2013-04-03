@@ -8,7 +8,11 @@ About
 
 NSass is a .NET wrapper around libsass library. All information about libsass itself could be found in readme file under *NSass.LibSass* directory.
 
-At this moment NSass is under development and contains very simple one-to-one C++/CLI wrapper around libsass, and high-level C# wrapper.
+At this moment NSass is under development. By the way, you already may use:
+
+* simple one-to-one C++/CLI wrapper around libsass
+* high-level C# wrapper (however, without much of additional features)
+* HTTP handler for live SASS processing
 
 Main principles
 ---------------
@@ -29,7 +33,7 @@ But at the end, you should build *NSass.Core* in Win32 mode first, then in x64 m
 How to include in your project
 ------------------------------
 
-First of all, you need to reference *NSass.Core*.
+First of all, you need to reference *NSass.Handler* or *NSass.Core*.
 
 Second, until NuGet packages are not implemented to make all the dirty work, to use NSass in your web project, add the following post-build event to it:
 
@@ -46,7 +50,13 @@ To make it working with Publish, include NSass.Wrapper library in project after 
 Usage
 -----
 
-Code is pretty straightforward. First of all, create an instance of SassCompiler:
+If you have web project and just want to process your SASS files at runtime, all you need is this line in Web.config:
+
+```xml
+<add name="ScssSassHandler" verb="GET" path="*.scss" type="NSass.SassHandler, NSass.Handler, Version=0.0.1.0, Culture=neutral, PublicKeyToken=null" />
+```
+
+If you have more deeper purpose, follow the next. First of all, create an instance of SassCompiler:
 
 ```c#
 ISassCompiler sassCompiler = new SassCompiler();
@@ -66,6 +76,29 @@ string output = sassCompiler.CompileFile(@"C:\Site.scss");
 
 If you want to handle SASS compilation errors nice, just catch SassCompileException - message inside contains all the necessary information.
 
+Note about @import
+------------------
+
+By default, NSass core adds current directory as import path while compilining a file. NSass handler additionaly adds web project root.
+So you may use both relative and absolute paths in includes. For example, if you have Site.scss in your Content folder, and this file includes Common.scss from the same folder, everything below will work in the same way:
+
+* @import "Common.scss";
+* @import "Content/Common.scss";
+* @import "/Content/Common.scss";
+* @import "../Common.scss";
+
+What is important to know - only first found file will be included. Searching process goes through current directory first, then through web site root.
+This may cause issues if you have another Content folder with Common.scss file inside, which is under root Content folder. Illustration:
+
+```c#
+/
+	/Content
+		Site.scss
+		Common.scss // <-- this file will be not included
+		/Content
+			Common.scss // <-- only this
+```
+
 What about unit testing / dependency injection?
 -----------------------------------------------
 
@@ -79,7 +112,6 @@ In most cases you should deal with *ISassCompiler* only.
 Roadmap
 -------
 
-* HttpHandler;
 * Bundle&Minification support;
 * NuGet packages;
 * Probably, simple SASS compilation tool for Windows for usage outside of .NET world.

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
-using System.Text;
 
 namespace NSass
 {
@@ -25,7 +23,7 @@ namespace NSass
 			_sassInterface = sassInterface;
 		}
 
-		public string Compile(string source, OutputStyle outputStyle = OutputStyle.Nested, bool sourceComments = true)
+		public string Compile(string source, OutputStyle outputStyle = OutputStyle.Nested, bool sourceComments = true, IEnumerable<string> includePaths = null)
 		{
 			if (outputStyle != OutputStyle.Nested && outputStyle != OutputStyle.Compressed)
 			{
@@ -38,7 +36,8 @@ namespace NSass
 				Options = new SassOptions
 				{
 					OutputStyle = (int)outputStyle,
-					SourceComments = sourceComments
+					SourceComments = sourceComments,
+					IncludePaths = includePaths != null ? String.Join(";", includePaths) : null
 				}
 			};
 
@@ -52,11 +51,18 @@ namespace NSass
 			return context.OutputString;
 		}
 
-		public string CompileFile(string inputPath, OutputStyle outputStyle = OutputStyle.Nested, bool sourceComments = true)
+		public string CompileFile(string inputPath, OutputStyle outputStyle = OutputStyle.Nested, bool sourceComments = true, IEnumerable<string> additionalIncludePaths = null)
 		{
 			if (outputStyle != OutputStyle.Nested && outputStyle != OutputStyle.Compressed)
 			{
 				throw new ArgumentException("Only nested and compressed output styles are currently supported by libsass.");
+			}
+
+			string directoryName = Path.GetDirectoryName(inputPath);
+			List<string> includePaths = new List<string> { directoryName };
+			if (additionalIncludePaths != null)
+			{
+				includePaths.AddRange(additionalIncludePaths);
 			}
 
 			SassFileContext context = new SassFileContext
@@ -65,7 +71,8 @@ namespace NSass
 				Options = new SassOptions
 				{
 					OutputStyle = (int)outputStyle,
-					SourceComments = sourceComments
+					SourceComments = sourceComments,
+					IncludePaths = String.Join(";", includePaths)
 				}
 			};
 
