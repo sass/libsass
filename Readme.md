@@ -8,11 +8,12 @@ About
 
 NSass is a .NET wrapper around libsass library. All information about libsass itself could be found in readme file under *NSass.LibSass* directory.
 
-At this moment NSass is under development. By the way, you already may use:
+At this moment NSass is under development. By the way, the most necessary stuff is already implemented:
 
 * simple one-to-one C++/CLI wrapper around libsass
 * high-level C# wrapper (however, without much of additional features)
 * HTTP handler for live SASS processing
+* install all of the above throught NuGet
 
 Main principles
 ---------------
@@ -21,60 +22,22 @@ Main principles
 * Simple as possible, almost without additional features;
 * Easy to use.
 
-Build process
--------------
+Installation
+------------
 
-NSass tries to play nice with x86/x64 issues. Thanks to Scott Bilas - http://scottbilas.com/blog/automatically-choose-32-or-64-bit-mixed-mode-dlls/.
-But this approach inflict NSass build process while simplifying it for end-user.
+If you have web project and want live SASS processing, just install *NSass.Handler* through NuGet:
 
-If you want Intellisense/Resharper support for *NSass.Core*, just build *NSass.Wrapper* in Win32 or x64 mode.
-But at the end, you should build *NSass.Core* in Win32 mode first, then in x64 mode. Or, use Batch Build, which is easier (check both Win32 and x64 configurations for *NSass.LibSass* and *NSass.Wrapper*, as well as AnyCPU for *NSass.Core*).
-
-How to include in your project
-------------------------------
-
-First of all, you need to reference *NSass.Handler* or *NSass.Core*.
-
-Second, until NuGet packages are not implemented to make all the dirty work, to use NSass in your web project, add the following post-build event to it:
-
-```bat
-if not exist "$(SolutionDir)$(ProjectName)\NSass.Wrapper\" mkdir "$(SolutionDir)$(ProjectName)\NSass.Wrapper\"
-del /q "$(SolutionDir)$(ProjectName)\NSass.Wrapper\*.*"
-copy "{NSass output directory}\NSass.Wrapper.*.dll" "$(SolutionDir)$(ProjectName)\NSass.Wrapper\"
-copy "{NSass output directory}\NSass.Wrapper.*.pdb" "$(SolutionDir)$(ProjectName)\NSass.Wrapper\"
+```
+PM> Install-Package NSass.Handler
 ```
 
-where *{NSass output directory}* should point to NSass binaries directory. Of course, you could use *$(SolutionDir)* variable and relative paths to keep thing clear.
-To make it working with Publish, include NSass.Wrapper library in project after first build.
+If you want to play with libsass through your own C# code, core library will be enough:
 
-Usage
------
-
-If you have web project and just want to process your SASS files at runtime, all you need is this line in Web.config:
-
-```xml
-<add name="ScssSassHandler" verb="GET" path="*.scss" type="NSass.SassHandler, NSass.Handler, Version=0.0.1.0, Culture=neutral, PublicKeyToken=null" />
+```
+PM> Install-Package NSass.Core
 ```
 
-If you have more deeper purpose, follow the next. First of all, create an instance of SassCompiler:
-
-```c#
-ISassCompiler sassCompiler = new SassCompiler();
-```
-
-Compile regular string with SASS code inside:
-
-```c#
-string output = sassCompiler.Compile("/* COMMENT */ html { body { color: red; } }");
-```
-
-... or a file:
-
-```c#
-string output = sassCompiler.CompileFile(@"C:\Site.scss");
-```
-
-If you want to handle SASS compilation errors nice, just catch SassCompileException - message inside contains all the necessary information.
+[Manual build and istallation](https://github.com/TBAPI-0KA/NSass/wiki/Manual-build-and-installation)
 
 Note about @import
 ------------------
@@ -113,7 +76,6 @@ Roadmap
 -------
 
 * Bundle&Minification support;
-* NuGet packages;
 * Probably, simple SASS compilation tool for Windows for usage outside of .NET world.
 
 All the other potential features (i. e. Compass support) will be merged from libsass when they will appear there.

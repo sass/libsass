@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package>
+	<metadata>
+		<id>$id$</id>
+		<version>$version$</version>
+		<authors>$author$</authors>
+		<owners>$author$</owners>
+		<licenseUrl>https://raw.github.com/TBAPI-0KA/NSass/master/License.txt</licenseUrl>
+		<projectUrl>https://github.com/TBAPI-0KA/NSass</projectUrl>
+		<!-- TODO: Add icon -->
+		<!--<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>$description$</description>
+		<copyright>Copyright © 2013 by $author$</copyright>
+		<tags>SASS SCSS CSS libsass</tags>
+		<references>
+			<reference file="$id$.dll" />
+		</references>
+	</metadata>
+	<files>
+		<file src="..\bin\Release\NSass.Wrapper.x86.dll" target="lib\net40\" />
+		<file src="..\bin\Release\NSass.Wrapper.x64.dll" target="lib\net40\" />
+		<file src="..\bin\Release\NSass.Wrapper.x86.dll" target="content\NSass.Wrapper" />
+		<file src="..\bin\Release\NSass.Wrapper.x64.dll" target="content\NSass.Wrapper" />
+		<file src="..\NuGet\$id$\Install.ps1" target="tools\" />
+	</files>
+</package>

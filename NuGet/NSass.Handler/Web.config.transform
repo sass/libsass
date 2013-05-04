@@ -1,0 +1,7 @@
+﻿<configuration>
+	<system.webServer>
+		<handlers>
+			<add name="NSassHandler" verb="GET" path="*.scss" type="NSass.SassHandler, NSass.Handler" />
+		</handlers>
+	</system.webServer>
+</configuration>

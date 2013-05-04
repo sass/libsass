@@ -11,7 +11,7 @@ namespace NSass
 
 		public static void Initialize()
 		{
-			string assemblyDir = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+			string assemblyDir = AppDomain.CurrentDomain.SetupInformation.PrivateBinPath;
 			assemblyDir = Path.Combine(assemblyDir, AssembliesDir);
 			string proxyFullPath = Path.Combine(assemblyDir, String.Format("{0}.proxy.dll", AssemblyName));
 			string x86FullPath = Path.Combine(assemblyDir, String.Format("{0}.x86.dll", AssemblyName));

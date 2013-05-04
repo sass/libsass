@@ -11,3 +11,5 @@
 /NSass.Core/obj/
 /NSass.Handler/obj/
 /bin/
+/NuGet/NSass.Core.*.nupkg
+/NuGet/NSass.Handler.*.nupkg

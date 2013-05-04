@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("NSass.Core")]
-[assembly: AssemblyDescription("A .NET wrapper around libsass library")]
+[assembly: AssemblyDescription("Core C# high-level wrapper around libsass library")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("TBAPI-0KA")]
 [assembly: AssemblyProduct("NSass.Core")]
 [assembly: AssemblyCopyright("Copyright © 2013 by TBAPI-0KA")]
 [assembly: AssemblyTrademark("")]
