@@ -22,11 +22,25 @@ namespace NSass.Tool
 		private void NewProject(object sender, EventArgs e)
 		{
 			ProjectPropertiesForm newProjectForm = new ProjectPropertiesForm();
-			DialogResult dialogResult = newProjectForm.ShowDialog(this);
 
-			if (dialogResult == DialogResult.OK)
+			if (newProjectForm.ShowDialog(this) == DialogResult.OK)
 			{
-				Program.Data.Projects.Add(newProjectForm.Project); 
+				Program.Data.Projects.Add(newProjectForm.Project);
+			}
+		}
+
+		private void EditProject(object sender, EventArgs e)
+		{
+			ListViewItem selectedItem = GetSelectedItem();
+
+			ProjectPropertiesForm editProjectForm = new ProjectPropertiesForm
+			{
+				Project = GetSelectedProject(selectedItem)
+			};
+
+			if (editProjectForm.ShowDialog() == DialogResult.OK)
+			{
+				selectedItem.Text = editProjectForm.Project.Name;
 			}
 		}
 
@@ -52,6 +66,18 @@ namespace NSass.Tool
 					}
 					break;
 			}
+		}
+
+		private ListViewItem GetSelectedItem()
+		{
+			return projectsListView.SelectedItems.Cast<ListViewItem>().Single();
+		}
+
+		private Project GetSelectedProject(ListViewItem selectedItem = null)
+		{
+			selectedItem = selectedItem ?? GetSelectedItem();
+			string key = selectedItem.Name;
+			return Program.Data.Projects.Single(x => x.Id.ToString() == key);
 		}
 	}
 }

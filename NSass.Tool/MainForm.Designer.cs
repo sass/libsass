@@ -107,6 +107,7 @@
             editToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
             editToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
             editToolStripMenuItem.Text = "&Edit...";
+            editToolStripMenuItem.Click += new System.EventHandler(this.EditProject);
             // 
             // deleteToolStripMenuItem
             // 
@@ -176,6 +177,7 @@
             editToolStripButton.Size = new System.Drawing.Size(23, 22);
             editToolStripButton.Text = "toolStripButton1";
             editToolStripButton.ToolTipText = "Edit project...";
+            editToolStripButton.Click += new System.EventHandler(this.EditProject);
             // 
             // deleteToolStripButton
             // 

@@ -17,18 +17,29 @@ namespace NSass.Tool
 			InitializeComponent();
 		}
 
-		public Project Project { get; private set; }
+		protected override void OnLoad(EventArgs e)
+		{
+			base.OnLoad(e);
+
+			if (Project != null)
+			{
+				nameTextBox.Text = Project.Name;
+				sourceFolderTextBox.Text = Project.SourceFolderPath;
+				destinationFolderTextBox.Text = Project.DestinationFolderPath;
+				includeSubdirectoriesCheckBox.Checked = Project.IncludeSubdirectories;
+			}
+		}
+
+		public Project Project { get; set; }
 
 		private void Submit(object sender, EventArgs e)
 		{
-			Project = new Project
-			{
-				Id = Guid.NewGuid(),
-				Name = nameTextBox.Text,
-				SourceFolderPath = sourceFolderTextBox.Text,
-				DestinationFolderPath = destinationFolderTextBox.Text,
-				IncludeSubdirectories = includeSubdirectoriesCheckBox.Checked
-			};
+			Project = Project ?? new Project { Id = new Guid() };
+
+			Project.Name = nameTextBox.Text;
+			Project.SourceFolderPath = sourceFolderTextBox.Text;
+			Project.DestinationFolderPath = destinationFolderTextBox.Text;
+			Project.IncludeSubdirectories = includeSubdirectoriesCheckBox.Checked;
 		}
 
 		private void ChooseSourceFolder(object sender, EventArgs e)
