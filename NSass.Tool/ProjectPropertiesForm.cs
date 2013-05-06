@@ -41,7 +41,7 @@ namespace NSass.Tool
 				return;
 			}
 
-			Project = Project ?? new Project { Id = new Guid() };
+			Project = Project ?? new Project { Id = Guid.NewGuid() };
 
 			Project.Name = nameTextBox.Text;
 			Project.SourceFolderPath = sourceFolderTextBox.Text;

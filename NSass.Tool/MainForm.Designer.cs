@@ -89,7 +89,7 @@
             newToolStripMenuItem.Image = global::NSass.Tool.Properties.Resources.New;
             newToolStripMenuItem.Name = "newToolStripMenuItem";
             newToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
-            newToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            newToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             newToolStripMenuItem.Text = "&New...";
             newToolStripMenuItem.Click += new System.EventHandler(this.NewProject);
             // 
@@ -98,7 +98,7 @@
             this.editToolStripMenuItem.Image = global::NSass.Tool.Properties.Resources.Edit;
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
             this.editToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
-            this.editToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.editToolStripMenuItem.Text = "&Edit...";
             this.editToolStripMenuItem.Click += new System.EventHandler(this.EditProject);
             // 
@@ -106,34 +106,35 @@
             // 
             this.deleteToolStripMenuItem.Image = global::NSass.Tool.Properties.Resources.Delete;
             this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.D)));
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.deleteToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Delete;
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.deleteToolStripMenuItem.Text = "&Delete...";
+            this.deleteToolStripMenuItem.Click += new System.EventHandler(this.DeleteProject);
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new System.Drawing.Size(155, 6);
+            toolStripSeparator1.Size = new System.Drawing.Size(149, 6);
             // 
             // startStopToolStripMenuItem
             // 
             this.startStopToolStripMenuItem.Image = global::NSass.Tool.Properties.Resources.Start;
             this.startStopToolStripMenuItem.Name = "startStopToolStripMenuItem";
             this.startStopToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.startStopToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.startStopToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.startStopToolStripMenuItem.Text = "&Start";
             // 
             // toolStripSeparator2
             // 
             toolStripSeparator2.Name = "toolStripSeparator2";
-            toolStripSeparator2.Size = new System.Drawing.Size(155, 6);
+            toolStripSeparator2.Size = new System.Drawing.Size(149, 6);
             // 
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Image = global::NSass.Tool.Properties.Resources.Exit;
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
             exitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
-            exitToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             exitToolStripMenuItem.Text = "&Exit";
             exitToolStripMenuItem.Click += new System.EventHandler(this.Exit);
             // 
@@ -229,6 +230,9 @@
             // 
             // logTextBox
             // 
+            this.logTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.logTextBox.Location = new System.Drawing.Point(188, 52);
             this.logTextBox.Multiline = true;
             this.logTextBox.Name = "logTextBox";

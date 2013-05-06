@@ -2,7 +2,7 @@
 
 namespace NSass.Tool.Models
 {
-	internal class Project
+	public class Project
 	{
 		public Guid Id { get; set; }
 

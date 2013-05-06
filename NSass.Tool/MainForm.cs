@@ -14,12 +14,15 @@ namespace NSass.Tool
 	internal partial class MainForm : Form
 	{
 		private readonly List<ToolStripItem> _enabledForSelectedProjectOnlyControls = new List<ToolStripItem>();
+		private readonly Data _data = new Data();
+		private readonly DataStorage _dataStorage = new DataStorage();
 
 		public MainForm()
 		{
 			InitializeComponent();
 
-			Program.Data.Projects.CollectionChanged += ProjectsChanged;
+			_data = new Data();
+			_data.Projects.CollectionChanged += ProjectsChanged;
 
 			_enabledForSelectedProjectOnlyControls.AddRange(new ToolStripItem[]
 			{
@@ -28,6 +31,11 @@ namespace NSass.Tool
 				startStopToolStripButton, startStopToolStripMenuItem
 			});
 			SelectedProjectChanged(null, null);
+
+			foreach (Project project in _dataStorage.GetAll())
+			{
+				_data.Projects.Add(project);	
+			}
 		}
 
 		#region Actions
@@ -38,7 +46,7 @@ namespace NSass.Tool
 
 			if (newProjectForm.ShowDialog(this) == DialogResult.OK)
 			{
-				Program.Data.Projects.Add(newProjectForm.Project);
+				_data.Projects.Add(newProjectForm.Project);
 			}
 		}
 
@@ -64,7 +72,7 @@ namespace NSass.Tool
 			{
 				ListViewItem selectedItem = GetSelectedItem();
 				projectsListView.Items.Remove(selectedItem);
-				Program.Data.Projects.Remove(GetSelectedProject(selectedItem));
+				_data.Projects.Remove(GetSelectedProject(selectedItem));
 			}
 		}
 
@@ -85,12 +93,14 @@ namespace NSass.Tool
 					foreach (Project project in e.NewItems.Cast<Project>())
 					{
 						projectsListView.Items.Add(project.Id.ToString(), project.Name, 0);
+						_dataStorage.Add(project);
 					}
 					break;
 				case NotifyCollectionChangedAction.Remove:
 					foreach (Project project in e.OldItems.Cast<Project>())
 					{
 						projectsListView.Items.RemoveByKey(project.Id.ToString());
+						_dataStorage.Remove(project);
 					}
 					break;
 			}
@@ -120,7 +130,7 @@ namespace NSass.Tool
 			}
 
 			string key = selectedItem.Name;
-			return Program.Data.Projects.Single(x => x.Id.ToString() == key);
+			return _data.Projects.Single(x => x.Id.ToString() == key);
 		}
 
 		#endregion
