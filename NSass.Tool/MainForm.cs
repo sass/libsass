@@ -57,6 +57,17 @@ namespace NSass.Tool
 			}
 		}
 
+		private void DeleteProject(object sender, EventArgs e)
+		{
+			if (MessageBox.Show(this, "Are you sure want to delete selected project?", "Confirm", MessageBoxButtons.YesNo,
+				MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
+			{
+				ListViewItem selectedItem = GetSelectedItem();
+				projectsListView.Items.Remove(selectedItem);
+				Program.Data.Projects.Remove(GetSelectedProject(selectedItem));
+			}
+		}
+
 		private void Exit(object sender, EventArgs e)
 		{
 			Application.Exit();
@@ -77,7 +88,7 @@ namespace NSass.Tool
 					}
 					break;
 				case NotifyCollectionChangedAction.Remove:
-					foreach (Project project in e.NewItems.Cast<Project>())
+					foreach (Project project in e.OldItems.Cast<Project>())
 					{
 						projectsListView.Items.RemoveByKey(project.Id.ToString());
 					}

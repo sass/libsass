@@ -181,6 +181,7 @@
             this.deleteToolStripButton.Size = new System.Drawing.Size(23, 22);
             this.deleteToolStripButton.Text = "toolStripButton2";
             this.deleteToolStripButton.ToolTipText = "Delete project...";
+            this.deleteToolStripButton.Click += new System.EventHandler(this.DeleteProject);
             // 
             // toolStripSeparator3
             // 
