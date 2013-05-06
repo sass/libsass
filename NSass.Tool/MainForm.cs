@@ -13,11 +13,24 @@ namespace NSass.Tool
 {
 	internal partial class MainForm : Form
 	{
+		private readonly List<ToolStripItem> _enabledForSelectedProjectOnlyControls = new List<ToolStripItem>();
+
 		public MainForm()
 		{
 			InitializeComponent();
+
 			Program.Data.Projects.CollectionChanged += ProjectsChanged;
+
+			_enabledForSelectedProjectOnlyControls.AddRange(new ToolStripItem[]
+			{
+				editToolStripButton, editToolStripMenuItem,
+				deleteToolStripButton, deleteToolStripMenuItem,
+				startStopToolStripButton, startStopToolStripMenuItem
+			});
+			SelectedProjectChanged(null, null);
 		}
+
+		#region Actions
 
 		private void NewProject(object sender, EventArgs e)
 		{
@@ -49,6 +62,10 @@ namespace NSass.Tool
 			Application.Exit();
 		}
 
+		#endregion
+
+		#region Event handlers
+
 		private void ProjectsChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			switch (e.Action)
@@ -68,16 +85,33 @@ namespace NSass.Tool
 			}
 		}
 
+		private void SelectedProjectChanged(object sender, EventArgs e)
+		{
+			bool areEnabled = GetSelectedItem() != null;
+			_enabledForSelectedProjectOnlyControls.ForEach(x => x.Enabled = areEnabled);
+		}
+
+		#endregion
+
+		#region Utility functions
+
 		private ListViewItem GetSelectedItem()
 		{
-			return projectsListView.SelectedItems.Cast<ListViewItem>().Single();
+			return projectsListView.SelectedItems.Cast<ListViewItem>().SingleOrDefault();
 		}
 
 		private Project GetSelectedProject(ListViewItem selectedItem = null)
 		{
 			selectedItem = selectedItem ?? GetSelectedItem();
+			if (selectedItem == null)
+			{
+				return null;
+			}
+
 			string key = selectedItem.Name;
 			return Program.Data.Projects.Single(x => x.Id.ToString() == key);
 		}
+
+		#endregion
 	}
 }

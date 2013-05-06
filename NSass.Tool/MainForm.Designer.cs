@@ -29,39 +29,32 @@
         private void InitializeComponent()
         {
             System.Windows.Forms.MenuStrip mainMenuStrip;
-            System.Windows.Forms.ToolStripMenuItem projectToolStripMenuItem;
             System.Windows.Forms.ToolStripMenuItem newToolStripMenuItem;
-            System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
-            System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
             System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-            System.Windows.Forms.ToolStripMenuItem startStopToolStripMenuItem;
             System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
             System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
             System.Windows.Forms.ToolStrip mainToolStrip;
             System.Windows.Forms.ToolStripButton newToolStripButton;
-            System.Windows.Forms.ToolStripButton editToolStripButton;
-            System.Windows.Forms.ToolStripButton deleteToolStripButton;
             System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
-            System.Windows.Forms.ToolStripButton startStopToolStripButton;
             System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
             System.Windows.Forms.ToolStripButton exitToolStripButton;
+            this.projectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.startStopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.deleteToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.startStopToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.projectsListView = new System.Windows.Forms.ListView();
             this.logTextBox = new System.Windows.Forms.TextBox();
             mainMenuStrip = new System.Windows.Forms.MenuStrip();
-            projectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            startStopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             mainToolStrip = new System.Windows.Forms.ToolStrip();
             newToolStripButton = new System.Windows.Forms.ToolStripButton();
-            editToolStripButton = new System.Windows.Forms.ToolStripButton();
-            deleteToolStripButton = new System.Windows.Forms.ToolStripButton();
             toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            startStopToolStripButton = new System.Windows.Forms.ToolStripButton();
             toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             exitToolStripButton = new System.Windows.Forms.ToolStripButton();
             mainMenuStrip.SuspendLayout();
@@ -71,7 +64,7 @@
             // mainMenuStrip
             // 
             mainMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            projectToolStripMenuItem});
+            this.projectToolStripMenuItem});
             mainMenuStrip.Location = new System.Drawing.Point(0, 0);
             mainMenuStrip.Name = "mainMenuStrip";
             mainMenuStrip.Size = new System.Drawing.Size(784, 24);
@@ -79,17 +72,17 @@
             // 
             // projectToolStripMenuItem
             // 
-            projectToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.projectToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             newToolStripMenuItem,
-            editToolStripMenuItem,
-            deleteToolStripMenuItem,
+            this.editToolStripMenuItem,
+            this.deleteToolStripMenuItem,
             toolStripSeparator1,
-            startStopToolStripMenuItem,
+            this.startStopToolStripMenuItem,
             toolStripSeparator2,
             exitToolStripMenuItem});
-            projectToolStripMenuItem.Name = "projectToolStripMenuItem";
-            projectToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
-            projectToolStripMenuItem.Text = "&Project";
+            this.projectToolStripMenuItem.Name = "projectToolStripMenuItem";
+            this.projectToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
+            this.projectToolStripMenuItem.Text = "&Project";
             // 
             // newToolStripMenuItem
             // 
@@ -102,20 +95,20 @@
             // 
             // editToolStripMenuItem
             // 
-            editToolStripMenuItem.Image = global::NSass.Tool.Properties.Resources.Edit;
-            editToolStripMenuItem.Name = "editToolStripMenuItem";
-            editToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
-            editToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
-            editToolStripMenuItem.Text = "&Edit...";
-            editToolStripMenuItem.Click += new System.EventHandler(this.EditProject);
+            this.editToolStripMenuItem.Image = global::NSass.Tool.Properties.Resources.Edit;
+            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+            this.editToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.editToolStripMenuItem.Text = "&Edit...";
+            this.editToolStripMenuItem.Click += new System.EventHandler(this.EditProject);
             // 
             // deleteToolStripMenuItem
             // 
-            deleteToolStripMenuItem.Image = global::NSass.Tool.Properties.Resources.Delete;
-            deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            deleteToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.D)));
-            deleteToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
-            deleteToolStripMenuItem.Text = "&Delete...";
+            this.deleteToolStripMenuItem.Image = global::NSass.Tool.Properties.Resources.Delete;
+            this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
+            this.deleteToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.D)));
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.deleteToolStripMenuItem.Text = "&Delete...";
             // 
             // toolStripSeparator1
             // 
@@ -124,11 +117,11 @@
             // 
             // startStopToolStripMenuItem
             // 
-            startStopToolStripMenuItem.Image = global::NSass.Tool.Properties.Resources.Start;
-            startStopToolStripMenuItem.Name = "startStopToolStripMenuItem";
-            startStopToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            startStopToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
-            startStopToolStripMenuItem.Text = "&Start";
+            this.startStopToolStripMenuItem.Image = global::NSass.Tool.Properties.Resources.Start;
+            this.startStopToolStripMenuItem.Name = "startStopToolStripMenuItem";
+            this.startStopToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
+            this.startStopToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.startStopToolStripMenuItem.Text = "&Start";
             // 
             // toolStripSeparator2
             // 
@@ -149,10 +142,10 @@
             mainToolStrip.BackColor = System.Drawing.SystemColors.Control;
             mainToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             newToolStripButton,
-            editToolStripButton,
-            deleteToolStripButton,
+            this.editToolStripButton,
+            this.deleteToolStripButton,
             toolStripSeparator3,
-            startStopToolStripButton,
+            this.startStopToolStripButton,
             toolStripSeparator4,
             exitToolStripButton});
             mainToolStrip.Location = new System.Drawing.Point(0, 24);
@@ -170,24 +163,24 @@
             // 
             // editToolStripButton
             // 
-            editToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            editToolStripButton.Image = global::NSass.Tool.Properties.Resources.Edit;
-            editToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            editToolStripButton.Name = "editToolStripButton";
-            editToolStripButton.Size = new System.Drawing.Size(23, 22);
-            editToolStripButton.Text = "toolStripButton1";
-            editToolStripButton.ToolTipText = "Edit project...";
-            editToolStripButton.Click += new System.EventHandler(this.EditProject);
+            this.editToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.editToolStripButton.Image = global::NSass.Tool.Properties.Resources.Edit;
+            this.editToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.editToolStripButton.Name = "editToolStripButton";
+            this.editToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.editToolStripButton.Text = "toolStripButton1";
+            this.editToolStripButton.ToolTipText = "Edit project...";
+            this.editToolStripButton.Click += new System.EventHandler(this.EditProject);
             // 
             // deleteToolStripButton
             // 
-            deleteToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            deleteToolStripButton.Image = global::NSass.Tool.Properties.Resources.Delete;
-            deleteToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            deleteToolStripButton.Name = "deleteToolStripButton";
-            deleteToolStripButton.Size = new System.Drawing.Size(23, 22);
-            deleteToolStripButton.Text = "toolStripButton2";
-            deleteToolStripButton.ToolTipText = "Delete project...";
+            this.deleteToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.deleteToolStripButton.Image = global::NSass.Tool.Properties.Resources.Delete;
+            this.deleteToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.deleteToolStripButton.Name = "deleteToolStripButton";
+            this.deleteToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.deleteToolStripButton.Text = "toolStripButton2";
+            this.deleteToolStripButton.ToolTipText = "Delete project...";
             // 
             // toolStripSeparator3
             // 
@@ -196,13 +189,13 @@
             // 
             // startStopToolStripButton
             // 
-            startStopToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            startStopToolStripButton.Image = global::NSass.Tool.Properties.Resources.Start;
-            startStopToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            startStopToolStripButton.Name = "startStopToolStripButton";
-            startStopToolStripButton.Size = new System.Drawing.Size(23, 22);
-            startStopToolStripButton.Text = "toolStripButton3";
-            startStopToolStripButton.ToolTipText = "Start preprocessing";
+            this.startStopToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.startStopToolStripButton.Image = global::NSass.Tool.Properties.Resources.Start;
+            this.startStopToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.startStopToolStripButton.Name = "startStopToolStripButton";
+            this.startStopToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.startStopToolStripButton.Text = "toolStripButton3";
+            this.startStopToolStripButton.ToolTipText = "Start preprocessing";
             // 
             // toolStripSeparator4
             // 
@@ -231,6 +224,7 @@
             this.projectsListView.TabIndex = 2;
             this.projectsListView.UseCompatibleStateImageBehavior = false;
             this.projectsListView.View = System.Windows.Forms.View.List;
+            this.projectsListView.SelectedIndexChanged += new System.EventHandler(this.SelectedProjectChanged);
             // 
             // logTextBox
             // 
@@ -265,5 +259,12 @@
 
         private System.Windows.Forms.ListView projectsListView;
         private System.Windows.Forms.TextBox logTextBox;
+        private System.Windows.Forms.ToolStripButton editToolStripButton;
+        private System.Windows.Forms.ToolStripButton deleteToolStripButton;
+        private System.Windows.Forms.ToolStripButton startStopToolStripButton;
+        private System.Windows.Forms.ToolStripMenuItem projectToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem startStopToolStripMenuItem;
     }
 }
