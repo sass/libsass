@@ -2,6 +2,7 @@
 /NSass.LibSass/NSass.LibSass.vcxproj.user
 /NSass.Wrapper/NSass.Wrapper.vcxproj.filters
 /NSass.Wrapper/NSass.Wrapper.vcxproj.user
+/NSass.Tool/NSass.Tool.csproj.user
 /NSass.opensdf
 /NSass.sdf
 /NSass.v11.suo
@@ -10,6 +11,8 @@
 /NSass.Wrapper/obj/
 /NSass.Core/obj/
 /NSass.Handler/obj/
+/NSass.Tool/obj/
+/NSass.Tool/bin/
 /bin/
 /NuGet/NSass.Core.*.nupkg
 /NuGet/NSass.Handler.*.nupkg
