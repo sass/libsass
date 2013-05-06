@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.Windows.Forms.Label sourceFolderLabel;
             System.Windows.Forms.Label destinationFolderLabelabel;
             System.Windows.Forms.Label nameLabel;
@@ -40,11 +41,13 @@
             this.nameTextBox = new System.Windows.Forms.TextBox();
             this.includeSubdirectoriesCheckBox = new System.Windows.Forms.CheckBox();
             this.mainFolderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
+            this.mainErrorProvider = new System.Windows.Forms.ErrorProvider(this.components);
             sourceFolderLabel = new System.Windows.Forms.Label();
             destinationFolderLabelabel = new System.Windows.Forms.Label();
             nameLabel = new System.Windows.Forms.Label();
             okButton = new System.Windows.Forms.Button();
             cancelButton = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)(this.mainErrorProvider)).BeginInit();
             this.SuspendLayout();
             // 
             // sourceFolderLabel
@@ -74,67 +77,6 @@
             nameLabel.TabIndex = 0;
             nameLabel.Text = "Name:";
             // 
-            // chooseSourceFolderButton
-            // 
-            this.chooseSourceFolderButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.chooseSourceFolderButton.Location = new System.Drawing.Point(347, 38);
-            this.chooseSourceFolderButton.Name = "chooseSourceFolderButton";
-            this.chooseSourceFolderButton.Size = new System.Drawing.Size(25, 25);
-            this.chooseSourceFolderButton.TabIndex = 5;
-            this.chooseSourceFolderButton.Text = "...";
-            this.chooseSourceFolderButton.UseVisualStyleBackColor = true;
-            this.chooseSourceFolderButton.Click += new System.EventHandler(this.ChooseSourceFolder);
-            // 
-            // sourceFolderTextBox
-            // 
-            this.sourceFolderTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.sourceFolderTextBox.Location = new System.Drawing.Point(110, 41);
-            this.sourceFolderTextBox.Name = "sourceFolderTextBox";
-            this.sourceFolderTextBox.Size = new System.Drawing.Size(231, 20);
-            this.sourceFolderTextBox.TabIndex = 4;
-            // 
-            // destinationFolderTextBox
-            // 
-            this.destinationFolderTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.destinationFolderTextBox.Location = new System.Drawing.Point(110, 72);
-            this.destinationFolderTextBox.Name = "destinationFolderTextBox";
-            this.destinationFolderTextBox.Size = new System.Drawing.Size(231, 20);
-            this.destinationFolderTextBox.TabIndex = 6;
-            // 
-            // chooseDestinationFolderButton
-            // 
-            this.chooseDestinationFolderButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.chooseDestinationFolderButton.Location = new System.Drawing.Point(347, 69);
-            this.chooseDestinationFolderButton.Name = "chooseDestinationFolderButton";
-            this.chooseDestinationFolderButton.Size = new System.Drawing.Size(25, 25);
-            this.chooseDestinationFolderButton.TabIndex = 7;
-            this.chooseDestinationFolderButton.Text = "...";
-            this.chooseDestinationFolderButton.UseVisualStyleBackColor = true;
-            this.chooseDestinationFolderButton.Click += new System.EventHandler(this.ChooseDestinationFolder);
-            // 
-            // nameTextBox
-            // 
-            this.nameTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.nameTextBox.Location = new System.Drawing.Point(110, 12);
-            this.nameTextBox.Name = "nameTextBox";
-            this.nameTextBox.Size = new System.Drawing.Size(262, 20);
-            this.nameTextBox.TabIndex = 3;
-            // 
-            // includeSubdirectoriesCheckBox
-            // 
-            this.includeSubdirectoriesCheckBox.AutoSize = true;
-            this.includeSubdirectoriesCheckBox.Checked = true;
-            this.includeSubdirectoriesCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.includeSubdirectoriesCheckBox.Location = new System.Drawing.Point(15, 98);
-            this.includeSubdirectoriesCheckBox.Name = "includeSubdirectoriesCheckBox";
-            this.includeSubdirectoriesCheckBox.Size = new System.Drawing.Size(129, 17);
-            this.includeSubdirectoriesCheckBox.TabIndex = 8;
-            this.includeSubdirectoriesCheckBox.Text = "Include subdirectories";
-            this.includeSubdirectoriesCheckBox.UseVisualStyleBackColor = true;
-            // 
             // okButton
             // 
             okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -158,11 +100,81 @@
             cancelButton.Text = "Cancel";
             cancelButton.UseVisualStyleBackColor = true;
             // 
+            // chooseSourceFolderButton
+            // 
+            this.chooseSourceFolderButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.chooseSourceFolderButton.Location = new System.Drawing.Point(347, 38);
+            this.chooseSourceFolderButton.Name = "chooseSourceFolderButton";
+            this.chooseSourceFolderButton.Size = new System.Drawing.Size(25, 25);
+            this.chooseSourceFolderButton.TabIndex = 5;
+            this.chooseSourceFolderButton.Text = "...";
+            this.chooseSourceFolderButton.UseVisualStyleBackColor = true;
+            this.chooseSourceFolderButton.Click += new System.EventHandler(this.ChooseSourceFolder);
+            // 
+            // sourceFolderTextBox
+            // 
+            this.sourceFolderTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.sourceFolderTextBox.Location = new System.Drawing.Point(110, 41);
+            this.sourceFolderTextBox.Name = "sourceFolderTextBox";
+            this.sourceFolderTextBox.Size = new System.Drawing.Size(221, 20);
+            this.sourceFolderTextBox.TabIndex = 4;
+            this.sourceFolderTextBox.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNotEmpty);
+            // 
+            // destinationFolderTextBox
+            // 
+            this.destinationFolderTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.destinationFolderTextBox.Location = new System.Drawing.Point(110, 72);
+            this.destinationFolderTextBox.Name = "destinationFolderTextBox";
+            this.destinationFolderTextBox.Size = new System.Drawing.Size(221, 20);
+            this.destinationFolderTextBox.TabIndex = 6;
+            this.destinationFolderTextBox.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNotEmpty);
+            // 
+            // chooseDestinationFolderButton
+            // 
+            this.chooseDestinationFolderButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.chooseDestinationFolderButton.Location = new System.Drawing.Point(347, 69);
+            this.chooseDestinationFolderButton.Name = "chooseDestinationFolderButton";
+            this.chooseDestinationFolderButton.Size = new System.Drawing.Size(25, 25);
+            this.chooseDestinationFolderButton.TabIndex = 7;
+            this.chooseDestinationFolderButton.Text = "...";
+            this.chooseDestinationFolderButton.UseVisualStyleBackColor = true;
+            this.chooseDestinationFolderButton.Click += new System.EventHandler(this.ChooseDestinationFolder);
+            // 
+            // nameTextBox
+            // 
+            this.nameTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.nameTextBox.Location = new System.Drawing.Point(110, 12);
+            this.nameTextBox.Name = "nameTextBox";
+            this.nameTextBox.Size = new System.Drawing.Size(246, 20);
+            this.nameTextBox.TabIndex = 3;
+            this.nameTextBox.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNotEmpty);
+            // 
+            // includeSubdirectoriesCheckBox
+            // 
+            this.includeSubdirectoriesCheckBox.AutoSize = true;
+            this.includeSubdirectoriesCheckBox.Checked = true;
+            this.includeSubdirectoriesCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.includeSubdirectoriesCheckBox.Location = new System.Drawing.Point(15, 98);
+            this.includeSubdirectoriesCheckBox.Name = "includeSubdirectoriesCheckBox";
+            this.includeSubdirectoriesCheckBox.Size = new System.Drawing.Size(129, 17);
+            this.includeSubdirectoriesCheckBox.TabIndex = 8;
+            this.includeSubdirectoriesCheckBox.Text = "Include subdirectories";
+            this.includeSubdirectoriesCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // mainErrorProvider
+            // 
+            this.mainErrorProvider.BlinkStyle = System.Windows.Forms.ErrorBlinkStyle.NeverBlink;
+            this.mainErrorProvider.ContainerControl = this;
+            // 
             // ProjectPropertiesForm
             // 
             this.AcceptButton = okButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoValidate = System.Windows.Forms.AutoValidate.EnableAllowFocusChange;
             this.CancelButton = cancelButton;
             this.ClientSize = new System.Drawing.Size(384, 157);
             this.Controls.Add(cancelButton);
@@ -183,6 +195,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "New project";
+            ((System.ComponentModel.ISupportInitialize)(this.mainErrorProvider)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -197,5 +210,6 @@
         private System.Windows.Forms.TextBox nameTextBox;
         private System.Windows.Forms.CheckBox includeSubdirectoriesCheckBox;
         private System.Windows.Forms.FolderBrowserDialog mainFolderBrowserDialog;
+        private System.Windows.Forms.ErrorProvider mainErrorProvider;
     }
 }
