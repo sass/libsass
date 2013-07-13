@@ -65,10 +65,9 @@ This may cause issues if you have another Content folder with Common.scss file i
 What about unit testing / dependency injection?
 -----------------------------------------------
 
-Well, NSass itself is very simple and just sends all the work to libsass.
-So at this moment it does not contain any tests, but probably I shall add some "smoke tests" - I need to test NSass engine after changes anyway.
+NSass is covered by a small pack of tests. They do not check correctness of SASS processing (what tests for SassC do), only parameters passing correctness.
 
-But, you could mock NSass classes in your tests or use your favorite IoC container for initialization.
+You could mock NSass classes in your tests or use your favorite IoC container for initialization.
 There are two extension points - *ISassInterface* in C++/CLI code, and *ISassCompiler* in C# code, implemented as *SassInterface* and *SassCompiler* accordingly by default.
 In most cases you should deal with *ISassCompiler* only.
 

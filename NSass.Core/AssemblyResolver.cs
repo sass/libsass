@@ -12,6 +12,11 @@ namespace NSass
 		public static void Initialize()
 		{
 			string assemblyDir = AppDomain.CurrentDomain.SetupInformation.PrivateBinPath;
+			// PrivateBinPath is empty in test scenarios; use BaseDirectory instead
+			if (String.IsNullOrEmpty(assemblyDir))
+			{
+				assemblyDir = AppDomain.CurrentDomain.BaseDirectory;
+			}
 			assemblyDir = Path.Combine(assemblyDir, AssembliesDir);
 			string proxyFullPath = Path.Combine(assemblyDir, String.Format("{0}.proxy.dll", AssemblyName));
 			string x86FullPath = Path.Combine(assemblyDir, String.Format("{0}.x86.dll", AssemblyName));
