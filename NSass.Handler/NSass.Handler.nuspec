@@ -14,7 +14,7 @@
 		<copyright>Copyright © 2013 by $author$</copyright>
 		<tags>SASS SCSS CSS libsass</tags>
 		<dependencies>
-			<dependency id="NSass.Core" version="0.0.2.0" />
+			<dependency id="NSass.Core" version="0.0.3.0" />
 		</dependencies>
 	</metadata>
 	<files>
