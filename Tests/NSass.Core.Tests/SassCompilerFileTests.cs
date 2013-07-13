@@ -25,7 +25,7 @@ namespace NSass.Tests
 		public void ShouldCompileFileWithCompressedOutputStyle()
 		{
 			// Arrange
-			const string expectedResult = "body .class{color:red;}\n";
+			const string expectedResult = "body .class {color:red;}";
 
 			// Act
 			string compiled = SassCompiler.CompileFile(BasicPath, OutputStyle.Compressed);

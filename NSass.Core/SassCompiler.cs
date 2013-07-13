@@ -37,7 +37,8 @@ namespace NSass
 				{
 					OutputStyle = (int)outputStyle,
 					SourceComments = sourceComments,
-					IncludePaths = includePaths != null ? String.Join(";", includePaths) : null
+					IncludePaths = includePaths != null ? String.Join(";", includePaths) : String.Empty,
+					ImagePath = String.Empty
 				}
 			};
 
@@ -72,7 +73,8 @@ namespace NSass
 				{
 					OutputStyle = (int)outputStyle,
 					SourceComments = sourceComments,
-					IncludePaths = String.Join(";", includePaths)
+					IncludePaths = String.Join(";", includePaths),
+					ImagePath = String.Empty
 				}
 			};
 
