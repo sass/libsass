@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A35A6129
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NSass.Core.Tests", "Tests\NSass.Core.Tests\NSass.Core.Tests.csproj", "{E18A9831-64BA-4675-95CF-4F6641FA1A39}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NSass.Optimization", "NSass.Optimization\NSass.Optimization.csproj", "{478AAA8B-0FE7-494F-AC57-403B0B68686B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -108,6 +110,18 @@ Global
 		{E18A9831-64BA-4675-95CF-4F6641FA1A39}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{E18A9831-64BA-4675-95CF-4F6641FA1A39}.Release|Win32.ActiveCfg = Release|Any CPU
 		{E18A9831-64BA-4675-95CF-4F6641FA1A39}.Release|x64.ActiveCfg = Release|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Release|Win32.ActiveCfg = Release|Any CPU
+		{478AAA8B-0FE7-494F-AC57-403B0B68686B}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

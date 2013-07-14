@@ -3,6 +3,7 @@
 /NSass.Wrapper/NSass.Wrapper.vcxproj.filters
 /NSass.Wrapper/NSass.Wrapper.vcxproj.user
 /NSass.Handler/NSass.Handler.csproj.user
+/NSass.Optimization/NSass.Optimization.csproj.user
 /NSass.Tool/NSass.Tool.csproj.user
 /Tests/NSass.Core.Tests/NSass.Core.Tests.csproj.user
 /NSass.opensdf
@@ -13,9 +14,11 @@
 /NSass.Wrapper/obj/
 /NSass.Core/obj/
 /NSass.Handler/obj/
+/NSass.Optimization/obj/
 /NSass.Tool/obj/
 /Tests/bin/
 /Tests/NSass.Core.Tests/obj/
 /bin/
 /NuGet/NSass.Core.*.nupkg
 /NuGet/NSass.Handler.*.nupkg
+/NuGet/NSass.Optimization.*.nupkg

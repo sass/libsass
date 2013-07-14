@@ -8,12 +8,15 @@ About
 
 NSass is a .NET wrapper around libsass library. All information about libsass itself could be found in readme file under *NSass.LibSass* directory.
 
-At this moment NSass is under development. By the way, the most necessary stuff is already implemented:
+Primary development of NSass is completed at this moment. Features you can use:
 
 * simple one-to-one C++/CLI wrapper around libsass
 * high-level C# wrapper (however, without much of additional features)
 * HTTP handler for live SASS processing
+* Bundling and Minification support
 * install all of the above throught NuGet
+
+Some minor features are under development.
 
 Main principles
 ---------------
@@ -30,6 +33,20 @@ If you have web project and want live SASS processing, just install *NSass.Handl
 ```
 PM> Install-Package NSass.Handler
 ```
+
+Bundling and Minification is also supported, you will need one more package:
+
+```
+PM> Install-Package NSass.Optimization
+```
+
+Then you will be able to use *SassBunle* in your bundle configuration as usual:
+
+```c#
+bundles.Add(new SassBundle("~/bundles/sass").Include("~/Content/Site.scss"));
+```
+
+Bundling requires *NSass.Handler* in debug mode (`BundleTable.EnableOptimizations == false` or `<compilation debug="true" />`), but works without it in production mode.
 
 If you want to play with libsass through your own C# code, core library will be enough:
 
@@ -73,9 +90,7 @@ In most cases you should deal with *ISassCompiler* only.
 
 Roadmap
 -------
-
-* Bundle&Minification support;
-* Probably, simple SASS compilation tool for Windows for usage outside of .NET world.
+* SASS compilation tool for Windows for usage outside of .NET world.
 
 All the other potential features (i. e. Compass support) will be merged from libsass when they will appear there.
 
