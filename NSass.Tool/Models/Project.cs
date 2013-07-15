@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Xml.Serialization;
 
 namespace NSass.Tool.Models
 {
@@ -13,5 +14,8 @@ namespace NSass.Tool.Models
 		public string DestinationFolderPath { get; set; }
 
 		public bool IncludeSubdirectories { get; set; }
+
+		[XmlIgnore]
+		public bool IsProcessingInProgress { get; set; }
 	}
 }

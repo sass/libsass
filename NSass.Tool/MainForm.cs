@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using NSass.Tool.Models;
+using NSass.Tool.Properties;
 
 namespace NSass.Tool
 {
@@ -76,6 +77,13 @@ namespace NSass.Tool
 			}
 		}
 
+		private void StartStopPreprocessing(object sender, EventArgs e)
+		{
+			Project selectedProject = GetSelectedProject();
+			selectedProject.IsProcessingInProgress = !selectedProject.IsProcessingInProgress;
+			UpdateStartStopButtons(selectedProject);
+		}
+
 		private void Exit(object sender, EventArgs e)
 		{
 			Application.Exit();
@@ -108,8 +116,15 @@ namespace NSass.Tool
 
 		private void SelectedProjectChanged(object sender, EventArgs e)
 		{
-			bool areEnabled = GetSelectedItem() != null;
+			ListViewItem selectedItem = GetSelectedItem();
+			bool areEnabled = selectedItem != null;
 			_enabledForSelectedProjectOnlyControls.ForEach(x => x.Enabled = areEnabled);
+
+			if (areEnabled)
+			{
+				Project selectedProject = GetSelectedProject(selectedItem);
+				UpdateStartStopButtons(selectedProject); 
+			}
 		}
 
 		#endregion
@@ -131,6 +146,29 @@ namespace NSass.Tool
 
 			string key = selectedItem.Name;
 			return _data.Projects.Single(x => x.Id.ToString() == key);
+		}
+
+		private void UpdateStartStopButtons(Project project)
+		{
+			Bitmap image;
+			string menuItemText, toolbarButtonTooltip;
+
+			if (project.IsProcessingInProgress)
+			{
+				image = Resources.Stop;
+				menuItemText = "Stop";
+				toolbarButtonTooltip = "Stop preprocessing";
+			}
+			else
+			{
+				image = Resources.Start;
+				menuItemText = "Start";
+				toolbarButtonTooltip = "Start preprocessing";
+			}
+
+			startStopToolStripButton.Image = startStopToolStripMenuItem.Image = image;
+			startStopToolStripMenuItem.Text = menuItemText;
+			startStopToolStripButton.ToolTipText = toolbarButtonTooltip;
 		}
 
 		#endregion

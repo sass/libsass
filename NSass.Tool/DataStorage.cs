@@ -11,6 +11,11 @@ namespace NSass.Tool
 	{
 		private const string Filename = "data.xml";
 
+		public DataStorage()
+		{
+			CreateStorageFileIfNotExist();
+		}
+
 		private void CreateStorageFileIfNotExist()
 		{
 			if (!File.Exists(Filename))
@@ -23,8 +28,6 @@ namespace NSass.Tool
 
 		public void Add(Project project)
 		{
-			CreateStorageFileIfNotExist();
-
 			XDocument xml = XDocument.Load(Filename);
 
 			XElement exisitingProject = xml.Root.Elements().SingleOrDefault(element => element.Element("Id").Value == project.Id.ToString());

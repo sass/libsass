@@ -123,6 +123,7 @@
             this.startStopToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
             this.startStopToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.startStopToolStripMenuItem.Text = "&Start";
+            this.startStopToolStripMenuItem.Click += new System.EventHandler(this.StartStopPreprocessing);
             // 
             // toolStripSeparator2
             // 
@@ -198,6 +199,7 @@
             this.startStopToolStripButton.Size = new System.Drawing.Size(23, 22);
             this.startStopToolStripButton.Text = "toolStripButton3";
             this.startStopToolStripButton.ToolTipText = "Start preprocessing";
+            this.startStopToolStripButton.Click += new System.EventHandler(this.StartStopPreprocessing);
             // 
             // toolStripSeparator4
             // 
