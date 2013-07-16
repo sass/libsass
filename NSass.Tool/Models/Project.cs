@@ -16,6 +16,11 @@ namespace NSass.Tool.Models
 		public bool IncludeSubdirectories { get; set; }
 
 		[XmlIgnore]
-		public bool IsProcessingInProgress { get; set; }
+		public ProcessingState ProcessingState { get; private set; }
+
+		public Project()
+		{
+			ProcessingState = new ProcessingState(this);
+		}
 	}
 }

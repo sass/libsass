@@ -80,7 +80,11 @@ namespace NSass.Tool
 		private void StartStopPreprocessing(object sender, EventArgs e)
 		{
 			Project selectedProject = GetSelectedProject();
-			selectedProject.IsProcessingInProgress = !selectedProject.IsProcessingInProgress;
+			selectedProject.ProcessingState.IsProcessingInProgress = !selectedProject.ProcessingState.IsProcessingInProgress;
+
+			string logMessage = selectedProject.ProcessingState.IsProcessingInProgress ? "Preprocessing started" : "Preprocessing stopped";
+			Log(selectedProject, logMessage);
+
 			UpdateStartStopButtons(selectedProject);
 		}
 
@@ -120,11 +124,12 @@ namespace NSass.Tool
 			bool areEnabled = selectedItem != null;
 			_enabledForSelectedProjectOnlyControls.ForEach(x => x.Enabled = areEnabled);
 
-			if (areEnabled)
+			Project selectedProject = GetSelectedProject(selectedItem);
+			if (selectedProject != null)
 			{
-				Project selectedProject = GetSelectedProject(selectedItem);
-				UpdateStartStopButtons(selectedProject); 
+				UpdateStartStopButtons(selectedProject);
 			}
+			UpdateLog();
 		}
 
 		#endregion
@@ -153,7 +158,7 @@ namespace NSass.Tool
 			Bitmap image;
 			string menuItemText, toolbarButtonTooltip;
 
-			if (project.IsProcessingInProgress)
+			if (project.ProcessingState.IsProcessingInProgress)
 			{
 				image = Resources.Stop;
 				menuItemText = "Stop";
@@ -169,6 +174,18 @@ namespace NSass.Tool
 			startStopToolStripButton.Image = startStopToolStripMenuItem.Image = image;
 			startStopToolStripMenuItem.Text = menuItemText;
 			startStopToolStripButton.ToolTipText = toolbarButtonTooltip;
+		}
+
+		private void UpdateLog()
+		{
+			Project selectedProject = GetSelectedProject();
+			logTextBox.Text = selectedProject != null ? selectedProject.ProcessingState.Log.ToString() : String.Empty;
+		}
+
+		private void Log(Project project, string message)
+		{
+			project.ProcessingState.Log.AppendFormat("[{0}] {1}{2}", DateTime.Now.ToLongTimeString(), message, Environment.NewLine);
+			UpdateLog();
 		}
 
 		#endregion
