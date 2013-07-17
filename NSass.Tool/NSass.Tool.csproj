@@ -80,12 +80,26 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\bin\Release\NSass.Wrapper.x64.dll">
+      <Link>NSass.Wrapper\NSass.Wrapper.x64.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\bin\Release\NSass.Wrapper.x86.dll">
+      <Link>NSass.Wrapper\NSass.Wrapper.x86.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\Delete.png" />
     <Content Include="Resources\Edit.png" />
     <Content Include="Resources\Exit.png" />
     <Content Include="Resources\New.png" />
     <Content Include="Resources\Start.png" />
     <Content Include="Resources\Stop.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NSass.Core\NSass.Core.csproj">
+      <Project>{8c59ffca-d91c-4477-9f74-f4fc07dc9c48}</Project>
+      <Name>NSass.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
