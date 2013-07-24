@@ -35,7 +35,7 @@ namespace NSass.Tool
 
 			foreach (Project project in _dataStorage.GetAll())
 			{
-				_data.Projects.Add(project);	
+				_data.Projects.Add(project);
 			}
 		}
 
@@ -63,6 +63,7 @@ namespace NSass.Tool
 			if (editProjectForm.ShowDialog() == DialogResult.OK)
 			{
 				selectedItem.Text = editProjectForm.Project.Name;
+				_dataStorage.Update(editProjectForm.Project);
 			}
 		}
 

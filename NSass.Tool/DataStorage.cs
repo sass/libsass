@@ -30,21 +30,12 @@ namespace NSass.Tool
 		{
 			XDocument xml = XDocument.Load(Filename);
 
-			XElement exisitingProject = xml.Root.Elements().SingleOrDefault(element => element.Element("Id").Value == project.Id.ToString());
+			XElement exisitingProject = GetNodeById(xml, project);
 			if (exisitingProject == null)
 			{
 				XElement projectElement = new XElement("Project");
 
-				XmlSerializer serializer = new XmlSerializer(project.GetType());
-				using (StringWriter stream = new StringWriter())
-				{
-					serializer.Serialize(stream, project);
-					XDocument serializedProject = XDocument.Parse(stream.ToString());
-					foreach (XElement projectProperty in serializedProject.Root.Elements())
-					{
-						projectElement.Add(projectProperty);
-					}
-				}
+				SerializeProject(project, projectElement);
 
 				xml.Root.Add(projectElement);
 
@@ -56,7 +47,18 @@ namespace NSass.Tool
 		{
 			XDocument xml = XDocument.Load(Filename);
 
-			xml.Root.Elements().Single(element => element.Element("Id").Value == project.Id.ToString()).Remove();
+			GetNodeById(xml, project).Remove();
+
+			xml.Save(Filename);
+		}
+
+		public void Update(Project project)
+		{
+			XDocument xml = XDocument.Load(Filename);
+
+			XElement exisitingProject = GetNodeById(xml, project);
+			exisitingProject.RemoveAll();
+			SerializeProject(project, exisitingProject);
 
 			xml.Save(Filename);
 		}
@@ -67,6 +69,25 @@ namespace NSass.Tool
 			XmlSerializer serializer = new XmlSerializer(typeof(Project));
 
 			return xml.Root.Elements().Select(projectElement => (Project)serializer.Deserialize(projectElement.CreateReader()));
+		}
+
+		private static XElement GetNodeById(XDocument xml, Project project)
+		{
+			return xml.Root.Elements().SingleOrDefault(element => element.Element("Id").Value == project.Id.ToString());
+		}
+
+		private static void SerializeProject(Project project, XElement projectElement)
+		{
+			XmlSerializer serializer = new XmlSerializer(project.GetType());
+			using (StringWriter stream = new StringWriter())
+			{
+				serializer.Serialize(stream, project);
+				XDocument serializedProject = XDocument.Parse(stream.ToString());
+				foreach (XElement projectProperty in serializedProject.Root.Elements())
+				{
+					projectElement.Add(projectProperty);
+				}
+			}
 		}
 	}
 }
