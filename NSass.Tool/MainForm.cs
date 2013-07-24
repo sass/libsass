@@ -137,9 +137,18 @@ namespace NSass.Tool
 
 		#region Utility functions
 
+		private delegate ListViewItem GetSelectedItemCallback();
+
 		private ListViewItem GetSelectedItem()
 		{
-			return projectsListView.SelectedItems.Cast<ListViewItem>().SingleOrDefault();
+			if (projectsListView.InvokeRequired)
+			{
+				return (ListViewItem)projectsListView.Invoke(new GetSelectedItemCallback(GetSelectedItem));
+			}
+			else
+			{
+				return projectsListView.SelectedItems.Cast<ListViewItem>().SingleOrDefault();	
+			}
 		}
 
 		private Project GetSelectedProject(ListViewItem selectedItem = null)
@@ -177,10 +186,24 @@ namespace NSass.Tool
 			startStopToolStripButton.ToolTipText = toolbarButtonTooltip;
 		}
 
+		private delegate void SetTextCallback(string text);
+
+		private void SetLogText(string text)
+		{
+			if (logTextBox.InvokeRequired)
+			{
+				logTextBox.Invoke(new SetTextCallback(SetLogText), new object[] { text });
+			}
+			else
+			{
+				logTextBox.Text = text;
+			}
+		}
+
 		private void UpdateLog()
 		{
 			Project selectedProject = GetSelectedProject();
-			logTextBox.Text = selectedProject != null ? selectedProject.ProcessingState.Log.ToString() : String.Empty;
+			SetLogText(selectedProject != null ? selectedProject.ProcessingState.Log.ToString() : String.Empty);
 		}
 
 		private void Log(Project project, string message)
