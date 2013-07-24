@@ -21,7 +21,7 @@ Some minor features are under development.
 Main principles
 ---------------
 
-* No modifications to original libsass code for easy merge;
+* Very small modifications to original libsass code for easy merge;
 * Simple as possible, almost without additional features;
 * Easy to use.
 

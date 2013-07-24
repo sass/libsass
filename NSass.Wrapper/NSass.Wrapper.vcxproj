@@ -180,12 +180,14 @@ copy "$(SolutionDir)bin\$(Configuration)\$(ProjectName).proxy.*" "$(SolutionDir)
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CallbackMarshaller.cpp" />
     <ClCompile Include="SassInterface.cpp" />
     <ClCompile Include="StringToANSI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssemblyInfo.hpp" />
     <ClInclude Include="ISassInterface.hpp" />
+    <ClInclude Include="CallbackMarshaller.hpp" />
     <ClInclude Include="SassInterface.hpp" />
     <ClInclude Include="SassOptions.hpp" />
     <ClInclude Include="StringToANSI.hpp" />

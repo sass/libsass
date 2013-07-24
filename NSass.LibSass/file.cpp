@@ -3,6 +3,7 @@
 #include <cctype>
 #include "file.hpp"
 #include "context.hpp"
+#include "callback_manager.hpp"
 
 namespace Sass {
 	namespace File {
@@ -74,6 +75,7 @@ namespace Sass {
 				file.read(contents, size);
 				contents[size] = '\0';
 				file.close();
+				NSass::CallbackManager::getInstance().trigger_file_access_callback(path.c_str());
 			}
 			return contents;
 		}

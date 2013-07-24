@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="ast.cpp" />
     <ClCompile Include="bind.cpp" />
+    <ClCompile Include="callback_manager.cpp" />
     <ClCompile Include="constants.cpp" />
     <ClCompile Include="context.cpp" />
     <ClCompile Include="contextualize.cpp" />
@@ -50,6 +51,7 @@
     <ClInclude Include="ast_fwd_decl.hpp" />
     <ClInclude Include="backtrace.hpp" />
     <ClInclude Include="bind.hpp" />
+    <ClInclude Include="callback_manager.hpp" />
     <ClInclude Include="color_names.hpp" />
     <ClInclude Include="constants.hpp" />
     <ClInclude Include="context.hpp" />

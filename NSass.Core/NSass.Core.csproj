@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="AssemblyResolver.cs" />
     <Compile Include="ISassCompiler.cs" />
+    <Compile Include="ManagedCallbackManager.cs" />
     <Compile Include="OutputStyle.cs" />
     <Compile Include="SassCompileException.cs" />
     <Compile Include="SassCompiler.cs" />
