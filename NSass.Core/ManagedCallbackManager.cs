@@ -11,5 +11,10 @@ namespace NSass
 		{
 			CallbackMarshaller.SetFileAccessCallBack(Marshal.GetFunctionPointerForDelegate(callback));
 		}
+
+		public static void UnsetFileAccessCallBack()
+		{
+			CallbackMarshaller.UnsetFileAccessCallBack();
+		}
 	}
 }

@@ -44,7 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CRC32.cs" />
     <Compile Include="DataStorage.cs" />
+    <Compile Include="FileChecksum.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -52,6 +54,7 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Models\Data.cs" />
+    <Compile Include="Models\FileModel.cs" />
     <Compile Include="Models\ProcessingState.cs" />
     <Compile Include="Models\Project.cs" />
     <Compile Include="ProjectPropertiesForm.cs">
