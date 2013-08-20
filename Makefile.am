@@ -31,8 +31,12 @@ TESTS = \
 	$(SASS_SPEC_PATH)/spec/scss \
 	$(SASS_SPEC_PATH)/spec/todo
 
+LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) ./tap-driver.sh
 LOG_COMPILER = $(RUBY) $(SASS_SPEC_PATH)/sass-spec.rb
 AM_LOG_FLAGS = -c ./sass-tester
+if USE_TAP
+AM_LOG_FLAGS += -t
+endif
 
 test: check
 
