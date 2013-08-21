@@ -1,3 +1,7 @@
+language: cpp
+compiler:
+    - gcc
+    - clang
 env:
     - AUTOTOOLS=yes
     - AUTOTOOLS=no
