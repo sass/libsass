@@ -19,9 +19,13 @@ extern "C" {
   using namespace std;
 
   sass_context* sass_new_context()
-  { return (sass_context*) calloc(1, sizeof(sass_context)); }
+  {
+    return (sass_context*) calloc(1, sizeof(sass_context));
+  }
 
-  void free_string_array(char ** arr, int num) {
+
+  void free_string_array(char ** arr, int num)
+  {
     if(!arr)
         return;
 
@@ -43,7 +47,9 @@ extern "C" {
   }
 
   sass_file_context* sass_new_file_context()
-  { return (sass_file_context*) calloc(1, sizeof(sass_file_context)); }
+  {
+    return (sass_file_context*) calloc(1, sizeof(sass_file_context));
+  }
 
   void sass_free_file_context(sass_file_context* ctx)
   {
@@ -56,7 +62,9 @@ extern "C" {
   }
 
   sass_folder_context* sass_new_folder_context()
-  { return (sass_folder_context*) calloc(1, sizeof(sass_folder_context)); }
+  {
+    return (sass_folder_context*) calloc(1, sizeof(sass_folder_context));
+  }
 
   void sass_free_folder_context(sass_folder_context* ctx)
   {
@@ -64,7 +72,8 @@ extern "C" {
     free_string_array(ctx->included_files, ctx->num_included_files);
   }
 
-  void copy_strings(const std::vector<std::string>& strings, char*** array, int* n) {
+  void copy_strings(const std::vector<std::string>& strings, char*** array, int* n)
+  {
     int num = strings.size();
     char** arr = (char**) malloc(sizeof(char*)* num);
 
