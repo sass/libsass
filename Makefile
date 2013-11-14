@@ -34,11 +34,13 @@ libsass.so: $(OBJECTS)
 %: %.o libsass.a
 	$(CXX) $(CXXFLAGS) -o $@ $+ $(LDFLAGS)
 
-install: libsass.a
-	install -Dpm0755 $< $(DESTDIR)$(LIBDIR)/$<
+install: static
+	mkdir -p $(DESTDIR)$(LIBDIR)
+	install -p -m 0644 libsass.a $(DESTDIR)$(LIBDIR)/libsass.a
 
-install-shared: libsass.so
-	install -Dpm0755 $< $(DESTDIR)$(LIBDIR)/$<
+install-shared: shared
+	mkdir -p $(DESTDIR)$(LIBDIR)
+	install -p -m 0755 libsass.so $(DESTDIR)$(LIBDIR)/libsass.so
 
 $(SASSC_BIN): libsass.a
 	cd $(SASS_SASSC_PATH) && make
