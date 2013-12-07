@@ -35,7 +35,7 @@ namespace Sass {
 			return np;
 		}
         
-        void remove(T* np)
+    void remove(T* np)
 		{
             cout << "Removing dud object " << np << std::endl;
             nodes.erase(find(nodes.begin(), nodes.end(), np));
