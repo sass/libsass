@@ -1,4 +1,4 @@
-CXX      = g++
+CXX     ?= g++
 CXXFLAGS = -Wall -O2 -fPIC
 LDFLAGS  = -fPIC
 

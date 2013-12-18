@@ -1,6 +1,15 @@
+language: cpp
+compiler:
+    - gcc
+    - clang
 env:
+    - AUTOTOOLS=newer
     - AUTOTOOLS=yes
     - AUTOTOOLS=no
+matrix:
+    exclude:
+        - compiler: clang
+          env: AUTOTOOLS=newer
 before_install:
   - git clone https://github.com/hcatlin/sass-spec.git
   - git clone https://github.com/hcatlin/sassc.git
