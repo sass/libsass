@@ -22,7 +22,7 @@ if ENABLE_TESTS
 
 noinst_PROGRAMS = sass-tester
 
-sass_tester_SOURCES = $(SASS_SASSC_PATH)/sassc.c
+nodist_sass_tester_SOURCES = $(SASS_SASSC_PATH)/sassc.c
 sass_tester_LDADD = libsass.la
 sass_tester_LDFLAGS = -no-install
 
