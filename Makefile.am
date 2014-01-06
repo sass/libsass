@@ -1,5 +1,11 @@
 ACLOCAL_AMFLAGS = -I m4
 
+EXTRA_DIST = \
+	COPYING \
+	INSTALL \
+	LICENSE \
+	Readme.md
+
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = support/libsass.pc
 
