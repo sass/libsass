@@ -8,7 +8,13 @@ libsass_la_SOURCES = ast.cpp base64vlq.cpp bind.cpp constants.cpp context.cpp co
 	copy_c_str.cpp error_handling.cpp eval.cpp expand.cpp extend.cpp file.cpp \
 	functions.cpp inspect.cpp output_compressed.cpp output_nested.cpp \
 	parser.cpp prelexer.cpp sass.cpp sass_interface.cpp source_map.cpp to_c.cpp to_string.cpp \
-	units.cpp
+	units.cpp \
+	ast_def_macros.hpp ast_factory.hpp ast_fwd_decl.hpp ast.hpp backtrace.hpp base64vlq.hpp \
+	bind.hpp color_names.hpp constants.hpp context.hpp contextualize.hpp copy_c_str.hpp \
+	environment.hpp error_handling.hpp eval.hpp expand.hpp extend.hpp file.hpp functions.hpp \
+	inspect.hpp kwd_arg_macros.hpp mapping.hpp memory_manager.hpp operation.hpp \
+	output_compressed.hpp output_nested.hpp parser.hpp position.hpp prelexer.hpp source_map.hpp \
+	to_c.hpp token.hpp to_string.hpp units.hpp
 libsass_la_LDFLAGS = -no-undefined -version-info 0:0:0
 
 include_HEADERS = sass_interface.h sass.h
