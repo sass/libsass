@@ -15,4 +15,4 @@ before_install:
   - export SASS_SASSC_PATH=$TRAVIS_BUILD_DIR/sassc
   - export SASS_LIBSASS_PATH=$TRAVIS_BUILD_DIR
 
-script: ./travis.sh
+script: ./script/travis.sh
