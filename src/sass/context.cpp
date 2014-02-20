@@ -12,9 +12,9 @@
 #endif
 
 #include "context.hpp"
-#include "constants.hpp"
+#include "constants/constants.hpp"
 #include "parser.hpp"
-#include "file.hpp"
+#include "file/file.hpp"
 #include "inspect.hpp"
 #include "output_nested.hpp"
 #include "output_compressed.hpp"
@@ -24,11 +24,11 @@
 #include "extend.hpp"
 #include "copy_c_str.hpp"
 #include "color_names.hpp"
-#include "functions.hpp"
+#include "functions/functions.hpp"
 #include "backtrace.hpp"
 
 #ifndef SASS_PRELEXER
-#include "prelexer.hpp"
+#include "prelexer/prelexer.hpp"
 #endif
 
 #include <iomanip>

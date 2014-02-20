@@ -1,6 +1,7 @@
 #include "ast.hpp"
 #include "context.hpp"
 #include "to_string.hpp"
+
 #include <set>
 #include <algorithm>
 #include <iostream>
@@ -49,7 +50,7 @@ namespace Sass {
       {
         if ((typeid(*(*rhs)[i]) == typeid(Pseudo_Selector) || typeid(*(*rhs)[i]) == typeid(Negated_Selector)) && (*rhs)[L-1]->is_pseudo_element())
         { found = true; break; }
-      }  
+      }
     }
     else
     {
@@ -218,7 +219,7 @@ namespace Sass {
     if (!found)
     { return false; }
 
-    /* 
+    /*
       Hmm, I hope I have the logic right:
 
       if lhs has a combinator:

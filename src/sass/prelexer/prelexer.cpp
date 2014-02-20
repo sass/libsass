@@ -1,6 +1,6 @@
 #include <cctype>
 #include <iostream>
-#include "constants.hpp"
+#include "../constants/constants.hpp"
 #include "prelexer.hpp"
 
 
@@ -258,7 +258,7 @@ namespace Sass {
     }
     // Attribute name in an attribute selector.
     const char* attribute_name(const char* src) {
-      return alternatives< sequence< optional<namespace_prefix>, identifier>, 
+      return alternatives< sequence< optional<namespace_prefix>, identifier>,
                            identifier >(src);
     }
     // match placeholder selectors

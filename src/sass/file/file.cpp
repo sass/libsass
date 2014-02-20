@@ -7,8 +7,9 @@
 #include <cctype>
 #include <algorithm>
 #include <sys/stat.h>
+
 #include "file.hpp"
-#include "context.hpp"
+#include "../context.hpp"
 
 namespace Sass {
   namespace File {

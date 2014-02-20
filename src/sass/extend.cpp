@@ -185,7 +185,7 @@ namespace Sass {
   {
     To_String to_string;
     // cerr << "EXTENDING COMPLEX: " << sel->perform(&to_string) << endl;
-    // vector<Selector_List*> choices; // 
+    // vector<Selector_List*> choices; //
     Selector_List* extended = new (ctx.mem) Selector_List(sel->path(), sel->position());
 
     Compound_Selector* h = sel->head();

@@ -26,7 +26,7 @@
 #endif
 
 #ifndef SASS_CONSTANTS
-#include "constants.hpp"
+#include "constants/constants.hpp"
 #endif
 
 #ifndef SASS_OPERATION

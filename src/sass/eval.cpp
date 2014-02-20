@@ -6,7 +6,7 @@
 #include "to_c.hpp"
 #include "context.hpp"
 #include "backtrace.hpp"
-#include "prelexer.hpp"
+#include "prelexer/prelexer.hpp"
 
 #include <cstdlib>
 #include <cmath>

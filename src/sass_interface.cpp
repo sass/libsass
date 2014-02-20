@@ -5,10 +5,10 @@
 #endif
 
 #include "sass_interface.h"
-#include "context.hpp"
+#include "sass/context.hpp"
 
 #ifndef SASS_ERROR_HANDLING
-#include "error_handling.hpp"
+#include "sass/error_handling.hpp"
 #endif
 
 #include <iostream>

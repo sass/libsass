@@ -4,7 +4,7 @@
 #include <map>
 
 #ifndef SASS_PRELEXER
-#include "prelexer.hpp"
+#include "prelexer/prelexer.hpp"
 #endif
 
 #ifndef SASS_TOKEN

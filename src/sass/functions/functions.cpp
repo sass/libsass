@@ -1,12 +1,12 @@
 #include "functions.hpp"
-#include "ast.hpp"
-#include "context.hpp"
-#include "backtrace.hpp"
-#include "parser.hpp"
-#include "constants.hpp"
-#include "to_string.hpp"
-#include "inspect.hpp"
-#include "eval.hpp"
+#include "../ast.hpp"
+#include "../context.hpp"
+#include "../backtrace.hpp"
+#include "../parser.hpp"
+#include "../constants/constants.hpp"
+#include "../to_string.hpp"
+#include "../inspect.hpp"
+#include "../eval.hpp"
 
 #include <cmath>
 #include <cctype>

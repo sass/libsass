@@ -1,7 +1,7 @@
 #define SASS_FUNCTIONS
 
 #ifndef SASS_ENVIRONMENT
-#include "environment.hpp"
+#include "../environment.hpp"
 #endif
 
 #ifndef SASS
@@ -11,7 +11,7 @@
 #include <string>
 
 #ifndef SASS_POSITION
-#include "position.hpp"
+#include "../position.hpp"
 #endif
 
 #define BUILT_IN(name) Expression*\

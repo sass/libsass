@@ -1,13 +1,13 @@
 #include <cstdlib>
 #include <iostream>
 #include "parser.hpp"
-#include "file.hpp"
+#include "file/file.hpp"
 #include "inspect.hpp"
 #include "to_string.hpp"
-#include "constants.hpp"
+#include "constants/constants.hpp"
 
 #ifndef SASS_PRELEXER
-#include "prelexer.hpp"
+#include "prelexer/prelexer.hpp"
 #endif
 
 #include <typeinfo>

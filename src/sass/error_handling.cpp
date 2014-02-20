@@ -3,7 +3,7 @@
 #endif
 
 #include "backtrace.hpp"
-#include "prelexer.hpp"
+#include "prelexer/prelexer.hpp"
 
 namespace Sass {
 

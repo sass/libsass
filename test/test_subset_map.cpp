@@ -1,6 +1,6 @@
 #include <string>
 #include <iostream>
-#include "../subset_map.hpp"
+#include "../src/sass/subset_map.hpp"
 
 using namespace std;
 using namespace Sass;

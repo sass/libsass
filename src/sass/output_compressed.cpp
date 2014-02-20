@@ -245,7 +245,7 @@ namespace Sass {
     {
       tail->perform(this);
       return;
-    } 
+    }
     if (head && !head->is_empty_reference()) head->perform(this);
     switch (comb) {
       case Complex_Selector::ANCESTOR_OF:
