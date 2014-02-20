@@ -4,6 +4,7 @@
 .sass-cache
 *.gem
 .svn/*
+*.orig
 
 # Configuration stuff
 
@@ -28,15 +29,16 @@ Makefile.in
 /m4/lt~obsolete.m4
 /missing
 /stamp-h1
-src/Makefile
+Makefile
 libsass/*
 
 # Build stuff
-
+build/
 *.o
 *.lo
 *.a
 a.out
+*.dll
 libsass.js
 
 bin/*
@@ -48,7 +50,29 @@ bin/*
 sassc++
 libsass.la
 support/libsass.pc
+src/libraryinfo.h
 
 # Cloned testing dirs
 sassc/
 sass-spec/
+
+#CMake files
+CMakeFiles
+CMakeCache.txt
+CTestTestfile.cmake
+cmake_install.cmake
+install_manifest.txt
+Testing
+DartConfiguration.tcl
+
+#VS files
+*.vcxproj
+*.filters
+*.sln
+Win32/
+Debug/
+Release/
+
+#XCode outputs
+*.dylib
+

@@ -41,9 +41,7 @@
 #include "environment.hpp"
 #endif
 
-#ifndef SASS
-#include "sass.h"
-#endif
+#include <sass/sass.h>
 
 #include "units.hpp"
 

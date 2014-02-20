@@ -4,9 +4,7 @@
 #include "operation.hpp"
 #endif
 
-#ifndef SASS
-#include "sass.h"
-#endif
+#include <sass/sass.h>
 
 namespace Sass {
   using namespace std;
