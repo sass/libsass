@@ -3,9 +3,7 @@
 #include <vector>
 #include <sstream>
 
-#ifndef SASS
-#include "sass.h"
-#endif
+#include <sass/sass.h>
 
 #include "context.hpp"
 

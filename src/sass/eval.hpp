@@ -10,9 +10,7 @@
 #include "environment.hpp"
 #endif
 
-#ifndef SASS
-#include "sass.h"
-#endif
+#include <sass/sass.h>
 
 #ifndef SASS_POSITION
 #include "position.hpp"

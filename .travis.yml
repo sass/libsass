@@ -1,11 +1,13 @@
 language: cpp
 
-compiler:
-  - gcc
-  - clang
-
-env:
-  - AUTOTOOLS=yes
-  - AUTOTOOLS=no
+install:
+  - sudo apt-get install cmake
+  - if [ "$BUILD_DOCUMENTATION" == "true" ]; then sudo apt-get install cmake doxygen; fi
 
 script: ./script/cibuild
+
+matrix:
+  include:
+    - compiler: clang
+      env: BUILD_DOCUMENTATION=true
+    - compiler: gcc

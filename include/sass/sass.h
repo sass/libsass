@@ -1,4 +1,8 @@
-#define SASS
+// Hampton Catlin. Copyright (C) 2012. MIT
+#ifndef HEADER_SASS_SASS_H_INCLUDED
+#define HEADER_SASS_SASS_H_INCLUDED
+
+#include <sass/version.h>
 
 #include <stddef.h>
 
@@ -127,4 +131,6 @@ struct Sass_C_Function_Descriptor {
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

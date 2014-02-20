@@ -9,14 +9,14 @@ using namespace std;
 using namespace Sass;
 
 Context ctx = Context::Data();
-To_String to_string;
+To_String sass_to_string;
 
 Compound_Selector* selector(string src)
 { return Parser::from_c_str(src.c_str(), ctx, "", Position()).parse_simple_selector_sequence(); }
 
 void diff(string s, string t)
 {
-  cout << s << " - " << t << " = " << selector(s + ";")->minus(selector(t + ";"), ctx)->perform(&to_string) << endl;
+  cout << s << " - " << t << " = " << selector(s + ";")->minus(selector(t + ";"), ctx)->perform(&sass_to_string) << endl;
 }
 
 int main()
