@@ -86,13 +86,14 @@ extern "C" {
   {
     using namespace Sass;
     try {
+      string image_path = c_ctx->options.image_path ? c_ctx->options.image_path : "";
       Context cpp_ctx(
         Context::Data().source_c_str(c_ctx->source_string)
                        .entry_point("")
                        .output_style((Output_Style) c_ctx->options.output_style)
                        .source_comments(c_ctx->options.source_comments == SASS_SOURCE_COMMENTS_DEFAULT)
                        .source_maps(false) // Only supported for files.
-                       .image_path(c_ctx->options.image_path)
+                       .image_path(image_path)
                        .include_paths_c_str(c_ctx->options.include_paths)
                        .include_paths_array(0)
                        .include_paths(vector<string>())
@@ -132,6 +133,7 @@ extern "C" {
         source_map_file = c_ctx->source_map_file;
       }
       string output_path = c_ctx->output_path ? c_ctx->output_path : "";
+      string image_path = c_ctx->options.image_path ? c_ctx->options.image_path : "";
       Context cpp_ctx(
         Context::Data().entry_point(c_ctx->input_path)
 	               .output_path(output_path)
@@ -139,7 +141,7 @@ extern "C" {
                        .source_comments(c_ctx->options.source_comments == SASS_SOURCE_COMMENTS_DEFAULT)
                        .source_maps(source_maps)
                        .source_map_file(source_map_file)
-                       .image_path(c_ctx->options.image_path)
+                       .image_path(image_path)
                        .include_paths_c_str(c_ctx->options.include_paths)
                        .include_paths_array(0)
                        .include_paths(vector<string>())
