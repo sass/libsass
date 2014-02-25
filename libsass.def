@@ -1,0 +1,11 @@
+LIBRARY   LIBSASS
+EXPORTS
+   sass_new_context   @1
+   sass_new_file_context   @2
+   sass_new_folder_context   @3
+   sass_free_context   @4
+   sass_free_file_context   @5
+   sass_free_folder_context   @6
+   sass_compile   @7
+   sass_compile_file   @8
+   sass_compile_folder   @9
