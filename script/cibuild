@@ -4,12 +4,12 @@ set -e
 
 script/bootstrap
 
-if [ "x$AUTOTOOLS" == "xyes" ]; then
-  autoreconf -i
-  ./configure --enable-tests \
-    --prefix=$TRAVIS_BUILD_DIR
-  make install
-  cp $TRAVIS_BUILD_DIR/lib/libsass.a $TRAVIS_BUILD_DIR
-fi
+# Scaffold build system
+cmake --build .
 
-script/spec
+# Run the test suite
+ctest --verbose
+
+if ["$BUILD_DOCUMENTATION" == "true"]; then
+  cmake --build . --target documentation
+fi
