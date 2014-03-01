@@ -44,7 +44,12 @@ namespace Sass {
     while (position < end) {
       if (lex< block_comment >()) {
         String*  contents = parse_interpolated_chunk(lexed);
-        Comment* comment  = new (ctx.mem) Comment(path, source_position, contents);
+        bool loud = false;
+        String_Constant *contents_constant = dynamic_cast<String_Constant *>(contents);
+        if( contents_constant != nullptr ) {
+          loud = contents_constant->value().substr( 0, 3 ) == "/*!";
+        }
+        Comment* comment  = new (ctx.mem) Comment(path, source_position, contents, loud);
         (*root) << comment;
       }
       else if (peek< import >()) {
@@ -565,14 +570,24 @@ namespace Sass {
         semicolon = false;
         while (lex< block_comment >()) {
           String*  contents = parse_interpolated_chunk(lexed);
-          Comment* comment  = new (ctx.mem) Comment(path, source_position, contents);
+          bool loud = false;
+          String_Constant *contents_constant = dynamic_cast<String_Constant *>(contents);
+          if( contents_constant != nullptr ) {
+            loud = contents_constant->value().substr( 0, 3 ) == "/*!";
+          }
+          Comment* comment  = new (ctx.mem) Comment(path, source_position, contents, loud);
           (*block) << comment;
         }
         if (lex< exactly<'}'> >()) break;
       }
       if (lex< block_comment >()) {
         String*  contents = parse_interpolated_chunk(lexed);
-        Comment* comment  = new (ctx.mem) Comment(path, source_position, contents);
+        bool loud = false;
+        String_Constant *contents_constant = dynamic_cast<String_Constant *>(contents);
+        if( contents_constant != nullptr ) {
+          loud = contents_constant->value().substr( 0, 3 ) == "/*!";
+        }
+        Comment* comment  = new (ctx.mem) Comment(path, source_position, contents, loud);
         (*block) << comment;
       }
       else if (peek< import >(position)) {
@@ -690,7 +705,12 @@ namespace Sass {
       else lex< exactly<';'> >();
       while (lex< block_comment >()) {
         String*  contents = parse_interpolated_chunk(lexed);
-        Comment* comment  = new (ctx.mem) Comment(path, source_position, contents);
+        bool loud = false;
+        String_Constant *contents_constant = dynamic_cast<String_Constant *>(contents);
+        if( contents_constant != nullptr ) {
+          loud = contents_constant->value().substr( 0, 3 ) == "/*!";
+        }
+        Comment* comment  = new (ctx.mem) Comment(path, source_position, contents, loud);
         (*block) << comment;
       }
     }

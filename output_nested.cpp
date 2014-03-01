@@ -229,6 +229,17 @@ namespace Sass {
     append_to_buffer(" }\n");
   }
 
+  void Output_Nested::operator()(Comment* c)
+  {
+    if( c->loud() ) {
+      String_Constant *str = dynamic_cast<String_Constant *>(c->text());
+      if( str != nullptr ) {
+        append_to_buffer( str->value() );
+        append_to_buffer("\n");
+      }
+    }
+  }
+
   void Output_Nested::indent()
   { append_to_buffer(string(2*indentation, ' ')); }
 

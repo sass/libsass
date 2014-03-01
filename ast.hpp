@@ -302,9 +302,10 @@ namespace Sass {
   ///////////////////////////////////////////
   class Comment : public Statement {
     ADD_PROPERTY(String*, text);
+    ADD_PROPERTY(bool, loud);
   public:
-    Comment(string path, Position position, String* txt)
-    : Statement(path, position), text_(txt)
+    Comment(string path, Position position, String* txt, bool loud)
+    : Statement(path, position), text_(txt), loud_(loud)
     { }
     ATTACH_OPERATIONS();
   };
