@@ -710,7 +710,6 @@ namespace Sass {
         if( contents_constant != nullptr ) {
           loud = contents_constant->value().substr( 0, 3 ) == "/*!";
         }
-
         Comment* comment  = new (ctx.mem) Comment(path, source_position, contents, loud);
         (*block) << comment;
       }
