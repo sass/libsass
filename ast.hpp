@@ -580,7 +580,7 @@ namespace Sass {
   ////////////////////////////////////////////////////////////////////////////
   class Unary_Expression : public Expression {
   public:
-    enum Type { PLUS, MINUS };
+    enum Type { PLUS, MINUS, NOT };
   private:
     ADD_PROPERTY(Type, type);
     ADD_PROPERTY(Expression*, operand);
