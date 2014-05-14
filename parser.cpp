@@ -843,6 +843,10 @@ namespace Sass {
 
   Expression* Parser::parse_expression()
   {
+    if (lex< exactly<not_kwd> >()) {
+      return new (ctx.mem) Unary_Expression(path, source_position, Unary_Expression::NOT, parse_expression());
+    }
+
     Expression* term1 = parse_term();
     // if it's a singleton, return it directly; don't wrap it
     if (!(peek< exactly<'+'> >(position) ||
