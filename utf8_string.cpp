@@ -33,7 +33,7 @@ namespace Sass {
         else {
           ++i; // go to the next byte
           // see if it's still part of the sequence
-          while ((i < end) && ((static_cast<unsigned char>(str[i]) & 0b11000000) == 0b10000000)) {
+          while ((i < end) && ((static_cast<unsigned char>(str[i]) & ((1<<7)+(1<<6))) == ((1<<7)+(0<<6)))) {
             ++i;
           }
           // when it's not [aka a new leading bit], increment and move on
@@ -63,7 +63,7 @@ namespace Sass {
         else {
           ++i; // go to the next byte
           // see if it's still part of the sequence
-          while ((i < str.length()) && ((static_cast<unsigned char>(str[i]) & 0b11000000) == 0b10000000)) {
+          while ((i < str.length()) && ((static_cast<unsigned char>(str[i]) & ((1<<7)+(1<<6))) == ((1<<7)+(0<<6)))) {
             ++i;
           }
           // when it's not [aka a new leading bit], increment and move on
@@ -83,7 +83,7 @@ namespace Sass {
         ++i; // go to the next byte
         ++pos;
         // see if it's still part of the sequence
-        while ((i < str.length()) && ((static_cast<unsigned char>(str[pos]) & 0b11000000) == 0b10000000)) {
+        while ((i < str.length()) && ((static_cast<unsigned char>(str[pos]) & ((1<<7)+(1<<6))) == ((1<<7)+(0<<6)))) {
           ++i;
           ++pos;
         }
@@ -120,4 +120,4 @@ namespace Sass {
   }
 }
 
-#endif 
+#endif
