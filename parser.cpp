@@ -343,6 +343,8 @@ namespace Sass {
   Selector_List* Parser::parse_selector_group()
   {
     To_String to_string;
+    lex < spaces_and_comments >();
+    size_t previous_line = source_position.line;
     Selector_List* group = new (ctx.mem) Selector_List(path, source_position);
     do {
       if (peek< exactly<'{'> >() ||
@@ -350,7 +352,15 @@ namespace Sass {
           peek< exactly<')'> >() ||
           peek< exactly<';'> >())
         break; // in case there are superfluous commas at the end
+
+      lex < spaces_and_comments >();
+      bool starts_on_newline = previous_line != source_position.line;
+      previous_line = source_position.line;
+
       Complex_Selector* comb = parse_selector_combination();
+
+      comb->starts_on_newline(starts_on_newline);
+
       if (!comb->has_reference()) {
         Position sel_source_position = source_position;
         Selector_Reference* ref = new (ctx.mem) Selector_Reference(path, sel_source_position);

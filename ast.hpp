@@ -1276,6 +1276,7 @@ namespace Sass {
     enum Combinator { ANCESTOR_OF, PARENT_OF, PRECEDES, ADJACENT_TO };
   private:
     ADD_PROPERTY(Combinator, combinator);
+    ADD_PROPERTY(bool, starts_on_newline);
     ADD_PROPERTY(Compound_Selector*, head);
     ADD_PROPERTY(Complex_Selector*, tail);
   public:
@@ -1287,6 +1288,7 @@ namespace Sass {
     {
       if ((h && h->has_reference())   || (t && t->has_reference()))   has_reference(true);
       if ((h && h->has_placeholder()) || (t && t->has_placeholder())) has_placeholder(true);
+      starts_on_newline(false);
     }
     Compound_Selector* base();
     Complex_Selector* context(Context&);
