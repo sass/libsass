@@ -959,6 +959,9 @@ namespace Sass {
     else if (peek< functional >() && !peek< uri_prefix >()) {
       return parse_function_call();
     }
+    else if (lex< not_op >()) {
+      return new (ctx.mem) Unary_Expression(path, source_position, Unary_Expression::NOT, parse_factor());
+    }
     else if (lex< sequence< exactly<'+'>, spaces_and_comments, negate< number > > >()) {
       return new (ctx.mem) Unary_Expression(path, source_position, Unary_Expression::PLUS, parse_factor());
     }
