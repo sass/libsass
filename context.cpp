@@ -58,6 +58,7 @@ namespace Sass {
     source_comments         (initializers.source_comments()),
     output_style            (initializers.output_style()),
     source_map_file         (make_canonical_path(initializers.source_map_file())),
+    source_map_sources      (initializers.source_map_sources()),
     omit_source_map_url     (initializers.omit_source_map_url()),
     is_indented_syntax_src  (initializers.is_indented_syntax_src()),
     names_to_colors         (map<string, Color*>()),
@@ -159,7 +160,7 @@ namespace Sass {
         sources.push_back(contents);
         included_files.push_back(real_path);
         queue.push_back(make_pair(full_path, contents));
-        source_map.files.push_back(resolve_relative_path(real_path, source_map_file, cwd));
+        source_map.files.push_back(make_pair(resolve_relative_path(real_path, source_map_file, cwd), contents));
         style_sheets[full_path] = 0;
         return full_path;
       }
@@ -180,7 +181,7 @@ namespace Sass {
       sources.push_back(contents);
       included_files.push_back(real_path);
       queue.push_back(make_pair(full_path, contents));
-      source_map.files.push_back(resolve_relative_path(real_path, source_map_file, cwd));
+      source_map.files.push_back(make_pair(resolve_relative_path(real_path, source_map_file, cwd), contents));
       style_sheets[full_path] = 0;
       return full_path;
     }
@@ -192,7 +193,7 @@ namespace Sass {
         sources.push_back(contents);
         included_files.push_back(real_path);
         queue.push_back(make_pair(full_path, contents));
-        source_map.files.push_back(resolve_relative_path(real_path, source_map_file, cwd));
+        source_map.files.push_back(make_pair(resolve_relative_path(real_path, source_map_file, cwd), contents));
         style_sheets[full_path] = 0;
         return full_path;
       }
@@ -273,7 +274,7 @@ namespace Sass {
   {
     if (source_map_file == "") return 0;
     char* result = 0;
-    string map = source_map.generate_source_map();
+    string map = source_map.generate_source_map(source_map_sources);
     result = copy_c_str(map.c_str());
     return result;
   }

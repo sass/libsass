@@ -26,6 +26,7 @@ SASSC_BIN = $(SASS_SASSC_PATH)/bin/sassc
 RUBY_BIN = ruby
 
 SOURCES = \
+	json.cpp \
 	ast.cpp \
 	base64vlq.cpp \
 	bind.cpp \
@@ -40,7 +41,7 @@ SOURCES = \
 	file.cpp \
 	functions.cpp \
 	inspect.cpp \
-	node.cpp \
+	json.cpp \
 	output_compressed.cpp \
 	output_nested.cpp \
 	parser.cpp \
