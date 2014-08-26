@@ -49,7 +49,7 @@ namespace Sass {
     include_paths        (initializers.include_paths()),
     queue                (vector<pair<string, const char*> >()),
     style_sheets         (map<string, Block*>()),
-    source_map           (resolve_relative_path(initializers.output_path(), initializers.source_map_file(), get_cwd())),
+    source_map           (resolve_relative_path(initializers.output_path(), initializers.source_map_file(), File::dir_name(make_canonical_path(initializers.source_map_file())))),
     c_functions          (vector<Sass_C_Function_Descriptor>()),
     image_path           (make_canonical_path(initializers.image_path())),
     output_path          (make_canonical_path(initializers.output_path())),
@@ -158,7 +158,7 @@ namespace Sass {
         sources.push_back(contents);
         included_files.push_back(real_path);
         queue.push_back(make_pair(full_path, contents));
-        source_map.files.push_back(resolve_relative_path(real_path, source_map_file, cwd));
+        source_map.files.push_back(resolve_relative_path(real_path, source_map_file, File::dir_name(source_map_file)));
         style_sheets[full_path] = 0;
         return full_path;
       }
@@ -179,7 +179,7 @@ namespace Sass {
       sources.push_back(contents);
       included_files.push_back(real_path);
       queue.push_back(make_pair(full_path, contents));
-      source_map.files.push_back(resolve_relative_path(real_path, source_map_file, cwd));
+      source_map.files.push_back(resolve_relative_path(real_path, source_map_file, File::dir_name(source_map_file)));
       style_sheets[full_path] = 0;
       return full_path;
     }
@@ -191,7 +191,7 @@ namespace Sass {
         sources.push_back(contents);
         included_files.push_back(real_path);
         queue.push_back(make_pair(full_path, contents));
-        source_map.files.push_back(resolve_relative_path(real_path, source_map_file, cwd));
+        source_map.files.push_back(resolve_relative_path(real_path, source_map_file, File::dir_name(source_map_file)));
         style_sheets[full_path] = 0;
         return full_path;
       }
@@ -261,7 +261,7 @@ namespace Sass {
 
   string Context::format_source_mapping_url(const string& file) const
   {
-    return "/*# sourceMappingURL=" + resolve_relative_path(file, output_path, cwd) + " */";
+    return "/*# sourceMappingURL=" + resolve_relative_path(file, output_path, File::dir_name(output_path)) + " */";
   }
 
   char* Context::generate_source_map()
@@ -424,6 +424,4 @@ namespace Sass {
     def->environment(env);
     (*env)[def->name() + "[f]"] = def;
   }
-
-
 }
