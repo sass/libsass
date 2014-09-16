@@ -93,26 +93,17 @@ extern "C" {
         source_maps = true;
         source_map_file = c_ctx->source_map_file;
       }
-      string input_path = c_ctx->input_path ? c_ctx->input_path : "";
-      int lastindex = input_path.find_last_of(".");
-      string output_path;
-      if (!c_ctx->output_path) {
-        if (input_path != "") {
-          output_path = (lastindex > -1 ? input_path.substr(0, lastindex) : input_path) + ".css";
-        }
-      }
-      else {
-          output_path = c_ctx->output_path;
-      }
+      string output_path = c_ctx->output_path ? c_ctx->output_path : "";
       Context cpp_ctx(
         Context::Data().source_c_str(c_ctx->source_string)
-                       .entry_point(input_path)
+                       .entry_point(c_ctx->input_path ?
+                                    c_ctx->input_path :
+                                    "")
                        .output_path(output_path)
                        .output_style((Output_Style) c_ctx->options.output_style)
                        .source_comments(c_ctx->options.source_comments == SASS_SOURCE_COMMENTS_DEFAULT)
                        .source_maps(source_maps)
                        .source_map_file(source_map_file)
-                       .omit_source_map_url(c_ctx->omit_source_map_url)
                        .image_path(c_ctx->options.image_path ?
                                    c_ctx->options.image_path :
                                    "")
@@ -165,23 +156,16 @@ extern "C" {
         source_maps = true;
         source_map_file = c_ctx->source_map_file;
       }
-      string input_path = c_ctx->input_path ? c_ctx->input_path : "";
-      int lastindex = input_path.find_last_of(".");
-      string output_path;
-      if (!c_ctx->output_path) {
-          output_path = (lastindex > -1 ? input_path.substr(0, lastindex) : input_path) + ".css";
-      }
-      else {
-          output_path = c_ctx->output_path;
-      }
+      string output_path = c_ctx->output_path ? c_ctx->output_path : "";
       Context cpp_ctx(
-        Context::Data().entry_point(input_path)
+        Context::Data().entry_point(c_ctx->input_path ?
+                                    c_ctx->input_path :
+                                    "")
                        .output_path(output_path)
                        .output_style((Output_Style) c_ctx->options.output_style)
                        .source_comments(c_ctx->options.source_comments == SASS_SOURCE_COMMENTS_DEFAULT)
                        .source_maps(source_maps)
                        .source_map_file(source_map_file)
-                       .omit_source_map_url(c_ctx->omit_source_map_url)
                        .image_path(c_ctx->options.image_path ?
                                    c_ctx->options.image_path :
                                    "")

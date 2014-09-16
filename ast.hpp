@@ -251,13 +251,10 @@ namespace Sass {
     ADD_PROPERTY(string, variable);
     ADD_PROPERTY(Expression*, value);
     ADD_PROPERTY(bool, is_guarded);
-    ADD_PROPERTY(bool, is_global);
   public:
     Assignment(string path, Position position,
-               string var, Expression* val,
-               bool guarded = false,
-               bool global = false)
-    : Statement(path, position), variable_(var), value_(val), is_guarded_(guarded), is_global_(global)
+               string var, Expression* val, bool guarded = false)
+    : Statement(path, position), variable_(var), value_(val), is_guarded_(guarded)
     { }
     ATTACH_OPERATIONS();
   };
@@ -401,7 +398,7 @@ namespace Sass {
   class Parameters;
   typedef Environment<AST_Node*> Env;
   typedef const char* Signature;
-  typedef Expression* (*Native_Function)(Env&, Env&, Context&, Signature, const string&, Position, Backtrace*);
+  typedef Expression* (*Native_Function)(Env&, Context&, Signature, const string&, Position, Backtrace*);
   typedef const char* Signature;
   class Definition : public Has_Block {
   public:

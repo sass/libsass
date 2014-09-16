@@ -272,8 +272,7 @@ namespace Sass {
     Expression* val = parse_list();
     val->is_delayed(false);
     bool is_guarded = lex< default_flag >();
-    bool is_global = lex< global_flag >();
-    Assignment* var = new (ctx.mem) Assignment(path, var_source_position, name, val, is_guarded, is_global);
+    Assignment* var = new (ctx.mem) Assignment(path, var_source_position, name, val, is_guarded);
     return var;
   }
 
@@ -796,8 +795,7 @@ namespace Sass {
         peek< exactly<','> >(position) ||
         // peek< exactly<':'> >(position) ||
         peek< exactly<ellipsis> >(position) ||
-        peek< default_flag >(position) ||
-        peek< global_flag >(position))
+        peek< default_flag >(position))
     { return disj1; }
 
     List* space_list = new (ctx.mem) List(path, source_position, 2, List::SPACE);
@@ -811,8 +809,7 @@ namespace Sass {
              peek< exactly<','> >(position) ||
              // peek< exactly<':'> >(position) ||
              peek< exactly<ellipsis> >(position) ||
-             peek< default_flag >(position) ||
-             peek< global_flag >(position)))
+             peek< default_flag >(position)))
     {
       (*space_list) << parse_disjunction();
     }
@@ -877,7 +874,7 @@ namespace Sass {
     Expression* term1 = parse_term();
     // if it's a singleton, return it directly; don't wrap it
     if (!(peek< exactly<'+'> >(position) ||
-          peek< sequence< negate< number >, exactly<'-'> > >(position)) ||
+          peek< sequence< negate< number >, exactly<'-'> > >(position)) || 
           peek< identifier >(position))
     { return term1; }
 
@@ -1358,7 +1355,7 @@ namespace Sass {
     lex< for_directive >();
     Position for_source_position = source_position;
     if (!lex< variable >()) error("@for directive requires an iteration variable");
-    string var(Util::normalize_underscores(lexed));
+    string var(lexed);
     if (!lex< from >()) error("expected 'from' keyword in @for directive");
     Expression* lower_bound = parse_expression();
     lower_bound->is_delayed(false);
@@ -1378,7 +1375,7 @@ namespace Sass {
     lex < each_directive >();
     Position each_source_position = source_position;
     if (!lex< variable >()) error("@each directive requires an iteration variable");
-    string var(Util::normalize_underscores(lexed));
+    string var(lexed);
     if (!lex< in >()) error("expected 'in' keyword in @each directive");
     Expression* list = parse_list();
     list->is_delayed(false);

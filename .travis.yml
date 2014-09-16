@@ -9,5 +9,3 @@ env:
   - AUTOTOOLS=no
 
 script: ./script/cibuild
-
-install: gem install minitest

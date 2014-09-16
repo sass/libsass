@@ -4,43 +4,19 @@
 #include "context.hpp"
 #endif
 
-#include <string>
 #include <sstream>
-#include <cstddef>
-#include <iomanip>
 
 namespace Sass {
-  using std::ptrdiff_t;
+
   SourceMap::SourceMap(const string& file) : current_position(Position(1, 1)), file(file) { }
-
-  // taken from http://stackoverflow.com/a/7725289/1550314
-  std::string encodeJsonString(const std::string& input) {
-    std::ostringstream ss;
-    for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
-        switch (*iter) {
-            case '\\': ss << "\\\\"; break;
-            case '"': ss << "\\\""; break;
-            case '\b': ss << "\\b"; break;
-            case '\f': ss << "\\f"; break;
-            case '\n': ss << "\\n"; break;
-            case '\r': ss << "\\r"; break;
-            case '\t': ss << "\\t"; break;
-            // is a legal escape in JSON
-            case '/': ss << "\\/"; break;
-            default: ss << *iter; break;
-        }
-    }
-
-    return ss.str();
-  }
 
   string SourceMap::generate_source_map() {
     string result = "{\n";
     result += "  \"version\": 3,\n";
-    result += "  \"file\": \"" + encodeJsonString(file) + "\",\n";
+    result += "  \"file\": \"" + file + "\",\n";
     result += "  \"sources\": [";
     for (size_t i = 0; i < files.size(); ++i) {
-      result+="\"" + encodeJsonString(files[i]) + "\",";
+      result+="\"" + files[i] + "\",";
     }
     if (!files.empty()) result.erase(result.length() - 1);
     result += "],\n";
@@ -103,7 +79,7 @@ namespace Sass {
 
   void SourceMap::update_column(const string& str)
   {
-    const ptrdiff_t new_line_count = std::count(str.begin(), str.end(), '\n');
+    const int new_line_count = std::count(str.begin(), str.end(), '\n');
     current_position.line += new_line_count;
     if (new_line_count >= 1) {
       current_position.column = str.size() - str.find_last_of('\n');

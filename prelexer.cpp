@@ -1,5 +1,4 @@
 #include <cctype>
-#include <cstddef>
 #include <iostream>
 #include "constants.hpp"
 #include "prelexer.hpp"
@@ -9,7 +8,7 @@ namespace Sass {
   using namespace Constants;
 
   namespace Prelexer {
-    using std::ptrdiff_t;
+    using std::cerr; using std::endl;
     // Matches zero characters (always succeeds without consuming input).
     const char* epsilon(char *src) {
       return src;
@@ -366,7 +365,7 @@ namespace Sass {
     }
     const char* hex(const char* src) {
       const char* p = sequence< exactly<'#'>, one_plus<xdigit> >(src);
-      ptrdiff_t len = p - src;
+      int len = p - src;
       return (len != 4 && len != 7) ? 0 : p;
     }
 
@@ -406,12 +405,6 @@ namespace Sass {
       return sequence< exactly<'!'>,
                        spaces_and_comments,
                        exactly<default_kwd> >(src);
-    }
-    // Match Sass "!global" keyword.
-    const char* global_flag(const char* src) {
-      return sequence< exactly<'!'>,
-                       spaces_and_comments,
-                       exactly<global_kwd> >(src);
     }
     // Match CSS pseudo-class/element prefixes.
     const char* pseudo_prefix(const char* src) {
