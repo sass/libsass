@@ -38,31 +38,28 @@
 
 namespace Sass {
   using namespace Constants;
-  using namespace File;
   using std::cerr;
   using std::endl;
 
   Context::Context(Context::Data initializers)
   : mem(Memory_Manager<AST_Node>()),
-    source_c_str         (initializers.source_c_str()),
-    sources              (vector<const char*>()),
-    include_paths        (initializers.include_paths()),
-    queue                (vector<pair<string, const char*> >()),
-    style_sheets         (map<string, Block*>()),
-    source_map           (resolve_relative_path(initializers.output_path(), initializers.source_map_file(), get_cwd())),
-    c_functions          (vector<Sass_C_Function_Descriptor>()),
-    image_path           (make_canonical_path(initializers.image_path())),
-    output_path          (make_canonical_path(initializers.output_path())),
-    source_comments      (initializers.source_comments()),
-    source_maps          (initializers.source_maps()),
-    output_style         (initializers.output_style()),
-    source_map_file      (make_canonical_path(initializers.source_map_file())),
-    omit_source_map_url  (initializers.omit_source_map_url()),
-    names_to_colors      (map<string, Color*>()),
-    colors_to_names      (map<int, string>()),
-    precision            (initializers.precision()),
-    extensions           (multimap<Compound_Selector, Complex_Selector*>()),
-    subset_map           (Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> >())
+    source_c_str    (initializers.source_c_str()),
+    sources         (vector<const char*>()),
+    include_paths   (initializers.include_paths()),
+    queue           (vector<pair<string, const char*> >()),
+    style_sheets    (map<string, Block*>()),
+    source_map(File::base_name(initializers.output_path())),
+    c_functions     (vector<Sass_C_Function_Descriptor>()),
+    image_path      (initializers.image_path()),
+    source_comments (initializers.source_comments()),
+    source_maps     (initializers.source_maps()),
+    output_style    (initializers.output_style()),
+    source_map_file (initializers.source_map_file()),
+    names_to_colors (map<string, Color*>()),
+    colors_to_names (map<int, string>()),
+    precision       (initializers.precision()),
+    extensions(multimap<Compound_Selector, Complex_Selector*>()),
+    subset_map(Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> >())
   {
     cwd = get_cwd();
 
@@ -148,7 +145,6 @@ namespace Sass {
     using namespace File;
     char* contents = 0;
     string real_path;
-    path = make_canonical_path(path);
     for (size_t i = 0, S = include_paths.size(); i < S; ++i) {
       string full_path(join_paths(include_paths[i], path));
       included_files.push_back(full_path);
@@ -171,7 +167,6 @@ namespace Sass {
     using namespace File;
     char* contents = 0;
     string real_path;
-    rel_filepath = make_canonical_path(rel_filepath);
     string full_path(join_paths(dir, rel_filepath));
     if (style_sheets.count(full_path)) return full_path;
     contents = resolve_and_load(full_path, real_path);
@@ -228,7 +223,7 @@ namespace Sass {
     // Output_Nested output_nested(*this);
 
     root = root->perform(&expand)->block();
-    if (!extensions.empty()) {
+    if (extensions.size()) {
       Extend extend(*this, extensions, subset_map, &backtrace);
       root->perform(&extend);
     }
@@ -238,9 +233,7 @@ namespace Sass {
         Output_Compressed output_compressed(this);
         root->perform(&output_compressed);
         string output = output_compressed.get_buffer();
-        if (source_map_file != "" && !omit_source_map_url) {
-          output += format_source_mapping_url(source_map_file);
-        }
+        if (source_maps) output += format_source_mapping_url(source_map_file);
         result = copy_c_str(output.c_str());
       } break;
 
@@ -248,9 +241,7 @@ namespace Sass {
         Output_Nested output_nested(source_comments, this);
         root->perform(&output_nested);
         string output = output_nested.get_buffer();
-        if (source_map_file != "" && !omit_source_map_url) {
-          output += "\n" + format_source_mapping_url(source_map_file);
-        }
+        if (source_maps) output += "\n" + format_source_mapping_url(source_map_file);
         result = copy_c_str(output.c_str());
 
       } break;
@@ -261,7 +252,7 @@ namespace Sass {
 
   string Context::format_source_mapping_url(const string& file) const
   {
-    return "/*# sourceMappingURL=" + resolve_relative_path(file, output_path, cwd) + " */";
+    return "/*# sourceMappingURL=" + File::base_name(file) + " */";
   }
 
   char* Context::generate_source_map()
@@ -278,8 +269,6 @@ namespace Sass {
     if (!source_c_str) return 0;
     queue.clear();
     queue.push_back(make_pair("source string", source_c_str));
-    // mimic google closure compiler
-    source_map.files.push_back("stdin");
     return compile_file();
   }
 
@@ -295,11 +284,10 @@ namespace Sass {
     const size_t wd_len = 1024;
     char wd[wd_len];
     string cwd = getcwd(wd, wd_len);
-#ifdef _WIN32
-    //convert backslashes to forward slashes
-    replace(cwd.begin(), cwd.end(), '\\', '/');
-#endif
     if (cwd[cwd.length() - 1] != '/') cwd += '/';
+#ifdef _WIN32
+    replace(cwd.begin(), cwd.end(), '\\', '/');    //convert Windows backslashes to URL forward slashes
+#endif
     return cwd;
   }
 
@@ -387,6 +375,7 @@ namespace Sass {
     register_function(ctx, abs_sig, abs, env);
     register_function(ctx, min_sig, min, env);
     register_function(ctx, max_sig, max, env);
+    register_function(ctx, random_sig, random, env);
     // List Functions
     register_function(ctx, length_sig, length, env);
     register_function(ctx, nth_sig, nth, env);
@@ -400,15 +389,11 @@ namespace Sass {
     register_function(ctx, unit_sig, unit, env);
     register_function(ctx, unitless_sig, unitless, env);
     register_function(ctx, comparable_sig, comparable, env);
-    register_function(ctx, variable_exists_sig, variable_exists, env);
-    register_function(ctx, global_variable_exists_sig, global_variable_exists, env);
-    register_function(ctx, function_exists_sig, function_exists, env);
-    register_function(ctx, mixin_exists_sig, mixin_exists, env);
     // Boolean Functions
     register_function(ctx, not_sig, sass_not, env);
     register_function(ctx, if_sig, sass_if, env);
     // Path Functions
-    register_function(ctx, image_url_sig, image_url, env);
+    register_function(ctx, image_url_sig, image_url, env); 
   }
 
   void register_c_functions(Context& ctx, Env* env, Sass_C_Function_Descriptor* descrs)

@@ -4,7 +4,7 @@ libdir=@libdir@
 includedir=@includedir@
 
 Name: libsass
-URL: https://github.com/sass/libsass
+URL: https://github.com/hcatlin/libsass
 Description: A C implementation of a Sass compiler
 Version: @VERSION@
 Libs: -L${libdir} -lsass

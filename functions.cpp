@@ -7,10 +7,8 @@
 #include "to_string.hpp"
 #include "inspect.hpp"
 #include "eval.hpp"
-#include "util.hpp"
 #include "utf8_string.hpp"
 
-#include <cstdlib>
 #include <cmath>
 #include <cctype>
 #include <sstream>
@@ -28,7 +26,7 @@ namespace Sass {
   {
     Parser sig_parser = Parser::from_c_str(sig, ctx, "[built-in function]");
     sig_parser.lex<Prelexer::identifier>();
-    string name(Util::normalize_underscores(sig_parser.lexed));
+    string name(sig_parser.lexed);
     Parameters* params = sig_parser.parse_parameters();
     return new (ctx.mem) Definition("[built-in function]",
                                     Position(),
@@ -43,7 +41,7 @@ namespace Sass {
   {
     Parser sig_parser = Parser::from_c_str(sig, ctx, "[c function]");
     sig_parser.lex<Prelexer::identifier>();
-    string name(Util::normalize_underscores(sig_parser.lexed));
+    string name(sig_parser.lexed);
     Parameters* params = sig_parser.parse_parameters();
     return new (ctx.mem) Definition("[c function]",
                                     Position(),
@@ -269,6 +267,7 @@ namespace Sass {
                                  rgb_color->b());
       return new (ctx.mem) Number(path, position, hsl_color.s, "%");
     }
+  
 
     Signature lightness_sig = "lightness($color)";
     BUILT_IN(lightness)
@@ -728,7 +727,7 @@ namespace Sass {
       if (index > 0 && index <= len) {
         // positive and within string length
         str.insert(UTF_8::code_point_offset_to_byte_offset(str, index-1), ins);
-      }
+      } 
       else if (index > len) {
         // positive and past string length
         str += ins;
@@ -849,7 +848,8 @@ namespace Sass {
       r->position(position);
       r->value(std::floor(r->value() + 0.5));
       return r;
-    }
+    } 
+
 
     Signature ceil_sig = "ceil($value)";
     BUILT_IN(ceil)
@@ -910,6 +910,18 @@ namespace Sass {
         if (lt(greatest, xi, ctx)) greatest = xi;
       }
       return greatest;
+    } 
+ 
+    Signature random_sig = "random($value)";
+    BUILT_IN(random)
+    { 
+      Number* n = ARG("$value", Number);
+      Number* r = new (ctx.mem) Number(*n);
+      r->path(path);
+      r->position(position);
+      int i= r->value();
+      r->value(std::rand()%(i+1) );
+      return r;
     }
 
     /////////////////
@@ -937,7 +949,7 @@ namespace Sass {
         *l << ARG("$list", Expression);
       }
       if (l->empty()) error("argument `$list` of `" + string(sig) + "` must not be empty", path, position);
-      double index = std::floor(n->value() < 0 ? l->length() + n->value() : n->value() - 1);
+      size_t index = std::floor(n->value() < 0 ? l->length() + n->value() : n->value() - 1);
       if (index < 0 || index > l->length() - 1) error("index out of bounds for `" + string(sig) + "`", path, position);
       return l->value_at_index(index);
     }
@@ -1097,58 +1109,6 @@ namespace Sass {
       return new (ctx.mem) Boolean(path, position, n1->unit() == tmp_n2.unit());
     }
 
-    Signature variable_exists_sig = "variable-exists($name)";
-    BUILT_IN(variable_exists)
-    {
-      string s = unquote(ARG("$name", String_Constant)->value());
-
-      if(d_env.has("$"+s)) {
-        return new (ctx.mem) Boolean(path, position, true);
-      }
-      else {
-        return new (ctx.mem) Boolean(path, position, false);
-      }
-    }
-
-    Signature global_variable_exists_sig = "global-variable-exists($name)";
-    BUILT_IN(global_variable_exists)
-    {
-      string s = unquote(ARG("$name", String_Constant)->value());
-
-      if(d_env.global_frame_has("$"+s)) {
-        return new (ctx.mem) Boolean(path, position, true);
-      }
-      else {
-        return new (ctx.mem) Boolean(path, position, false);
-      }
-    }
-
-    Signature function_exists_sig = "function-exists($name)";
-    BUILT_IN(function_exists)
-    {
-      string s = unquote(ARG("$name", String_Constant)->value());
-
-      if(d_env.global_frame_has(s+"[f]")) {
-        return new (ctx.mem) Boolean(path, position, true);
-      }
-      else {
-        return new (ctx.mem) Boolean(path, position, false);
-      }
-    }
-
-    Signature mixin_exists_sig = "mixin-exists($name)";
-    BUILT_IN(mixin_exists)
-    {
-      string s = unquote(ARG("$name", String_Constant)->value());
-
-      if(d_env.global_frame_has(s+"[m]")) {
-        return new (ctx.mem) Boolean(path, position, true);
-      }
-      else {
-        return new (ctx.mem) Boolean(path, position, false);
-      }
-    }
-
     ////////////////////
     // BOOLEAN FUNCTIONS
     ////////////////////
@@ -1158,19 +1118,8 @@ namespace Sass {
     { return new (ctx.mem) Boolean(path, position, ARG("$value", Expression)->is_false()); }
 
     Signature if_sig = "if($condition, $if-true, $if-false)";
-    // BUILT_IN(sass_if)
-    // { return ARG("$condition", Expression)->is_false() ? ARG("$if-false", Expression) : ARG("$if-true", Expression); }
     BUILT_IN(sass_if)
-    {
-      Eval eval(ctx, &d_env, backtrace);
-      bool is_true = !ARG("$condition", Expression)->perform(&eval)->is_false();
-      if (is_true) {
-        return ARG("$if-true", Expression)->perform(&eval);
-      }
-      else {
-        return ARG("$if-false", Expression)->perform(&eval);
-      }
-    }
+    { return ARG("$condition", Expression)->is_false() ? ARG("$if-false", Expression) : ARG("$if-true", Expression); }
 
     ////////////////
     // URL FUNCTIONS

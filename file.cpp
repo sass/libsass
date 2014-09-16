@@ -2,14 +2,6 @@
 #define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
 #endif
 
-#ifndef FS_CASE_SENSITIVE
-#ifdef _WIN32
-#define FS_CASE_SENSITIVE 0
-#else
-#define FS_CASE_SENSITIVE 1
-#endif
-#endif
-
 #include <iostream>
 #include <fstream>
 #include <cctype>
@@ -23,41 +15,13 @@ namespace Sass {
   namespace File {
     using namespace std;
 
-    // no physical check on filesystem
-    // only a logical cleanup of a path
-    string make_canonical_path (string path)
-    {
-
-      // declarations
-      size_t pos;
-
-      #ifdef _WIN32
-        //convert backslashes to forward slashes
-        replace(path.begin(), path.end(), '\\', '/');
-      #endif
-
-      pos = 0; // remove all self references inside the path string
-      while((pos = path.find("/./", pos)) != string::npos) path.erase(pos, 2);
-
-      pos = 0; // remove all leading and trailing self references
-      while(path.length() > 1 && path.substr(0, 2) == "./") path.erase(0, 2);
-      while((pos = path.length()) > 1 && path.substr(pos - 2) == "/.") path.erase(pos - 2);
-
-      pos = 0; // collapse multiple delimiters into a single one
-      while((pos = path.find("//", pos)) != string::npos) path.erase(pos, 1);
-
-      return path;
-
-    }
-
     size_t find_last_folder_separator(const string& path, size_t limit = string::npos)
     {
       size_t pos = string::npos;
       size_t pos_p = path.find_last_of('/', limit);
-      #ifdef _WIN32
-      size_t pos_w = path.find_last_of('\\', limit);
-      #else
       size_t pos_w = string::npos;
+      #ifdef _WIN32
+      pos_w = path.find_last_of('\\', limit);
       #endif
       if (pos_p != string::npos && pos_w != string::npos) {
         pos = max(pos_p, pos_w);
@@ -114,12 +78,11 @@ namespace Sass {
 
     string make_absolute_path(const string& path, const string& cwd)
     {
-      return make_canonical_path((is_absolute_path(path) ? path : join_paths(cwd, path)));
+      return (is_absolute_path(path) ? path : join_paths(cwd, path));
     }
 
     string resolve_relative_path(const string& uri, const string& base, const string& cwd)
     {
-
       string absolute_uri = make_absolute_path(uri, cwd);
       string absolute_base = make_absolute_path(base, cwd);
 
@@ -129,13 +92,7 @@ namespace Sass {
       size_t index = 0;
       size_t minSize = min(absolute_uri.size(), absolute_base.size());
       for (size_t i = 0; i < minSize; ++i) {
-        #ifdef FS_CASE_SENSITIVE
-          if (absolute_uri[i] != absolute_base[i]) break;
-        #else
-          // compare the charactes in a case insensitive manner
-          // windows fs is only case insensitive in ascii ranges
-          if (tolower(absolute_uri[i]) != tolower(absolute_base[i])) break;
-        #endif
+        if (absolute_uri[i] != absolute_base[i]) break;
         if (absolute_uri[i] == '/') index = i + 1;
       }
       for (size_t i = index; i < absolute_uri.size(); ++i) {
@@ -144,24 +101,10 @@ namespace Sass {
       for (size_t i = index; i < absolute_base.size(); ++i) {
         stripped_base += absolute_base[i];
       }
-
-      size_t left = 0;
       size_t directories = 0;
-      for (size_t right = 0; right < stripped_base.size(); ++right) {
-        if (stripped_base[right] == '/') {
-          if (stripped_base.substr(left, 2) != "..") {
-            ++directories;
-          }
-          else if (directories > 1) {
-            --directories;
-          }
-          else {
-            directories = 0;
-          }
-          left = right + 1;
-        }
+      for (size_t i = 0; i < stripped_base.size(); ++i) {
+        if (stripped_base[i] == '/') ++directories;
       }
-
       string result = "";
       for (size_t i = 0; i < directories; ++i) {
         result += "../";
@@ -212,10 +155,12 @@ namespace Sass {
           }
         }
       }
-#ifdef _WIN32
-      // convert Windows backslashes to URL forward slashes
-      replace(real_path.begin(), real_path.end(), '\\', '/');
-#endif
+      string extension;
+      if (real_path.length() > 5) {
+        extension = real_path.substr(real_path.length() - 5, 5);
+      }
+      for(size_t i=0; i<extension.size();++i)
+        extension[i] = tolower(extension[i]);
       return contents;
     }
 
