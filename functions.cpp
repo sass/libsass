@@ -344,9 +344,15 @@ namespace Sass {
                        position);
     }
 
-    Signature saturate_sig = "saturate($color, $amount)";
+    Signature saturate_sig = "saturate($color, $amount: nil)";
     BUILT_IN(saturate)
     {
+      Number* filter_amount = dynamic_cast<Number*>(env["$color"]);
+      if (filter_amount) {
+        To_String to_string;
+        return new (ctx.mem) String_Constant(path, position, "saturate(" + filter_amount->perform(&to_string) + ")");
+      }
+
       Color* rgb_color = ARG("$color", Color);
       Number* amount = ARGR("$amount", Number, 0, 100);
       HSL hsl_color = rgb_to_hsl(rgb_color->r(),
@@ -394,6 +400,12 @@ namespace Sass {
     Signature grayscale_sig = "grayscale($color)";
     BUILT_IN(grayscale)
     {
+      Number* amount = dynamic_cast<Number*>(env["$color"]);
+      if (amount) {
+        To_String to_string;
+        return new (ctx.mem) String_Constant(path, position, "grayscale(" + amount->perform(&to_string) + ")");
+      }
+
       Color* rgb_color = ARG("$color", Color);
       HSL hsl_color = rgb_to_hsl(rgb_color->r(),
                                  rgb_color->g(),
@@ -426,6 +438,12 @@ namespace Sass {
     Signature invert_sig = "invert($color)";
     BUILT_IN(invert)
     {
+      Number* amount = dynamic_cast<Number*>(env["$color"]);
+      if (amount) {
+        To_String to_string;
+        return new (ctx.mem) String_Constant(path, position, "invert(" + amount->perform(&to_string) + ")");
+      }
+
       Color* rgb_color = ARG("$color", Color);
       return new (ctx.mem) Color(path,
                                  position,
@@ -446,9 +464,14 @@ namespace Sass {
       if (ie_kwd) {
         return new (ctx.mem) String_Constant(path, position, "alpha(" + ie_kwd->value() + ")");
       }
-      else {
-        return new (ctx.mem) Number(path, position, ARG("$color", Color)->a());
+
+      Number* amount = dynamic_cast<Number*>(env["$color"]);
+      if (amount) {
+        To_String to_string;
+        return new (ctx.mem) String_Constant(path, position, "opacity(" + amount->perform(&to_string) + ")");
       }
+
+      return new (ctx.mem) Number(path, position, ARG("$color", Color)->a());
     }
 
     Signature opacify_sig = "opacify($color, $amount)";
