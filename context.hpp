@@ -45,6 +45,7 @@ namespace Sass {
     vector<string> include_paths;
     vector<pair<string, const char*> > queue; // queue of files to be parsed
     map<string, Block*> style_sheets; // map of paths to ASTs
+    map<string, bool> ast_emitted; // map of paths to emitted flag
     SourceMap source_map;
     vector<Sass_C_Function_Descriptor> c_functions;
 
@@ -52,6 +53,7 @@ namespace Sass {
     string       output_path; // for relative paths to the output
     bool         source_comments;
     bool         source_maps;
+    bool         import_once;
     Output_Style output_style;
     string       source_map_file;
     bool         omit_source_map_url;
@@ -71,6 +73,7 @@ namespace Sass {
       KWD_ARG(Data, vector<string>,  include_paths);
       KWD_ARG(Data, bool,            source_comments);
       KWD_ARG(Data, bool,            source_maps);
+      KWD_ARG(Data, bool,            import_once);
       KWD_ARG(Data, Output_Style,    output_style);
       KWD_ARG(Data, string,          source_map_file);
       KWD_ARG(Data, bool,            omit_source_map_url);

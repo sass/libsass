@@ -12,7 +12,8 @@ char *sass_compile_emscripten(
   int output_style,
   int source_comments,
   char *include_paths,
-  char **error_message
+  char **error_message,
+  int import_once
 );
 
 #ifdef __cplusplus

@@ -49,12 +49,14 @@ namespace Sass {
     include_paths        (initializers.include_paths()),
     queue                (vector<pair<string, const char*> >()),
     style_sheets         (map<string, Block*>()),
+    ast_emitted          (map<string, bool>()),
     source_map           (resolve_relative_path(initializers.output_path(), initializers.source_map_file(), get_cwd())),
     c_functions          (vector<Sass_C_Function_Descriptor>()),
     image_path           (initializers.image_path()),
     output_path          (make_canonical_path(initializers.output_path())),
     source_comments      (initializers.source_comments()),
     source_maps          (initializers.source_maps()),
+    import_once          (initializers.import_once()),
     output_style         (initializers.output_style()),
     source_map_file      (make_canonical_path(initializers.source_map_file())),
     omit_source_map_url  (initializers.omit_source_map_url()),
@@ -160,6 +162,7 @@ namespace Sass {
         queue.push_back(make_pair(full_path, contents));
         source_map.files.push_back(resolve_relative_path(real_path, source_map_file, cwd));
         style_sheets[full_path] = 0;
+        ast_emitted[full_path] = false;
         return full_path;
       }
     }
@@ -181,6 +184,7 @@ namespace Sass {
       queue.push_back(make_pair(full_path, contents));
       source_map.files.push_back(resolve_relative_path(real_path, source_map_file, cwd));
       style_sheets[full_path] = 0;
+      ast_emitted[full_path] = false;
       return full_path;
     }
     for (size_t i = 0, S = include_paths.size(); i < S; ++i) {
@@ -193,6 +197,7 @@ namespace Sass {
         queue.push_back(make_pair(full_path, contents));
         source_map.files.push_back(resolve_relative_path(real_path, source_map_file, cwd));
         style_sheets[full_path] = 0;
+        ast_emitted[full_path] = false;
         return full_path;
       }
     }

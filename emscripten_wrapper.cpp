@@ -8,7 +8,8 @@ char *sass_compile_emscripten(
   int output_style,
   int source_comments,
   char *include_paths,
-  char **error_message
+  char **error_message,
+  int import_once
 ) {
   char *output_string;
   struct sass_options options;
@@ -19,6 +20,7 @@ char *sass_compile_emscripten(
   options.image_path = NULL;
   options.include_paths = include_paths;
   options.precision = 0; // 0 => use sass default numeric precision
+  options.import_once = import_once;
 
   ctx->options = options;
   ctx->source_string = source_string;

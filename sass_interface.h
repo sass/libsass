@@ -23,6 +23,7 @@ struct sass_options {
   const char* include_paths;
   const char* image_path;
   int precision;
+  int import_once; // bool
 };
 
 struct sass_context {
