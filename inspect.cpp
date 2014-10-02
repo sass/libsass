@@ -563,6 +563,9 @@ namespace Sass {
     Compound_Selector*           head = c->head();
     Complex_Selector*            tail = c->tail();
     Complex_Selector::Combinator comb = c->combinator();
+    if (c->starts_on_newline()) {
+      append_to_buffer("\n");
+    }
     if (head && !head->is_empty_reference()) head->perform(this);
     if (head && !head->is_empty_reference() && tail) append_to_buffer(" ");
     switch (comb) {
@@ -582,7 +585,7 @@ namespace Sass {
     if (g->empty()) return;
     (*g)[0]->perform(this);
     for (size_t i = 1, L = g->length(); i < L; ++i) {
-      append_to_buffer(", ");
+      append_to_buffer(",");
       (*g)[i]->perform(this);
     }
   }

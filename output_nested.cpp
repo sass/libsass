@@ -64,12 +64,11 @@ namespace Sass {
 
     if (b->has_non_hoistable()) {
       decls = true;
-      indent();
       if (source_comments) {
         stringstream ss;
+        indent();
         ss << "/* line " << r->position().line << ", " << r->path() << " */" << endl;
         append_to_buffer(ss.str());
-        indent();
       }
       s->perform(this);
       append_to_buffer(" {\n");
@@ -123,6 +122,23 @@ namespace Sass {
     }
   }
 
+  void Output_Nested::operator()(Selector_List* g)
+  {
+    if (g->empty()) return;
+
+    indent();(*g)[0]->perform(this);
+    for (size_t i = 1, L = g->length(); i < L; ++i) {
+      append_to_buffer(",");
+      if ((*g)[i]->starts_on_newline()) {
+        append_to_buffer("\n");
+        indent();
+      } else {
+        append_to_buffer(" ");
+      }
+      (*g)[i]->perform(this);
+    }
+  }
+
   void Output_Nested::operator()(Media_Block* m)
   {
     List*  q     = m->media_queries();
@@ -149,7 +165,6 @@ namespace Sass {
     if (e && b->has_non_hoistable()) {
       // JMA - hoisted, output the non-hoistable in a nested block, followed by the hoistable
       ++indentation;
-      indent();
       e->perform(this);
       append_to_buffer(" {\n");
       
