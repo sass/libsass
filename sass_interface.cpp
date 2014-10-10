@@ -190,8 +190,14 @@ extern "C" {
       else {
           output_path = c_ctx->output_path;
       }
+      if (c_ctx->source_string==NULL)
+      {
+          c_ctx->source_string="//";
+      }
       Context cpp_ctx(
-        Context::Data().entry_point(input_path)
+
+        Context::Data().source_c_str(c_ctx->source_string)
+                       .entry_point(input_path)
                        .output_path(output_path)
                        .output_style((Output_Style) c_ctx->options.output_style)
                        .source_comments(c_ctx->options.source_comments)
