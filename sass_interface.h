@@ -32,8 +32,6 @@ struct sass_options {
   // Colon-separated list of paths
   // Semicolon-separated on Windows
   const char* include_paths;
-  // For the image-url Sass function
-  const char* image_path;
   // Precision for outputting fractional numbers
   int precision;
 };

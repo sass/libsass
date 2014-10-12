@@ -96,7 +96,6 @@ namespace Sass {
     extern Signature call_sig;
     extern Signature not_sig;
     extern Signature if_sig;
-    extern Signature image_url_sig;
     extern Signature map_get_sig;
     extern Signature map_merge_sig;
     extern Signature map_remove_sig;

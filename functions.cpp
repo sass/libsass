@@ -1410,19 +1410,5 @@ namespace Sass {
       }
     }
 
-    ////////////////
-    // URL FUNCTIONS
-    ////////////////
-
-    Signature image_url_sig = "image-url($path, $only-path: false, $cache-buster: false)";
-    BUILT_IN(image_url)
-    {
-      String_Constant* ipath = ARG("$path", String_Constant);
-      bool only_path = !ARG("$only-path", Expression)->is_false();
-      string full_path(quote(ctx.image_path + "/" + unquote(ipath->value()), '"'));
-      if (!only_path) full_path = "url(" + full_path + ")";
-      return new (ctx.mem) String_Constant(path, position, full_path);
-    }
-
   }
 }

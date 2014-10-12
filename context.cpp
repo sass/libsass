@@ -53,7 +53,6 @@ namespace Sass {
     style_sheets            (map<string, Block*>()),
     source_map              (resolve_relative_path(initializers.output_path(), initializers.source_map_file(), get_cwd())),
     c_functions             (vector<Sass_C_Function_Descriptor>()),
-    image_path              (initializers.image_path()),
     output_path             (make_canonical_path(initializers.output_path())),
     source_comments         (initializers.source_comments()),
     output_style            (initializers.output_style()),
@@ -433,8 +432,6 @@ namespace Sass {
     // Boolean Functions
     register_function(ctx, not_sig, sass_not, env);
     register_function(ctx, if_sig, sass_if, env);
-    // Path Functions
-    register_function(ctx, image_url_sig, image_url, env);
   }
 
   void register_c_functions(Context& ctx, Env* env, Sass_C_Function_Descriptor* descrs)
