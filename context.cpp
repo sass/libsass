@@ -211,7 +211,8 @@ namespace Sass {
   {
     Block* root = 0;
     for (size_t i = 0; i < queue.size(); ++i) {
-      Parser p(Parser::from_c_str(queue[i].second, *this, queue[i].first, Position(1 + i, 1, 1)));
+      string parsedata=string(source_c_str)+string("\n")+string(queue[i].second);
+      Parser p(Parser::from_c_str(parsedata.c_str(), *this, queue[i].first, Position(1 + i, 0, 1)));
       Block* ast = p.parse();
       if (i == 0) root = ast;
       style_sheets[queue[i].first] = ast;
