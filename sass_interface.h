@@ -53,6 +53,7 @@ struct sass_context {
 };
 
 struct sass_file_context {
+  const char* source_string;
   const char* input_path;
   const char* output_path;
   char* output_string;
