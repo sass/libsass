@@ -649,8 +649,12 @@ namespace Sass {
         Map* r = static_cast<Map*>(rhs);
         if (l->length() != r->length()) return false;
         for (size_t i = 0, L = l->length(); i < L; ++i) {
-          if (!eq((*l)[i]->key(), (*r)[i]->key(), ctx)) return false;
-          if (!eq((*l)[i]->value(), (*r)[i]->value(), ctx)) return false;
+          bool found = false;
+          for (size_t j = 0, K = r->length(); j < K && !found; ++j) {
+            found = eq((*l)[i]->key(), (*r)[j]->key(), ctx) &&
+                    eq((*l)[i]->value(), (*r)[j]->value(), ctx);
+          }
+          if (!found) return false;
         }
         return true;
       } break;
