@@ -1241,7 +1241,13 @@ namespace Sass {
 
       size_t len = m1->length() + m2->length();
       Map* result = new (ctx.mem) Map(path, position, len);
-      *result += m1;
+      for (size_t i = 0, L = m1->length(); i < L; ++i) {
+        bool skip = false;
+        for (size_t j = 0, K = m2->length(); j < K && !skip; ++j) {
+          skip = eq((*m1)[i]->key(), (*m2)[j]->key(), ctx);
+        }
+        if (!skip) *result << (*m1)[i];
+      }
       *result += m2;
       return result;
     }
