@@ -738,6 +738,7 @@ namespace Sass {
   }
 
   Declaration* Parser::parse_declaration() {
+    ctx.in_declaration++;
     String* prop = 0;
     if (peek< sequence< optional< exactly<'*'> >, identifier_schema > >()) {
       prop = parse_identifier_schema();
@@ -754,7 +755,9 @@ namespace Sass {
     if (!lex< exactly<':'> >()) error("property \"" + string(lexed) + "\" must be followed by a ':'");
     if (peek< exactly<';'> >()) error("style declaration must contain a value");
     Expression* list = parse_list();
-    return new (ctx.mem) Declaration(path, prop->position(), prop, list/*, lex<important>()*/);
+    Declaration* ret = new (ctx.mem) Declaration(path, prop->position(), prop, list/*, lex<important>()*/);
+    ctx.in_declaration--;
+    return ret;
   }
 
   Expression* Parser::parse_map()
@@ -952,7 +955,7 @@ namespace Sass {
 
   Expression* Parser::parse_expression()
   {
-    if (lex< exactly<not_kwd> >()) {
+    if (!ctx.in_declaration && lex< exactly<not_kwd> >()) {
       return new (ctx.mem) Unary_Expression(path, source_position, Unary_Expression::NOT, parse_expression());
     }
 
