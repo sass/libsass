@@ -25,7 +25,7 @@ char *read_file(const char *path) {
 
 void init_options(struct sass_options *options, int import_once) {
     options->output_style = SASS_STYLE_COMPRESSED;
-    options->source_comments = SASS_SOURCE_COMMENTS_NONE;
+    options->source_comments = 0;
     options->include_paths = TEST_DATA_DIR;
     options->image_path = TEST_DATA_DIR;
     options->precision = 0;
@@ -42,7 +42,7 @@ void test_sass_compile_once_disabled() {
     sass_compile(context);
 
     assert(0 == context->error_status);
-    assert(0 == strcmp(".a{color:red;}.b{color:red;}.c{color:red;}.c{color:red;}", context->output_string));
+    assert(0 == strcmp(".a{color:red}.b{color:red}.c{color:red}.c{color:red}", context->output_string));
     free(d);
     sass_free_context(context);
 }
@@ -56,7 +56,7 @@ void test_sass_compile_once_enabled() {
     context->source_string = d;
     sass_compile(context);
     assert(0 == context->error_status);
-    assert(0 == strcmp(".a{color:red;}.b{color:red;}.c{color:red;}", context->output_string));
+    assert(0 == strcmp(".a{color:red}.b{color:red}.c{color:red}", context->output_string));
     free(d);
     sass_free_context(context);
 }
@@ -69,7 +69,7 @@ void test_sass_compile_file_once_disabled() {
     context->output_path = NULL;
     sass_compile_file(context);
     assert(0 == context->error_status);
-    assert(0 == strcmp(".a{color:red;}.b{color:red;}.c{color:red;}.c{color:red;}", context->output_string));
+    assert(0 == strcmp(".a{color:red}.b{color:red}.c{color:red}.c{color:red}", context->output_string));
     sass_free_file_context(context);
 }
 
@@ -83,7 +83,7 @@ void test_sass_compile_file_once_enabled() {
     sass_compile_file(context);
 
     assert(0 == context->error_status);
-    assert(0 == strcmp(".a{color:red;}.b{color:red;}.c{color:red;}", context->output_string));
+    assert(0 == strcmp(".a{color:red}.b{color:red}.c{color:red}", context->output_string));
     sass_free_file_context(context);
 }
 
