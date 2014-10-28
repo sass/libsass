@@ -3,7 +3,11 @@
 .DS_Store
 .sass-cache
 *.gem
+*.gcno
 .svn/*
+.cproject
+.project
+.settings/
 
 # Configuration stuff
 

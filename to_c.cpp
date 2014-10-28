@@ -28,6 +28,18 @@ namespace Sass {
     return v;
   }
 
+  Sass_Value To_C::operator()(Map* m)
+  {
+    Sass_Value v = make_sass_map(m->length());
+    int i = 0;
+    for (auto key : m->keys()) {
+      v.map.pairs[i].key = key->perform(this);
+      v.map.pairs[i].value = m->at(key)->perform(this);
+      i++;
+    }
+    return v;
+  }
+
   Sass_Value To_C::operator()(Arguments* a)
   {
     Sass_Value v = make_sass_list(a->length(), SASS_COMMA);

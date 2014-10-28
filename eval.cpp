@@ -161,6 +161,7 @@ namespace Sass {
 
   Expression* Eval::operator()(List* l)
   {
+    if (l->is_expanded()) return l;
     List* ll = new (ctx.mem) List(l->path(),
                                   l->position(),
                                   l->length(),
@@ -169,7 +170,21 @@ namespace Sass {
     for (size_t i = 0, L = l->length(); i < L; ++i) {
       *ll << (*l)[i]->perform(this);
     }
+    ll->is_expanded(true);
     return ll;
+  }
+
+  Expression* Eval::operator()(Map* m)
+  {
+    if (m->is_expanded()) return m;
+    Map* mm = new (ctx.mem) Map(m->path(),
+                                  m->position(),
+                                  m->length());
+    for (auto key : m->keys()) {
+      *mm << std::make_pair(key->perform(this), m->at(key)->perform(this));
+    }
+    mm->is_expanded(true);
+    return mm;
   }
 
   // -- only need to define two comparisons, and the rest can be implemented in terms of them
@@ -345,13 +360,15 @@ namespace Sass {
       backtrace = &here;
 
       To_C to_c;
-      Sass_Value c_val = c_func(args->perform(&to_c), def->cookie());
+      union Sass_Value c_args = args->perform(&to_c);
+      Sass_Value c_val = c_func(c_args, def->cookie());
       if (c_val.unknown.tag == SASS_ERROR) {
         error("error in C function " + c->name() + ": " + c_val.error.message, c->path(), c->position(), backtrace);
       }
       result = cval_to_astnode(c_val, ctx, backtrace, c->path(), c->position());
 
       backtrace = here.parent;
+      free_sass_value(c_val);
       env = old_env;
     }
     // else it's an overloaded native function; resolve it
@@ -402,6 +419,7 @@ namespace Sass {
     else error("unbound variable " + v->name(), v->path(), v->position());
     // cerr << "name: " << v->name() << "; type: " << typeid(*value).name() << "; value: " << value->perform(&to_string) << endl;
     if (typeid(*value) == typeid(Argument)) value = static_cast<Argument*>(value)->value();
+
     // cerr << "\ttype is now: " << typeid(*value).name() << endl << endl;
     return value;
   }
@@ -503,6 +521,7 @@ namespace Sass {
       Color* c = new (ctx.mem) Color(*ctx.names_to_colors[s->value()]);
       c->path(s->path());
       c->position(s->position());
+      c->disp(s->value());
       return c;
     }
     return s;
@@ -627,6 +646,14 @@ namespace Sass {
         return true;
       } break;
 
+      case Expression::MAP: {
+        Map* l = static_cast<Map*>(lhs);
+        Map* r = static_cast<Map*>(rhs);
+        if (l->length() != r->length()) return false;
+        for (auto key : l->keys())
+          if (!eq(l->at(key), r->at(key), ctx)) return false;
+        return true;
+      } break;
       case Expression::NULL_VAL: {
         return true;
       } break;
@@ -843,6 +870,15 @@ namespace Sass {
           *l << cval_to_astnode(v.list.values[i], ctx, backtrace, path, position);
         }
         e = l;
+      } break;
+      case SASS_MAP: {
+        Map* m = new (ctx.mem) Map(path, position);
+        for (size_t i = 0, L = v.map.length; i < L; ++i) {
+          *m << std::make_pair(
+            cval_to_astnode(v.map.pairs[i].key, ctx, backtrace, path, position),
+            cval_to_astnode(v.map.pairs[i].value, ctx, backtrace, path, position));
+        }
+        e = m;
       } break;
       case SASS_NULL: {
         e = new (ctx.mem) Null(path, position);

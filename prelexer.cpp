@@ -92,7 +92,7 @@ namespace Sass {
         if((p = escape(src))) {
           src = p;
           continue;
-        } 
+        }
         else if((p = exactly<'"'>(src))) {
           return p;
         }
@@ -111,7 +111,7 @@ namespace Sass {
         if((p = escape(src))) {
           src = p;
           continue;
-        } 
+        }
         else if((p = exactly<'\''>(src))) {
           return p;
         }
@@ -164,6 +164,21 @@ namespace Sass {
                                                 exactly<'_'>,
                                                 exactly<'|'>,
                                                 backslash_something > > >(src);
+    }
+
+    const char* map_key(const char* src) {
+      return sequence< spaces_and_comments,
+                       one_plus< sequence< exactly<'('>, spaces_and_comments > >,
+                       one_plus< alternatives< identifier, alnums, string_constant, variable, spaces, exactly<','> > >,
+                       spaces_and_comments,
+                       zero_plus< exactly<')'> >,
+                       spaces_and_comments,
+                       exactly<':'> >(src);
+    }
+
+    // Match CSS css variables.
+    const char* custom_property_name(const char* src) {
+      return sequence< exactly<'-'>, exactly<'-'>, identifier >(src);
     }
 
     // Match interpolant schemas
@@ -322,7 +337,7 @@ namespace Sass {
     }
     // Attribute name in an attribute selector.
     const char* attribute_name(const char* src) {
-      return alternatives< sequence< optional<namespace_prefix>, identifier>, 
+      return alternatives< sequence< optional<namespace_prefix>, identifier>,
                            identifier >(src);
     }
     // match placeholder selectors
@@ -401,6 +416,12 @@ namespace Sass {
                        spaces_and_comments,
                        exactly<important_kwd> >(src);
     }
+    // Match CSS "!optional" keyword.
+    const char* optional(const char* src) {
+      return sequence< exactly<'!'>,
+      spaces_and_comments,
+      exactly<optional_kwd> >(src);
+    }
     // Match Sass "!default" keyword.
     const char* default_flag(const char* src) {
       return sequence< exactly<'!'>,
@@ -458,7 +479,7 @@ namespace Sass {
 
     // Match SCSS variable names.
     const char* variable(const char* src) {
-      return sequence<exactly<'$'>, name>(src);
+      return sequence<exactly<'$'>, identifier>(src);
     }
 
     // Match Sass boolean keywords.

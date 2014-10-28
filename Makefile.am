@@ -1,4 +1,11 @@
 ACLOCAL_AMFLAGS = -I m4
+AM_CXXFLAGS = -std=c++11 -Wall -fPIC
+
+if ENABLE_COVERAGE
+  AM_CXXFLAGS += -O0 --coverage
+else
+  AM_CXXFLAGS += -O2
+endif
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = support/libsass.pc
@@ -12,7 +19,6 @@ libsass_la_SOURCES = \
 	context.cpp \
 	contextualize.cpp \
 	copy_c_str.cpp \
-	emscripten_wrapper.cpp \
 	error_handling.cpp \
 	eval.cpp \
 	expand.cpp \
@@ -20,13 +26,16 @@ libsass_la_SOURCES = \
 	file.cpp \
 	functions.cpp \
 	inspect.cpp \
+	node.cpp \
 	output_compressed.cpp \
 	output_nested.cpp \
 	parser.cpp \
 	prelexer.cpp \
+	remove_placeholders.cpp \
 	sass.cpp \
 	sass_interface.cpp \
-	sass2scss/sass2scss.cpp \
+	sass_util.cpp \
+	sass2scss.cpp \
 	source_map.cpp \
 	to_c.cpp \
 	to_string.cpp \
@@ -45,6 +54,10 @@ noinst_PROGRAMS = sass-tester
 sass_tester_SOURCES = $(SASS_SASSC_PATH)/sassc.c
 sass_tester_LDADD = libsass.la
 sass_tester_LDFLAGS = -no-install
+if ENABLE_COVERAGE
+sass_tester_LDFLAGS += -static
+nodist_EXTRA_sass_tester_SOURCES = non-existent-file-to-force-CXX-linking.cxx
+endif
 
 TESTS = \
 	$(SASS_SPEC_PATH)/spec/basic \
@@ -75,4 +88,3 @@ test_issues: $(SASSC_BIN) libsass.la
 	$(RUBY_BIN) $(SASS_SPEC_PATH)/sass-spec.rb -c $(SASSC_BIN) $(LOG_FLAGS) $(SASS_SPEC_PATH)/spec/issues
 
 endif
-

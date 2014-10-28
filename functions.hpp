@@ -84,6 +84,7 @@ namespace Sass {
     extern Signature append_sig;
     extern Signature zip_sig;
     extern Signature compact_sig;
+    extern Signature list_separator_sig;
     extern Signature type_of_sig;
     extern Signature unit_sig;
     extern Signature unitless_sig;
@@ -92,9 +93,17 @@ namespace Sass {
     extern Signature global_variable_exists_sig;
     extern Signature function_exists_sig;
     extern Signature mixin_exists_sig;
+    extern Signature call_sig;
     extern Signature not_sig;
     extern Signature if_sig;
     extern Signature image_url_sig;
+    extern Signature map_get_sig;
+    extern Signature map_merge_sig;
+    extern Signature map_remove_sig;
+    extern Signature map_keys_sig;
+    extern Signature map_values_sig;
+    extern Signature map_has_key_sig;
+    extern Signature keywords_sig;
 
     BUILT_IN(rgb);
     BUILT_IN(rgba_4);
@@ -145,6 +154,7 @@ namespace Sass {
     BUILT_IN(append);
     BUILT_IN(zip);
     BUILT_IN(compact);
+    BUILT_IN(list_separator);
     BUILT_IN(type_of);
     BUILT_IN(unit);
     BUILT_IN(unitless);
@@ -153,9 +163,17 @@ namespace Sass {
     BUILT_IN(global_variable_exists);
     BUILT_IN(function_exists);
     BUILT_IN(mixin_exists);
+    BUILT_IN(call);
     BUILT_IN(sass_not);
     BUILT_IN(sass_if);
     BUILT_IN(image_url);
+    BUILT_IN(map_get);
+    BUILT_IN(map_merge);
+    BUILT_IN(map_remove);
+    BUILT_IN(map_keys);
+    BUILT_IN(map_values);
+    BUILT_IN(map_has_key);
+    BUILT_IN(keywords);
 
   }
 }

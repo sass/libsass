@@ -51,12 +51,12 @@ namespace Sass {
 
     string       image_path; // for the image-url Sass function
     string       output_path; // for relative paths to the output
-    bool         source_comments;
-    bool         source_maps;
-    bool         import_once;
-    Output_Style output_style;
-    string       source_map_file;
-    bool         omit_source_map_url;
+    bool         source_comments; // for inline debug comments in css output
+    Output_Style output_style; // output style for the generated css code
+    string       source_map_file; // path to source map file (enables feature)
+    bool         omit_source_map_url; // disable source map comment in css output
+    bool         is_indented_syntax_src; // treat source string as sass
+    bool         import_once; // true if redundant imports should be omitted
 
     map<string, Color*> names_to_colors;
     map<int, string>    colors_to_names;
@@ -72,11 +72,11 @@ namespace Sass {
       KWD_ARG(Data, const char**,    include_paths_array);
       KWD_ARG(Data, vector<string>,  include_paths);
       KWD_ARG(Data, bool,            source_comments);
-      KWD_ARG(Data, bool,            source_maps);
       KWD_ARG(Data, bool,            import_once);
       KWD_ARG(Data, Output_Style,    output_style);
       KWD_ARG(Data, string,          source_map_file);
       KWD_ARG(Data, bool,            omit_source_map_url);
+      KWD_ARG(Data, bool,            is_indented_syntax_src);
       KWD_ARG(Data, size_t,          precision);
     };
 
@@ -87,7 +87,10 @@ namespace Sass {
     void setup_color_map();
     string add_file(string);
     string add_file(string, string);
-    char* compile_string();
+    // allow to optionally overwrite the input path
+    // default argument for input_path is string("stdin")
+    // usefull to influence the source-map generating etc.
+    char* compile_string(const string& input_path = "stdin");
     char* compile_file();
     char* generate_source_map();
 
@@ -106,7 +109,6 @@ namespace Sass {
     // void register_overload_stub(string name, Env* env);
 
   public:
-    multimap<Compound_Selector, Complex_Selector*> extensions;
     Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> > subset_map;
   };
 

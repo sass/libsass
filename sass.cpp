@@ -45,7 +45,8 @@ extern "C" {
                                                c_ctx->output_style)
 
                          .source_comments     (c_ctx->source_comments)
-                         .source_maps         (c_ctx->source_maps)
+                         .source_map_file     (c_ctx->source_map_file)
+                         .omit_source_map_url (c_ctx->omit_source_map_url)
 
                          .image_path          (c_ctx->image_path ?
                                                c_ctx->image_path :
@@ -141,6 +142,15 @@ extern "C" {
     return v;
   }
 
+  union Sass_Value make_sass_map(size_t len)
+  {
+    union Sass_Value v;
+    v.map.tag = SASS_MAP;
+    v.map.length = len;
+    v.map.pairs = (struct Sass_KeyValuePair*) malloc(sizeof(struct Sass_KeyValuePair)*len);
+    return v;
+  }
+
   union Sass_Value make_sass_null()
   {
     union Sass_Value v;
@@ -154,6 +164,43 @@ extern "C" {
     v.error.tag = SASS_ERROR;
     v.error.message = strdup(msg);
     return v;
+  }
+
+  // make_sass_* may allocated additional memory
+  void free_sass_value(const union Sass_Value val) {
+
+    int i;
+    switch(val.unknown.tag) {
+        // case SASS_NULL: {
+        // }   break;
+        // case SASS_BOOLEAN: {
+        // }   break;
+        case SASS_NUMBER: {
+                free(val.number.unit);
+        }   break;
+        // case SASS_COLOR: {
+        // }   break;
+        case SASS_STRING: {
+                free(val.string.value);
+        }   break;
+        case SASS_LIST: {
+                for (i=0; i<val.list.length; i++) {
+                    free_sass_value(val.list.values[i]);
+                }
+                free(val.list.values);
+        }   break;
+        case SASS_MAP: {
+                for (i=0; i<val.map.length; i++) {
+                    free_sass_value(val.map.pairs[i].key);
+                    free_sass_value(val.map.pairs[i].value);
+                }
+                free(val.map.pairs);
+        }   break;
+        case SASS_ERROR: {
+                free(val.error.message);
+        }   break;
+    }
+
   }
 
 }

@@ -3,6 +3,9 @@
 #include "ast.hpp"
 #include "context.hpp"
 #include "to_string.hpp"
+#include "util.hpp"
+#include <cmath>
+#include <iomanip>
 
 namespace Sass {
   using namespace std;
@@ -37,23 +40,16 @@ namespace Sass {
     Selector* s     = r->selector();
     Block*    b     = r->block();
 
-    // In case the extend visitor isn't called (if there are no @extend
-    // directives in the entire document), check for placeholders here and
-    // make sure they aren't output.
-    // TODO: investigate why I decided to duplicate this logic in the extend visitor
-    Selector_List* sl = static_cast<Selector_List*>(s);
-    if (ctx->extensions.empty()) {
-      Selector_List* new_sl = new (ctx->mem) Selector_List(sl->path(), sl->position());
-      for (size_t i = 0, L = sl->length(); i < L; ++i) {
-        if (!(*sl)[i]->has_placeholder()) {
-          *new_sl << (*sl)[i];
+    // Filter out rulesets that aren't printable (process its children though)
+    if (!Util::isPrintable(r)) {
+      for (size_t i = 0, L = b->length(); i < L; ++i) {
+        Statement* stm = (*b)[i];
+        if (dynamic_cast<Has_Block*>(stm)) {
+          stm->perform(this);
         }
       }
-      s = new_sl;
-      sl = new_sl;
-      r->selector(new_sl);
+      return;
     }
-    if (sl->length() == 0) return;
 
     if (b->has_non_hoistable()) {
       s->perform(this);
@@ -64,6 +60,8 @@ namespace Sass {
           stm->perform(this);
         }
       }
+      size_t l = buffer.length();
+      if (l > 0 && buffer.at(l - 1) == ';') buffer.erase(l - 1);
       append_singleline_part_to_buffer("}");
     }
 
@@ -82,34 +80,51 @@ namespace Sass {
     List*  q     = m->media_queries();
     Block* b     = m->block();
 
+    // Filter out media blocks that aren't printable (process its children though)
+    if (!Util::isPrintable(m)) {
+      for (size_t i = 0, L = b->length(); i < L; ++i) {
+        Statement* stm = (*b)[i];
+        if (dynamic_cast<Has_Block*>(stm)) {
+          stm->perform(this);
+        }
+      }
+      return;
+    }
+
     ctx->source_map.add_mapping(m);
     append_singleline_part_to_buffer("@media ");
     q->perform(this);
     append_singleline_part_to_buffer("{");
 
-    Selector* e = m->enclosing_selector();
-    bool hoisted = false;
+    Selector* e = m->selector();
     if (e && b->has_non_hoistable()) {
-      hoisted = true;
+      // JMA - hoisted, output the non-hoistable in a nested block, followed by the hoistable
       e->perform(this);
       append_singleline_part_to_buffer("{");
-    }
 
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
-      Statement* stm = (*b)[i];
-      if (!stm->is_hoistable()) {
-        stm->perform(this);
+      for (size_t i = 0, L = b->length(); i < L; ++i) {
+        Statement* stm = (*b)[i];
+        if (!stm->is_hoistable()) {
+          stm->perform(this);
+        }
+      }
+
+      append_singleline_part_to_buffer("}");
+
+      for (size_t i = 0, L = b->length(); i < L; ++i) {
+        Statement* stm = (*b)[i];
+        if (stm->is_hoistable()) {
+          stm->perform(this);
+        }
       }
     }
-
-    if (hoisted) {
-      append_singleline_part_to_buffer("}");
-    }
-
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
-      Statement* stm = (*b)[i];
-      if (stm->is_hoistable()) {
-        stm->perform(this);
+    else {
+      // JMA - not hoisted, just output in order
+      for (size_t i = 0, L = b->length(); i < L; ++i) {
+        Statement* stm = (*b)[i];
+        if (!stm->is_hoistable()) {
+          stm->perform(this);
+        }
       }
     }
 
@@ -212,6 +227,52 @@ namespace Sass {
     }
   }
 
+  // helper function for serializing colors
+  template <size_t range>
+  static double cap_channel(double c) {
+    if      (c > range) return range;
+    else if (c < 0)     return 0;
+    else                return c;
+  }
+
+  void Output_Compressed::operator()(Color* c)
+  {
+    stringstream ss;
+    double r = round(cap_channel<0xff>(c->r()));
+    double g = round(cap_channel<0xff>(c->g()));
+    double b = round(cap_channel<0xff>(c->b()));
+    double a = cap_channel<1>   (c->a());
+
+    // retain the originally specified color definition if unchanged
+    if (!c->disp().empty()) {
+      ss << c->disp();
+    }
+    else if (a >= 1) {
+      // see if it's a named color
+      int numval = r * 0x10000;
+      numval += g * 0x100;
+      numval += b;
+      if (ctx && ctx->colors_to_names.count(numval)) {
+        ss << ctx->colors_to_names[numval];
+      }
+      else {
+        // otherwise output the hex triplet
+        ss << '#' << setw(2) << setfill('0');
+        ss << hex << setw(2) << static_cast<unsigned long>(r);
+        ss << hex << setw(2) << static_cast<unsigned long>(g);
+        ss << hex << setw(2) << static_cast<unsigned long>(b);
+      }
+    }
+    else {
+      ss << "rgba(";
+      ss << static_cast<unsigned long>(r) << ",";
+      ss << static_cast<unsigned long>(g) << ",";
+      ss << static_cast<unsigned long>(b) << ",";
+      ss << a << ')';
+    }
+    append_singleline_part_to_buffer(ss.str());
+  }
+
   void Output_Compressed::operator()(Media_Query_Expression* mqe)
   {
     if (mqe->is_interpolated()) {
@@ -226,6 +287,11 @@ namespace Sass {
       }
       append_singleline_part_to_buffer(")");
     }
+  }
+
+  void Output_Compressed::operator()(Null* n)
+  {
+    // noop
   }
 
   void Output_Compressed::operator()(Argument* a)
@@ -262,7 +328,7 @@ namespace Sass {
     {
       tail->perform(this);
       return;
-    } 
+    }
     if (head && !head->is_empty_reference()) head->perform(this);
     switch (comb) {
       case Complex_Selector::ANCESTOR_OF:

@@ -1,6 +1,7 @@
 #define SASS
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,8 +22,9 @@ struct Sass_Context {
   char*        error_message;
 
   int          output_style;
-  int          source_comments;
-  int          source_maps;
+  bool         source_comments;
+  const char*  source_map_file;
+  bool         omit_source_map_url;
   const char*  image_path;
   const char*  output_path;
   const char*  include_paths_string;
@@ -42,6 +44,7 @@ enum Sass_Tag {
   SASS_COLOR,
   SASS_STRING,
   SASS_LIST,
+  SASS_MAP,
   SASS_NULL,
   SASS_ERROR
 };
@@ -91,6 +94,13 @@ struct Sass_List {
   union Sass_Value*   values;
 };
 
+struct Sass_KeyValuePair;
+struct Sass_Map {
+  enum Sass_Tag              tag;
+  size_t                     length;
+  struct Sass_KeyValuePair*  pairs;
+};
+
 struct Sass_Null {
   enum Sass_Tag tag;
 };
@@ -108,8 +118,14 @@ union Sass_Value {
   struct Sass_Color   color;
   struct Sass_String  string;
   struct Sass_List    list;
+  struct Sass_Map     map;
   struct Sass_Null    null;
   struct Sass_Error   error;
+};
+
+struct Sass_KeyValuePair {
+  union Sass_Value key;
+  union Sass_Value value;
 };
 
 union Sass_Value make_sass_boolean (int val);
@@ -117,8 +133,11 @@ union Sass_Value make_sass_number  (double val, const char* unit);
 union Sass_Value make_sass_color   (double r, double g, double b, double a);
 union Sass_Value make_sass_string  (const char* val);
 union Sass_Value make_sass_list    (size_t len, enum Sass_Separator sep);
+union Sass_Value make_sass_map     (size_t len);
 union Sass_Value make_sass_null    ();
 union Sass_Value make_sass_error   (const char* msg);
+
+void free_sass_value (const union Sass_Value val);
 
 typedef union Sass_Value(*Sass_C_Function)(union Sass_Value, void *cookie);
 

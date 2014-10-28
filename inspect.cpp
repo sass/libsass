@@ -78,6 +78,7 @@ namespace Sass {
 
   void Inspect::operator()(Declaration* dec)
   {
+    if (dec->value()->concrete_type() == Expression::NULL_VAL) return;
     if (ctx) ctx->source_map.add_mapping(dec->property());
     dec->property()->perform(this);
     append_to_buffer(": ");
@@ -320,7 +321,7 @@ namespace Sass {
     if (n->numerator_units().size() > 1 || n->denominator_units().size() > 0) {
       error(d + n->unit() + " is not a valid CSS value", n->path(), n->position());
     }
-    append_to_buffer(d);
+    append_to_buffer(d == "-0" ? "0" : d);
     append_to_buffer(n->unit());
   }
 
@@ -335,15 +336,10 @@ namespace Sass {
   void Inspect::operator()(Color* c)
   {
     stringstream ss;
-    double r = cap_channel<0xff>(c->r());
-    double g = cap_channel<0xff>(c->g());
-    double b = cap_channel<0xff>(c->b());
+    double r = round(cap_channel<0xff>(c->r()));
+    double g = round(cap_channel<0xff>(c->g()));
+    double b = round(cap_channel<0xff>(c->b()));
     double a = cap_channel<1>   (c->a());
-
-    // if (a >= 1 && ctx.colors_to_names.count(numval)) {
-    //   ss << ctx.colors_to_names[numval];
-    // }
-    // else
 
     // retain the originally specified color definition if unchanged
     if (!c->disp().empty()) {
@@ -360,9 +356,9 @@ namespace Sass {
       else {
         // otherwise output the hex triplet
         ss << '#' << setw(2) << setfill('0');
-        ss << hex << setw(2) << static_cast<unsigned long>(floor(r+0.5));
-        ss << hex << setw(2) << static_cast<unsigned long>(floor(g+0.5));
-        ss << hex << setw(2) << static_cast<unsigned long>(floor(b+0.5));
+        ss << hex << setw(2) << static_cast<unsigned long>(r);
+        ss << hex << setw(2) << static_cast<unsigned long>(g);
+        ss << hex << setw(2) << static_cast<unsigned long>(b);
       }
     }
     else {
