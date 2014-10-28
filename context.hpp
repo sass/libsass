@@ -61,6 +61,8 @@ namespace Sass {
 
     size_t precision; // precision for outputting fractional numbers
 
+    int in_declaration; // >0 if parser is currently parsing a declaration
+
     KWD_ARG_SET(Data) {
       KWD_ARG(Data, const char*,     source_c_str);
       KWD_ARG(Data, string,          entry_point);
