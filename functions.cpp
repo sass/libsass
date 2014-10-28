@@ -1051,6 +1051,29 @@ namespace Sass {
       if (index < 0 || index > l->length() - 1) error("index out of bounds for `" + string(sig) + "`", path, position);
       return l->value_at_index(index);
     }
+    
+    Signature set_nth_sig = "set-nth($list, $n, $value)";
+    BUILT_IN(set_nth)
+    {
+      List* l = dynamic_cast<List*>(env["$list"]);
+      Number* n = ARG("$n", Number);
+      Expression* v = ARG("$value", Expression);
+      if (!l) {
+        l = new (ctx.mem) List(path, position, 1);
+        *l << ARG("$list", Expression);
+      }
+      if (l->empty()) error("argument `$list` of `" + string(sig) + "` must not be empty", path, position);
+      double index = std::floor(n->value() < 0 ? l->length() + n->value() : n->value() - 1);
+      if (index < 0 || index > l->length() - 1) error("index out of bounds for `" + string(sig) + "`", path, position);
+      List* result = new (ctx.mem) List(path, position, l->length(), l->separator());
+      std::vector<Expression*> e;
+      for (unsigned i = 0; i < l->length(); ++i) {
+        if (i == index) e.at(i) = v;
+        else e.at(i) = &l[i];
+      }
+      result->elements(e);
+      return result;
+    }
 
     Signature index_sig = "index($list, $value)";
     BUILT_IN(index)
@@ -1192,7 +1215,7 @@ namespace Sass {
       Expression* v = ARG("$key", Expression);
       try {
         return m->at(v);
-      } catch (const std::out_of_range&) {
+      } catch (const std::out_of_range& oor) {
         return new (ctx.mem) Null(path, position);
       }
     }
