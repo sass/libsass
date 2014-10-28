@@ -52,11 +52,11 @@ namespace Sass {
     string       image_path; // for the image-url Sass function
     string       output_path; // for relative paths to the output
     bool         source_comments; // for inline debug comments in css output
+    bool         import_once; // true if redundant imports should be omitted
     Output_Style output_style; // output style for the generated css code
     string       source_map_file; // path to source map file (enables feature)
     bool         omit_source_map_url; // disable source map comment in css output
     bool         is_indented_syntax_src; // treat source string as sass
-    bool         import_once; // true if redundant imports should be omitted
 
     map<string, Color*> names_to_colors;
     map<int, string>    colors_to_names;

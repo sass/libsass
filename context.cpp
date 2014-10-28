@@ -56,6 +56,7 @@ namespace Sass {
     image_path              (initializers.image_path()),
     output_path             (make_canonical_path(initializers.output_path())),
     source_comments         (initializers.source_comments()),
+    import_once             (initializers.import_once()),
     output_style            (initializers.output_style()),
     source_map_file         (make_canonical_path(initializers.source_map_file())),
     omit_source_map_url     (initializers.omit_source_map_url()),
@@ -63,8 +64,7 @@ namespace Sass {
     names_to_colors         (map<string, Color*>()),
     colors_to_names         (map<int, string>()),
     precision               (initializers.precision()),
-    subset_map              (Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> >()),
-    import_once             (initializers.import_once())
+    subset_map              (Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> >())
   {
     cwd = get_cwd();
 
