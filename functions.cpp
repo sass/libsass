@@ -1066,12 +1066,9 @@ namespace Sass {
       double index = std::floor(n->value() < 0 ? l->length() + n->value() : n->value() - 1);
       if (index < 0 || index > l->length() - 1) error("index out of bounds for `" + string(sig) + "`", path, position);
       List* result = new (ctx.mem) List(path, position, l->length(), l->separator());
-      std::vector<Expression*> e;
-      for (unsigned i = 0; i < l->length(); ++i) {
-        if (i == index) e.at(i) = v;
-        else e.at(i) = &l[i];
+      for (size_t i = 0, L = l->length(); i < L; ++i) {
+        *result << (i == index) ? v : (*l)[i];
       }
-      result->elements(e);
       return result;
     }
 
@@ -1215,7 +1212,7 @@ namespace Sass {
       Expression* v = ARG("$key", Expression);
       try {
         return m->at(v);
-      } catch (const std::out_of_range& oor) {
+      } catch (const std::out_of_range&) {
         return new (ctx.mem) Null(path, position);
       }
     }
