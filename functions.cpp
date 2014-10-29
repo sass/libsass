@@ -1067,7 +1067,7 @@ namespace Sass {
       if (index < 0 || index > l->length() - 1) error("index out of bounds for `" + string(sig) + "`", path, position);
       List* result = new (ctx.mem) List(path, position, l->length(), l->separator());
       for (size_t i = 0, L = l->length(); i < L; ++i) {
-        *result << (i == index) ? v : (*l)[i];
+        *result << ((i == index) ? v : (*l)[i]);
       }
       return result;
     }
