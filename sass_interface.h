@@ -21,6 +21,7 @@ struct sass_options {
   int output_style;
   // If you want inline source comments
   bool source_comments;
+  bool source_map_sources; // really want a bool, but C doesn't have them
   // Path to source map file
   // Enables the source map generating
   // Used to create sourceMappingUrl

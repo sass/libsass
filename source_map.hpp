@@ -24,7 +24,7 @@ namespace Sass {
   class SourceMap {
 
   public:
-    vector<string> files;
+    vector<pair<string, const char*> > files;
 
     SourceMap(const string& file);
 
@@ -32,7 +32,7 @@ namespace Sass {
     void update_column(const string& str);
     void add_mapping(AST_Node* node);
 
-    string generate_source_map();
+    string generate_source_map(const bool& include_sources);
 
   private:
 
