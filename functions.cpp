@@ -241,6 +241,16 @@ namespace Sass {
       return new (ctx.mem) Color(path, position, r, g, b, a);
     }
 
+    HSL get_hsl(Color* rgb_color, bool alpha) 
+    {
+      if (!alpha)
+        Color* rgb_color = rgb_color;
+      HSL hsl_color = rgb_to_hsl(rgb_color->r(),
+                                 rgb_color->g(),
+                                 rgb_color->b());
+      return hsl_color;
+    }
+
     Signature hsl_sig = "hsl($hue, $saturation, $lightness)";
     BUILT_IN(hsl)
     {
@@ -268,30 +278,22 @@ namespace Sass {
     Signature hue_sig = "hue($color)";
     BUILT_IN(hue)
     {
-      Color* rgb_color = ARG("$color", Color);
-      HSL hsl_color = rgb_to_hsl(rgb_color->r(),
-                                 rgb_color->g(),
-                                 rgb_color->b());
+      HSL hsl_color = get_hsl(ARG("$color", Color), false);
+
       return new (ctx.mem) Number(path, position, hsl_color.h, "deg");
     }
 
     Signature saturation_sig = "saturation($color)";
     BUILT_IN(saturation)
     {
-      Color* rgb_color = ARG("$color", Color);
-      HSL hsl_color = rgb_to_hsl(rgb_color->r(),
-                                 rgb_color->g(),
-                                 rgb_color->b());
+      HSL hsl_color = get_hsl(ARG("$color", Color), false);
       return new (ctx.mem) Number(path, position, hsl_color.s, "%");
     }
 
     Signature lightness_sig = "lightness($color)";
     BUILT_IN(lightness)
     {
-      Color* rgb_color = ARG("$color", Color);
-      HSL hsl_color = rgb_to_hsl(rgb_color->r(),
-                                 rgb_color->g(),
-                                 rgb_color->b());
+      HSL hsl_color = get_hsl(ARG("$color", Color), false);
       return new (ctx.mem) Number(path, position, hsl_color.l, "%");
     }
 
@@ -299,10 +301,8 @@ namespace Sass {
     BUILT_IN(adjust_hue)
     {
       Color* rgb_color = ARG("$color", Color);
+      HSL hsl_color = get_hsl(rgb_color, true);
       Number* degrees = ARG("$degrees", Number);
-      HSL hsl_color = rgb_to_hsl(rgb_color->r(),
-                                 rgb_color->g(),
-                                 rgb_color->b());
       return hsla_impl(hsl_color.h + degrees->value(),
                        hsl_color.s,
                        hsl_color.l,
@@ -316,10 +316,9 @@ namespace Sass {
     BUILT_IN(lighten)
     {
       Color* rgb_color = ARG("$color", Color);
+      HSL hsl_color = get_hsl(rgb_color, true);
+
       Number* amount = ARGR("$amount", Number, 0, 100);
-      HSL hsl_color = rgb_to_hsl(rgb_color->r(),
-                                 rgb_color->g(),
-                                 rgb_color->b());
       //Check lightness is not negative before lighten it
       double hslcolorL = hsl_color.l;
       if (hslcolorL < 0) {
@@ -339,10 +338,9 @@ namespace Sass {
     BUILT_IN(darken)
     {
       Color* rgb_color = ARG("$color", Color);
+      HSL hsl_color = get_hsl(rgb_color, true);
+
       Number* amount = ARGR("$amount", Number, 0, 100);
-      HSL hsl_color = rgb_to_hsl(rgb_color->r(),
-                                 rgb_color->g(),
-                                 rgb_color->b());
 
       //Check lightness if not over 100, before darken it
       double hslcolorL = hsl_color.l;
@@ -371,9 +369,7 @@ namespace Sass {
 
       ARGR("$amount", Number, 0, 100);
       Color* rgb_color = ARG("$color", Color);
-      HSL hsl_color = rgb_to_hsl(rgb_color->r(),
-                                 rgb_color->g(),
-                                 rgb_color->b());
+      HSL hsl_color = get_hsl(rgb_color, true);
       //Check saturation is not negative before saturate it
       double hslcolorS = hsl_color.s;
       if (hslcolorS < 0) {
@@ -394,10 +390,8 @@ namespace Sass {
     BUILT_IN(desaturate)
     {
       Color* rgb_color = ARG("$color", Color);
+      HSL hsl_color = get_hsl(rgb_color, true);
       Number* amount = ARGR("$amount", Number, 0, 100);
-      HSL hsl_color = rgb_to_hsl(rgb_color->r(),
-                                 rgb_color->g(),
-                                 rgb_color->b());
       //Check saturation is not over 100 before desaturate it
       double hslcolorS = hsl_color.s;
       if (hslcolorS > 100) {
@@ -424,9 +418,7 @@ namespace Sass {
       }
 
       Color* rgb_color = ARG("$color", Color);
-      HSL hsl_color = rgb_to_hsl(rgb_color->r(),
-                                 rgb_color->g(),
-                                 rgb_color->b());
+      HSL hsl_color = get_hsl(rgb_color, true);
       return hsla_impl(hsl_color.h,
                        0.0,
                        hsl_color.l,
@@ -440,9 +432,7 @@ namespace Sass {
     BUILT_IN(complement)
     {
       Color* rgb_color = ARG("$color", Color);
-      HSL hsl_color = rgb_to_hsl(rgb_color->r(),
-                                 rgb_color->g(),
-                                 rgb_color->b());
+      HSL hsl_color = get_hsl(rgb_color, true);
       return hsla_impl(hsl_color.h - 180.0,
                        hsl_color.s,
                        hsl_color.l,
@@ -712,26 +702,31 @@ namespace Sass {
     // STRING FUNCTIONS
     ///////////////////
 
-    Signature unquote_sig = "unquote($string)";
-    BUILT_IN(sass_unquote)
+    String_Constant* sass_q(Env& env, Context& ctx, const string& path, Position position, bool usequote)
     {
       To_String to_string;
       AST_Node* arg = env["$string"];
-      string str(unquote(arg->perform(&to_string)));
+      string str;
+      if (!usequote) {
+        string str(unquote(arg->perform(&to_string)));
+      } else {
+        string str(quote(arg->perform(&to_string), '"'));
+      }
       String_Constant* result = new (ctx.mem) String_Constant(path, position, str);
       result->is_delayed(true);
       return result;
     }
 
+    Signature unquote_sig = "unquote($string)";
+    BUILT_IN(sass_unquote)
+    {
+      return sass_q(env, ctx, path, position, true);
+    }
+
     Signature quote_sig = "quote($string)";
     BUILT_IN(sass_quote)
     {
-      To_String to_string;
-      AST_Node* arg = env["$string"];
-      string str(quote(arg->perform(&to_string), '"'));
-      String_Constant* result = new (ctx.mem) String_Constant(path, position, str);
-      result->is_delayed(true);
-      return result;
+      return sass_q(env, ctx, path, position, false);
     }
 
 
@@ -900,34 +895,30 @@ namespace Sass {
       return new (ctx.mem) String_Constant(path, position, newstr);
     }
 
-    Signature to_upper_case_sig = "to-upper-case($string)";
-    BUILT_IN(to_upper_case)
+    Expression* to_case(String_Constant* arg, Context& ctx, const string& path, Position position, bool upper)
     {
-      String_Constant* s = ARG("$string", String_Constant);
+      String_Constant* s = arg;
       string str = s->value();
 
       for (size_t i = 0, L = str.length(); i < L; ++i) {
         if (isascii(str[i])) {
-          str[i] = std::toupper(str[i]);
+          str[i] = (upper ? std::toupper(str[i]) : std::tolower(str[i]));
         }
       }
 
       return new (ctx.mem) String_Constant(path, position, str);
     }
 
+    Signature to_upper_case_sig = "to-upper-case($string)";
+    BUILT_IN(to_upper_case)
+    {
+      return to_case(ARG("$string", String_Constant), ctx, path, position, true);
+    }
+
     Signature to_lower_case_sig = "to-lower-case($string)";
     BUILT_IN(to_lower_case)
     {
-      String_Constant* s = ARG("$string", String_Constant);
-      string str = s->value();
-
-      for (size_t i = 0, L = str.length(); i < L; ++i) {
-        if (isascii(str[i])) {
-          str[i] = std::tolower(str[i]);
-        }
-      }
-
-      return new (ctx.mem) String_Constant(path, position, str);
+      return to_case(ARG("$string", String_Constant), ctx, path, position, false);
     }
 
     ///////////////////
@@ -942,62 +933,72 @@ namespace Sass {
       return new (ctx.mem) Number(path, position, n->value() * 100, "%");
     }
 
-    Signature round_sig = "round($value)";
-    BUILT_IN(round)
+    enum s_type { ROUND, CEIL, FLOOR, ABS };
+
+    Number* number_helper(Number* x, Context& ctx, const string& path, Position position, s_type s)
     {
-      Number* n = ARG("$value", Number);
+      Number* n = x;
       Number* r = new (ctx.mem) Number(*n);
       r->path(path);
       r->position(position);
-      r->value(std::floor(r->value() + 0.5));
+      switch (s) {
+        case ROUND: r->value(std::floor(r->value() + 0.5)); break;
+        case CEIL:  r->value(std::ceil(r->value())); break;
+        case FLOOR: r->value(std::floor(r->value())); break;
+        case ABS:   r->value(std::abs(r->value())); break;
+      }
       return r;
+    }
+
+    Signature round_sig = "round($value)";
+    BUILT_IN(round)
+    {
+      s_type s = ROUND;
+      return number_helper(ARG("$value", Number), ctx, path, position, s);
     }
 
     Signature ceil_sig = "ceil($value)";
     BUILT_IN(ceil)
     {
-      Number* n = ARG("$value", Number);
-      Number* r = new (ctx.mem) Number(*n);
-      r->path(path);
-      r->position(position);
-      r->value(std::ceil(r->value()));
-      return r;
+      s_type s = CEIL;
+      return number_helper(ARG("$value", Number), ctx, path, position, s);
     }
 
     Signature floor_sig = "floor($value)";
     BUILT_IN(floor)
     {
-      Number* n = ARG("$value", Number);
-      Number* r = new (ctx.mem) Number(*n);
-      r->path(path);
-      r->position(position);
-      r->value(std::floor(r->value()));
-      return r;
+      s_type s = FLOOR;
+      return number_helper(ARG("$value", Number), ctx, path, position, s);
     }
 
     Signature abs_sig = "abs($value)";
     BUILT_IN(abs)
     {
-      Number* n = ARG("$value", Number);
-      Number* r = new (ctx.mem) Number(*n);
-      r->path(path);
-      r->position(position);
-      r->value(std::abs(r->value()));
-      return r;
+      s_type s = ABS;
+      return number_helper(ARG("$value", Number), ctx, path, position, s);
     }
+
+    Number* minmax(Number* x1, List* arglist, Signature sig, Context& ctx, const string& path, Position position, bool m)
+    {
+      Number* num = x1;
+      for (size_t i = 0, L = arglist->length(); i < L; ++i) {
+        Number* xi = dynamic_cast<Number*>(arglist->value_at_index(i));
+        if (!xi) error("`" + string(sig) + "` only takes numeric arguments", path, position);
+        if (m) {
+          if (lt(xi, num, ctx)) num = xi;
+        } else {
+          if (lt(num, xi, ctx)) num = xi;
+        }
+      }
+      return num;
+    } 
 
     Signature min_sig = "min($x1, $x2...)";
     BUILT_IN(min)
     {
       Number* x1 = ARG("$x1", Number);
       List* arglist = ARG("$x2", List);
-      Number* least = x1;
-      for (size_t i = 0, L = arglist->length(); i < L; ++i) {
-        Number* xi = dynamic_cast<Number*>(arglist->value_at_index(i));
-        if (!xi) error("`" + string(sig) + "` only takes numeric arguments", path, position);
-        if (lt(xi, least, ctx)) least = xi;
-      }
-      return least;
+      return minmax(x1, arglist, sig, ctx, path, position, true);
     }
 
     Signature max_sig = "max($x1, $x2...)";
@@ -1005,13 +1006,7 @@ namespace Sass {
     {
       Number* x1 = ARG("$x1", Number);
       List* arglist = ARG("$x2", List);
-      Number* greatest = x1;
-      for (size_t i = 0, L = arglist->length(); i < L; ++i) {
-        Number* xi = dynamic_cast<Number*>(arglist->value_at_index(i));
-        if (!xi) error("`" + string(sig) + "` only takes numeric arguments", path, position);
-        if (lt(greatest, xi, ctx)) greatest = xi;
-      }
-      return greatest;
+      return minmax(x1, arglist, sig, ctx, path, position, false);
     }
 
     /////////////////
@@ -1035,36 +1030,38 @@ namespace Sass {
                                   list ? list->length() : 1);
     }
 
+    double nth_helper(List* l, Number* n, Expression* x, Signature sig, Context& ctx, const string& path, Position position)
+    {
+      // if the argument isn't a list, then wrap it in a singleton list
+      if (!l) {
+        l = new (ctx.mem) List(path, position, 1);
+        *l << x;
+      }
+      if (l->empty()) error("argument `$list` of `" + string(sig) + "` must not be empty", path, position);
+      double index = std::floor(n->value() < 0 ? l->length() + n->value() : n->value() - 1);
+      if (index < 0 || index > l->length() - 1) error("index out of bounds for `" + string(sig) + "`", path, position);
+      return index;
+    }
+
     Signature nth_sig = "nth($list, $n)";
     BUILT_IN(nth)
     {
       List* l = dynamic_cast<List*>(env["$list"]);
       Number* n = ARG("$n", Number);
+      Expression* x = ARG("$list", Expression);
       if (n->value() == 0) error("argument `$n` of `" + string(sig) + "` must be non-zero", path, position);
-      // if the argument isn't a list, then wrap it in a singleton list
-      if (!l) {
-        l = new (ctx.mem) List(path, position, 1);
-        *l << ARG("$list", Expression);
-      }
-      if (l->empty()) error("argument `$list` of `" + string(sig) + "` must not be empty", path, position);
-      double index = std::floor(n->value() < 0 ? l->length() + n->value() : n->value() - 1);
-      if (index < 0 || index > l->length() - 1) error("index out of bounds for `" + string(sig) + "`", path, position);
+      double index = nth_helper(l, n, x, sig, ctx, path, position);
       return l->value_at_index(index);
     }
-
+    
     Signature set_nth_sig = "set-nth($list, $n, $value)";
     BUILT_IN(set_nth)
     {
       List* l = dynamic_cast<List*>(env["$list"]);
       Number* n = ARG("$n", Number);
+      Expression* x = ARG("$list", Expression);
+      double index = nth_helper(l, n, x, sig, ctx, path, position);
       Expression* v = ARG("$value", Expression);
-      if (!l) {
-        l = new (ctx.mem) List(path, position, 1);
-        *l << ARG("$list", Expression);
-      }
-      if (l->empty()) error("argument `$list` of `" + string(sig) + "` must not be empty", path, position);
-      double index = std::floor(n->value() < 0 ? l->length() + n->value() : n->value() - 1);
-      if (index < 0 || index > l->length() - 1) error("index out of bounds for `" + string(sig) + "`", path, position);
       List* result = new (ctx.mem) List(path, position, l->length(), l->separator());
       for (size_t i = 0, L = l->length(); i < L; ++i) {
         *result << ((i == index) ? v : (*l)[i]);
