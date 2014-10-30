@@ -42,6 +42,7 @@ namespace Sass {
     Position current_position;
     string file;
     Base64VLQ base64vlq;
+    bool mapping_was_updated;
   };
 
 }
