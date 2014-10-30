@@ -69,13 +69,11 @@ namespace Sass {
 
       if (generated_line != previous_generated_line) {
         previous_generated_column = 0;
-        while (generated_line != previous_generated_line) {
-          result += ";";
-          previous_generated_line += 1;
-        }
+        result += std::string(generated_line, ';');
+        previous_generated_line = generated_line;
       }
-      else {
-        if (i > 0) result += ",";
+      else if (i > 0) {
+        result += ",";
       }
 
       // generated column
@@ -105,7 +103,7 @@ namespace Sass {
   {
     const ptrdiff_t new_line_count = std::count(str.begin(), str.end(), '\n');
     current_position.line += new_line_count;
-    if (new_line_count >= 1) {
+    if (new_line_count > 0) {
       current_position.column = str.size() - str.find_last_of('\n');
     } else {
       current_position.column += str.size();
