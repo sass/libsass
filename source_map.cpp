@@ -11,7 +11,7 @@
 
 namespace Sass {
   using std::ptrdiff_t;
-  SourceMap::SourceMap(const string& file) : current_position(Position(1, 1)), file(file) { }
+  SourceMap::SourceMap(const string& file) : current_position(Position(1, 1)), file(file), mapping_was_updated(false) { }
 
   // taken from http://stackoverflow.com/a/7725289/1550314
   std::string encodeJsonString(const std::string& input) {
@@ -110,11 +110,15 @@ namespace Sass {
     } else {
       current_position.column += str.size();
     }
+    mapping_was_updated = true;
   }
 
   void SourceMap::add_mapping(AST_Node* node)
   {
-    mappings.push_back(Mapping(node->position(), current_position));
+    if(mapping_was_updated) {
+      mappings.push_back(Mapping(node->position(), current_position));
+    }
+    mapping_was_updated = false;
   }
 
 }
