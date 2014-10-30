@@ -32,8 +32,6 @@ struct sass_options {
   // Colon-separated list of paths
   // Semicolon-separated on Windows
   const char* include_paths;
-  // For the image-url Sass function
-  const char* image_path;
   // Precision for outputting fractional numbers
   int precision;
 };
@@ -53,8 +51,12 @@ struct sass_context {
 };
 
 struct sass_file_context {
+  // Input Path is the path to the Sass file for processing
   const char* input_path;
   const char* output_path;
+  // Source string is an optional way to inject some Sass before the file is executed
+  // to allow for dynamic changes in execution w/o a file change.
+  const char* source_string;
   char* output_string;
   char* source_map_string;
   struct sass_options options;

@@ -53,7 +53,6 @@ namespace Sass {
     style_sheets            (map<string, Block*>()),
     source_map              (resolve_relative_path(initializers.output_path(), initializers.source_map_file(), get_cwd())),
     c_functions             (vector<Sass_C_Function_Descriptor>()),
-    image_path              (initializers.image_path()),
     output_path             (make_canonical_path(initializers.output_path())),
     source_comments         (initializers.source_comments()),
     output_style            (initializers.output_style()),
@@ -212,7 +211,8 @@ namespace Sass {
   {
     Block* root = 0;
     for (size_t i = 0; i < queue.size(); ++i) {
-      Parser p(Parser::from_c_str(queue[i].second, *this, queue[i].first, Position(1 + i, 1, 1)));
+      string parsedata=string(source_c_str)+string("\n")+string(queue[i].second);
+      Parser p(Parser::from_c_str(parsedata.c_str(), *this, queue[i].first, Position(1 + i, 0, 1)));
       Block* ast = p.parse();
       if (i == 0) root = ast;
       style_sheets[queue[i].first] = ast;
@@ -434,8 +434,6 @@ namespace Sass {
     // Boolean Functions
     register_function(ctx, not_sig, sass_not, env);
     register_function(ctx, if_sig, sass_if, env);
-    // Path Functions
-    register_function(ctx, image_url_sig, image_url, env);
   }
 
   void register_c_functions(Context& ctx, Env* env, Sass_C_Function_Descriptor* descrs)

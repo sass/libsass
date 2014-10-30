@@ -114,7 +114,6 @@ extern "C" {
                        .source_comments(c_ctx->options.source_comments)
                        .source_map_file(safe_str(c_ctx->options.source_map_file))
                        .omit_source_map_url(c_ctx->options.omit_source_map_url)
-                       .image_path(safe_str(c_ctx->options.image_path))
                        .include_paths_c_str(c_ctx->options.include_paths)
                        .include_paths_array(0)
                        .include_paths(vector<string>())
@@ -193,14 +192,19 @@ extern "C" {
       else {
           output_path = c_ctx->output_path;
       }
+      if (c_ctx->source_string==NULL)
+      {
+          c_ctx->source_string="//";
+      }
       Context cpp_ctx(
-        Context::Data().entry_point(input_path)
+
+        Context::Data().source_c_str(c_ctx->source_string)
+                       .entry_point(input_path)
                        .output_path(output_path)
                        .output_style((Output_Style) c_ctx->options.output_style)
                        .source_comments(c_ctx->options.source_comments)
                        .source_map_file(safe_str(c_ctx->options.source_map_file))
                        .omit_source_map_url(c_ctx->options.omit_source_map_url)
-                       .image_path(safe_str(c_ctx->options.image_path))
                        .include_paths_c_str(c_ctx->options.include_paths)
                        .include_paths_array(0)
                        .include_paths(vector<string>())
