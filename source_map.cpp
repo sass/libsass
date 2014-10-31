@@ -12,7 +12,7 @@
 
 namespace Sass {
   using std::ptrdiff_t;
-  SourceMap::SourceMap(const string& file) : current_position(Position(1, 1)), file(file) { }
+  SourceMap::SourceMap(const string& file) : output_position(Position(1, 1)), file(file) { }
 
   string SourceMap::generate_source_map(Context &ctx) {
 
@@ -79,10 +79,8 @@ namespace Sass {
 
       if (generated_line != previous_generated_line) {
         previous_generated_column = 0;
-        if (generated_line > previous_generated_line) {
-          result += std::string(generated_line - previous_generated_line, ';');
-          previous_generated_line = generated_line;
-        }
+        result += std::string(generated_line, ';');
+        previous_generated_line = generated_line;
       }
       else if (i > 0) {
         result += ",";
@@ -108,26 +106,33 @@ namespace Sass {
   void SourceMap::remove_line()
   {
     // prevent removing non existing lines
-    if (current_position.line > 1) {
-      current_position.line -= 1;
-      current_position.column = 1;
+    if (output_position.line > 1) {
+      output_position.line -= 1;
+      output_position.column = 1;
     }
   }
 
-  void SourceMap::update_column(const string& str)
+  // called when something is added to the output
+  // pass the buffer that we are adding to output
+  void SourceMap::update_position(const string& text)
   {
-    const ptrdiff_t new_line_count = std::count(str.begin(), str.end(), '\n');
-    current_position.line += new_line_count;
-    if (new_line_count > 0) {
-      current_position.column = str.size() - str.find_last_of('\n');
-    } else {
-      current_position.column += str.size();
-    }
+
+    // count the number of lines we are newly adding to the buffer
+    const ptrdiff_t new_line_count = std::count(text.begin(), text.end(), '\n');
+    // increase internal position line count
+    output_position.line += new_line_count;
+
+    // if we have just one line, we can simply increase the column position
+    if (new_line_count == 0) { output_position.column += text.size(); }
+    // otherwise we need to reset the column counter from last line in text
+    else { output_position.column = text.size() - text.find_last_of('\n'); }
+
   }
 
+  // called when something is added to the output
   void SourceMap::add_mapping(AST_Node* node)
   {
-    mappings.push_back(Mapping(node->position(), current_position));
+    mappings.push_back(Mapping(node->position(), output_position));
   }
 
 }

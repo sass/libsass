@@ -135,7 +135,9 @@ namespace Sass {
     return new (ctx.mem) Declaration(d->path(),
                                      d->position(),
                                      new_p,
+                                     d->separator(),
                                      d->value()->perform(eval->with(env, backtrace)),
+                                     d->closer(),
                                      d->is_important());
   }
 

@@ -139,7 +139,7 @@ namespace Sass {
       }
       return;
     }
-    
+
     indent();
     ctx->source_map.add_mapping(m);
     append_to_buffer("@media ");
@@ -153,7 +153,7 @@ namespace Sass {
       indent();
       e->perform(this);
       append_to_buffer(" {\n");
-      
+
       ++indentation;
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement* stm = (*b)[i];
@@ -164,12 +164,12 @@ namespace Sass {
         }
       }
       --indentation;
-      
+
       buffer.erase(buffer.length()-1);
       if (ctx) ctx->source_map.remove_line();
       append_to_buffer(" }\n");
       --indentation;
-      
+
       ++indentation;
       ++indentation;
       for (size_t i = 0, L = b->length(); i < L; ++i) {
@@ -194,7 +194,7 @@ namespace Sass {
       }
       --indentation;
     }
-    
+
     buffer.erase(buffer.length()-1);
     if (ctx) ctx->source_map.remove_line();
     append_to_buffer(" }\n");
@@ -263,7 +263,7 @@ namespace Sass {
   {
     buffer += text;
     if (ctx && !ctx->_skip_source_map_update)
-      ctx->source_map.update_column(text);
+      ctx->source_map.update_position(text);
   }
 
 }

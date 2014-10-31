@@ -748,6 +748,8 @@ namespace Sass {
 
   Declaration* Parser::parse_declaration() {
     String* prop = 0;
+    String* sep = 0;
+    String* end= 0;
     if (peek< sequence< optional< exactly<'*'> >, identifier_schema > >()) {
       prop = parse_identifier_schema();
     }
@@ -761,9 +763,12 @@ namespace Sass {
       error("invalid property name");
     }
     if (!lex< exactly<':'> >()) error("property \"" + string(lexed) + "\" must be followed by a ':'");
+    sep = new (ctx.mem) String_Constant(path, source_position, lexed);
     if (peek< exactly<';'> >()) error("style declaration must contain a value");
     Expression* list = parse_list();
-    return new (ctx.mem) Declaration(path, prop->position(), prop, list/*, lex<important>()*/);
+    lex< exactly < empty_str > >();
+    end = new (ctx.mem) String_Constant(path, source_position, lexed);
+    return new (ctx.mem) Declaration(path, prop->position(), prop, sep, list, end /*, lex<important>()*/ );
   }
 
   Expression* Parser::parse_map()

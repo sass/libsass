@@ -373,12 +373,14 @@ namespace Sass {
   ////////////////////////////////////////////////////////////////////////
   class Declaration : public Statement {
     ADD_PROPERTY(String*, property);
+    ADD_PROPERTY(String*, separator);
     ADD_PROPERTY(Expression*, value);
+    ADD_PROPERTY(String*, closer);
     ADD_PROPERTY(bool, is_important);
   public:
     Declaration(string path, Position position,
-                String* prop, Expression* val, bool i = false)
-    : Statement(path, position), property_(prop), value_(val), is_important_(i)
+                String* prop, String* sep, Expression* val, String* closer, bool i = false)
+    : Statement(path, position), property_(prop), separator_(sep), value_(val), closer_(closer), is_important_(i)
     { }
     ATTACH_OPERATIONS();
   };

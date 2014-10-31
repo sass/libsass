@@ -89,10 +89,13 @@ namespace Sass {
     if (dec->value()->concrete_type() == Expression::NULL_VAL) return;
     if (ctx) ctx->source_map.add_mapping(dec->property());
     dec->property()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(dec->separator());
     append_to_buffer(": ");
     if (ctx) ctx->source_map.add_mapping(dec->value());
     dec->value()->perform(this);
+    // if (ctx) ctx->source_map.add_mapping(dec->important());
     if (dec->is_important()) append_to_buffer(" !important");
+    if (ctx) ctx->source_map.add_mapping(dec->closer());
     append_to_buffer(";");
   }
 
@@ -279,12 +282,14 @@ namespace Sass {
 
   void Inspect::operator()(Function_Call* call)
   {
+    if (ctx) ctx->source_map.add_mapping(call);
     append_to_buffer(call->name());
     call->arguments()->perform(this);
   }
 
   void Inspect::operator()(Function_Call_Schema* call)
   {
+    if (ctx) ctx->source_map.add_mapping(call);
     call->name()->perform(this);
     call->arguments()->perform(this);
   }
@@ -677,7 +682,7 @@ namespace Sass {
   {
     buffer += text;
     if (ctx && !ctx->_skip_source_map_update)
-      ctx->source_map.update_column(text);
+      ctx->source_map.update_position(text);
   }
 
 }

@@ -133,6 +133,7 @@ namespace Sass {
         if (after_whitespace) {
           source_position.line += count_interval<'\n'>(position, after_whitespace);
           lexed = Token(position, after_whitespace);
+          // cerr << "+++== parsed " << lexed << " @ " << source_position.column << " vs " << position << "\n";
           return position = after_whitespace;
         }
         else {
@@ -165,6 +166,7 @@ namespace Sass {
         source_position.column = column + whitespace;
         column += after_token - after_whitespace + whitespace;
         lexed = Token(after_whitespace, after_token);
+        // cerr << "===== parsed " << lexed << " @ " << source_position.column << " vs " << position << "\n";
 
         return position = after_token;
       }
