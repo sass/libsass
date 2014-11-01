@@ -53,6 +53,7 @@ namespace Sass {
           // copy all remaining arguments into the rest parameter, preserving names
           List* arglist = new (ctx.mem) List(p->path(),
                                              p->position(),
+                                             p->closure(),
                                              0,
                                              List::COMMA,
                                              true);
@@ -61,6 +62,7 @@ namespace Sass {
             a = (*as)[ia];
             (*arglist) << new (ctx.mem) Argument(a->path(),
                                                  a->position(),
+                                                 a->closure(),
                                                  a->value(),
                                                  a->name(),
                                                  false);
@@ -84,7 +86,7 @@ namespace Sass {
           a = static_cast<Argument*>((*arglist)[0]);
         } else {
           Expression* a_to_convert = (*arglist)[0];
-          a = new (ctx.mem) Argument(a_to_convert->path(), a_to_convert->position(), a_to_convert, "", false);
+          a = new (ctx.mem) Argument(a_to_convert->path(), a_to_convert->position(), a_to_convert->closure(), a_to_convert, "", false);
         }
         arglist->elements().erase(arglist->elements().begin());
         if (!arglist->length() || (!arglist->is_arglist() && ip + 1 == LP)) {
@@ -156,6 +158,7 @@ namespace Sass {
         if (leftover->is_rest_parameter()) {
           env->current_frame()[leftover->name()] = new (ctx.mem) List(leftover->path(),
                                                                       leftover->position(),
+                                                                      leftover->closure(),
                                                                       0,
                                                                       List::COMMA,
                                                                       true);

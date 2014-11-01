@@ -27,9 +27,10 @@ namespace Sass {
     vector<size_t> source_index;
     SourceMap(const string& file);
 
-    void remove_line();
+    void remove_line(const string& buffer);
     void update_position(const string& str);
     void add_mapping(AST_Node* node);
+    void add_mapping(Position position);
 
     string generate_source_map(Context &ctx);
 

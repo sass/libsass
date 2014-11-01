@@ -73,6 +73,7 @@ namespace Sass {
         indent();
       }
       s->perform(this);
+      ctx->source_map.add_mapping(r->block());
       append_to_buffer(" {\n");
       ++indentation;
       for (size_t i = 0, L = b->length(); i < L; ++i) {
@@ -106,9 +107,11 @@ namespace Sass {
         }
       }
       --indentation;
-      buffer.erase(buffer.length()-1);
-      if (ctx) ctx->source_map.remove_line();
-      append_to_buffer(" }\n");
+      buffer.erase(buffer.length() - 1);
+      if (ctx) ctx->source_map.remove_line(buffer);
+      append_to_buffer(" }");
+      ctx->source_map.add_mapping(b->closure());
+      append_to_buffer("\n");
     }
 
     if (b->has_hoistable()) {
@@ -164,10 +167,11 @@ namespace Sass {
         }
       }
       --indentation;
-
-      buffer.erase(buffer.length()-1);
-      if (ctx) ctx->source_map.remove_line();
-      append_to_buffer(" }\n");
+      buffer.erase(buffer.length() - 1);
+      if (ctx) ctx->source_map.remove_line(buffer);
+      append_to_buffer(" }");
+      ctx->source_map.add_mapping(b->closure());
+      append_to_buffer("\n");
       --indentation;
 
       ++indentation;
@@ -195,9 +199,12 @@ namespace Sass {
       --indentation;
     }
 
-    buffer.erase(buffer.length()-1);
-    if (ctx) ctx->source_map.remove_line();
-    append_to_buffer(" }\n");
+    buffer.erase(buffer.length() - 1);
+    if (ctx) ctx->source_map.remove_line(buffer);
+    append_to_buffer(" }");
+    ctx->source_map.add_mapping(b->closure());
+    append_to_buffer("\n");
+
   }
 
   void Output_Nested::operator()(At_Rule* a)
@@ -247,13 +254,17 @@ namespace Sass {
     }
     if (decls) --indentation;
 
-    buffer.erase(buffer.length()-1);
-    if (ctx) ctx->source_map.remove_line();
+    buffer.erase(buffer.length() - 1);
+    if (ctx) ctx->source_map.remove_line(buffer);
+    append_to_buffer(" }");
+    ctx->source_map.add_mapping(b->closure());
+    append_to_buffer("\n");
+
+    if (ctx) ctx->source_map.remove_line(buffer);
     if (b->has_hoistable()) {
-      buffer.erase(buffer.length()-1);
-      if (ctx) ctx->source_map.remove_line();
+      buffer.erase(buffer.length() - 1);
+      if (ctx) ctx->source_map.remove_line(buffer);
     }
-    append_to_buffer(" }\n");
   }
 
   void Output_Nested::indent()

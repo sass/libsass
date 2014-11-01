@@ -19,9 +19,9 @@
 #include <iomanip>
 #include <iostream>
 
-#define ARG(argname, argtype) get_arg<argtype>(argname, env, sig, path, position, backtrace)
-#define ARGR(argname, argtype, lo, hi) get_arg_r(argname, env, sig, path, position, lo, hi, backtrace)
-#define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, path, position, backtrace, ctx)
+#define ARG(argname, argtype) get_arg<argtype>(argname, env, sig, path, position, closure, backtrace)
+#define ARGR(argname, argtype, lo, hi) get_arg_r(argname, env, sig, path, position, closure, lo, hi, backtrace)
+#define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, path, position, closure, backtrace, ctx)
 
 namespace Sass {
   using std::stringstream;
@@ -34,6 +34,7 @@ namespace Sass {
     string name(Util::normalize_underscores(sig_parser.lexed));
     Parameters* params = sig_parser.parse_parameters();
     return new (ctx.mem) Definition("[built-in function]",
+                                    Position(),
                                     Position(),
                                     sig,
                                     name,
@@ -50,6 +51,7 @@ namespace Sass {
     Parameters* params = sig_parser.parse_parameters();
     return new (ctx.mem) Definition("[c function]",
                                     Position(),
+                                    Position(),
                                     sig,
                                     name,
                                     params,
@@ -61,7 +63,7 @@ namespace Sass {
   namespace Functions {
 
     template <typename T>
-    T* get_arg(const string& argname, Env& env, Signature sig, const string& path, Position position, Backtrace* backtrace)
+    T* get_arg(const string& argname, Env& env, Signature sig, const string& path, Position position, Position closure, Backtrace* backtrace)
     {
       // Minimal error handling -- the expectation is that built-ins will be written correctly!
       T* val = dynamic_cast<T*>(env[argname]);
@@ -77,24 +79,24 @@ namespace Sass {
       return val;
     }
 
-    Map* get_arg_m(const string& argname, Env& env, Signature sig, const string& path, Position position, Backtrace* backtrace, Context& ctx)
+    Map* get_arg_m(const string& argname, Env& env, Signature sig, const string& path, Position position, Position closure, Backtrace* backtrace, Context& ctx)
     {
       // Minimal error handling -- the expectation is that built-ins will be written correctly!
       Map* val = dynamic_cast<Map*>(env[argname]);
       if (val) return val;
 
       List* lval = dynamic_cast<List*>(env[argname]);
-      if (lval && lval->length() == 0) return new (ctx.mem) Map(path, position, 0);
+      if (lval && lval->length() == 0) return new (ctx.mem) Map(path, position, closure, 0);
 
       // fallback on get_arg for error handling
-      val = get_arg<Map>(argname, env, sig, path, position, backtrace);
+      val = get_arg<Map>(argname, env, sig, path, position, closure, backtrace);
       return val;
     }
 
-    Number* get_arg_r(const string& argname, Env& env, Signature sig, const string& path, Position position, double lo, double hi, Backtrace* backtrace)
+    Number* get_arg_r(const string& argname, Env& env, Signature sig, const string& path, Position position, Position closure, double lo, double hi, Backtrace* backtrace)
     {
       // Minimal error handling -- the expectation is that built-ins will be written correctly!
-      Number* val = get_arg<Number>(argname, env, sig, path, position, backtrace);
+      Number* val = get_arg<Number>(argname, env, sig, path, position, closure, backtrace);
       double v = val->value();
       if (!(lo <= v && v <= hi)) {
         stringstream msg;
@@ -114,6 +116,7 @@ namespace Sass {
     {
       return new (ctx.mem) Color(path,
                                  position,
+                                 closure,
                                  ARGR("$red",   Number, 0, 255)->value(),
                                  ARGR("$green", Number, 0, 255)->value(),
                                  ARGR("$blue",  Number, 0, 255)->value());
@@ -124,6 +127,7 @@ namespace Sass {
     {
       return new (ctx.mem) Color(path,
                                  position,
+                                 closure,
                                  ARGR("$red",   Number, 0, 255)->value(),
                                  ARGR("$green", Number, 0, 255)->value(),
                                  ARGR("$blue",  Number, 0, 255)->value(),
@@ -142,15 +146,15 @@ namespace Sass {
 
     Signature red_sig = "red($color)";
     BUILT_IN(red)
-    { return new (ctx.mem) Number(path, position, ARG("$color", Color)->r()); }
+    { return new (ctx.mem) Number(path, position, closure, ARG("$color", Color)->r()); }
 
     Signature green_sig = "green($color)";
     BUILT_IN(green)
-    { return new (ctx.mem) Number(path, position, ARG("$color", Color)->g()); }
+    { return new (ctx.mem) Number(path, position, closure, ARG("$color", Color)->g()); }
 
     Signature blue_sig = "blue($color)";
     BUILT_IN(blue)
-    { return new (ctx.mem) Number(path, position, ARG("$color", Color)->b()); }
+    { return new (ctx.mem) Number(path, position, closure, ARG("$color", Color)->b()); }
 
     Signature mix_sig = "mix($color-1, $color-2, $weight: 50%)";
     BUILT_IN(mix)
@@ -168,6 +172,7 @@ namespace Sass {
 
       return new (ctx.mem) Color(path,
                                  position,
+                                 closure,
                                  std::floor(w1*color1->r() + w2*color2->r()),
                                  std::floor(w1*color1->g() + w2*color2->g()),
                                  std::floor(w1*color1->b() + w2*color2->b()),
@@ -222,7 +227,7 @@ namespace Sass {
       return m1;
     }
 
-    Color* hsla_impl(double h, double s, double l, double a, Context& ctx, const string& path, Position position)
+    Color* hsla_impl(double h, double s, double l, double a, Context& ctx, const string& path, Position position, Position closure)
     {
       h /= 360.0;
       s /= 100.0;
@@ -238,7 +243,7 @@ namespace Sass {
       double g = (h_to_rgb(m1, m2, h) * 255.0);
       double b = (h_to_rgb(m1, m2, h-1.0/3.0) * 255.0);
 
-      return new (ctx.mem) Color(path, position, r, g, b, a);
+      return new (ctx.mem) Color(path, position, closure, r, g, b, a);
     }
 
     Signature hsl_sig = "hsl($hue, $saturation, $lightness)";
@@ -250,7 +255,8 @@ namespace Sass {
                        1.0,
                        ctx,
                        path,
-                       position);
+                       position,
+                       closure);
     }
 
     Signature hsla_sig = "hsla($hue, $saturation, $lightness, $alpha)";
@@ -262,7 +268,8 @@ namespace Sass {
                        ARGR("$alpha", Number, 0, 1)->value(),
                        ctx,
                        path,
-                       position);
+                       position,
+                       closure);
     }
 
     Signature hue_sig = "hue($color)";
@@ -272,7 +279,7 @@ namespace Sass {
       HSL hsl_color = rgb_to_hsl(rgb_color->r(),
                                  rgb_color->g(),
                                  rgb_color->b());
-      return new (ctx.mem) Number(path, position, hsl_color.h, "deg");
+      return new (ctx.mem) Number(path, position, closure, hsl_color.h, "deg");
     }
 
     Signature saturation_sig = "saturation($color)";
@@ -282,7 +289,7 @@ namespace Sass {
       HSL hsl_color = rgb_to_hsl(rgb_color->r(),
                                  rgb_color->g(),
                                  rgb_color->b());
-      return new (ctx.mem) Number(path, position, hsl_color.s, "%");
+      return new (ctx.mem) Number(path, position, closure, hsl_color.s, "%");
     }
 
     Signature lightness_sig = "lightness($color)";
@@ -292,7 +299,7 @@ namespace Sass {
       HSL hsl_color = rgb_to_hsl(rgb_color->r(),
                                  rgb_color->g(),
                                  rgb_color->b());
-      return new (ctx.mem) Number(path, position, hsl_color.l, "%");
+      return new (ctx.mem) Number(path, position, closure, hsl_color.l, "%");
     }
 
     Signature adjust_hue_sig = "adjust-hue($color, $degrees)";
@@ -309,7 +316,8 @@ namespace Sass {
                        rgb_color->a(),
                        ctx,
                        path,
-                       position);
+                       position,
+                       closure);
     }
 
     Signature lighten_sig = "lighten($color, $amount)";
@@ -332,7 +340,8 @@ namespace Sass {
                        rgb_color->a(),
                        ctx,
                        path,
-                       position);
+                       position,
+                       closure);
     }
 
     Signature darken_sig = "darken($color, $amount)";
@@ -356,7 +365,8 @@ namespace Sass {
                        rgb_color->a(),
                        ctx,
                        path,
-                       position);
+                       position,
+                       closure);
     }
 
     Signature saturate_sig = "saturate($color, $amount: false)";
@@ -366,7 +376,7 @@ namespace Sass {
       Number* amount = dynamic_cast<Number*>(env["$amount"]);
       if (!amount) {
         To_String to_string(&ctx);
-        return new (ctx.mem) String_Constant(path, position, "saturate(" + env["$color"]->perform(&to_string) + ")");
+        return new (ctx.mem) String_Constant(path, position, closure, "saturate(" + env["$color"]->perform(&to_string) + ")");
       }
 
       ARGR("$amount", Number, 0, 100);
@@ -387,7 +397,8 @@ namespace Sass {
                        rgb_color->a(),
                        ctx,
                        path,
-                       position);
+                       position,
+                       closure);
     }
 
     Signature desaturate_sig = "desaturate($color, $amount)";
@@ -410,7 +421,8 @@ namespace Sass {
                        rgb_color->a(),
                        ctx,
                        path,
-                       position);
+                       position,
+                       closure);
     }
 
     Signature grayscale_sig = "grayscale($color)";
@@ -420,7 +432,7 @@ namespace Sass {
       Number* amount = dynamic_cast<Number*>(env["$color"]);
       if (amount) {
         To_String to_string(&ctx);
-        return new (ctx.mem) String_Constant(path, position, "grayscale(" + amount->perform(&to_string) + ")");
+        return new (ctx.mem) String_Constant(path, position, closure, "grayscale(" + amount->perform(&to_string) + ")");
       }
 
       Color* rgb_color = ARG("$color", Color);
@@ -433,7 +445,8 @@ namespace Sass {
                        rgb_color->a(),
                        ctx,
                        path,
-                       position);
+                       position,
+                       closure);
     }
 
     Signature complement_sig = "complement($color)";
@@ -449,7 +462,8 @@ namespace Sass {
                        rgb_color->a(),
                        ctx,
                        path,
-                       position);
+                       position,
+                       closure);
     }
 
     Signature invert_sig = "invert($color)";
@@ -459,12 +473,13 @@ namespace Sass {
       Number* amount = dynamic_cast<Number*>(env["$color"]);
       if (amount) {
         To_String to_string(&ctx);
-        return new (ctx.mem) String_Constant(path, position, "invert(" + amount->perform(&to_string) + ")");
+        return new (ctx.mem) String_Constant(path, position, closure, "invert(" + amount->perform(&to_string) + ")");
       }
 
       Color* rgb_color = ARG("$color", Color);
       return new (ctx.mem) Color(path,
                                  position,
+                                 closure,
                                  255 - rgb_color->r(),
                                  255 - rgb_color->g(),
                                  255 - rgb_color->b(),
@@ -480,17 +495,17 @@ namespace Sass {
     {
       String_Constant* ie_kwd = dynamic_cast<String_Constant*>(env["$color"]);
       if (ie_kwd) {
-        return new (ctx.mem) String_Constant(path, position, "alpha(" + ie_kwd->value() + ")");
+        return new (ctx.mem) String_Constant(path, position, closure, "alpha(" + ie_kwd->value() + ")");
       }
 
       // CSS3 filter function overload: pass literal through directly
       Number* amount = dynamic_cast<Number*>(env["$color"]);
       if (amount) {
         To_String to_string(&ctx);
-        return new (ctx.mem) String_Constant(path, position, "opacity(" + amount->perform(&to_string) + ")");
+        return new (ctx.mem) String_Constant(path, position, closure, "opacity(" + amount->perform(&to_string) + ")");
       }
 
-      return new (ctx.mem) Number(path, position, ARG("$color", Color)->a());
+      return new (ctx.mem) Number(path, position, closure, ARG("$color", Color)->a());
     }
 
     Signature opacify_sig = "opacify($color, $amount)";
@@ -501,6 +516,7 @@ namespace Sass {
       double alpha = color->a() + ARGR("$amount", Number, 0, 1)->value();
       return new (ctx.mem) Color(path,
                                  position,
+                                 closure,
                                  color->r(),
                                  color->g(),
                                  color->b(),
@@ -515,6 +531,7 @@ namespace Sass {
       double alpha = color->a() - ARGR("$amount", Number, 0, 1)->value();
       return new (ctx.mem) Color(path,
                                  position,
+                                 closure,
                                  color->r(),
                                  color->g(),
                                  color->b(),
@@ -546,6 +563,7 @@ namespace Sass {
       if (rgb) {
         return new (ctx.mem) Color(path,
                                    position,
+                                   closure,
                                    color->r() + (r ? r->value() : 0),
                                    color->g() + (g ? g->value() : 0),
                                    color->b() + (b ? b->value() : 0),
@@ -559,11 +577,13 @@ namespace Sass {
                          color->a() + (a ? a->value() : 0),
                          ctx,
                          path,
-                         position);
+                         position,
+                         closure);
       }
       if (a) {
         return new (ctx.mem) Color(path,
                                    position,
+                                   closure,
                                    color->r(),
                                    color->g(),
                                    color->b(),
@@ -599,6 +619,7 @@ namespace Sass {
         double ascale = (a ? ARGR("$alpha", Number, -100.0, 100.0)->value() : 0.0) / 100.0;
         return new (ctx.mem) Color(path,
                                    position,
+                                   closure,
                                    color->r() + rscale * (rscale > 0.0 ? 255 - color->r() : color->r()),
                                    color->g() + gscale * (gscale > 0.0 ? 255 - color->g() : color->g()),
                                    color->b() + bscale * (bscale > 0.0 ? 255 - color->b() : color->b()),
@@ -614,12 +635,13 @@ namespace Sass {
         hsl_struct.s += sscale * (sscale > 0.0 ? 100.0 - hsl_struct.s : hsl_struct.s);
         hsl_struct.l += lscale * (lscale > 0.0 ? 100.0 - hsl_struct.l : hsl_struct.l);
         double alpha = color->a() + ascale * (ascale > 0.0 ? 1.0 - color->a() : color->r());
-        return hsla_impl(hsl_struct.h, hsl_struct.s, hsl_struct.l, alpha, ctx, path, position);
+        return hsla_impl(hsl_struct.h, hsl_struct.s, hsl_struct.l, alpha, ctx, path, position, closure);
       }
       if (a) {
         double ascale = (a ? ARGR("$alpha", Number, -100.0, 100.0)->value() : 0.0) / 100.0;
         return new (ctx.mem) Color(path,
                                    position,
+                                   closure,
                                    color->r(),
                                    color->g(),
                                    color->b(),
@@ -651,6 +673,7 @@ namespace Sass {
       if (rgb) {
         return new (ctx.mem) Color(path,
                                    position,
+                                   closure,
                                    r ? ARGR("$red",   Number, 0, 255)->value() : color->r(),
                                    g ? ARGR("$green", Number, 0, 255)->value() : color->g(),
                                    b ? ARGR("$blue",  Number, 0, 255)->value() : color->b(),
@@ -662,12 +685,13 @@ namespace Sass {
         if (s) hsl_struct.s = ARGR("$saturation", Number, 0, 100)->value();
         if (l) hsl_struct.l = ARGR("$lightness",  Number, 0, 100)->value();
         double alpha = a ? ARGR("$alpha", Number, 0, 1.0)->value() : color->a();
-        return hsla_impl(hsl_struct.h, hsl_struct.s, hsl_struct.l, alpha, ctx, path, position);
+        return hsla_impl(hsl_struct.h, hsl_struct.s, hsl_struct.l, alpha, ctx, path, position, closure);
       }
       if (a) {
         double alpha = a ? ARGR("$alpha", Number, 0, 1.0)->value() : color->a();
         return new (ctx.mem) Color(path,
                                    position,
+                                   closure,
                                    color->r(),
                                    color->g(),
                                    color->b(),
@@ -705,7 +729,7 @@ namespace Sass {
       for (size_t i = 0, L = result.length(); i < L; ++i) {
         result[i] = std::toupper(result[i]);
       }
-      return new (ctx.mem) String_Constant(path, position, result);
+      return new (ctx.mem) String_Constant(path, position, closure, result);
     }
 
     ///////////////////
@@ -718,7 +742,7 @@ namespace Sass {
       To_String to_string;
       AST_Node* arg = env["$string"];
       string str(unquote(arg->perform(&to_string)));
-      String_Constant* result = new (ctx.mem) String_Constant(path, position, str);
+      String_Constant* result = new (ctx.mem) String_Constant(path, position, closure, str);
       result->is_delayed(true);
       return result;
     }
@@ -729,7 +753,7 @@ namespace Sass {
       To_String to_string;
       AST_Node* arg = env["$string"];
       string str(quote(arg->perform(&to_string), '"'));
-      String_Constant* result = new (ctx.mem) String_Constant(path, position, str);
+      String_Constant* result = new (ctx.mem) String_Constant(path, position, closure, str);
       result->is_delayed(true);
       return result;
     }
@@ -766,7 +790,7 @@ namespace Sass {
         error(msg, path, position, backtrace);
       }
       // return something even if we had an error (-1)
-      return new (ctx.mem) Number(path, position, len);
+      return new (ctx.mem) Number(path, position, closure, len);
     }
 
     Signature str_insert_sig = "str-insert($string, $insert, $index)";
@@ -822,7 +846,7 @@ namespace Sass {
         string msg("utf8::invalid_utf8");
         error(msg, path, position, backtrace);
       }
-      return new (ctx.mem) String_Constant(path, position, str);
+      return new (ctx.mem) String_Constant(path, position, closure, str);
     }
 
     Signature str_index_sig = "str-index($string, $substring)";
@@ -839,7 +863,7 @@ namespace Sass {
 
         size_t c_index = str.find(substr);
         if(c_index == string::npos) {
-          return new (ctx.mem) Null(path, position);
+          return new (ctx.mem) Null(path, position, closure);
         }
         index = UTF_8::code_point_count(str, 0, c_index) + 1;
       }
@@ -856,7 +880,7 @@ namespace Sass {
         error(msg, path, position, backtrace);
       }
       // return something even if we had an error (-1)
-      return new (ctx.mem) Number(path, position, index);
+      return new (ctx.mem) Number(path, position, closure, index);
     }
 
     Signature str_slice_sig = "str-slice($string, $start-at, $end-at:-1)";
@@ -897,7 +921,7 @@ namespace Sass {
         string msg("utf8::invalid_utf8");
         error(msg, path, position, backtrace);
       }
-      return new (ctx.mem) String_Constant(path, position, newstr);
+      return new (ctx.mem) String_Constant(path, position, closure, newstr);
     }
 
     Signature to_upper_case_sig = "to-upper-case($string)";
@@ -912,7 +936,7 @@ namespace Sass {
         }
       }
 
-      return new (ctx.mem) String_Constant(path, position, str);
+      return new (ctx.mem) String_Constant(path, position, closure, str);
     }
 
     Signature to_lower_case_sig = "to-lower-case($string)";
@@ -927,7 +951,7 @@ namespace Sass {
         }
       }
 
-      return new (ctx.mem) String_Constant(path, position, str);
+      return new (ctx.mem) String_Constant(path, position, closure, str);
     }
 
     ///////////////////
@@ -939,7 +963,7 @@ namespace Sass {
     {
       Number* n = ARG("$value", Number);
       if (!n->is_unitless()) error("argument $value of `" + string(sig) + "` must be unitless", path, position);
-      return new (ctx.mem) Number(path, position, n->value() * 100, "%");
+      return new (ctx.mem) Number(path, position, closure, n->value() * 100, "%");
     }
 
     Signature round_sig = "round($value)";
@@ -949,6 +973,7 @@ namespace Sass {
       Number* r = new (ctx.mem) Number(*n);
       r->path(path);
       r->position(position);
+      // r->closure(closure);
       r->value(std::floor(r->value() + 0.5));
       return r;
     }
@@ -960,6 +985,7 @@ namespace Sass {
       Number* r = new (ctx.mem) Number(*n);
       r->path(path);
       r->position(position);
+      // r->closure(closure);
       r->value(std::ceil(r->value()));
       return r;
     }
@@ -971,6 +997,7 @@ namespace Sass {
       Number* r = new (ctx.mem) Number(*n);
       r->path(path);
       r->position(position);
+      // r->closure(closure);
       r->value(std::floor(r->value()));
       return r;
     }
@@ -982,6 +1009,7 @@ namespace Sass {
       Number* r = new (ctx.mem) Number(*n);
       r->path(path);
       r->position(position);
+      // r->closure(closure);
       r->value(std::abs(r->value()));
       return r;
     }
@@ -1026,12 +1054,14 @@ namespace Sass {
         Map* map = dynamic_cast<Map*>(env["$list"]);
         return new (ctx.mem) Number(path,
                                     position,
+                                    closure,
                                     map ? map->length() : 1);
       }
 
       List* list = dynamic_cast<List*>(env["$list"]);
       return new (ctx.mem) Number(path,
                                   position,
+                                  closure,
                                   list ? list->length() : 1);
     }
 
@@ -1043,7 +1073,7 @@ namespace Sass {
       if (n->value() == 0) error("argument `$n` of `" + string(sig) + "` must be non-zero", path, position);
       // if the argument isn't a list, then wrap it in a singleton list
       if (!l) {
-        l = new (ctx.mem) List(path, position, 1);
+        l = new (ctx.mem) List(path, position, closure, 1);
         *l << ARG("$list", Expression);
       }
       if (l->empty()) error("argument `$list` of `" + string(sig) + "` must not be empty", path, position);
@@ -1059,13 +1089,13 @@ namespace Sass {
       Number* n = ARG("$n", Number);
       Expression* v = ARG("$value", Expression);
       if (!l) {
-        l = new (ctx.mem) List(path, position, 1);
+        l = new (ctx.mem) List(path, position, closure, 1);
         *l << ARG("$list", Expression);
       }
       if (l->empty()) error("argument `$list` of `" + string(sig) + "` must not be empty", path, position);
       double index = std::floor(n->value() < 0 ? l->length() + n->value() : n->value() - 1);
       if (index < 0 || index > l->length() - 1) error("index out of bounds for `" + string(sig) + "`", path, position);
-      List* result = new (ctx.mem) List(path, position, l->length(), l->separator());
+      List* result = new (ctx.mem) List(path, position, closure, l->length(), l->separator());
       for (size_t i = 0, L = l->length(); i < L; ++i) {
         *result << ((i == index) ? v : (*l)[i]);
       }
@@ -1078,13 +1108,13 @@ namespace Sass {
       List* l = dynamic_cast<List*>(env["$list"]);
       Expression* v = ARG("$value", Expression);
       if (!l) {
-        l = new (ctx.mem) List(path, position, 1);
+        l = new (ctx.mem) List(path, position, closure, 1);
         *l << ARG("$list", Expression);
       }
       for (size_t i = 0, L = l->length(); i < L; ++i) {
-        if (eq(l->value_at_index(i), v, ctx)) return new (ctx.mem) Number(path, position, i+1);
+        if (eq(l->value_at_index(i), v, ctx)) return new (ctx.mem) Number(path, position, closure, i+1);
       }
-      return new (ctx.mem) Null(path, position);
+      return new (ctx.mem) Null(path, position, closure);
     }
 
     Signature join_sig = "join($list1, $list2, $separator: auto)";
@@ -1095,12 +1125,12 @@ namespace Sass {
       String_Constant* sep = ARG("$separator", String_Constant);
       List::Separator sep_val = (l1 ? l1->separator() : List::SPACE);
       if (!l1) {
-        l1 = new (ctx.mem) List(path, position, 1);
+        l1 = new (ctx.mem) List(path, position, closure, 1);
         *l1 << ARG("$list1", Expression);
         sep_val = (l2 ? l2->separator() : List::SPACE);
       }
       if (!l2) {
-        l2 = new (ctx.mem) List(path, position, 1);
+        l2 = new (ctx.mem) List(path, position, closure, 1);
         *l2 << ARG("$list2", Expression);
       }
       size_t len = l1->length() + l2->length();
@@ -1108,7 +1138,7 @@ namespace Sass {
       if (sep_str == "space") sep_val = List::SPACE;
       else if (sep_str == "comma") sep_val = List::COMMA;
       else if (sep_str != "auto") error("argument `$separator` of `" + string(sig) + "` must be `space`, `comma`, or `auto`", path, position);
-      List* result = new (ctx.mem) List(path, position, len, sep_val);
+      List* result = new (ctx.mem) List(path, position, closure, len, sep_val);
       *result += l1;
       *result += l2;
       return result;
@@ -1121,10 +1151,10 @@ namespace Sass {
       Expression* v = ARG("$val", Expression);
       String_Constant* sep = ARG("$separator", String_Constant);
       if (!l) {
-        l = new (ctx.mem) List(path, position, 1);
+        l = new (ctx.mem) List(path, position, closure, 1);
         *l << ARG("$list", Expression);
       }
-      List* result = new (ctx.mem) List(path, position, l->length() + 1, l->separator());
+      List* result = new (ctx.mem) List(path, position, closure, l->length() + 1, l->separator());
       string sep_str(unquote(sep->value()));
       if (sep_str == "space") result->separator(List::SPACE);
       else if (sep_str == "comma") result->separator(List::COMMA);
@@ -1142,7 +1172,7 @@ namespace Sass {
       for (size_t i = 0, L = arglist->length(); i < L; ++i) {
         List* ith = dynamic_cast<List*>(arglist->value_at_index(i));
         if (!ith) {
-          ith = new (ctx.mem) List(path, position, 1);
+          ith = new (ctx.mem) List(path, position, closure, 1);
           *ith << arglist->value_at_index(i);
           if (arglist->is_arglist()) {
             ((Argument*)(*arglist)[i])->value(ith);
@@ -1152,10 +1182,10 @@ namespace Sass {
         }
         shortest = (i ? std::min(shortest, ith->length()) : ith->length());
       }
-      List* zippers = new (ctx.mem) List(path, position, shortest, List::COMMA);
+      List* zippers = new (ctx.mem) List(path, position, closure, shortest, List::COMMA);
       size_t L = arglist->length();
       for (size_t i = 0; i < shortest; ++i) {
-        List* zipper = new (ctx.mem) List(path, position, L);
+        List* zipper = new (ctx.mem) List(path, position, closure, L);
         for (size_t j = 0; j < L; ++j) {
           *zipper << (*static_cast<List*>(arglist->value_at_index(j)))[i];
         }
@@ -1173,13 +1203,13 @@ namespace Sass {
         Expression* the_arg = arglist->value_at_index(0);
         arglist = dynamic_cast<List*>(the_arg);
         if (!arglist) {
-          List* result = new (ctx.mem) List(path, position, 1, List::COMMA);
+          List* result = new (ctx.mem) List(path, position, closure, 1, List::COMMA);
           *result << the_arg;
           return result;
         }
         sep = arglist->separator();
       }
-      List* result = new (ctx.mem) List(path, position, 0, sep);
+      List* result = new (ctx.mem) List(path, position, closure, 0, sep);
       for (size_t i = 0, L = arglist->length(); i < L; ++i) {
         Boolean* ith = dynamic_cast<Boolean*>(arglist->value_at_index(i));
         if (ith && ith->value() == false) continue;
@@ -1193,11 +1223,12 @@ namespace Sass {
     {
       List* l = dynamic_cast<List*>(env["$list"]);
       if (!l) {
-        l = new (ctx.mem) List(path, position, 1);
+        l = new (ctx.mem) List(path, position, closure, 1);
         *l << ARG("$list", Expression);
       }
       return new (ctx.mem) String_Constant(path,
                                            position,
+                                           closure,
                                            l->separator() == List::COMMA ? "comma" : "space");
     }
 
@@ -1213,7 +1244,7 @@ namespace Sass {
       try {
         return m->at(v);
       } catch (const std::out_of_range&) {
-        return new (ctx.mem) Null(path, position);
+        return new (ctx.mem) Null(path, position, closure);
       }
     }
 
@@ -1222,14 +1253,14 @@ namespace Sass {
     {
       Map* m = ARGM("$map", Map, ctx);
       Expression* v = ARG("$key", Expression);
-      return new (ctx.mem) Boolean(path, position, m->has(v));
+      return new (ctx.mem) Boolean(path, position, closure, m->has(v));
     }
 
     Signature map_keys_sig = "map-keys($map)";
     BUILT_IN(map_keys)
     {
       Map* m = ARGM("$map", Map, ctx);
-      List* result = new (ctx.mem) List(path, position, m->length(), List::COMMA);
+      List* result = new (ctx.mem) List(path, position, closure, m->length(), List::COMMA);
       for ( auto key : m->keys()) {
         *result << key;
       }
@@ -1240,7 +1271,7 @@ namespace Sass {
     BUILT_IN(map_values)
     {
       Map* m = ARGM("$map", Map, ctx);
-      List* result = new (ctx.mem) List(path, position, m->length(), List::COMMA);
+      List* result = new (ctx.mem) List(path, position, closure, m->length(), List::COMMA);
       for ( auto key : m->keys()) {
         *result << m->at(key);
       }
@@ -1254,7 +1285,7 @@ namespace Sass {
       Map* m2 = ARGM("$map2", Map, ctx);
 
       size_t len = m1->length() + m2->length();
-      Map* result = new (ctx.mem) Map(path, position, len);
+      Map* result = new (ctx.mem) Map(path, position, closure, len);
       *result += m1;
       *result += m2;
       return result;
@@ -1266,7 +1297,7 @@ namespace Sass {
       bool remove;
       Map* m = ARGM("$map", Map, ctx);
       List* arglist = ARG("$keys", List);
-      Map* result = new (ctx.mem) Map(path, position, 1);
+      Map* result = new (ctx.mem) Map(path, position, closure, 1);
       for (auto key : m->keys()) {
         remove = false;
         for (size_t j = 0, K = arglist->length(); j < K && !remove; ++j) {
@@ -1281,11 +1312,11 @@ namespace Sass {
     BUILT_IN(keywords)
     {
       List* arglist = new (ctx.mem) List(*ARG("$args", List));
-      Map* result = new (ctx.mem) Map(path, position, 1);
+      Map* result = new (ctx.mem) Map(path, position, closure, 1);
       for (size_t i = 0, L = arglist->length(); i < L; ++i) {
         string name = string(((Argument*)(*arglist)[i])->name());
         string sanitized_name = string(name, 1);
-        *result << make_pair(new (ctx.mem) String_Constant(path, position, sanitized_name),
+        *result << make_pair(new (ctx.mem) String_Constant(path, position, closure, sanitized_name),
                              ((Argument*)(*arglist)[i])->value());
       }
       return result;
@@ -1303,19 +1334,19 @@ namespace Sass {
         To_String to_string;
         string str(v->perform(&to_string));
         if (ctx.names_to_colors.count(str)) {
-          return new (ctx.mem) String_Constant(path, position, "color");
+          return new (ctx.mem) String_Constant(path, position, closure, "color");
         }
       }
-      return new (ctx.mem) String_Constant(path, position, ARG("$value", Expression)->type());
+      return new (ctx.mem) String_Constant(path, position, closure, ARG("$value", Expression)->type());
     }
 
     Signature unit_sig = "unit($number)";
     BUILT_IN(unit)
-    { return new (ctx.mem) String_Constant(path, position, quote(ARG("$number", Number)->unit(), '"')); }
+    { return new (ctx.mem) String_Constant(path, position, closure, quote(ARG("$number", Number)->unit(), '"')); }
 
     Signature unitless_sig = "unitless($number)";
     BUILT_IN(unitless)
-    { return new (ctx.mem) Boolean(path, position, ARG("$number", Number)->is_unitless()); }
+    { return new (ctx.mem) Boolean(path, position, closure, ARG("$number", Number)->is_unitless()); }
 
     Signature comparable_sig = "comparable($number-1, $number-2)";
     BUILT_IN(comparable)
@@ -1323,11 +1354,11 @@ namespace Sass {
       Number* n1 = ARG("$number-1", Number);
       Number* n2 = ARG("$number-2", Number);
       if (n1->is_unitless() || n2->is_unitless()) {
-        return new (ctx.mem) Boolean(path, position, true);
+        return new (ctx.mem) Boolean(path, position, closure, true);
       }
       Number tmp_n2(*n2);
       tmp_n2.normalize(n1->find_convertible_unit());
-      return new (ctx.mem) Boolean(path, position, n1->unit() == tmp_n2.unit());
+      return new (ctx.mem) Boolean(path, position, closure, n1->unit() == tmp_n2.unit());
     }
 
     Signature variable_exists_sig = "variable-exists($name)";
@@ -1336,10 +1367,10 @@ namespace Sass {
       string s = unquote(ARG("$name", String_Constant)->value());
 
       if(d_env.has("$"+s)) {
-        return new (ctx.mem) Boolean(path, position, true);
+        return new (ctx.mem) Boolean(path, position, closure, true);
       }
       else {
-        return new (ctx.mem) Boolean(path, position, false);
+        return new (ctx.mem) Boolean(path, position, closure, false);
       }
     }
 
@@ -1349,10 +1380,10 @@ namespace Sass {
       string s = unquote(ARG("$name", String_Constant)->value());
 
       if(d_env.global_frame_has("$"+s)) {
-        return new (ctx.mem) Boolean(path, position, true);
+        return new (ctx.mem) Boolean(path, position, closure, true);
       }
       else {
-        return new (ctx.mem) Boolean(path, position, false);
+        return new (ctx.mem) Boolean(path, position, closure, false);
       }
     }
 
@@ -1362,10 +1393,10 @@ namespace Sass {
       string s = unquote(ARG("$name", String_Constant)->value());
 
       if(d_env.global_frame_has(s+"[f]")) {
-        return new (ctx.mem) Boolean(path, position, true);
+        return new (ctx.mem) Boolean(path, position, closure, true);
       }
       else {
-        return new (ctx.mem) Boolean(path, position, false);
+        return new (ctx.mem) Boolean(path, position, closure, false);
       }
     }
 
@@ -1375,10 +1406,10 @@ namespace Sass {
       string s = unquote(ARG("$name", String_Constant)->value());
 
       if(d_env.global_frame_has(s+"[m]")) {
-        return new (ctx.mem) Boolean(path, position, true);
+        return new (ctx.mem) Boolean(path, position, closure, true);
       }
       else {
-        return new (ctx.mem) Boolean(path, position, false);
+        return new (ctx.mem) Boolean(path, position, closure, false);
       }
     }
 
@@ -1388,12 +1419,12 @@ namespace Sass {
       string name = unquote(ARG("$name", String_Constant)->value());
       List* arglist = new (ctx.mem) List(*ARG("$args", List));
 
-      Arguments* args = new (ctx.mem) Arguments(path, position);
+      Arguments* args = new (ctx.mem) Arguments(path, position, closure);
       for (size_t i = 0, L = arglist->length(); i < L; ++i) {
-        Argument* arg = new (ctx.mem) Argument(path, position, arglist->value_at_index(i));
+        Argument* arg = new (ctx.mem) Argument(path, position, closure, arglist->value_at_index(i));
         *args << arg;
       }
-      Function_Call* func = new (ctx.mem) Function_Call(path, position, name, args);
+      Function_Call* func = new (ctx.mem) Function_Call(path, position, closure, name, args);
       Eval eval(ctx, &d_env, backtrace);
       return func->perform(&eval);
 
@@ -1405,7 +1436,7 @@ namespace Sass {
 
     Signature not_sig = "not($value)";
     BUILT_IN(sass_not)
-    { return new (ctx.mem) Boolean(path, position, ARG("$value", Expression)->is_false()); }
+    { return new (ctx.mem) Boolean(path, position, closure, ARG("$value", Expression)->is_false()); }
 
     Signature if_sig = "if($condition, $if-true, $if-false)";
     // BUILT_IN(sass_if)
@@ -1433,7 +1464,7 @@ namespace Sass {
       bool only_path = !ARG("$only-path", Expression)->is_false();
       string full_path(quote(ctx.image_path + "/" + unquote(ipath->value()), '"'));
       if (!only_path) full_path = "url(" + full_path + ")";
-      return new (ctx.mem) String_Constant(path, position, full_path);
+      return new (ctx.mem) String_Constant(path, position, closure, full_path);
     }
 
   }

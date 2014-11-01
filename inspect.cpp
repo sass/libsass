@@ -35,7 +35,7 @@ namespace Sass {
       size_t l = buffer.length();
       if (l > 2 && buffer[l-1] == '\n' && buffer[l-2] == '\n') {
         buffer.erase(l-1);
-        if (ctx) ctx->source_map.remove_line();
+        if (ctx) ctx->source_map.remove_line(buffer);
       }
     }
   }
@@ -95,7 +95,7 @@ namespace Sass {
     dec->value()->perform(this);
     // if (ctx) ctx->source_map.add_mapping(dec->important());
     if (dec->is_important()) append_to_buffer(" !important");
-    if (ctx) ctx->source_map.add_mapping(dec->closer());
+    if (ctx) ctx->source_map.add_mapping(dec->closure());
     append_to_buffer(";");
   }
 

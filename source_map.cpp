@@ -79,8 +79,10 @@ namespace Sass {
 
       if (generated_line != previous_generated_line) {
         previous_generated_column = 0;
-        result += std::string(generated_line, ';');
-        previous_generated_line = generated_line;
+        if (generated_line > previous_generated_line) {
+          result += std::string(generated_line - previous_generated_line, ';');
+          previous_generated_line = generated_line;
+        }
       }
       else if (i > 0) {
         result += ",";
@@ -103,12 +105,19 @@ namespace Sass {
     return result;
   }
 
-  void SourceMap::remove_line()
+  void SourceMap::remove_line(const string& buffer)
   {
     // prevent removing non existing lines
     if (output_position.line > 1) {
       output_position.line -= 1;
-      output_position.column = 1;
+      size_t last_lf = buffer.find_last_of('\n');
+      if (last_lf != string::npos) {
+        output_position.column = buffer.size() - last_lf;
+      } else {
+        output_position.column = buffer.size() - 0;
+      }
+    } else {
+    	throw("removing unexisting line??");
     }
   }
 
@@ -132,7 +141,14 @@ namespace Sass {
   // called when something is added to the output
   void SourceMap::add_mapping(AST_Node* node)
   {
-    mappings.push_back(Mapping(node->position(), output_position));
+  	if (node)
+      mappings.push_back(Mapping(node->position(), output_position));
+  }
+
+  // called when something is added to the output
+  void SourceMap::add_mapping(Position position)
+  {
+      mappings.push_back(Mapping(position, output_position));
   }
 
 }
