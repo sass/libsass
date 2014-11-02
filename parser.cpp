@@ -208,7 +208,7 @@ namespace Sass {
     else if (lex< exactly< ellipsis > >()) {
       is_rest = true;
     }
-    Parameter* p = new (ctx.mem) Parameter(path, pos, pos, name, val, is_rest);
+    Parameter* p = new (ctx.mem) Parameter(path, pos, source_closure, name, val, is_rest);
     return p;
   }
 

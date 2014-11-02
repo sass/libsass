@@ -14,6 +14,7 @@ namespace Sass {
   // statements
   void Inspect::operator()(Block* block)
   {
+    if (ctx) ctx->source_map.add_mapping(block);
     if (!block->is_root()) {
       append_to_buffer(" {\n");
       ++indentation;
@@ -38,19 +39,24 @@ namespace Sass {
         if (ctx) ctx->source_map.remove_line(buffer);
       }
     }
+    if (ctx) ctx->source_map.add_mapping(block->closure());
   }
 
   void Inspect::operator()(Ruleset* ruleset)
   {
+    if (ctx) ctx->source_map.add_mapping(ruleset);
     ruleset->selector()->perform(this);
     ruleset->block()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(ruleset->closure());
   }
 
   void Inspect::operator()(Propset* propset)
   {
+    if (ctx) ctx->source_map.add_mapping(propset);
     propset->property_fragment()->perform(this);
     append_to_buffer(": ");
     propset->block()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(propset->closure());
   }
 
   void Inspect::operator()(Media_Block* media_block)
@@ -59,6 +65,7 @@ namespace Sass {
     append_to_buffer("@media ");
     media_block->media_queries()->perform(this);
     media_block->block()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(media_block->closure());
   }
 
   void Inspect::operator()(Feature_Block* feature_block)
@@ -71,6 +78,7 @@ namespace Sass {
 
   void Inspect::operator()(At_Rule* at_rule)
   {
+    if (ctx) ctx->source_map.add_mapping(at_rule);
     append_to_buffer(at_rule->keyword());
     if (at_rule->selector()) {
       append_to_buffer(" ");
@@ -82,10 +90,12 @@ namespace Sass {
     else {
       append_to_buffer(";");
     }
+    if (ctx) ctx->source_map.add_mapping(at_rule->closure());
   }
 
   void Inspect::operator()(Declaration* dec)
   {
+    if (ctx) ctx->source_map.add_mapping(dec);
     if (dec->value()->concrete_type() == Expression::NULL_VAL) return;
     if (ctx) ctx->source_map.add_mapping(dec->property());
     dec->property()->perform(this);
@@ -101,15 +111,18 @@ namespace Sass {
 
   void Inspect::operator()(Assignment* assn)
   {
+    if (ctx) ctx->source_map.add_mapping(assn);
     append_to_buffer(assn->variable());
     append_to_buffer(": ");
     assn->value()->perform(this);
     if (assn->is_guarded()) append_to_buffer(" !default");
     append_to_buffer(";");
+    if (ctx) ctx->source_map.add_mapping(assn->closure());
   }
 
   void Inspect::operator()(Import* import)
   {
+    if (ctx) ctx->source_map.add_mapping(import);
     if (!import->urls().empty()) {
       if (ctx) ctx->source_map.add_mapping(import);
       append_to_buffer("@import ");
@@ -123,6 +136,7 @@ namespace Sass {
         append_to_buffer(";");
       }
     }
+    if (ctx) ctx->source_map.add_mapping(import->closure());
   }
 
   void Inspect::operator()(Import_Stub* import)
@@ -131,6 +145,7 @@ namespace Sass {
     append_to_buffer("@import ");
     append_to_buffer(import->file_name());
     append_to_buffer(";");
+    if (ctx) ctx->source_map.add_mapping(import->closure());
   }
 
   void Inspect::operator()(Warning* warning)
@@ -139,15 +154,19 @@ namespace Sass {
     append_to_buffer("@warn ");
     warning->message()->perform(this);
     append_to_buffer(";");
+    if (ctx) ctx->source_map.add_mapping(warning->closure());
   }
 
   void Inspect::operator()(Comment* comment)
   {
+    if (ctx) ctx->source_map.add_mapping(comment);
     comment->text()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(comment->closure());
   }
 
   void Inspect::operator()(If* cond)
   {
+    if (ctx) ctx->source_map.add_mapping(cond);
     append_to_buffer("@if ");
     cond->predicate()->perform(this);
     cond->consequent()->perform(this);
@@ -157,10 +176,12 @@ namespace Sass {
       append_to_buffer("else");
       cond->alternative()->perform(this);
     }
+    if (ctx) ctx->source_map.add_mapping(cond->closure());
   }
 
   void Inspect::operator()(For* loop)
   {
+    if (ctx) ctx->source_map.add_mapping(loop);
     append_to_buffer("@for ");
     append_to_buffer(loop->variable());
     append_to_buffer(" from ");
@@ -168,10 +189,12 @@ namespace Sass {
     append_to_buffer((loop->is_inclusive() ? " through " : " to "));
     loop->upper_bound()->perform(this);
     loop->block()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(loop->closure());
   }
 
   void Inspect::operator()(Each* loop)
   {
+    if (ctx) ctx->source_map.add_mapping(loop);
     append_to_buffer("@each ");
     append_to_buffer(loop->variables()[0]);
     for (size_t i = 1, L = loop->variables().size(); i < L; ++i) {
@@ -181,31 +204,39 @@ namespace Sass {
     append_to_buffer(" in ");
     loop->list()->perform(this);
     loop->block()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(loop->closure());
   }
 
   void Inspect::operator()(While* loop)
   {
+    if (ctx) ctx->source_map.add_mapping(loop);
     append_to_buffer("@while ");
     loop->predicate()->perform(this);
     loop->block()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(loop->closure());
   }
 
   void Inspect::operator()(Return* ret)
   {
+    if (ctx) ctx->source_map.add_mapping(ret);
     append_to_buffer("@return ");
     ret->value()->perform(this);
     append_to_buffer(";");
+    if (ctx) ctx->source_map.add_mapping(ret->closure());
   }
 
   void Inspect::operator()(Extension* extend)
   {
+    if (ctx) ctx->source_map.add_mapping(extend);
     append_to_buffer("@extend ");
     extend->selector()->perform(this);
     append_to_buffer(";");
+    if (ctx) ctx->source_map.add_mapping(extend->closure());
   }
 
   void Inspect::operator()(Definition* def)
   {
+    if (ctx) ctx->source_map.add_mapping(def);
     if (def->type() == Definition::MIXIN) {
       append_to_buffer("@mixin ");
     } else {
@@ -214,10 +245,12 @@ namespace Sass {
     append_to_buffer(def->name());
     def->parameters()->perform(this);
     def->block()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(def->closure());
   }
 
   void Inspect::operator()(Mixin_Call* call)
   {
+    if (ctx) ctx->source_map.add_mapping(call);
     append_to_buffer(string("@include ") += call->name());
     if (call->arguments()) {
       call->arguments()->perform(this);
@@ -227,16 +260,19 @@ namespace Sass {
       call->block()->perform(this);
     }
     if (!call->block()) append_to_buffer(";");
+    if (ctx) ctx->source_map.add_mapping(call->closure());
   }
 
   void Inspect::operator()(Content* content)
   {
     if (ctx) ctx->source_map.add_mapping(content);
     append_to_buffer("@content;");
+    if (ctx) ctx->source_map.add_mapping(content->closure());
   }
 
   void Inspect::operator()(List* list)
   {
+    if (ctx) ctx->source_map.add_mapping(list);
     string sep(list->separator() == List::SPACE ? " " : ", ");
     if (list->empty()) return;
     bool items_output = false;
@@ -249,10 +285,12 @@ namespace Sass {
       list_item->perform(this);
       items_output = true;
     }
+    if (ctx) ctx->source_map.add_mapping(list->closure());
   }
 
   void Inspect::operator()(Binary_Expression* expr)
   {
+    if (ctx) ctx->source_map.add_mapping(expr);
     expr->left()->perform(this);
     switch (expr->type()) {
       case Binary_Expression::AND: append_to_buffer(" and "); break;
@@ -271,13 +309,16 @@ namespace Sass {
       default: break; // shouldn't get here
     }
     expr->right()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(expr->closure());
   }
 
   void Inspect::operator()(Unary_Expression* expr)
   {
+    if (ctx) ctx->source_map.add_mapping(expr);
     if (expr->type() == Unary_Expression::PLUS) append_to_buffer("+");
     else                                        append_to_buffer("-");
     expr->operand()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(expr->closure());
   }
 
   void Inspect::operator()(Function_Call* call)
@@ -285,6 +326,7 @@ namespace Sass {
     if (ctx) ctx->source_map.add_mapping(call);
     append_to_buffer(call->name());
     call->arguments()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(call->closure());
   }
 
   void Inspect::operator()(Function_Call_Schema* call)
@@ -292,16 +334,21 @@ namespace Sass {
     if (ctx) ctx->source_map.add_mapping(call);
     call->name()->perform(this);
     call->arguments()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(call->closure());
   }
 
   void Inspect::operator()(Variable* var)
   {
+    if (ctx) ctx->source_map.add_mapping(var);
     append_to_buffer(var->name());
+    if (ctx) ctx->source_map.add_mapping(var->closure());
   }
 
   void Inspect::operator()(Textual* txt)
   {
+    if (ctx) ctx->source_map.add_mapping(txt);
     append_to_buffer(txt->value());
+    if (ctx) ctx->source_map.add_mapping(txt->closure());
   }
 
   // helper functions for serializing numbers
@@ -327,6 +374,7 @@ namespace Sass {
 
   void Inspect::operator()(Number* n)
   {
+    if (ctx) ctx->source_map.add_mapping(n);
     stringstream ss;
     ss.precision(ctx ? ctx->precision : 5);
     ss << fixed << n->value();
@@ -340,6 +388,7 @@ namespace Sass {
     }
     append_to_buffer(d == "-0" ? "0" : d);
     append_to_buffer(n->unit());
+    if (ctx) ctx->source_map.add_mapping(n->closure());
   }
 
   // helper function for serializing colors
@@ -390,11 +439,14 @@ namespace Sass {
 
   void Inspect::operator()(Boolean* b)
   {
+    if (ctx) ctx->source_map.add_mapping(b);
     append_to_buffer(b->value() ? "true" : "false");
+    if (ctx) ctx->source_map.add_mapping(b->closure());
   }
 
   void Inspect::operator()(String_Schema* ss)
   {
+    if (ctx) ctx->source_map.add_mapping(ss);
     // Evaluation should turn these into String_Constants, so this method is
     // only for inspection purposes.
     for (size_t i = 0, L = ss->length(); i < L; ++i) {
@@ -402,11 +454,14 @@ namespace Sass {
       (*ss)[i]->perform(this);
       if ((*ss)[i]->is_interpolant()) append_to_buffer("}");
     }
+    if (ctx) ctx->source_map.add_mapping(ss->closure());
   }
 
   void Inspect::operator()(String_Constant* s)
   {
+    if (ctx) ctx->source_map.add_mapping(s);
     append_to_buffer(s->needs_unquoting() ? unquote(s->value()) : s->value());
+    if (ctx) ctx->source_map.add_mapping(s->closure());
   }
 
   void Inspect::operator()(Feature_Queries* fq)
@@ -448,6 +503,7 @@ namespace Sass {
 
   void Inspect::operator()(Media_Query* mq)
   {
+    if (ctx) ctx->source_map.add_mapping(mq);
     size_t i = 0;
     if (mq->media_type()) {
       if      (mq->is_negated())    append_to_buffer("not ");
@@ -461,10 +517,12 @@ namespace Sass {
       append_to_buffer(" and ");
       (*mq)[i]->perform(this);
     }
+    if (ctx) ctx->source_map.add_mapping(mq->closure());
   }
 
   void Inspect::operator()(Media_Query_Expression* mqe)
   {
+    if (ctx) ctx->source_map.add_mapping(mqe);
     if (mqe->is_interpolated()) {
       mqe->feature()->perform(this);
     }
@@ -477,16 +535,20 @@ namespace Sass {
       }
       append_to_buffer(")");
     }
+    if (ctx) ctx->source_map.add_mapping(mqe->closure());
   }
 
   void Inspect::operator()(Null* n)
   {
+    if (ctx) ctx->source_map.add_mapping(n);
     append_to_buffer("null");
+    if (ctx) ctx->source_map.add_mapping(n->closure());
   }
 
   // parameters and arguments
   void Inspect::operator()(Parameter* p)
   {
+    if (ctx) ctx->source_map.add_mapping(p);
     append_to_buffer(p->name());
     if (p->default_value()) {
       append_to_buffer(": ");
@@ -495,10 +557,12 @@ namespace Sass {
     else if (p->is_rest_parameter()) {
       append_to_buffer("...");
     }
+    if (ctx) ctx->source_map.add_mapping(p->closure());
   }
 
   void Inspect::operator()(Parameters* p)
   {
+    if (ctx) ctx->source_map.add_mapping(p);
     append_to_buffer("(");
     if (!p->empty()) {
       (*p)[0]->perform(this);
@@ -508,10 +572,12 @@ namespace Sass {
       }
     }
     append_to_buffer(")");
+    if (ctx) ctx->source_map.add_mapping(p->closure());
   }
 
   void Inspect::operator()(Argument* a)
   {
+    if (ctx) ctx->source_map.add_mapping(a);
     if (!a->name().empty()) {
       append_to_buffer(a->name());
       append_to_buffer(": ");
@@ -524,10 +590,12 @@ namespace Sass {
     if (a->is_rest_argument()) {
       append_to_buffer("...");
     }
+    if (ctx) ctx->source_map.add_mapping(a->closure());
   }
 
   void Inspect::operator()(Arguments* a)
   {
+    if (ctx) ctx->source_map.add_mapping(a);
     append_to_buffer("(");
     if (!a->empty()) {
       (*a)[0]->perform(this);
@@ -537,35 +605,44 @@ namespace Sass {
       }
     }
     append_to_buffer(")");
+    if (ctx) ctx->source_map.add_mapping(a->closure());
   }
 
   // selectors
   void Inspect::operator()(Selector_Schema* s)
   {
+    if (ctx) ctx->source_map.add_mapping(s);
     s->contents()->perform(this);
+    if (ctx) ctx->source_map.add_mapping(s->closure());
   }
 
   void Inspect::operator()(Selector_Reference* ref)
   {
+    if (ctx) ctx->source_map.add_mapping(ref);
     if (ref->selector()) ref->selector()->perform(this);
     else                 append_to_buffer("&");
+    if (ctx) ctx->source_map.add_mapping(ref->closure());
   }
 
   void Inspect::operator()(Selector_Placeholder* s)
   {
+    if (ctx) ctx->source_map.add_mapping(s);
     append_to_buffer(s->name());
+    if (ctx) ctx->source_map.add_mapping(s->closure());
   }
 
   void Inspect::operator()(Type_Selector* s)
   {
     if (ctx) ctx->source_map.add_mapping(s);
     append_to_buffer(s->name());
+    if (ctx) ctx->source_map.add_mapping(s->closure());
   }
 
   void Inspect::operator()(Selector_Qualifier* s)
   {
     if (ctx) ctx->source_map.add_mapping(s);
     append_to_buffer(s->name());
+    if (ctx) ctx->source_map.add_mapping(s->closure());
   }
 
   void Inspect::operator()(Attribute_Selector* s)
@@ -581,6 +658,7 @@ namespace Sass {
       // append_to_buffer(s->value());
     }
     append_to_buffer("]");
+    if (ctx) ctx->source_map.add_mapping(s->closure());
   }
 
   void Inspect::operator()(Pseudo_Selector* s)
@@ -591,6 +669,7 @@ namespace Sass {
       s->expression()->perform(this);
       append_to_buffer(")");
     }
+    if (ctx) ctx->source_map.add_mapping(s->closure());
   }
 
   void Inspect::operator()(Wrapped_Selector* s)
@@ -599,17 +678,21 @@ namespace Sass {
     append_to_buffer(s->name());
     s->selector()->perform(this);
     append_to_buffer(")");
+    if (ctx) ctx->source_map.add_mapping(s->closure());
   }
 
   void Inspect::operator()(Compound_Selector* s)
   {
+    if (ctx) ctx->source_map.add_mapping(s);
     for (size_t i = 0, L = s->length(); i < L; ++i) {
       (*s)[i]->perform(this);
     }
+    if (ctx) ctx->source_map.add_mapping(s->closure());
   }
 
   void Inspect::operator()(Complex_Selector* c)
   {
+    if (ctx) ctx->source_map.add_mapping(c);
     Compound_Selector*           head = c->head();
     Complex_Selector*            tail = c->tail();
     Complex_Selector::Combinator comb = c->combinator();
@@ -625,16 +708,19 @@ namespace Sass {
       append_to_buffer(" ");
     }
     if (tail) tail->perform(this);
+    if (ctx) ctx->source_map.add_mapping(c->closure());
   }
 
   void Inspect::operator()(Selector_List* g)
   {
+    if (ctx) ctx->source_map.add_mapping(g);
     if (g->empty()) return;
     (*g)[0]->perform(this);
     for (size_t i = 1, L = g->length(); i < L; ++i) {
       append_to_buffer(", ");
       (*g)[i]->perform(this);
     }
+    if (ctx) ctx->source_map.add_mapping(g->closure());
   }
 
   inline void Inspect::fallback_impl(AST_Node* n)

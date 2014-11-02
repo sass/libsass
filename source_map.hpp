@@ -29,8 +29,8 @@ namespace Sass {
 
     void remove_line(const string& buffer);
     void update_position(const string& str);
-    void add_mapping(AST_Node* node);
-    void add_mapping(Position position);
+    void add_mapping(AST_Node* node, size_t type = -1);
+    void add_mapping(Position position, size_t type = -1);
 
     string generate_source_map(Context &ctx);
 

@@ -70,12 +70,14 @@ namespace Sass {
     size_t previous_original_line = 0;
     size_t previous_original_column = 0;
     size_t previous_original_file = 0;
+    size_t previous_original_type = 0;
     for (size_t i = 0; i < mappings.size(); ++i) {
       const size_t generated_line = mappings[i].generated_position.line - 1;
       const size_t generated_column = mappings[i].generated_position.column - 1;
       const size_t original_line = mappings[i].original_position.line - 1;
       const size_t original_column = mappings[i].original_position.column - 1;
       const size_t original_file = mappings[i].original_position.file - 1;
+      const size_t original_type = mappings[i].type;
 
       if (generated_line != previous_generated_line) {
         previous_generated_column = 0;
@@ -100,6 +102,9 @@ namespace Sass {
       // source column
       result += base64vlq.encode(static_cast<int>(original_column) - static_cast<int>(previous_original_column));
       previous_original_column = original_column;
+      // type column
+      result += base64vlq.encode(static_cast<int>(original_type) - static_cast<int>(previous_original_type));
+      previous_original_type = original_type;
     }
 
     return result;
@@ -139,16 +144,16 @@ namespace Sass {
   }
 
   // called when something is added to the output
-  void SourceMap::add_mapping(AST_Node* node)
+  void SourceMap::add_mapping(AST_Node* node, size_t type)
   {
   	if (node)
-      mappings.push_back(Mapping(node->position(), output_position));
+      mappings.push_back(Mapping(node->position(), output_position, node->type()));
   }
 
   // called when something is added to the output
-  void SourceMap::add_mapping(Position position)
+  void SourceMap::add_mapping(Position position, size_t type)
   {
-      mappings.push_back(Mapping(position, output_position));
+      mappings.push_back(Mapping(position, output_position, type));
   }
 
 }
