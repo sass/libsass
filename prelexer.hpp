@@ -320,8 +320,6 @@ namespace Sass {
 
     const char* backslash_something(const char* src);
 
-    const char* map_key(const char* src);
-
     // Match CSS css variables.
     const char* custom_property_name(const char* src);
     // Match a CSS identifier.
@@ -340,6 +338,7 @@ namespace Sass {
     const char* at_keyword(const char* src);
     const char* import(const char* src);
     const char* media(const char* src);
+    const char* supports(const char* src);
     const char* keyframes(const char* src);
     const char* keyf(const char* src);
     const char* mixin(const char* src);

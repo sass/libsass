@@ -166,16 +166,6 @@ namespace Sass {
                                                 backslash_something > > >(src);
     }
 
-    const char* map_key(const char* src) {
-      return sequence< spaces_and_comments,
-                       one_plus< sequence< exactly<'('>, spaces_and_comments > >,
-                       one_plus< alternatives< identifier, alnums, string_constant, variable, spaces, exactly<','> > >,
-                       spaces_and_comments,
-                       zero_plus< exactly<')'> >,
-                       spaces_and_comments,
-                       exactly<':'> >(src);
-    }
-
     // Match CSS css variables.
     const char* custom_property_name(const char* src) {
       return sequence< exactly<'-'>, exactly<'-'>, identifier >(src);
@@ -215,6 +205,10 @@ namespace Sass {
 
     const char* media(const char* src) {
       return exactly<media_kwd>(src);
+    }
+
+    const char* supports(const char* src) {
+      return exactly<supports_kwd>(src);
     }
 
     const char* keyframes(const char* src) {
@@ -298,7 +292,8 @@ namespace Sass {
     const char* name(const char* src) {
       return one_plus< alternatives< alnum,
                                      exactly<'-'>,
-                                     exactly<'_'> > >(src);
+                                     exactly<'_'>,
+                                     exactly<'\\'> > >(src);
     }
 
     const char* warn(const char* src) {

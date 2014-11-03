@@ -122,9 +122,7 @@ namespace Sass {
       // JMA - not hoisted, just output in order
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement* stm = (*b)[i];
-        if (!stm->is_hoistable()) {
-          stm->perform(this);
-        }
+        stm->perform(this);
       }
     }
 
@@ -363,7 +361,8 @@ namespace Sass {
   void Output_Compressed::append_singleline_part_to_buffer(const string& text)
   {
     buffer += text;
-    if (ctx) ctx->source_map.update_column(text);
+    if (ctx && !ctx->_skip_source_map_update)
+      ctx->source_map.update_column(text);
   }
 
 }

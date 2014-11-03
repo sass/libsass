@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 #include "parser.hpp"
 #include "file.hpp"
 #include "inspect.hpp"
@@ -87,6 +88,9 @@ namespace Sass {
       }
       else if (peek< media >()) {
         (*root) << parse_media_block();
+      }
+      else if (peek< supports >()) {
+        (*root) << parse_feature_block();
       }
       else if (peek< warn >()) {
         (*root) << parse_warning();
@@ -253,12 +257,14 @@ namespace Sass {
     }
     else {
       bool is_arglist = false;
+      bool is_keyword = false;
       Expression* val = parse_space_list();
       val->is_delayed(false);
       if (lex< exactly< ellipsis > >()) {
-        is_arglist = true;
+        if (val->concrete_type() == Expression::MAP) is_keyword = true;
+        else is_arglist = true;
       }
-      arg = new (ctx.mem) Argument(path, source_position, val, "", is_arglist);
+      arg = new (ctx.mem) Argument(path, source_position, val, "", is_arglist, is_keyword);
     }
     return arg;
   }
@@ -271,8 +277,8 @@ namespace Sass {
     if (!lex< exactly<':'> >()) error("expected ':' after " + name + " in assignment statement");
     Expression* val = parse_list();
     val->is_delayed(false);
-    bool is_guarded = lex< default_flag >();
-    bool is_global = lex< global_flag >();
+    bool is_guarded = lex< default_flag >() != NULL;
+    bool is_global = lex< global_flag >() != NULL;
     Assignment* var = new (ctx.mem) Assignment(path, var_source_position, name, val, is_guarded, is_global);
     return var;
   }
@@ -608,7 +614,7 @@ namespace Sass {
           Comment* comment  = new (ctx.mem) Comment(path, source_position, contents);
           (*block) << comment;
         }
-        if (lex< exactly<'}'> >()) break;
+        if (lex< sequence< exactly<'}'>, zero_plus< exactly<';'> > > >()) break;
       }
       if (lex< block_comment >()) {
         String*  contents = parse_interpolated_chunk(lexed);
@@ -690,6 +696,9 @@ namespace Sass {
       else if (peek< media >()) {
         (*block) << parse_media_block();
       }
+      else if (peek< supports >()) {
+        (*block) << parse_feature_block();
+      }
       // ignore the @charset directive for now
       else if (lex< exactly< charset_kwd > >()) {
         lex< string_constant >();
@@ -759,34 +768,15 @@ namespace Sass {
 
   Expression* Parser::parse_map()
   {
-    if (!(peek< map_key >(position)))
-    { return parse_list(); }
-
-    lex< exactly<'('> >();
-
-    // empty maps so treat it like an empty list
-    if (peek< exactly<')'> >(position))
-    {
-      lex< exactly<')'> >();
-      return new (ctx.mem) List(path, source_position, 0);
-    }
-
     Expression* key = parse_list();
 
     // it's not a map so return the lexed value as a list value
-    if (!lex< exactly<':'> >())
-    {
-      if (!lex< exactly<')'> >()) error("unclosed parenthesis");
-      return key;
-    }
+    if (!peek< exactly<':'> >())
+    { return key; }
 
-    Expression* value;
-    if (peek< map_key >(position))
-    {
-      value = parse_map();
-    } else {
-      value = parse_space_list();
-    }
+    lex< exactly<':'> >();
+
+    Expression* value = parse_space_list();
 
     Map* map = new (ctx.mem) Map(path, source_position, 1);
     (*map) << make_pair(key, value);
@@ -802,18 +792,10 @@ namespace Sass {
       if (!(lex< exactly<':'> >()))
       { error("invalid syntax"); }
 
-      Expression* value;
-      if (peek< map_key >(position))
-      {
-        value = parse_map();
-      } else {
-        value = parse_space_list();
-      }
+      Expression* value = parse_space_list();
 
       (*map) << make_pair(key, value);
     }
-
-    if (!lex< exactly<')'> >()) error("unclosed parenthesis 3");
 
     return map;
   }
@@ -847,7 +829,7 @@ namespace Sass {
           peek< exactly<'}'> >(position) ||
           peek< exactly<'{'> >(position) ||
           peek< exactly<')'> >(position) ||
-          //peek< exactly<':'> >(position) ||
+          peek< exactly<':'> >(position) ||
           peek< exactly<ellipsis> >(position)) {
         break;
       }
@@ -860,9 +842,7 @@ namespace Sass {
 
   Expression* Parser::parse_space_list()
   {
-    Expression* disj1;
-    if (peek< map_key >(position)) disj1 = parse_map();
-    else disj1 = parse_disjunction();
+    Expression* disj1 = parse_disjunction();
     // if it's a singleton, return it directly; don't wrap it
     if (//peek< exactly<'!'> >(position) ||
         peek< exactly<';'> >(position) ||
@@ -991,7 +971,7 @@ namespace Sass {
   Expression* Parser::parse_factor()
   {
     if (lex< exactly<'('> >()) {
-      Expression* value = parse_list();
+      Expression* value = parse_map();
       if (!lex< exactly<')'> >()) error("unclosed parenthesis");
       value->is_delayed(false);
       // make sure wrapped lists and division expressions are non-delayed within parentheses
@@ -1070,7 +1050,7 @@ namespace Sass {
         *args << arg;
         return result;
       }
-      catch (Error& err) {
+      catch (Error&) {
         // back up so we can try again
         position = here;
         source_position = here_p;
@@ -1454,7 +1434,12 @@ namespace Sass {
     lex < each_directive >();
     Position each_source_position = source_position;
     if (!lex< variable >()) error("@each directive requires an iteration variable");
-    string var(Util::normalize_underscores(lexed));
+    vector<string> vars;
+    vars.push_back(Util::normalize_underscores(lexed));
+    while (peek< exactly<','> >() && lex< exactly<','> >()) {
+      if (!lex< variable >()) error("@each directive requires an iteration variable");
+      vars.push_back(Util::normalize_underscores(lexed));
+    }
     if (!lex< in >()) error("expected 'in' keyword in @each directive");
     Expression* list = parse_list();
     list->is_delayed(false);
@@ -1466,7 +1451,7 @@ namespace Sass {
     }
     if (!peek< exactly<'{'> >()) error("expected '{' after the upper bound in @each directive");
     Block* body = parse_block();
-    return new (ctx.mem) Each(path, each_source_position, var, list, body);
+    return new (ctx.mem) Each(path, each_source_position, vars, list, body);
   }
 
   While* Parser::parse_while_directive()
@@ -1541,6 +1526,90 @@ namespace Sass {
       error("unclosed parenthesis in media query expression");
     }
     return new (ctx.mem) Media_Query_Expression(path, feature->position(), feature, expression);
+  }
+
+  Feature_Block* Parser::parse_feature_block()
+  {
+    lex< supports >();
+    Position supports_source_position = source_position;
+
+    Feature_Queries* feature_queries = parse_feature_queries();
+
+    if (!peek< exactly<'{'> >()) {
+      error("expected '{' in feature query");
+    }
+    Block* block = parse_block();
+
+    return new (ctx.mem) Feature_Block(path, supports_source_position, feature_queries, block);
+  }
+
+  Feature_Queries* Parser::parse_feature_queries()
+  {
+    Feature_Queries* fq = new (ctx.mem) Feature_Queries(path, source_position);
+    while (!peek< exactly<'{'> >(position))
+      (*fq) << parse_feature_query();
+
+    if (fq->empty()) error("expected @supports condition (e.g. (display: flexbox))");
+
+    return fq;
+  }
+
+  Feature_Query* Parser::parse_feature_query()
+  {
+    Feature_Query* fq = new (ctx.mem) Feature_Query(path, source_position);
+    while (!peek< exactly<'{'> >(position))
+    {
+      if (peek< not_op >(position)) (*fq) << parse_supports_negation();
+      else if (peek< and_op >(position)) (*fq) << parse_supports_conjunction();
+      else if (peek< or_op >(position)) (*fq) << parse_supports_disjunction();
+      else (*fq) << parse_supports_declaration_condition();
+    }
+
+    return fq;
+  }
+
+  Feature_Query_Condition* Parser::parse_supports_negation()
+  {
+    lex< not_op >();
+
+    Feature_Query_Condition* cond = parse_supports_declaration_condition();
+    cond->is_negated(true);
+
+    return cond;
+  }
+
+  Feature_Query_Condition* Parser::parse_supports_conjunction()
+  {
+    lex< and_op >();
+
+    Feature_Query_Condition* cond = parse_supports_declaration_condition();
+    cond->operand(Feature_Query_Condition::AND);
+
+    return cond;
+  }
+
+  Feature_Query_Condition* Parser::parse_supports_disjunction()
+  {
+    lex< or_op >();
+
+    Feature_Query_Condition* cond = parse_supports_declaration_condition();
+    cond->operand(Feature_Query_Condition::OR);
+
+    return cond;
+  }
+
+  Feature_Query_Condition* Parser::parse_supports_declaration_condition()
+  {
+    if (!lex< exactly<'('> >()) error("@supports declaration expected '('");
+    Expression* feature = parse_expression();
+    lex< exactly<':'> >();
+    Expression* expression = parse_list();
+    if (!lex< exactly<')'> >()) error("unclosed parenthesis in @supports declaration");
+    Feature_Query_Condition* cond = new (ctx.mem) Feature_Query_Condition(feature->path(),
+                                                                          feature->position(),
+                                                                          feature,
+                                                                          expression);
+    return cond;
   }
 
   At_Rule* Parser::parse_at_rule()

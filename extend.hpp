@@ -21,7 +21,7 @@ namespace Sass {
   using namespace std;
 
   struct Context;
-  
+
   typedef Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> > ExtensionSubsetMap;
 
   class Extend : public Operation_CRTP<void, Extend> {
@@ -39,6 +39,7 @@ namespace Sass {
 
     void operator()(Block*);
     void operator()(Ruleset*);
+    void operator()(Feature_Block*);
     void operator()(Media_Block*);
     void operator()(At_Rule*);
 

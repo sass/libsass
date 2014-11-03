@@ -105,10 +105,14 @@ namespace Sass {
 
   Expression* Eval::operator()(Each* e)
   {
-    string variable(e->variable());
+    vector<string> variables(e->variables());
     Expression* expr = e->list()->perform(this);
     List* list = 0;
-    if (expr->concrete_type() != Expression::LIST) {
+    Map* map = 0;
+    if (expr->concrete_type() == Expression::MAP) {
+      map = static_cast<Map*>(expr);
+    }
+    else if (expr->concrete_type() != Expression::LIST) {
       list = new (ctx.mem) List(expr->path(), expr->position(), 1, List::COMMA);
       *list << expr;
     }
@@ -116,15 +120,41 @@ namespace Sass {
       list = static_cast<List*>(expr);
     }
     Env new_env;
-    new_env[variable] = 0;
+    for (size_t i = 0, L = variables.size(); i < L; ++i) new_env[variables[i]] = 0;
     new_env.link(env);
     env = &new_env;
     Block* body = e->block();
     Expression* val = 0;
-    for (size_t i = 0, L = list->length(); i < L; ++i) {
-      (*env)[variable] = (*list)[i];
-      val = body->perform(this);
-      if (val) break;
+
+    if (map) {
+      for (auto key : map->keys()) {
+        (*env)[variables[0]] = key;
+        (*env)[variables[1]] = map->at(key);
+        val = body->perform(this);
+        if (val) break;
+      }
+    }
+    else {
+      for (size_t i = 0, L = list->length(); i < L; ++i) {
+        List* variable = 0;
+        if ((*list)[i]->concrete_type() != Expression::LIST || variables.size() == 1) {
+          variable = new (ctx.mem) List((*list)[i]->path(), (*list)[i]->position(), 1, List::COMMA);
+          *variable << (*list)[i];
+        }
+        else {
+          variable = static_cast<List*>((*list)[i]);
+        }
+        for (size_t j = 0, K = variables.size(); j < K; ++j) {
+          if (j < variable->length()) {
+            (*env)[variables[j]] = (*variable)[j];
+          }
+          else {
+            (*env)[variables[j]] = new (ctx.mem) Null(expr->path(), expr->position());
+          }
+          val = body->perform(this);
+          if (val) break;
+        }
+      }
     }
     env = new_env.parent();
     return val;
@@ -500,7 +530,9 @@ namespace Sass {
   Expression* Eval::operator()(String_Schema* s)
   {
     string acc;
-    To_String to_string(0);
+    ctx._skip_source_map_update = true;
+    To_String to_string(&ctx);
+    ctx._skip_source_map_update = false;
     for (size_t i = 0, L = s->length(); i < L; ++i) {
       string chunk((*s)[i]->perform(this)->perform(&to_string));
       if (((s->quote_mark() && is_quoted(chunk)) || !s->quote_mark()) && (*s)[i]->is_interpolant()) { // some redundancy in that test
@@ -525,6 +557,41 @@ namespace Sass {
       return c;
     }
     return s;
+  }
+
+  Expression* Eval::operator()(Feature_Queries* f)
+  {
+    Feature_Queries* ff = new (ctx.mem) Feature_Queries(f->path(),
+                                                        f->position(),
+                                                        f->length());
+    for (size_t i = 0, L = f->length(); i < L; ++i) {
+      *ff << static_cast<Feature_Query*>((*f)[i]->perform(this));
+    }
+    return ff;
+  }
+
+  Expression* Eval::operator()(Feature_Query* q)
+  {
+    Feature_Query* qq = new (ctx.mem) Feature_Query(q->path(),
+                                                    q->position(),
+                                                    q->length(),
+                                                    q->is_negated());
+    for (size_t i = 0, L = q->length(); i < L; ++i) {
+      *qq << static_cast<Feature_Query_Condition*>((*q)[i]->perform(this));
+    }
+    return qq;
+  }
+
+  Expression* Eval::operator()(Feature_Query_Condition* c)
+  {
+    Expression* feature = c->feature()->perform(this);
+    Expression* value = c->value()->perform(this);
+    return new (ctx.mem) Feature_Query_Condition(c->path(),
+                                                 c->position(),
+                                                 feature,
+                                                 value,
+                                                 c->operand(),
+                                                 c->is_negated());
   }
 
   Expression* Eval::operator()(Media_Query* q)
@@ -567,20 +634,32 @@ namespace Sass {
     val->is_delayed(false);
     val = val->perform(this);
     val->is_delayed(false);
-    if (a->is_rest_argument() && (val->concrete_type() != Expression::LIST)) {
-      List* wrapper = new (ctx.mem) List(val->path(),
-                                         val->position(),
-                                         0,
-                                         List::COMMA,
-                                         true);
-      *wrapper << val;
-      val = wrapper;
+
+    bool is_rest_argument = a->is_rest_argument();
+    bool is_keyword_argument = a->is_keyword_argument();
+
+    if (a->is_rest_argument()) {
+      if (val->concrete_type() == Expression::MAP) {
+        is_rest_argument = false;
+        is_keyword_argument = true;
+      }
+      else
+      if(val->concrete_type() != Expression::LIST) {
+        List* wrapper = new (ctx.mem) List(val->path(),
+                                           val->position(),
+                                           0,
+                                           List::COMMA,
+                                           true);
+        *wrapper << val;
+        val = wrapper;
+      }
     }
     return new (ctx.mem) Argument(a->path(),
                                   a->position(),
                                   val,
                                   a->name(),
-                                  a->is_rest_argument());
+                                  is_rest_argument,
+                                  is_keyword_argument);
   }
 
   Expression* Eval::operator()(Arguments* a)
@@ -853,7 +932,7 @@ namespace Sass {
     Expression* e = 0;
     switch (v.unknown.tag) {
       case SASS_BOOLEAN: {
-        e = new (ctx.mem) Boolean(path, position, v.boolean.value);
+        e = new (ctx.mem) Boolean(path, position, !!v.boolean.value);
       } break;
       case SASS_NUMBER: {
         e = new (ctx.mem) Number(path, position, v.number.value, v.number.unit);

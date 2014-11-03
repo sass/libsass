@@ -340,6 +340,19 @@ namespace Sass {
     ATTACH_OPERATIONS();
   };
 
+  ///////////////////
+  // Feature queries.
+  ///////////////////
+  class Feature_Block : public Has_Block {
+    ADD_PROPERTY(Feature_Queries*, feature_queries);
+  public:
+    Feature_Block(string path, Position position, Feature_Queries* fqs, Block* b)
+    : Has_Block(path, position, b), feature_queries_(fqs)
+    { }
+    bool is_hoistable() { return true; }
+    ATTACH_OPERATIONS();
+  };
+
   ///////////////////////////////////////////////////////////////////////
   // At-rules -- arbitrary directives beginning with "@" that may have an
   // optional statement block.
@@ -475,11 +488,11 @@ namespace Sass {
   // The Sass `@each` control directive.
   //////////////////////////////////////
   class Each : public Has_Block {
-    ADD_PROPERTY(string, variable);
+    ADD_PROPERTY(vector<string>, variables);
     ADD_PROPERTY(Expression*, list);
   public:
-    Each(string path, Position position, string var, Expression* lst, Block* b)
-    : Has_Block(path, position, b), variable_(var), list_(lst)
+    Each(string path, Position position, vector<string> vars, Expression* lst, Block* b)
+    : Has_Block(path, position, b), variables_(vars), list_(lst)
     { }
     ATTACH_OPERATIONS();
   };
@@ -658,7 +671,7 @@ namespace Sass {
           if (!(*(elements()[i]) == *(l[i]))) return false;
         return true;
       }
-      catch (std::bad_cast& bc)
+      catch (std::bad_cast&)
       {
         return false;
       }
@@ -706,7 +719,7 @@ namespace Sass {
           if (!(*at(key) == *m.at(key))) return false;
         return true;
       }
-      catch (std::bad_cast& bc)
+      catch (std::bad_cast&)
       {
         return false;
       }
@@ -768,6 +781,103 @@ namespace Sass {
     ATTACH_OPERATIONS();
   };
 
+  ////////////////////////////////////////////////////////////
+  // Individual argument objects for mixin and function calls.
+  ////////////////////////////////////////////////////////////
+  class Argument : public Expression {
+    ADD_PROPERTY(Expression*, value);
+    ADD_PROPERTY(string, name);
+    ADD_PROPERTY(bool, is_rest_argument);
+    ADD_PROPERTY(bool, is_keyword_argument);
+    size_t hash_;
+  public:
+    Argument(string p, Position pos, Expression* val, string n = "", bool rest = false, bool keyword = false)
+    : Expression(p, pos), value_(val), name_(n), is_rest_argument_(rest), is_keyword_argument_(keyword), hash_(0)
+    {
+      if (!name_.empty() && is_rest_argument_) {
+        error("variable-length argument may not be passed by name", path(), position());
+      }
+    }
+
+    virtual bool operator==(Expression& rhs) const
+    {
+      try
+      {
+        Argument& m = dynamic_cast<Argument&>(rhs);
+        if (!(m && name() == m.name())) return false;
+        return *value() == *value();
+      }
+      catch (std::bad_cast&)
+      {
+        return false;
+      }
+    }
+
+    virtual size_t hash()
+    {
+      if (hash_ > 0) return hash_;
+
+      hash_ = std::hash<string>()(name()) ^ value()->hash();
+
+      return hash_;
+    }
+
+    ATTACH_OPERATIONS();
+  };
+
+  ////////////////////////////////////////////////////////////////////////
+  // Argument lists -- in their own class to facilitate context-sensitive
+  // error checking (e.g., ensuring that all ordinal arguments precede all
+  // named arguments).
+  ////////////////////////////////////////////////////////////////////////
+  class Arguments : public Expression, public Vectorized<Argument*> {
+    ADD_PROPERTY(bool, has_named_arguments);
+    ADD_PROPERTY(bool, has_rest_argument);
+    ADD_PROPERTY(bool, has_keyword_argument);
+  protected:
+    void adjust_after_pushing(Argument* a)
+    {
+      if (!a->name().empty()) {
+        if (has_rest_argument_ || has_keyword_argument_) {
+          error("named arguments must precede variable-length argument", a->path(), a->position());
+        }
+        has_named_arguments_ = true;
+      }
+      else if (a->is_rest_argument()) {
+        if (has_rest_argument_) {
+          error("functions and mixins may only be called with one variable-length argument", a->path(), a->position());
+        }
+        if (has_keyword_argument_) {
+          error("only keyword arguments may follow variable arguments", a->path(), a->position());
+        }
+        has_rest_argument_ = true;
+      }
+      else if (a->is_keyword_argument()) {
+        if (has_keyword_argument_) {
+          error("functions and mixins may only be called with one keyword argument", a->path(), a->position());
+        }
+        has_keyword_argument_ = true;
+      }
+      else {
+        if (has_rest_argument_) {
+          error("ordinal arguments must precede variable-length arguments", a->path(), a->position());
+        }
+        if (has_named_arguments_) {
+          error("ordinal arguments must precede named arguments", a->path(), a->position());
+        }
+      }
+    }
+  public:
+    Arguments(string path, Position position)
+    : Expression(path, position),
+      Vectorized<Argument*>(),
+      has_named_arguments_(false),
+      has_rest_argument_(false),
+      has_keyword_argument_(false)
+    { }
+    ATTACH_OPERATIONS();
+  };
+
   //////////////////
   // Function calls.
   //////////////////
@@ -775,13 +885,43 @@ namespace Sass {
     ADD_PROPERTY(string, name);
     ADD_PROPERTY(Arguments*, arguments);
     ADD_PROPERTY(void*, cookie);
+    size_t hash_;
   public:
     Function_Call(string path, Position position, string n, Arguments* args, void* cookie)
-    : Expression(path, position), name_(n), arguments_(args), cookie_(cookie)
+    : Expression(path, position), name_(n), arguments_(args), cookie_(cookie), hash_(0)
     { concrete_type(STRING); }
     Function_Call(string path, Position position, string n, Arguments* args)
-    : Expression(path, position), name_(n), arguments_(args), cookie_(0)
+    : Expression(path, position), name_(n), arguments_(args), cookie_(0), hash_(0)
     { concrete_type(STRING); }
+
+    virtual bool operator==(Expression& rhs) const
+    {
+      try
+      {
+        Function_Call& m = dynamic_cast<Function_Call&>(rhs);
+        if (!(m && name() == m.name())) return false;
+        if (!(m && arguments()->length() == m.arguments()->length())) return false;
+        for (size_t i =0, L = arguments()->length(); i < L; ++i)
+          if (!((*arguments())[i] == (*m.arguments())[i])) return false;
+        return true;
+      }
+      catch (std::bad_cast&)
+      {
+        return false;
+      }
+    }
+
+    virtual size_t hash()
+    {
+      if (hash_ > 0) return hash_;
+
+      hash_ = std::hash<string>()(name());
+      for (auto argument : arguments()->elements())
+        hash_ ^= argument->hash();
+
+      return hash_;
+    }
+
     ATTACH_OPERATIONS();
   };
 
@@ -815,7 +955,7 @@ namespace Sass {
         Variable& e = dynamic_cast<Variable&>(rhs);
         return e && name() == e.name();
       }
-      catch (std::bad_cast& bc)
+      catch (std::bad_cast&)
       {
         return false;
       }
@@ -853,13 +993,14 @@ namespace Sass {
     ADD_PROPERTY(double, value);
     vector<string> numerator_units_;
     vector<string> denominator_units_;
-    size_t hash_ = 0;
+    size_t hash_;
   public:
     Number(string path, Position position, double val, string u = "")
     : Expression(path, position),
       value_(val),
       numerator_units_(vector<string>()),
-      denominator_units_(vector<string>())
+      denominator_units_(vector<string>()),
+      hash_(0)
     {
       if (!u.empty()) numerator_units_.push_back(u);
       concrete_type(NUMBER);
@@ -969,7 +1110,7 @@ namespace Sass {
         e.normalize(find_convertible_unit());
         return unit() == e.unit() && value() == e.value();
       }
-      catch (std::bad_cast& bc)
+      catch (std::bad_cast&)
       {
         return false;
       }
@@ -993,10 +1134,11 @@ namespace Sass {
     ADD_PROPERTY(double, b);
     ADD_PROPERTY(double, a);
     ADD_PROPERTY(string, disp);
-    size_t hash_ = 0;
+    size_t hash_;
   public:
     Color(string path, Position position, double r, double g, double b, double a = 1, const string disp = "")
-    : Expression(path, position), r_(r), g_(g), b_(b), a_(a), disp_(disp)
+    : Expression(path, position), r_(r), g_(g), b_(b), a_(a), disp_(disp),
+      hash_(0)
     { concrete_type(COLOR); }
     string type() { return "color"; }
     static string type_name() { return "color"; }
@@ -1008,7 +1150,7 @@ namespace Sass {
         Color& c = (dynamic_cast<Color&>(rhs));
         return c && r() == c.r() && g() == c.g() && b() == c.b() && a() == c.a();
       }
-      catch (std::bad_cast& bc)
+      catch (std::bad_cast&)
       {
         return false;
       }
@@ -1028,9 +1170,11 @@ namespace Sass {
   ////////////
   class Boolean : public Expression {
     ADD_PROPERTY(bool, value);
-    size_t hash_ = 0;
+    size_t hash_;
   public:
-    Boolean(string path, Position position, bool val) : Expression(path, position), value_(val)
+    Boolean(string path, Position position, bool val)
+    : Expression(path, position), value_(val),
+      hash_(0)
     { concrete_type(BOOLEAN); }
     virtual operator bool() { return value_; }
     string type() { return "bool"; }
@@ -1044,7 +1188,7 @@ namespace Sass {
         Boolean& e = dynamic_cast<Boolean&>(rhs);
         return e && value() == e.value();
       }
-      catch (std::bad_cast& bc)
+      catch (std::bad_cast&)
       {
         return false;
       }
@@ -1081,12 +1225,40 @@ namespace Sass {
   ///////////////////////////////////////////////////////////////////////
   class String_Schema : public String, public Vectorized<Expression*> {
     ADD_PROPERTY(char, quote_mark);
+    size_t hash_;
   public:
     String_Schema(string path, Position position, size_t size = 0, bool unq = false, char qm = '\0')
-    : String(path, position, unq), Vectorized<Expression*>(size), quote_mark_(qm)
+    : String(path, position, unq), Vectorized<Expression*>(size), quote_mark_(qm), hash_(0)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }
+
+    virtual bool operator==(Expression& rhs) const
+    {
+      try
+      {
+        String_Schema& e = dynamic_cast<String_Schema&>(rhs);
+        if (!(e && length() == e.length())) return false;
+        for (size_t i = 0, L = length(); i < L; ++i)
+          if (!((*this)[i] == e[i])) return false;
+        return true;
+      }
+      catch (std::bad_cast&)
+      {
+        return false;
+      }
+    }
+
+    virtual size_t hash()
+    {
+      if (hash_ > 0) return hash_;
+
+      for (auto string : elements())
+        hash_ ^= string->hash();
+
+      return hash_;
+    }
+
     ATTACH_OPERATIONS();
   };
 
@@ -1096,19 +1268,19 @@ namespace Sass {
   class String_Constant : public String {
     ADD_PROPERTY(string, value);
     string unquoted_;
-    size_t hash_ = 0;
+    size_t hash_;
   public:
     String_Constant(string path, Position position, string val, bool unq = false)
-    : String(path, position, unq, true), value_(val)
+    : String(path, position, unq, true), value_(val), hash_(0)
     { unquoted_ = unquote(value_); }
     String_Constant(string path, Position position, const char* beg, bool unq = false)
-    : String(path, position, unq, true), value_(string(beg))
+    : String(path, position, unq, true), value_(string(beg)), hash_(0)
     { unquoted_ = unquote(value_); }
     String_Constant(string path, Position position, const char* beg, const char* end, bool unq = false)
-    : String(path, position, unq, true), value_(string(beg, end-beg))
+    : String(path, position, unq, true), value_(string(beg, end-beg)), hash_(0)
     { unquoted_ = unquote(value_); }
     String_Constant(string path, Position position, const Token& tok, bool unq = false)
-    : String(path, position, unq, true), value_(string(tok.begin, tok.end))
+    : String(path, position, unq, true), value_(string(tok.begin, tok.end)), hash_(0)
     { unquoted_ = unquote(value_); }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1120,7 +1292,7 @@ namespace Sass {
         String_Constant& e = dynamic_cast<String_Constant&>(rhs);
         return e && unquoted_ == e.unquoted_;
       }
-      catch (std::bad_cast& bc)
+      catch (std::bad_cast&)
       {
         return false;
       }
@@ -1165,6 +1337,50 @@ namespace Sass {
     Media_Query_Expression(string path, Position position,
                            Expression* f, Expression* v, bool i = false)
     : Expression(path, position), feature_(f), value_(v), is_interpolated_(i)
+    { }
+    ATTACH_OPERATIONS();
+  };
+
+  ///////////////////
+  // Feature queries.
+  ///////////////////
+  class Feature_Queries : public Expression, public Vectorized<Feature_Query*> {
+  public:
+    Feature_Queries(string path, Position position, size_t s = 0)
+    : Expression(path, position), Vectorized<Feature_Query*>(s)
+    { }
+    ATTACH_OPERATIONS();
+  };
+
+  /////////////////
+  // Feature query.
+  /////////////////
+  class Feature_Query : public Expression, public Vectorized<Feature_Query_Condition*> {
+    ADD_PROPERTY(bool, is_negated);
+  public:
+    Feature_Query(string path, Position position, size_t s = 0, bool n = false)
+    : Expression(path, position), Vectorized<Feature_Query_Condition*>(s),
+      is_negated_(false)
+    { }
+    ATTACH_OPERATIONS();
+  };
+
+  ////////////////////////////////////////////////////////
+  // Feature expressions (for use inside feature queries).
+  ////////////////////////////////////////////////////////
+  class Feature_Query_Condition : public Expression {
+  public:
+    enum Operand { NONE, AND, OR };
+  private:
+    ADD_PROPERTY(Expression*, feature);
+    ADD_PROPERTY(Expression*, value);
+    ADD_PROPERTY(Operand, operand);
+    ADD_PROPERTY(bool, is_negated);
+  public:
+    Feature_Query_Condition(string path, Position position,
+                           Expression* f, Expression* v,
+                           Operand o = NONE, bool n = false, bool i = false)
+    : Expression(path, position), feature_(f), value_(v), operand_(o), is_negated_(n)
     { }
     ATTACH_OPERATIONS();
   };
@@ -1270,73 +1486,10 @@ namespace Sass {
     ATTACH_OPERATIONS();
   };
 
-  ////////////////////////////////////////////////////////////
-  // Individual argument objects for mixin and function calls.
-  ////////////////////////////////////////////////////////////
-  class Argument : public Expression {
-    ADD_PROPERTY(Expression*, value);
-    ADD_PROPERTY(string, name);
-    ADD_PROPERTY(bool, is_rest_argument);
-  public:
-    Argument(string p, Position pos, Expression* val, string n = "", bool rest = false)
-    : Expression(p, pos), value_(val), name_(n), is_rest_argument_(rest)
-    {
-      if (!name_.empty() && is_rest_argument_) {
-        error("variable-length argument may not be passed by name", path(), position());
-      }
-    }
-    ATTACH_OPERATIONS();
-  };
-
   //////////////////////////////////////////////////////////////////////////////////////////
   // Additional method on Lists to retrieve values directly or from an encompassed Argument.
   //////////////////////////////////////////////////////////////////////////////////////////
   inline Expression* List::value_at_index(size_t i) { return is_arglist_ ? ((Argument*)(*this)[i])->value() : (*this)[i]; }
-
-  ////////////////////////////////////////////////////////////////////////
-  // Argument lists -- in their own class to facilitate context-sensitive
-  // error checking (e.g., ensuring that all ordinal arguments precede all
-  // named arguments).
-  ////////////////////////////////////////////////////////////////////////
-  class Arguments : public Expression, public Vectorized<Argument*> {
-    ADD_PROPERTY(bool, has_named_arguments);
-    ADD_PROPERTY(bool, has_rest_argument);
-  protected:
-    void adjust_after_pushing(Argument* a)
-    {
-      if (!a->name().empty()) {
-        if (has_rest_argument_) {
-          error("named arguments must precede variable-length argument", a->path(), a->position());
-        }
-        has_named_arguments_ = true;
-      }
-      else if (a->is_rest_argument()) {
-        if (has_rest_argument_) {
-          error("functions and mixins may only be called with one variable-length argument", a->path(), a->position());
-        }
-        if (has_named_arguments_) {
-          error("functions and mixins may not be called with both named arguments and variable-length arguments", a->path(), a->position());
-        }
-        has_rest_argument_ = true;
-      }
-      else {
-        if (has_rest_argument_) {
-          error("ordinal arguments must precede variable-length arguments", a->path(), a->position());
-        }
-        if (has_named_arguments_) {
-          error("ordinal arguments must precede named arguments", a->path(), a->position());
-        }
-      }
-    }
-  public:
-    Arguments(string path, Position position)
-    : Expression(path, position),
-      Vectorized<Argument*>(),
-      has_named_arguments_(false),
-      has_rest_argument_(false)
-    { }
-    ATTACH_OPERATIONS();
-  };
 
   /////////////////////////////////////////
   // Abstract base class for CSS selectors.

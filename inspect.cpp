@@ -61,6 +61,14 @@ namespace Sass {
     media_block->block()->perform(this);
   }
 
+  void Inspect::operator()(Feature_Block* feature_block)
+  {
+    if (ctx) ctx->source_map.add_mapping(feature_block);
+    append_to_buffer("@supports ");
+    feature_block->feature_queries()->perform(this);
+    feature_block->block()->perform(this);
+  }
+
   void Inspect::operator()(At_Rule* at_rule)
   {
     append_to_buffer(at_rule->keyword());
@@ -162,7 +170,11 @@ namespace Sass {
   void Inspect::operator()(Each* loop)
   {
     append_to_buffer("@each ");
-    append_to_buffer(loop->variable());
+    append_to_buffer(loop->variables()[0]);
+    for (size_t i = 1, L = loop->variables().size(); i < L; ++i) {
+      append_to_buffer(", ");
+      append_to_buffer(loop->variables()[i]);
+    }
     append_to_buffer(" in ");
     loop->list()->perform(this);
     loop->block()->perform(this);
@@ -390,6 +402,43 @@ namespace Sass {
   void Inspect::operator()(String_Constant* s)
   {
     append_to_buffer(s->needs_unquoting() ? unquote(s->value()) : s->value());
+  }
+
+  void Inspect::operator()(Feature_Queries* fq)
+  {
+    size_t i = 0;
+    (*fq)[i++]->perform(this);
+    for (size_t L = fq->length(); i < L; ++i) {
+      (*fq)[i]->perform(this);
+    }
+  }
+
+  void Inspect::operator()(Feature_Query* fq)
+  {
+    size_t i = 0;
+    (*fq)[i++]->perform(this);
+    for (size_t L = fq->length(); i < L; ++i) {
+      if (fq->is_negated()) append_to_buffer("not ");
+      (*fq)[i]->perform(this);
+    }
+  }
+
+  void Inspect::operator()(Feature_Query_Condition* fqc)
+  {
+    if (fqc->operand() == Feature_Query_Condition::AND)
+      append_to_buffer(" and ");
+    else if (fqc->operand() == Feature_Query_Condition::OR)
+      append_to_buffer(" or ");
+
+    if (fqc->is_negated()) append_to_buffer("not ");
+
+    append_to_buffer("(");
+    fqc->feature()->perform(this);
+    if (fqc->value()) {
+      append_to_buffer(": ");
+      fqc->value()->perform(this);
+    }
+    append_to_buffer(")");
   }
 
   void Inspect::operator()(Media_Query* mq)
@@ -627,7 +676,8 @@ namespace Sass {
   void Inspect::append_to_buffer(const string& text)
   {
     buffer += text;
-    if (ctx) ctx->source_map.update_column(text);
+    if (ctx && !ctx->_skip_source_map_update)
+      ctx->source_map.update_column(text);
   }
 
 }

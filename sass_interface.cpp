@@ -72,18 +72,18 @@ extern "C" {
     free(ctx);
   }
 
-  void copy_strings(const std::vector<std::string>& strings, char*** array, int* n) {
-    int num = strings.size();
+  void copy_strings(const std::vector<std::string>& strings, char*** array, int* n, int skip = 0) {
+    int num = static_cast<int>(strings.size());
     char** arr = (char**) malloc(sizeof(char*)* num);
 
-    for(int i = 0; i < num; i++) {
-      arr[i] = (char*) malloc(sizeof(char) * strings[i].size() + 1);
-      std::copy(strings[i].begin(), strings[i].end(), arr[i]);
-      arr[i][strings[i].size()] = '\0';
+    for(int i = skip; i < num; i++) {
+      arr[i-skip] = (char*) malloc(sizeof(char) * strings[i].size() + 1);
+      std::copy(strings[i].begin(), strings[i].end(), arr[i-skip]);
+      arr[i-skip][strings[i].size()] = '\0';
     }
 
     *array = arr;
-    *n = num;
+    *n = num - skip;
   }
 
   // helper for safe access to c_ctx
@@ -96,7 +96,7 @@ extern "C" {
     using namespace Sass;
     try {
       string input_path = safe_str(c_ctx->input_path);
-      int lastindex = input_path.find_last_of(".");
+      int lastindex = static_cast<int>(input_path.find_last_of("."));
       string output_path;
       if (!c_ctx->output_path) {
         if (input_path != "") {
@@ -135,7 +135,7 @@ extern "C" {
       c_ctx->error_message = 0;
       c_ctx->error_status = 0;
 
-      copy_strings(cpp_ctx.get_included_files(), &c_ctx->included_files, &c_ctx->num_included_files);
+      copy_strings(cpp_ctx.get_included_files(), &c_ctx->included_files, &c_ctx->num_included_files, 1);
     }
     catch (Error& e) {
       stringstream msg_stream;
@@ -186,7 +186,7 @@ extern "C" {
     using namespace Sass;
     try {
       string input_path = safe_str(c_ctx->input_path);
-      int lastindex = input_path.find_last_of(".");
+      int lastindex = static_cast<int>(input_path.find_last_of("."));
       string output_path;
       if (!c_ctx->output_path) {
           output_path = (lastindex > -1 ? input_path.substr(0, lastindex) : input_path) + ".css";
@@ -200,6 +200,8 @@ extern "C" {
                        .output_style((Output_Style) c_ctx->options.output_style)
                        .source_comments(c_ctx->options.source_comments)
                        .source_map_file(safe_str(c_ctx->options.source_map_file))
+                       .source_map_embed(c_ctx->options.source_map_embed)
+                       .source_map_contents(c_ctx->options.source_map_contents)
                        .omit_source_map_url(c_ctx->options.omit_source_map_url)
                        .image_path(safe_str(c_ctx->options.image_path))
                        .include_paths_c_str(c_ctx->options.include_paths)
