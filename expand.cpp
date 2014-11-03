@@ -95,6 +95,8 @@ namespace Sass {
     Expression* feature_queries = f->feature_queries()->perform(eval->with(env, backtrace));
     Feature_Block* ff = new (ctx.mem) Feature_Block(f->path(),
                                                     f->position(),
+                                                    f->closure(),
+                                                    9132,
                                                     static_cast<Feature_Queries*>(feature_queries),
                                                     f->block()->perform(this)->block());
     return ff;

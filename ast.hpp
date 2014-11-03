@@ -351,8 +351,8 @@ namespace Sass {
   class Feature_Block : public Has_Block {
     ADD_PROPERTY(Feature_Queries*, feature_queries);
   public:
-    Feature_Block(string path, Position position, Feature_Queries* fqs, Block* b)
-    : Has_Block(path, position, b), feature_queries_(fqs)
+    Feature_Block(string path, Position position, Position closure, size_t type, Feature_Queries* fqs, Block* b)
+    : Has_Block(path, position, closure, type, b), feature_queries_(fqs)
     { }
     bool is_hoistable() { return true; }
     ATTACH_OPERATIONS();
@@ -1359,8 +1359,8 @@ namespace Sass {
   ///////////////////
   class Feature_Queries : public Expression, public Vectorized<Feature_Query*> {
   public:
-    Feature_Queries(string path, Position position, size_t s = 0)
-    : Expression(path, position), Vectorized<Feature_Query*>(s)
+    Feature_Queries(string path, Position position, Position closure, size_t type, size_t s = 0)
+    : Expression(path, position, closure, type), Vectorized<Feature_Query*>(s)
     { }
     ATTACH_OPERATIONS();
   };
@@ -1371,8 +1371,8 @@ namespace Sass {
   class Feature_Query : public Expression, public Vectorized<Feature_Query_Condition*> {
     ADD_PROPERTY(bool, is_negated);
   public:
-    Feature_Query(string path, Position position, size_t s = 0, bool n = false)
-    : Expression(path, position), Vectorized<Feature_Query_Condition*>(s),
+    Feature_Query(string path, Position position, Position closure, size_t type, size_t s = 0, bool n = false)
+    : Expression(path, position, closure, type), Vectorized<Feature_Query_Condition*>(s),
       is_negated_(false)
     { }
     ATTACH_OPERATIONS();
@@ -1390,10 +1390,10 @@ namespace Sass {
     ADD_PROPERTY(Operand, operand);
     ADD_PROPERTY(bool, is_negated);
   public:
-    Feature_Query_Condition(string path, Position position,
+    Feature_Query_Condition(string path, Position position, Position closure, size_t type,
                            Expression* f, Expression* v,
                            Operand o = NONE, bool n = false, bool i = false)
-    : Expression(path, position), feature_(f), value_(v), operand_(o), is_negated_(n)
+    : Expression(path, position, closure, type), feature_(f), value_(v), operand_(o), is_negated_(n)
     { }
     ATTACH_OPERATIONS();
   };

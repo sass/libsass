@@ -1545,12 +1545,12 @@ namespace Sass {
     }
     Block* block = parse_block();
 
-    return new (ctx.mem) Feature_Block(path, supports_source_position, feature_queries, block);
+    return new (ctx.mem) Feature_Block(path, supports_source_position, supports_source_position, 9432, feature_queries, block);
   }
 
   Feature_Queries* Parser::parse_feature_queries()
   {
-    Feature_Queries* fq = new (ctx.mem) Feature_Queries(path, source_position);
+    Feature_Queries* fq = new (ctx.mem) Feature_Queries(path, source_position, source_position, 9222);
     while (!peek< exactly<'{'> >(position))
       (*fq) << parse_feature_query();
 
@@ -1561,7 +1561,7 @@ namespace Sass {
 
   Feature_Query* Parser::parse_feature_query()
   {
-    Feature_Query* fq = new (ctx.mem) Feature_Query(path, source_position);
+    Feature_Query* fq = new (ctx.mem) Feature_Query(path, source_position, source_position, 9232);
     while (!peek< exactly<'{'> >(position))
     {
       if (peek< not_op >(position)) (*fq) << parse_supports_negation();
@@ -1612,6 +1612,8 @@ namespace Sass {
     if (!lex< exactly<')'> >()) error("unclosed parenthesis in @supports declaration");
     Feature_Query_Condition* cond = new (ctx.mem) Feature_Query_Condition(feature->path(),
                                                                           feature->position(),
+                                                                          feature->closure(),
+                                                                          2423,
                                                                           feature,
                                                                           expression);
     return cond;

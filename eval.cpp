@@ -586,6 +586,8 @@ namespace Sass {
   {
     Feature_Queries* ff = new (ctx.mem) Feature_Queries(f->path(),
                                                         f->position(),
+                                                        f->closure(),
+                                                        7838,
                                                         f->length());
     for (size_t i = 0, L = f->length(); i < L; ++i) {
       *ff << static_cast<Feature_Query*>((*f)[i]->perform(this));
@@ -597,6 +599,8 @@ namespace Sass {
   {
     Feature_Query* qq = new (ctx.mem) Feature_Query(q->path(),
                                                     q->position(),
+                                                    q->closure(),
+                                                    7832,
                                                     q->length(),
                                                     q->is_negated());
     for (size_t i = 0, L = q->length(); i < L; ++i) {
@@ -611,6 +615,8 @@ namespace Sass {
     Expression* value = c->value()->perform(this);
     return new (ctx.mem) Feature_Query_Condition(c->path(),
                                                  c->position(),
+                                                 c->closure(),
+                                                 7833,
                                                  feature,
                                                  value,
                                                  c->operand(),
