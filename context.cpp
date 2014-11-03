@@ -95,7 +95,7 @@ namespace Sass {
     size_t i = 0;
     while (color_names[i]) {
       string name(color_names[i]);
-      Color* value = new (mem) Color("[COLOR TABLE]", Position(),
+      Color* value = new (mem) Color("[COLOR TABLE]", Position(), Position(), 3233,
                                      color_values[i*3],
                                      color_values[i*3+1],
                                      color_values[i*3+2]);
@@ -348,6 +348,8 @@ namespace Sass {
   {
     Definition* stub = new (ctx.mem) Definition("[built-in function]",
                                             Position(),
+                                            Position(),
+                                            3333,
                                             0,
                                             name,
                                             0,

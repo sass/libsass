@@ -15,9 +15,10 @@ namespace Sass {
 
         // Create a new selector group without placeholders
         Selector_List* sl = static_cast<Selector_List*>(r->selector());
+    Position noPosition;
 
         if (sl) {
-            Selector_List* new_sl = new (ctx.mem) Selector_List(sl->path(), sl->position());
+            Selector_List* new_sl = new (ctx.mem) Selector_List(sl->path(), sl->position(), noPosition, 3106);
 
             for (size_t i = 0, L = sl->length(); i < L; ++i) {
                 if (!(*sl)[i]->has_placeholder()) {

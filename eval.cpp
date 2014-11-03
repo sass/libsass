@@ -88,14 +88,14 @@ namespace Sass {
     double hi = static_cast<Number*>(high)->value();
     if (f->is_inclusive()) ++hi;
     Env new_env;
-    new_env[variable] = new (ctx.mem) Number(low->path(), low->position(), lo);
+    new_env[variable] = new (ctx.mem) Number(low->path(), low->position(), low->closure(), 7311, lo);
     new_env.link(env);
     env = &new_env;
     Block* body = f->block();
     Expression* val = 0;
     for (double i = lo;
          i < hi;
-         (*env)[variable] = new (ctx.mem) Number(low->path(), low->position(), ++i)) {
+         (*env)[variable] = new (ctx.mem) Number(low->path(), low->position(), low->closure(), 7312, ++i)) {
       val = body->perform(this);
       if (val) break;
     }
@@ -113,7 +113,7 @@ namespace Sass {
       map = static_cast<Map*>(expr);
     }
     else if (expr->concrete_type() != Expression::LIST) {
-      list = new (ctx.mem) List(expr->path(), expr->position(), 1, List::COMMA);
+      list = new (ctx.mem) List(expr->path(), expr->position(), expr->closure(), 31232, 1, List::COMMA);
       *list << expr;
     }
     else {
@@ -138,7 +138,7 @@ namespace Sass {
       for (size_t i = 0, L = list->length(); i < L; ++i) {
         List* variable = 0;
         if ((*list)[i]->concrete_type() != Expression::LIST || variables.size() == 1) {
-          variable = new (ctx.mem) List((*list)[i]->path(), (*list)[i]->position(), 1, List::COMMA);
+          variable = new (ctx.mem) List((*list)[i]->path(), (*list)[i]->position(), (*list)[i]->closure(), 3223, 1, List::COMMA);
           *variable << (*list)[i];
         }
         else {
@@ -149,7 +149,7 @@ namespace Sass {
             (*env)[variables[j]] = (*variable)[j];
           }
           else {
-            (*env)[variables[j]] = new (ctx.mem) Null(expr->path(), expr->position());
+            (*env)[variables[j]] = new (ctx.mem) Null(expr->path(), expr->position(), expr->closure(), 7313);
           }
           val = body->perform(this);
           if (val) break;
@@ -194,6 +194,8 @@ namespace Sass {
     if (l->is_expanded()) return l;
     List* ll = new (ctx.mem) List(l->path(),
                                   l->position(),
+                                  l->closure(),
+                                  104,
                                   l->length(),
                                   l->separator(),
                                   l->is_arglist());
@@ -209,6 +211,7 @@ namespace Sass {
     if (m->is_expanded()) return m;
     Map* mm = new (ctx.mem) Map(m->path(),
                                   m->position(),
+                                  m->closure(),
                                   m->length());
     for (auto key : m->keys()) {
       *mm << std::make_pair(key->perform(this), m->at(key)->perform(this));
@@ -251,12 +254,12 @@ namespace Sass {
 
     // see if it's a relational expression
     switch(op_type) {
-      case Binary_Expression::EQ:  return new (ctx.mem) Boolean(b->path(), b->position(), eq(lhs, rhs, ctx));
-      case Binary_Expression::NEQ: return new (ctx.mem) Boolean(b->path(), b->position(), !eq(lhs, rhs, ctx));
-      case Binary_Expression::GT:  return new (ctx.mem) Boolean(b->path(), b->position(), !lt(lhs, rhs, ctx) && !eq(lhs, rhs, ctx));
-      case Binary_Expression::GTE: return new (ctx.mem) Boolean(b->path(), b->position(), !lt(lhs, rhs, ctx));
-      case Binary_Expression::LT:  return new (ctx.mem) Boolean(b->path(), b->position(), lt(lhs, rhs, ctx));
-      case Binary_Expression::LTE: return new (ctx.mem) Boolean(b->path(), b->position(), lt(lhs, rhs, ctx) || eq(lhs, rhs, ctx));
+      case Binary_Expression::EQ:  return new (ctx.mem) Boolean(b->path(), b->position(), b->closure(), 7314, eq(lhs, rhs, ctx));
+      case Binary_Expression::NEQ: return new (ctx.mem) Boolean(b->path(), b->position(), b->closure(), 7315, !eq(lhs, rhs, ctx));
+      case Binary_Expression::GT:  return new (ctx.mem) Boolean(b->path(), b->position(), b->closure(), 7316, !lt(lhs, rhs, ctx) && !eq(lhs, rhs, ctx));
+      case Binary_Expression::GTE: return new (ctx.mem) Boolean(b->path(), b->position(), b->closure(), 7317, !lt(lhs, rhs, ctx));
+      case Binary_Expression::LT:  return new (ctx.mem) Boolean(b->path(), b->position(), b->closure(), 7318, lt(lhs, rhs, ctx));
+      case Binary_Expression::LTE: return new (ctx.mem) Boolean(b->path(), b->position(), b->closure(), 7319, lt(lhs, rhs, ctx) || eq(lhs, rhs, ctx));
 
       default:                     break;
     }
@@ -294,10 +297,12 @@ namespace Sass {
       // Special cases: +/- variables which evaluate to null ouput just +/-,
       // but +/- null itself outputs the string
       if (operand->concrete_type() == Expression::NULL_VAL && typeid(*(u->operand())) == typeid(Variable)) {
-        u->operand(new (ctx.mem) String_Constant(u->path(), u->position(), ""));
+        u->operand(new (ctx.mem) String_Constant(u->path(), u->position(), u->closure(), 7321, ""));
       }
       String_Constant* result = new (ctx.mem) String_Constant(u->path(),
                                                               u->position(),
+                                                              u->closure(),
+                                                              7320,
                                                               u->perform(&to_string));
       return result;
     }
@@ -317,11 +322,15 @@ namespace Sass {
     if (!env->has(full_name)) {
       Function_Call* lit = new (ctx.mem) Function_Call(c->path(),
                                                        c->position(),
+                                                       c->closure(),
+                                                       7323,
                                                        c->name(),
                                                        args);
       To_String to_string;
       return new (ctx.mem) String_Constant(c->path(),
                                            c->position(),
+                                           c->closure(),
+                                           7322,
                                            lit->perform(&to_string));
     }
 
@@ -374,7 +383,7 @@ namespace Sass {
       Backtrace here(backtrace, c->path(), c->position(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
-      result = func(*env, *old_env, ctx, def->signature(), c->path(), c->position(), backtrace);
+      result = func(*env, *old_env, ctx, def->signature(), c->path(), c->position(), c->closure(), 336, backtrace);
 
       backtrace = here.parent;
       env = old_env;
@@ -395,7 +404,7 @@ namespace Sass {
       if (c_val.unknown.tag == SASS_ERROR) {
         error("error in C function " + c->name() + ": " + c_val.error.message, c->path(), c->position(), backtrace);
       }
-      result = cval_to_astnode(c_val, ctx, backtrace, c->path(), c->position());
+      result = cval_to_astnode(c_val, ctx, backtrace, c->path(), c->position(), c->closure());
 
       backtrace = here.parent;
       free_sass_value(c_val);
@@ -419,7 +428,7 @@ namespace Sass {
       Backtrace here(backtrace, c->path(), c->position(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
-      result = resolved_def->native_function()(*env, *old_env, ctx, resolved_def->signature(), c->path(), c->position(), backtrace);
+      result = resolved_def->native_function()(*env, *old_env, ctx, resolved_def->signature(), c->path(), c->position(), c->closure(), 338, backtrace);
 
       backtrace = here.parent;
       env = old_env;
@@ -428,6 +437,7 @@ namespace Sass {
     // backtrace = here.parent;
     // env = old_env;
     result->position(c->position());
+    // result->closure(c->closure());
     return result;
   }
 
@@ -435,7 +445,7 @@ namespace Sass {
   {
     Expression* evaluated_name = s->name()->perform(this);
     Expression* evaluated_args = s->arguments()->perform(this);
-    String_Schema* ss = new (ctx.mem) String_Schema(s->path(), s->position(), 2);
+    String_Schema* ss = new (ctx.mem) String_Schema(s->path(), s->position(), s->closure(), 2);
     (*ss) << evaluated_name << evaluated_args;
     return ss->perform(this);
   }
@@ -463,17 +473,23 @@ namespace Sass {
       case Textual::NUMBER:
         result = new (ctx.mem) Number(t->path(),
                                       t->position(),
+                                      t->closure(),
+                                      7323,
                                       atof(t->value().c_str()));
         break;
       case Textual::PERCENTAGE:
         result = new (ctx.mem) Number(t->path(),
                                       t->position(),
+                                      t->closure(),
+                                      7324,
                                       atof(t->value().c_str()),
                                       "%");
         break;
       case Textual::DIMENSION:
         result = new (ctx.mem) Number(t->path(),
                                       t->position(),
+                                      t->closure(),
+                                      7325,
                                       atof(t->value().c_str()),
                                       Token(number(t->value().c_str())));
         break;
@@ -485,6 +501,8 @@ namespace Sass {
           string b(hext.substr(4,2));
           result = new (ctx.mem) Color(t->path(),
                                        t->position(),
+                                       t->closure(),
+                                       7326,
                                        static_cast<double>(strtol(r.c_str(), NULL, 16)),
                                        static_cast<double>(strtol(g.c_str(), NULL, 16)),
                                        static_cast<double>(strtol(b.c_str(), NULL, 16)),
@@ -494,6 +512,8 @@ namespace Sass {
         else {
           result = new (ctx.mem) Color(t->path(),
                                        t->position(),
+                                       t->closure(),
+                                       7327,
                                        static_cast<double>(strtol(string(2,hext[0]).c_str(), NULL, 16)),
                                        static_cast<double>(strtol(string(2,hext[1]).c_str(), NULL, 16)),
                                        static_cast<double>(strtol(string(2,hext[2]).c_str(), NULL, 16)),
@@ -544,6 +564,8 @@ namespace Sass {
     }
     return new (ctx.mem) String_Constant(s->path(),
                                          s->position(),
+                                         s->closure(),
+                                         7328,
                                          acc);
   }
 
@@ -553,6 +575,7 @@ namespace Sass {
       Color* c = new (ctx.mem) Color(*ctx.names_to_colors[s->value()]);
       c->path(s->path());
       c->position(s->position());
+      // c->closure(s->closure());
       c->disp(s->value());
       return c;
     }
@@ -563,6 +586,8 @@ namespace Sass {
   {
     Feature_Queries* ff = new (ctx.mem) Feature_Queries(f->path(),
                                                         f->position(),
+                                                        f->closure(),
+                                                        7838,
                                                         f->length());
     for (size_t i = 0, L = f->length(); i < L; ++i) {
       *ff << static_cast<Feature_Query*>((*f)[i]->perform(this));
@@ -574,6 +599,8 @@ namespace Sass {
   {
     Feature_Query* qq = new (ctx.mem) Feature_Query(q->path(),
                                                     q->position(),
+                                                    q->closure(),
+                                                    7832,
                                                     q->length(),
                                                     q->is_negated());
     for (size_t i = 0, L = q->length(); i < L; ++i) {
@@ -588,6 +615,8 @@ namespace Sass {
     Expression* value = c->value()->perform(this);
     return new (ctx.mem) Feature_Query_Condition(c->path(),
                                                  c->position(),
+                                                 c->closure(),
+                                                 7833,
                                                  feature,
                                                  value,
                                                  c->operand(),
@@ -600,6 +629,8 @@ namespace Sass {
     t = static_cast<String*>(t ? t->perform(this) : 0);
     Media_Query* qq = new (ctx.mem) Media_Query(q->path(),
                                                 q->position(),
+                                                q->closure(),
+                                                7329,
                                                 t,
                                                 q->length(),
                                                 q->is_negated(),
@@ -618,6 +649,8 @@ namespace Sass {
     value = (value ? value->perform(this) : 0);
     return new (ctx.mem) Media_Query_Expression(e->path(),
                                                 e->position(),
+                                                e->closure(),
+                                                7330,
                                                 feature,
                                                 value,
                                                 e->is_interpolated());
@@ -647,6 +680,8 @@ namespace Sass {
       if(val->concrete_type() != Expression::LIST) {
         List* wrapper = new (ctx.mem) List(val->path(),
                                            val->position(),
+                                           val->closure(),
+                                           105,
                                            0,
                                            List::COMMA,
                                            true);
@@ -656,6 +691,8 @@ namespace Sass {
     }
     return new (ctx.mem) Argument(a->path(),
                                   a->position(),
+                                  a->closure(),
+                                  7331,
                                   val,
                                   a->name(),
                                   is_rest_argument,
@@ -664,7 +701,7 @@ namespace Sass {
 
   Expression* Eval::operator()(Arguments* a)
   {
-    Arguments* aa = new (ctx.mem) Arguments(a->path(), a->position());
+    Arguments* aa = new (ctx.mem) Arguments(a->path(), a->position(), a->closure(), 108);
     for (size_t i = 0, L = a->length(); i < L; ++i) {
       *aa << static_cast<Argument*>((*a)[i]->perform(this));
     }
@@ -767,7 +804,7 @@ namespace Sass {
     double rv = r->value();
     Binary_Expression::Type op = b->type();
     if (op == Binary_Expression::DIV && !rv) {
-      return new (ctx.mem) String_Constant(l->path(), b->position(), "Infinity");
+      return new (ctx.mem) String_Constant(l->path(), b->position(), b->closure(), 7347, "Infinity");
     }
     if (op == Binary_Expression::MOD && !rv) {
       error("division by zero", r->path(), r->position());
@@ -783,6 +820,7 @@ namespace Sass {
     }
     Number* v = new (ctx.mem) Number(*l);
     v->position(b->position());
+    // v->closure(b->closure());
     if (l_unit.empty() && (op == Binary_Expression::ADD || op == Binary_Expression::SUB)) {
       v->numerator_units() = r->numerator_units();
       v->denominator_units() = r->denominator_units();
@@ -823,6 +861,8 @@ namespace Sass {
       case Binary_Expression::MUL: {
         return new (ctx.mem) Color(l->path(),
                                    l->position(),
+                                   l->closure(),
+                                   7332,
                                    ops[op](lv, r->r()),
                                    ops[op](lv, r->g()),
                                    ops[op](lv, r->b()),
@@ -834,6 +874,8 @@ namespace Sass {
         To_String to_string;
         return new (ctx.mem) String_Constant(l->path(),
                                              l->position(),
+                                             l->closure(),
+                                             7333,
                                              l->perform(&to_string)
                                              + sep
                                              + r->perform(&to_string));
@@ -855,6 +897,8 @@ namespace Sass {
     if (op == Binary_Expression::DIV && !rv) error("division by zero", r->path(), r->position());
     return new (ctx.mem) Color(l->path(),
                                l->position(),
+                               l->closure(),
+                               7334,
                                ops[op](l->r(), rv),
                                ops[op](l->g(), rv),
                                ops[op](l->b(), rv),
@@ -874,6 +918,8 @@ namespace Sass {
     }
     return new (ctx.mem) Color(l->path(),
                                l->position(),
+                               l->closure(),
+                               7335,
                                ops[op](l->r(), r->r()),
                                ops[op](l->g(), r->g()),
                                ops[op](l->b(), r->b()),
@@ -922,45 +968,47 @@ namespace Sass {
     string result(unquote(lstr) + sep + unquote(rstr));
     return new (ctx.mem) String_Constant(lhs->path(),
                                lhs->position(),
+                               lhs->closure(),
+                               7346,
                                unquoted ? result : quote(result, q));
   }
 
-  Expression* cval_to_astnode(Sass_Value v, Context& ctx, Backtrace* backtrace, string path, Position position)
+  Expression* cval_to_astnode(Sass_Value v, Context& ctx, Backtrace* backtrace, string path, Position position, Position closure)
   {
     using std::strlen;
     using std::strcpy;
     Expression* e = 0;
     switch (v.unknown.tag) {
       case SASS_BOOLEAN: {
-        e = new (ctx.mem) Boolean(path, position, !!v.boolean.value);
+        e = new (ctx.mem) Boolean(path, position, closure, 7340, !!v.boolean.value);
       } break;
       case SASS_NUMBER: {
-        e = new (ctx.mem) Number(path, position, v.number.value, v.number.unit);
+        e = new (ctx.mem) Number(path, position, closure, 7341, v.number.value, v.number.unit);
       } break;
       case SASS_COLOR: {
-        e = new (ctx.mem) Color(path, position, v.color.r, v.color.g, v.color.b, v.color.a);
+        e = new (ctx.mem) Color(path, position, closure, 7342, v.color.r, v.color.g, v.color.b, v.color.a);
       } break;
       case SASS_STRING: {
-        e = new (ctx.mem) String_Constant(path, position, v.string.value);
+        e = new (ctx.mem) String_Constant(path, position, closure, 7343, v.string.value);
       } break;
       case SASS_LIST: {
-        List* l = new (ctx.mem) List(path, position, v.list.length, v.list.separator == SASS_COMMA ? List::COMMA : List::SPACE);
+        List* l = new (ctx.mem) List(path, position, closure, 7344, v.list.length, v.list.separator == SASS_COMMA ? List::COMMA : List::SPACE);
         for (size_t i = 0, L = v.list.length; i < L; ++i) {
           *l << cval_to_astnode(v.list.values[i], ctx, backtrace, path, position);
         }
         e = l;
       } break;
       case SASS_MAP: {
-        Map* m = new (ctx.mem) Map(path, position);
+        Map* m = new (ctx.mem) Map(path, position, closure, 106);
         for (size_t i = 0, L = v.map.length; i < L; ++i) {
           *m << std::make_pair(
-            cval_to_astnode(v.map.pairs[i].key, ctx, backtrace, path, position),
-            cval_to_astnode(v.map.pairs[i].value, ctx, backtrace, path, position));
+            cval_to_astnode(v.map.pairs[i].key, ctx, backtrace, path, position, closure),
+            cval_to_astnode(v.map.pairs[i].value, ctx, backtrace, path, position, closure));
         }
         e = m;
       } break;
       case SASS_NULL: {
-        e = new (ctx.mem) Null(path, position);
+        e = new (ctx.mem) Null(path, position, closure, 7345);
       } break;
       case SASS_ERROR: {
         error("error in C function: " + string(v.error.message), path, position, backtrace);

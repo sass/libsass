@@ -362,7 +362,7 @@ namespace Sass {
   {
     buffer += text;
     if (ctx && !ctx->_skip_source_map_update)
-      ctx->source_map.update_column(text);
+      ctx->source_map.update_position(text);
   }
 
 }

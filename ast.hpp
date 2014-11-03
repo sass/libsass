@@ -78,8 +78,12 @@ namespace Sass {
   class AST_Node {
     ADD_PROPERTY(string, path);
     ADD_PROPERTY(Position, position);
+    ADD_PROPERTY(Position, closure);
+    ADD_PROPERTY(size_t, type);
   public:
-    AST_Node(string path, Position position) : path_(path), position_(position) { }
+    AST_Node(string path, Position position, Position closure, size_t type)
+    : path_(path), position_(position), closure_(closure), type_(type)
+    { }
     virtual ~AST_Node() = 0;
     // virtual Block* block() { return 0; }
     ATTACH_OPERATIONS();
@@ -112,9 +116,9 @@ namespace Sass {
     ADD_PROPERTY(bool, is_interpolant);
     ADD_PROPERTY(Concrete_Type, concrete_type);
   public:
-    Expression(string path, Position position,
+    Expression(string path, Position position, Position closure, size_t type,
                bool d = false, bool e = false, bool i = false, Concrete_Type ct = NONE)
-    : AST_Node(path, position),
+    : AST_Node(path, position, closure, type),
       is_delayed_(d), is_expanded_(d), is_interpolant_(i), concrete_type_(ct)
     { }
     virtual operator bool() { return true; }
@@ -124,7 +128,7 @@ namespace Sass {
     static string type_name() { return ""; }
     virtual bool is_false() { return false; }
     virtual bool operator==( Expression& rhs) const { return false; }
-    virtual size_t hash() { return 0; }
+    virtual size_t hash2() { return 0; }
   };
 }
 
@@ -139,7 +143,7 @@ namespace std {
   {
     size_t operator()(Sass::Expression* s) const
     {
-      return s->hash();
+      return s->hash2();
     }
   };
   template<>
@@ -251,7 +255,8 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   class Statement : public AST_Node {
   public:
-    Statement(string path, Position position) : AST_Node(path, position) { }
+    Statement(string path, Position position, Position closure, size_t type)
+    : AST_Node(path, position, closure, type) { }
     virtual ~Statement() = 0;
     // needed for rearranging nested rulesets during CSS emission
     virtual bool   is_hoistable() { return false; }
@@ -274,8 +279,8 @@ namespace Sass {
       else                   has_non_hoistable_ = true;
     };
   public:
-    Block(string path, Position position, size_t s = 0, bool r = false)
-    : Statement(path, position),
+    Block(string path, Position position, Position closure, size_t type, size_t s = 0, bool r = false)
+    : Statement(path, position, closure, type),
       Vectorized<Statement*>(s),
       is_root_(r), has_hoistable_(false), has_non_hoistable_(false)
     { }
@@ -289,8 +294,8 @@ namespace Sass {
   class Has_Block : public Statement {
     ADD_PROPERTY(Block*, block);
   public:
-    Has_Block(string path, Position position, Block* b)
-    : Statement(path, position), block_(b)
+    Has_Block(string path, Position position, Position closure, size_t type, Block* b)
+    : Statement(path, position, closure, type), block_(b)
     { }
     virtual ~Has_Block() = 0;
   };
@@ -304,8 +309,8 @@ namespace Sass {
   class Ruleset : public Has_Block {
     ADD_PROPERTY(Selector*, selector);
   public:
-    Ruleset(string path, Position position, Selector* s, Block* b)
-    : Has_Block(path, position, b), selector_(s)
+    Ruleset(string path, Position position, Position closure, size_t type, Selector* s, Block* b)
+    : Has_Block(path, position, closure, type, b), selector_(s)
     { }
     // nested rulesets need to be hoisted out of their enclosing blocks
     bool is_hoistable() { return true; }
@@ -319,8 +324,8 @@ namespace Sass {
   class Propset : public Has_Block {
     ADD_PROPERTY(String*, property_fragment);
   public:
-    Propset(string path, Position position, String* pf, Block* b = 0)
-    : Has_Block(path, position, b), property_fragment_(pf)
+    Propset(string path, Position position, Position closure, size_t type, String* pf, Block* b = 0)
+    : Has_Block(path, position, closure, type, b), property_fragment_(pf)
     { }
     ATTACH_OPERATIONS();
   };
@@ -333,8 +338,8 @@ namespace Sass {
     ADD_PROPERTY(List*, media_queries);
     ADD_PROPERTY(Selector*, selector);
   public:
-    Media_Block(string path, Position position, List* mqs, Block* b)
-    : Has_Block(path, position, b), media_queries_(mqs), selector_(0)
+    Media_Block(string path, Position position, Position closure, size_t type, List* mqs, Block* b)
+    : Has_Block(path, position, closure, type, b), media_queries_(mqs), selector_(0)
     { }
     bool is_hoistable() { return true; }
     ATTACH_OPERATIONS();
@@ -346,8 +351,8 @@ namespace Sass {
   class Feature_Block : public Has_Block {
     ADD_PROPERTY(Feature_Queries*, feature_queries);
   public:
-    Feature_Block(string path, Position position, Feature_Queries* fqs, Block* b)
-    : Has_Block(path, position, b), feature_queries_(fqs)
+    Feature_Block(string path, Position position, Position closure, size_t type, Feature_Queries* fqs, Block* b)
+    : Has_Block(path, position, closure, type, b), feature_queries_(fqs)
     { }
     bool is_hoistable() { return true; }
     ATTACH_OPERATIONS();
@@ -362,8 +367,8 @@ namespace Sass {
     ADD_PROPERTY(Selector*, selector);
     ADD_PROPERTY(Expression*, value);
   public:
-    At_Rule(string path, Position position, string kwd, Selector* sel = 0, Block* b = 0)
-    : Has_Block(path, position, b), keyword_(kwd), selector_(sel), value_(0) // set value manually if needed
+    At_Rule(string path, Position position, Position closure, size_t type, string kwd, Selector* sel = 0, Block* b = 0)
+    : Has_Block(path, position, closure, type, b), keyword_(kwd), selector_(sel), value_(0) // set value manually if needed
     { }
     ATTACH_OPERATIONS();
   };
@@ -373,12 +378,13 @@ namespace Sass {
   ////////////////////////////////////////////////////////////////////////
   class Declaration : public Statement {
     ADD_PROPERTY(String*, property);
+    ADD_PROPERTY(String*, separator);
     ADD_PROPERTY(Expression*, value);
     ADD_PROPERTY(bool, is_important);
   public:
-    Declaration(string path, Position position,
-                String* prop, Expression* val, bool i = false)
-    : Statement(path, position), property_(prop), value_(val), is_important_(i)
+    Declaration(string path, Position position, Position closure, size_t type,
+                String* prop, String* sep, Expression* val, bool i = false)
+    : Statement(path, position, closure, type), property_(prop), separator_(sep), value_(val), is_important_(i)
     { }
     ATTACH_OPERATIONS();
   };
@@ -394,11 +400,11 @@ namespace Sass {
     ADD_PROPERTY(bool, is_guarded);
     ADD_PROPERTY(bool, is_global);
   public:
-    Assignment(string path, Position position,
+    Assignment(string path, Position position, Position closure, size_t type,
                string var, Expression* val,
                bool guarded = false,
                bool global = false)
-    : Statement(path, position), variable_(var), value_(val), is_guarded_(guarded), is_global_(global)
+    : Statement(path, position, closure, type), variable_(var), value_(val), is_guarded_(guarded), is_global_(global)
     { }
     ATTACH_OPERATIONS();
   };
@@ -411,8 +417,8 @@ namespace Sass {
     vector<string>         files_;
     vector<Expression*> urls_;
   public:
-    Import(string path, Position position)
-    : Statement(path, position),
+    Import(string path, Position position, Position closure, size_t type)
+    : Statement(path, position, closure, type),
       files_(vector<string>()), urls_(vector<Expression*>())
     { }
     vector<string>&         files() { return files_; }
@@ -423,8 +429,8 @@ namespace Sass {
   class Import_Stub : public Statement {
     ADD_PROPERTY(string, file_name);
   public:
-    Import_Stub(string path, Position position, string f)
-    : Statement(path, position), file_name_(f)
+    Import_Stub(string path, Position position, Position closure, size_t type, string f)
+    : Statement(path, position, closure, type), file_name_(f)
     { }
     ATTACH_OPERATIONS();
   };
@@ -435,8 +441,8 @@ namespace Sass {
   class Warning : public Statement {
     ADD_PROPERTY(Expression*, message);
   public:
-    Warning(string path, Position position, Expression* msg)
-    : Statement(path, position), message_(msg)
+    Warning(string path, Position position, Position closure, size_t type, Expression* msg)
+    : Statement(path, position, closure, type), message_(msg)
     { }
     ATTACH_OPERATIONS();
   };
@@ -447,8 +453,8 @@ namespace Sass {
   class Comment : public Statement {
     ADD_PROPERTY(String*, text);
   public:
-    Comment(string path, Position position, String* txt)
-    : Statement(path, position), text_(txt)
+    Comment(string path, Position position, Position closure, size_t type, String* txt)
+    : Statement(path, position, closure, type), text_(txt)
     { }
     ATTACH_OPERATIONS();
   };
@@ -461,8 +467,8 @@ namespace Sass {
     ADD_PROPERTY(Block*, consequent);
     ADD_PROPERTY(Block*, alternative);
   public:
-    If(string path, Position position, Expression* pred, Block* con, Block* alt = 0)
-    : Statement(path, position), predicate_(pred), consequent_(con), alternative_(alt)
+    If(string path, Position position, Position closure, size_t type, Expression* pred, Block* con, Block* alt = 0)
+    : Statement(path, position, closure, type), predicate_(pred), consequent_(con), alternative_(alt)
     { }
     ATTACH_OPERATIONS();
   };
@@ -476,9 +482,9 @@ namespace Sass {
     ADD_PROPERTY(Expression*, upper_bound);
     ADD_PROPERTY(bool, is_inclusive);
   public:
-    For(string path, Position position,
+    For(string path, Position position, Position closure, size_t type,
         string var, Expression* lo, Expression* hi, Block* b, bool inc)
-    : Has_Block(path, position, b),
+    : Has_Block(path, position, closure, type, b),
       variable_(var), lower_bound_(lo), upper_bound_(hi), is_inclusive_(inc)
     { }
     ATTACH_OPERATIONS();
@@ -491,8 +497,8 @@ namespace Sass {
     ADD_PROPERTY(vector<string>, variables);
     ADD_PROPERTY(Expression*, list);
   public:
-    Each(string path, Position position, vector<string> vars, Expression* lst, Block* b)
-    : Has_Block(path, position, b), variables_(vars), list_(lst)
+    Each(string path, Position position, Position closure, size_t type, vector<string> vars, Expression* lst, Block* b)
+    : Has_Block(path, position, closure, type, b), variables_(vars), list_(lst)
     { }
     ATTACH_OPERATIONS();
   };
@@ -503,8 +509,8 @@ namespace Sass {
   class While : public Has_Block {
     ADD_PROPERTY(Expression*, predicate);
   public:
-    While(string path, Position position, Expression* pred, Block* b)
-    : Has_Block(path, position, b), predicate_(pred)
+    While(string path, Position position, Position closure, size_t type, Expression* pred, Block* b)
+    : Has_Block(path, position, closure, type, b), predicate_(pred)
     { }
     ATTACH_OPERATIONS();
   };
@@ -515,8 +521,8 @@ namespace Sass {
   class Return : public Statement {
     ADD_PROPERTY(Expression*, value);
   public:
-    Return(string path, Position position, Expression* val)
-    : Statement(path, position), value_(val)
+    Return(string path, Position position, Position closure, size_t type, Expression* val)
+    : Statement(path, position, closure, type), value_(val)
     { }
     ATTACH_OPERATIONS();
   };
@@ -527,8 +533,8 @@ namespace Sass {
   class Extension : public Statement {
     ADD_PROPERTY(Selector*, selector);
   public:
-    Extension(string path, Position position, Selector* s)
-    : Statement(path, position), selector_(s)
+    Extension(string path, Position position, Position closure, size_t type, Selector* s)
+    : Statement(path, position, closure, type), selector_(s)
     { }
     ATTACH_OPERATIONS();
   };
@@ -542,7 +548,7 @@ namespace Sass {
   class Parameters;
   typedef Environment<AST_Node*> Env;
   typedef const char* Signature;
-  typedef Expression* (*Native_Function)(Env&, Env&, Context&, Signature, const string&, Position, Backtrace*);
+  typedef Expression* (*Native_Function)(Env&, Env&, Context&, Signature, const string&, Position, Position, size_t, Backtrace*);
   typedef const char* Signature;
   class Definition : public Has_Block {
   public:
@@ -559,11 +565,13 @@ namespace Sass {
   public:
     Definition(string path,
                Position position,
+               Position closure,
+               size_t type,
                string n,
                Parameters* params,
                Block* b,
                Type t)
-    : Has_Block(path, position, b),
+    : Has_Block(path, position, closure, 90013, b),
       name_(n),
       parameters_(params),
       environment_(0),
@@ -576,12 +584,14 @@ namespace Sass {
     { }
     Definition(string path,
                Position position,
+               Position closure,
+               size_t type,
                Signature sig,
                string n,
                Parameters* params,
                Native_Function func_ptr,
                bool overload_stub = false)
-    : Has_Block(path, position, 0),
+    : Has_Block(path, position, closure, 90014, 0),
       name_(n),
       parameters_(params),
       environment_(0),
@@ -594,6 +604,8 @@ namespace Sass {
     { }
     Definition(string path,
                Position position,
+               Position closure,
+               size_t type,
                Signature sig,
                string n,
                Parameters* params,
@@ -601,7 +613,7 @@ namespace Sass {
                void* cookie,
                bool whatever,
                bool whatever2)
-    : Has_Block(path, position, 0),
+    : Has_Block(path, position, closure, 90015, 0),
       name_(n),
       parameters_(params),
       environment_(0),
@@ -623,8 +635,8 @@ namespace Sass {
     ADD_PROPERTY(string, name);
     ADD_PROPERTY(Arguments*, arguments);
   public:
-    Mixin_Call(string path, Position position, string n, Arguments* args, Block* b = 0)
-    : Has_Block(path, position, b), name_(n), arguments_(args)
+    Mixin_Call(string path, Position position, Position closure, size_t type, string n, Arguments* args, Block* b = 0)
+    : Has_Block(path, position, closure, type, b), name_(n), arguments_(args)
     { }
     ATTACH_OPERATIONS();
   };
@@ -634,7 +646,8 @@ namespace Sass {
   ///////////////////////////////////////////////////
   class Content : public Statement {
   public:
-    Content(string path, Position position) : Statement(path, position) { }
+    Content(string path, Position position, Position closure, size_t type)
+    : Statement(path, position, closure, type) { }
     ATTACH_OPERATIONS();
   };
 
@@ -650,9 +663,9 @@ namespace Sass {
     ADD_PROPERTY(Separator, separator);
     ADD_PROPERTY(bool, is_arglist);
   public:
-    List(string path, Position position,
+    List(string path, Position position, Position closure, size_t type,
          size_t size = 0, Separator sep = SPACE, bool argl = false)
-    : Expression(path, position),
+    : Expression(path, position, closure, type),
       Vectorized<Expression*>(size),
       separator_(sep), is_arglist_(argl)
     { concrete_type(LIST); }
@@ -685,7 +698,7 @@ namespace Sass {
       hash_ = std::hash<string>()(separator() == COMMA ? "comma" : "space");
 
       for (size_t i = 0, L = length(); i < L; ++i)
-        hash_ ^= (elements()[i])->hash();
+        hash_ ^= (elements()[i])->hash2();
 
       return hash_;
     }
@@ -700,9 +713,9 @@ namespace Sass {
   class Map : public Expression, public Hashed {
     void adjust_after_pushing(std::pair<Expression*, Expression*> p) { is_expanded(false); }
   public:
-    Map(string path, Position position,
+    Map(string path, Position position, Position closure, size_t type,
          size_t size = 0)
-    : Expression(path, position),
+    : Expression(path, position, closure, type),
       Hashed(size)
     { concrete_type(MAP); }
     string type() { return "map"; }
@@ -730,7 +743,7 @@ namespace Sass {
       if (hash_ > 0) return hash_;
 
       for (auto key : keys())
-        hash_ ^= key->hash() ^ at(key)->hash();
+        hash_ ^= key->hash2() ^ at(key)->hash2();
 
       return hash_;
     }
@@ -758,9 +771,9 @@ namespace Sass {
     ADD_PROPERTY(Expression*, left);
     ADD_PROPERTY(Expression*, right);
   public:
-    Binary_Expression(string path, Position position,
+    Binary_Expression(string path, Position position, Position closure,
                       Type t, Expression* lhs, Expression* rhs)
-    : Expression(path, position), type_(t), left_(lhs), right_(rhs)
+    : Expression(path, position, closure, 90100), type_(t), left_(lhs), right_(rhs)
     { }
     ATTACH_OPERATIONS();
   };
@@ -775,8 +788,8 @@ namespace Sass {
     ADD_PROPERTY(Type, type);
     ADD_PROPERTY(Expression*, operand);
   public:
-    Unary_Expression(string path, Position position, Type t, Expression* o)
-    : Expression(path, position), type_(t), operand_(o)
+    Unary_Expression(string path, Position position, Position closure, size_t type, Type t, Expression* o)
+    : Expression(path, position, closure, type), type_(t), operand_(o)
     { }
     ATTACH_OPERATIONS();
   };
@@ -791,8 +804,8 @@ namespace Sass {
     ADD_PROPERTY(bool, is_keyword_argument);
     size_t hash_;
   public:
-    Argument(string p, Position pos, Expression* val, string n = "", bool rest = false, bool keyword = false)
-    : Expression(p, pos), value_(val), name_(n), is_rest_argument_(rest), is_keyword_argument_(keyword), hash_(0)
+    Argument(string p, Position pos, Position closure, size_t type, Expression* val, string n = "", bool rest = false, bool keyword = false)
+    : Expression(p, pos, closure, type), value_(val), name_(n), is_rest_argument_(rest), is_keyword_argument_(keyword), hash_(0)
     {
       if (!name_.empty() && is_rest_argument_) {
         error("variable-length argument may not be passed by name", path(), position());
@@ -817,7 +830,7 @@ namespace Sass {
     {
       if (hash_ > 0) return hash_;
 
-      hash_ = std::hash<string>()(name()) ^ value()->hash();
+      hash_ = std::hash<string>()(name()) ^ value()->hash2();
 
       return hash_;
     }
@@ -868,8 +881,8 @@ namespace Sass {
       }
     }
   public:
-    Arguments(string path, Position position)
-    : Expression(path, position),
+    Arguments(string path, Position position, Position closure, size_t type)
+    : Expression(path, position, closure, type),
       Vectorized<Argument*>(),
       has_named_arguments_(false),
       has_rest_argument_(false),
@@ -887,11 +900,11 @@ namespace Sass {
     ADD_PROPERTY(void*, cookie);
     size_t hash_;
   public:
-    Function_Call(string path, Position position, string n, Arguments* args, void* cookie)
-    : Expression(path, position), name_(n), arguments_(args), cookie_(cookie), hash_(0)
+    Function_Call(string path, Position position, Position closure, size_t type, string n, Arguments* args, void* cookie)
+    : Expression(path, position, closure, type), name_(n), arguments_(args), cookie_(cookie), hash_(0)
     { concrete_type(STRING); }
-    Function_Call(string path, Position position, string n, Arguments* args)
-    : Expression(path, position), name_(n), arguments_(args), cookie_(0), hash_(0)
+    Function_Call(string path, Position position, Position closure, size_t type, string n, Arguments* args)
+    : Expression(path, position, closure, type), name_(n), arguments_(args), cookie_(0), hash_(0)
     { concrete_type(STRING); }
 
     virtual bool operator==(Expression& rhs) const
@@ -932,8 +945,8 @@ namespace Sass {
     ADD_PROPERTY(String*, name);
     ADD_PROPERTY(Arguments*, arguments);
   public:
-    Function_Call_Schema(string path, Position position, String* n, Arguments* args)
-    : Expression(path, position), name_(n), arguments_(args)
+    Function_Call_Schema(string path, Position position, Position closure, size_t type, String* n, Arguments* args)
+    : Expression(path, position, closure, type), name_(n), arguments_(args)
     { concrete_type(STRING); }
     ATTACH_OPERATIONS();
   };
@@ -944,8 +957,8 @@ namespace Sass {
   class Variable : public Expression {
     ADD_PROPERTY(string, name);
   public:
-    Variable(string path, Position position, string n)
-    : Expression(path, position), name_(n)
+    Variable(string path, Position position, Position closure, size_t type, string n)
+    : Expression(path, position, closure, type), name_(n)
     { }
 
     virtual bool operator==(Expression& rhs) const
@@ -980,8 +993,8 @@ namespace Sass {
     ADD_PROPERTY(Type, type);
     ADD_PROPERTY(string, value);
   public:
-    Textual(string path, Position position, Type t, string val)
-    : Expression(path, position, true), type_(t), value_(val)
+    Textual(string path, Position position, Position closure, size_t type, Type t, string val)
+    : Expression(path, position, closure, type, true), type_(t), value_(val)
     { }
     ATTACH_OPERATIONS();
   };
@@ -995,8 +1008,8 @@ namespace Sass {
     vector<string> denominator_units_;
     size_t hash_;
   public:
-    Number(string path, Position position, double val, string u = "")
-    : Expression(path, position),
+    Number(string path, Position position, Position closure, size_t type, double val, string u = "")
+    : Expression(path, position, closure, type),
       value_(val),
       numerator_units_(vector<string>()),
       denominator_units_(vector<string>()),
@@ -1136,8 +1149,8 @@ namespace Sass {
     ADD_PROPERTY(string, disp);
     size_t hash_;
   public:
-    Color(string path, Position position, double r, double g, double b, double a = 1, const string disp = "")
-    : Expression(path, position), r_(r), g_(g), b_(b), a_(a), disp_(disp),
+    Color(string path, Position position, Position closure, size_t type, double r, double g, double b, double a = 1, const string disp = "")
+    : Expression(path, position, closure, type), r_(r), g_(g), b_(b), a_(a), disp_(disp),
       hash_(0)
     { concrete_type(COLOR); }
     string type() { return "color"; }
@@ -1172,8 +1185,8 @@ namespace Sass {
     ADD_PROPERTY(bool, value);
     size_t hash_;
   public:
-    Boolean(string path, Position position, bool val)
-    : Expression(path, position), value_(val),
+    Boolean(string path, Position position, Position closure, size_t type, bool val)
+    : Expression(path, position, closure, type), value_(val),
       hash_(0)
     { concrete_type(BOOLEAN); }
     virtual operator bool() { return value_; }
@@ -1210,8 +1223,8 @@ namespace Sass {
   class String : public Expression {
     ADD_PROPERTY(bool, needs_unquoting);
   public:
-    String(string path, Position position, bool unq = false, bool delayed = false)
-    : Expression(path, position, delayed), needs_unquoting_(unq)
+    String(string path, Position position, Position closure, size_t type, bool unq = false, bool delayed = false)
+    : Expression(path, position, closure, type, delayed), needs_unquoting_(unq)
     { concrete_type(STRING); }
     static string type_name() { return "string"; }
     virtual ~String() = 0;
@@ -1227,8 +1240,8 @@ namespace Sass {
     ADD_PROPERTY(char, quote_mark);
     size_t hash_;
   public:
-    String_Schema(string path, Position position, size_t size = 0, bool unq = false, char qm = '\0')
-    : String(path, position, unq), Vectorized<Expression*>(size), quote_mark_(qm), hash_(0)
+    String_Schema(string path, Position position, Position closure, size_t size = 0, bool unq = false, char qm = '\0')
+    : String(path, position, closure, unq), Vectorized<Expression*>(size), quote_mark_(qm), hash_(0)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1254,7 +1267,7 @@ namespace Sass {
       if (hash_ > 0) return hash_;
 
       for (auto string : elements())
-        hash_ ^= string->hash();
+        hash_ ^= string->hash2();
 
       return hash_;
     }
@@ -1270,17 +1283,17 @@ namespace Sass {
     string unquoted_;
     size_t hash_;
   public:
-    String_Constant(string path, Position position, string val, bool unq = false)
-    : String(path, position, unq, true), value_(val), hash_(0)
+    String_Constant(string path, Position position, Position closure, size_t type, string val, bool unq = false)
+    : String(path, position, closure, type, unq, true), value_(val), hash_(0)
     { unquoted_ = unquote(value_); }
-    String_Constant(string path, Position position, const char* beg, bool unq = false)
-    : String(path, position, unq, true), value_(string(beg)), hash_(0)
+    String_Constant(string path, Position position, Position closure, size_t type, const char* beg, bool unq = false)
+    : String(path, position, closure, type, unq, true), value_(string(beg)), hash_(0)
     { unquoted_ = unquote(value_); }
-    String_Constant(string path, Position position, const char* beg, const char* end, bool unq = false)
-    : String(path, position, unq, true), value_(string(beg, end-beg)), hash_(0)
+    String_Constant(string path, Position position, Position closure, size_t type, const char* beg, const char* end, bool unq = false)
+    : String(path, position, closure, type, unq, true), value_(string(beg, end-beg)), hash_(0)
     { unquoted_ = unquote(value_); }
-    String_Constant(string path, Position position, const Token& tok, bool unq = false)
-    : String(path, position, unq, true), value_(string(tok.begin, tok.end)), hash_(0)
+    String_Constant(string path, Position position, Position closure, size_t type, const Token& tok, bool unq = false)
+    : String(path, position, closure, type, unq, true), value_(string(tok.begin, tok.end)), hash_(0)
     { unquoted_ = unquote(value_); }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1318,9 +1331,9 @@ namespace Sass {
     ADD_PROPERTY(bool, is_negated);
     ADD_PROPERTY(bool, is_restricted);
   public:
-    Media_Query(string path, Position position,
+    Media_Query(string path, Position position, Position closure, size_t type,
                 String* t = 0, size_t s = 0, bool n = false, bool r = false)
-    : Expression(path, position), Vectorized<Media_Query_Expression*>(s),
+    : Expression(path, position, closure, type), Vectorized<Media_Query_Expression*>(s),
       media_type_(t), is_negated_(n), is_restricted_(r)
     { }
     ATTACH_OPERATIONS();
@@ -1334,9 +1347,9 @@ namespace Sass {
     ADD_PROPERTY(Expression*, value);
     ADD_PROPERTY(bool, is_interpolated);
   public:
-    Media_Query_Expression(string path, Position position,
+    Media_Query_Expression(string path, Position position, Position closure, size_t type,
                            Expression* f, Expression* v, bool i = false)
-    : Expression(path, position), feature_(f), value_(v), is_interpolated_(i)
+    : Expression(path, position, closure, type), feature_(f), value_(v), is_interpolated_(i)
     { }
     ATTACH_OPERATIONS();
   };
@@ -1346,8 +1359,8 @@ namespace Sass {
   ///////////////////
   class Feature_Queries : public Expression, public Vectorized<Feature_Query*> {
   public:
-    Feature_Queries(string path, Position position, size_t s = 0)
-    : Expression(path, position), Vectorized<Feature_Query*>(s)
+    Feature_Queries(string path, Position position, Position closure, size_t type, size_t s = 0)
+    : Expression(path, position, closure, type), Vectorized<Feature_Query*>(s)
     { }
     ATTACH_OPERATIONS();
   };
@@ -1358,8 +1371,8 @@ namespace Sass {
   class Feature_Query : public Expression, public Vectorized<Feature_Query_Condition*> {
     ADD_PROPERTY(bool, is_negated);
   public:
-    Feature_Query(string path, Position position, size_t s = 0, bool n = false)
-    : Expression(path, position), Vectorized<Feature_Query_Condition*>(s),
+    Feature_Query(string path, Position position, Position closure, size_t type, size_t s = 0, bool n = false)
+    : Expression(path, position, closure, type), Vectorized<Feature_Query_Condition*>(s),
       is_negated_(false)
     { }
     ATTACH_OPERATIONS();
@@ -1377,10 +1390,10 @@ namespace Sass {
     ADD_PROPERTY(Operand, operand);
     ADD_PROPERTY(bool, is_negated);
   public:
-    Feature_Query_Condition(string path, Position position,
+    Feature_Query_Condition(string path, Position position, Position closure, size_t type,
                            Expression* f, Expression* v,
                            Operand o = NONE, bool n = false, bool i = false)
-    : Expression(path, position), feature_(f), value_(v), operand_(o), is_negated_(n)
+    : Expression(path, position, closure, type), feature_(f), value_(v), operand_(o), is_negated_(n)
     { }
     ATTACH_OPERATIONS();
   };
@@ -1390,7 +1403,9 @@ namespace Sass {
   //////////////////
   class Null : public Expression {
   public:
-    Null(string path, Position position) : Expression(path, position) { concrete_type(NULL_VAL); }
+    Null(string path, Position position, Position closure, size_t type)
+    : Expression(path, position, closure, type)
+    { concrete_type(NULL_VAL); }
     string type() { return "null"; }
     static string type_name() { return "null"; }
     bool is_invisible() { return true; }
@@ -1417,8 +1432,8 @@ namespace Sass {
     ADD_PROPERTY(Expression*, expression);
     ADD_PROPERTY(Env*, environment);
   public:
-    Thunk(string path, Position position, Expression* exp, Env* env = 0)
-    : Expression(path, position), expression_(exp), environment_(env)
+    Thunk(string path, Position position, Position closure, size_t type, Expression* exp, Env* env = 0)
+    : Expression(path, position, closure, type), expression_(exp), environment_(env)
     { }
   };
 
@@ -1430,9 +1445,9 @@ namespace Sass {
     ADD_PROPERTY(Expression*, default_value);
     ADD_PROPERTY(bool, is_rest_parameter);
   public:
-    Parameter(string p, Position pos,
+    Parameter(string p, Position pos, Position closure, size_t type,
               string n, Expression* def = 0, bool rest = false)
-    : AST_Node(p, pos), name_(n), default_value_(def), is_rest_parameter_(rest)
+    : AST_Node(p, pos, closure, type), name_(n), default_value_(def), is_rest_parameter_(rest)
     {
       if (default_value_ && is_rest_parameter_) {
         error("variable-length parameter may not have a default value", path(), position());
@@ -1477,8 +1492,8 @@ namespace Sass {
       }
     }
   public:
-    Parameters(string path, Position position)
-    : AST_Node(path, position),
+    Parameters(string path, Position position, Position closure, size_t type)
+    : AST_Node(path, position, closure, type),
       Vectorized<Parameter*>(),
       has_optional_parameters_(false),
       has_rest_parameter_(false)
@@ -1498,8 +1513,8 @@ namespace Sass {
     ADD_PROPERTY(bool, has_reference);
     ADD_PROPERTY(bool, has_placeholder);
   public:
-    Selector(string path, Position position, bool r = false, bool h = false)
-    : AST_Node(path, position), has_reference_(r), has_placeholder_(h)
+    Selector(string path, Position position, Position closure, size_t type, bool r = false, bool h = false)
+    : AST_Node(path, position, closure, type), has_reference_(r), has_placeholder_(h)
     { }
     virtual ~Selector() = 0;
     virtual Selector_Placeholder* find_placeholder();
@@ -1514,8 +1529,8 @@ namespace Sass {
   class Selector_Schema : public Selector {
     ADD_PROPERTY(String*, contents);
   public:
-    Selector_Schema(string path, Position position, String* c)
-    : Selector(path, position), contents_(c)
+    Selector_Schema(string path, Position position, Position closure, size_t type, String* c)
+    : Selector(path, position, closure, type), contents_(c)
     { }
     ATTACH_OPERATIONS();
   };
@@ -1525,8 +1540,8 @@ namespace Sass {
   ////////////////////////////////////////////
   class Simple_Selector : public Selector {
   public:
-    Simple_Selector(string path, Position position)
-    : Selector(path, position)
+    Simple_Selector(string path, Position position, Position closure, size_t type)
+    : Selector(path, position, closure, type)
     { }
     virtual ~Simple_Selector() = 0;
     virtual Compound_Selector* unify_with(Compound_Selector*, Context&);
@@ -1545,8 +1560,8 @@ namespace Sass {
   class Selector_Reference : public Simple_Selector {
     ADD_PROPERTY(Selector*, selector);
   public:
-    Selector_Reference(string path, Position position, Selector* r = 0)
-    : Simple_Selector(path, position), selector_(r)
+    Selector_Reference(string path, Position position, Position closure, size_t type, Selector* r = 0)
+    : Simple_Selector(path, position, closure, type), selector_(r)
     { has_reference(true); }
     virtual int specificity()
     {
@@ -1562,8 +1577,8 @@ namespace Sass {
   class Selector_Placeholder : public Simple_Selector {
     ADD_PROPERTY(string, name);
   public:
-    Selector_Placeholder(string path, Position position, string n)
-    : Simple_Selector(path, position), name_(n)
+    Selector_Placeholder(string path, Position position, Position closure, size_t type, string n)
+    : Simple_Selector(path, position, closure, type), name_(n)
     { has_placeholder(true); }
     virtual Selector_Placeholder* find_placeholder();
     ATTACH_OPERATIONS();
@@ -1575,8 +1590,8 @@ namespace Sass {
   class Type_Selector : public Simple_Selector {
     ADD_PROPERTY(string, name);
   public:
-    Type_Selector(string path, Position position, string n)
-    : Simple_Selector(path, position), name_(n)
+    Type_Selector(string path, Position position, Position closure, size_t type, string n)
+    : Simple_Selector(path, position, closure, type), name_(n)
     { }
     virtual int specificity()
     {
@@ -1593,8 +1608,8 @@ namespace Sass {
   class Selector_Qualifier : public Simple_Selector {
     ADD_PROPERTY(string, name);
   public:
-    Selector_Qualifier(string path, Position position, string n)
-    : Simple_Selector(path, position), name_(n)
+    Selector_Qualifier(string path, Position position, Position closure, size_t type, string n)
+    : Simple_Selector(path, position, closure, type), name_(n)
     { }
     virtual int specificity()
     {
@@ -1613,8 +1628,8 @@ namespace Sass {
     ADD_PROPERTY(string, matcher);
     ADD_PROPERTY(String*, value); // might be interpolated
   public:
-    Attribute_Selector(string path, Position position, string n, string m, String* v)
-    : Simple_Selector(path, position), name_(n), matcher_(m), value_(v)
+    Attribute_Selector(string path, Position position, Position closure, size_t type, string n, string m, String* v)
+    : Simple_Selector(path, position, closure, type), name_(n), matcher_(m), value_(v)
     { }
     ATTACH_OPERATIONS();
   };
@@ -1626,8 +1641,8 @@ namespace Sass {
     ADD_PROPERTY(string, name);
     ADD_PROPERTY(String*, expression);
   public:
-    Pseudo_Selector(string path, Position position, string n, String* expr = 0)
-    : Simple_Selector(path, position), name_(n), expression_(expr)
+    Pseudo_Selector(string path, Position position, Position closure, size_t type, string n, String* expr = 0)
+    : Simple_Selector(path, position, closure, type), name_(n), expression_(expr)
     { }
     virtual int specificity()
     {
@@ -1664,8 +1679,8 @@ namespace Sass {
     ADD_PROPERTY(string, name);
     ADD_PROPERTY(Selector*, selector);
   public:
-    Wrapped_Selector(string path, Position position, string n, Selector* sel)
-    : Simple_Selector(path, position), name_(n), selector_(sel)
+    Wrapped_Selector(string path, Position position, Position closure, size_t type, string n, Selector* sel)
+    : Simple_Selector(path, position, closure, type), name_(n), selector_(sel)
     { }
     ATTACH_OPERATIONS();
   };
@@ -1689,8 +1704,8 @@ namespace Sass {
       if (s->has_placeholder()) has_placeholder(true);
     }
   public:
-    Compound_Selector(string path, Position position, size_t s = 0)
-    : Selector(path, position),
+    Compound_Selector(string path, Position position, Position closure, size_t type, size_t s = 0)
+    : Selector(path, position, closure, type),
       Vectorized<Simple_Selector*>(s)
     { }
 
@@ -1751,11 +1766,11 @@ namespace Sass {
     ADD_PROPERTY(Compound_Selector*, head);
     ADD_PROPERTY(Complex_Selector*, tail);
   public:
-    Complex_Selector(string path, Position position,
+    Complex_Selector(string path, Position position, Position closure, size_t type,
                          Combinator c,
                          Compound_Selector* h,
                          Complex_Selector* t)
-    : Selector(path, position), combinator_(c), head_(h), tail_(t)
+    : Selector(path, position, closure, type), combinator_(c), head_(h), tail_(t)
     {
       if ((h && h->has_reference())   || (t && t->has_reference()))   has_reference(true);
       if ((h && h->has_placeholder()) || (t && t->has_placeholder())) has_placeholder(true);
@@ -1846,8 +1861,8 @@ namespace Sass {
   protected:
     void adjust_after_pushing(Complex_Selector* c);
   public:
-    Selector_List(string path, Position position, size_t s = 0)
-    : Selector(path, position), Vectorized<Complex_Selector*>(s)
+    Selector_List(string path, Position position, Position closure, size_t type, size_t s = 0)
+    : Selector(path, position, closure, type), Vectorized<Complex_Selector*>(s)
     { }
     virtual Selector_Placeholder* find_placeholder();
     virtual int specificity()

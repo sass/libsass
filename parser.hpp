@@ -50,18 +50,19 @@ namespace Sass {
     string path;
     size_t column;
     Position source_position;
+    Position source_closure;
 
 
     Token lexed;
 
-    Parser(Context& ctx, string path, Position source_position)
+    Parser(Context& ctx, string path, Position source_position, Position source_closure)
     : ctx(ctx), stack(vector<Syntactic_Context>()),
-      source(0), position(0), end(0), path(path), column(1), source_position(source_position)
+      source(0), position(0), path(path), column(1), source_position(source_position), source_closure(source_closure)
     { stack.push_back(nothing); }
 
-    static Parser from_string(string src, Context& ctx, string path = "", Position source_position = Position());
-    static Parser from_c_str(const char* src, Context& ctx, string path = "", Position source_position = Position());
-    static Parser from_token(Token t, Context& ctx, string path = "", Position source_position = Position());
+    static Parser from_string(string src, Context& ctx, string path = "", Position source_position = Position(), Position source_closure = Position());
+    static Parser from_c_str(const char* src, Context& ctx, string path = "", Position source_position = Position(), Position source_closure = Position());
+    static Parser from_token(Token t, Context& ctx, string path = "", Position source_position = Position(), Position source_closure = Position());
 
 #ifdef __clang__
 
@@ -133,6 +134,9 @@ namespace Sass {
         if (after_whitespace) {
           source_position.line += count_interval<'\n'>(position, after_whitespace);
           lexed = Token(position, after_whitespace);
+          // cerr << "+++== parsed " << lexed << " @ " << source_position.column << " vs " << position << "\n";
+          source_closure = source_position;
+          source_closure.column += lexed.length();
           return position = after_whitespace;
         }
         else {
@@ -165,6 +169,10 @@ namespace Sass {
         source_position.column = column + whitespace;
         column += after_token - after_whitespace + whitespace;
         lexed = Token(after_whitespace, after_token);
+        // cerr << "===== parsed " << lexed << " @ " << source_position.column << " vs " << position << "\n";
+
+        source_closure = source_position;
+        source_closure.column += lexed.length();
 
         return position = after_token;
       }

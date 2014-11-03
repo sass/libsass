@@ -27,9 +27,11 @@ namespace Sass {
     vector<size_t> source_index;
     SourceMap(const string& file);
 
-    void remove_line();
-    void update_column(const string& str);
-    void add_mapping(AST_Node* node);
+    void remove_line(const string& buffer);
+    void update_position(const string& str);
+    void add_mapping(AST_Node* node, size_t type = -1);
+    void add_mapping_end(AST_Node* node, size_t type = -1);
+    void add_mapping(Position position, size_t type = -1);
 
     string generate_source_map(Context &ctx);
 
@@ -38,7 +40,7 @@ namespace Sass {
     string serialize_mappings();
 
     vector<Mapping> mappings;
-    Position current_position;
+    Position output_position;
     string file;
     Base64VLQ base64vlq;
   };

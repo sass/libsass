@@ -241,10 +241,10 @@ namespace Sass {
     // TODO: figure out a better way to create a Complex_Selector from scratch
     // TODO: There's got to be a better way. This got ugly quick...
     Position noPosition;
-    Type_Selector fakeParent("", noPosition, "temp");
-    Compound_Selector fakeHead("", noPosition, 1 /*size*/);
+    Type_Selector fakeParent("", noPosition, noPosition, 8230, "temp");
+    Compound_Selector fakeHead("", noPosition, noPosition, 8231, 1 /*size*/);
     fakeHead.elements().push_back(&fakeParent);
-    Complex_Selector fakeParentContainer("", noPosition, Complex_Selector::ANCESTOR_OF, &fakeHead /*head*/, NULL /*tail*/);
+    Complex_Selector fakeParentContainer("", noPosition, noPosition, 8232, Complex_Selector::ANCESTOR_OF, &fakeHead /*head*/, NULL /*tail*/);
 
     pOne->set_innermost(&fakeParentContainer, Complex_Selector::ANCESTOR_OF);
     pTwo->set_innermost(&fakeParentContainer, Complex_Selector::ANCESTOR_OF);
@@ -603,10 +603,10 @@ namespace Sass {
     // TODO: figure out a better way to create a Complex_Selector from scratch
     // TODO: There's got to be a better way. This got ugly quick...
     Position noPosition;
-    Type_Selector fakeParent("", noPosition, "temp");
-    Compound_Selector fakeHead("", noPosition, 1 /*size*/);
+    Type_Selector fakeParent("", noPosition, noPosition, 8234, "temp");
+    Compound_Selector fakeHead("", noPosition, noPosition, 8235, 1 /*size*/);
     fakeHead.elements().push_back(&fakeParent);
-    Complex_Selector fakeParentContainer("", noPosition, Complex_Selector::ANCESTOR_OF, &fakeHead /*head*/, NULL /*tail*/);
+    Complex_Selector fakeParentContainer("", noPosition, noPosition, 8236, Complex_Selector::ANCESTOR_OF, &fakeHead /*head*/, NULL /*tail*/);
 
     Complex_Selector* pOneWithFakeParent = nodeToComplexSelector(one, ctx);
     pOneWithFakeParent->set_innermost(&fakeParentContainer, Complex_Selector::ANCESTOR_OF);
@@ -1521,7 +1521,7 @@ namespace Sass {
 //      DEBUG_EXEC(EXTEND_COMPOUND, printComplexSelector(&seq, "SEQ: "))
 
 
-      Compound_Selector* pSels = new (ctx.mem) Compound_Selector(pSelector->path(), pSelector->position());
+      Compound_Selector* pSels = new (ctx.mem) Compound_Selector(pSelector->path(), pSelector->position(), pSelector->closure(), 8238);
       for (vector<ExtensionPair>::iterator groupIter = group.begin(), groupIterEnd = group.end(); groupIter != groupIterEnd; groupIter++) {
         ExtensionPair& pair = *groupIter;
         Compound_Selector* pCompound = pair.second;
@@ -1553,7 +1553,7 @@ namespace Sass {
       Compound_Selector* pUnifiedSelector = NULL;
 
       if (!pInnermostCompoundSelector) {
-        pInnermostCompoundSelector = new (ctx.mem) Compound_Selector(pSelector->path(), pSelector->position());
+        pInnermostCompoundSelector = new (ctx.mem) Compound_Selector(pSelector->path(), pSelector->position(), pSelector->closure(), 8238);
       }
 
       pUnifiedSelector = pInnermostCompoundSelector->unify_with(pSelectorWithoutExtendSelectors, ctx);
@@ -1579,7 +1579,7 @@ namespace Sass {
       // complex is that Complex_Selector contains a combinator, but in ruby combinators have already been filtered
       // out and aren't operated on.
       Complex_Selector* pNewSelector = pExtComplexSelector->cloneFully(ctx);
-      Complex_Selector* pNewInnerMost = new (ctx.mem) Complex_Selector(pSelector->path(), pSelector->position(), Complex_Selector::ANCESTOR_OF, pUnifiedSelector, NULL);
+      Complex_Selector* pNewInnerMost = new (ctx.mem) Complex_Selector(pSelector->path(), pSelector->position(), pSelector->closure(), 8239, Complex_Selector::ANCESTOR_OF, pUnifiedSelector, NULL);
       Complex_Selector::Combinator combinator = pNewSelector->clear_innermost();
       pNewSelector->set_innermost(pNewInnerMost, combinator);
 
@@ -1810,7 +1810,7 @@ namespace Sass {
 
     To_String to_string;
 
-    Selector_List* pNewSelectors = new (ctx.mem) Selector_List(pSelectorList->path(), pSelectorList->position(), pSelectorList->length());
+    Selector_List* pNewSelectors = new (ctx.mem) Selector_List(pSelectorList->path(), pSelectorList->position(), pSelectorList->closure(), 3338, pSelectorList->length());
 
     extendedSomething = false;
 

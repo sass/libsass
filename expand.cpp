@@ -32,7 +32,7 @@ namespace Sass {
     Env new_env;
     new_env.link(*env);
     env = &new_env;
-    Block* bb = new (ctx.mem) Block(b->path(), b->position(), b->length(), b->is_root());
+    Block* bb = new (ctx.mem) Block(b->path(), b->position(), b->closure(), 123, b->length(), b->is_root());
     block_stack.push_back(bb);
     append_block(b);
     block_stack.pop_back();
@@ -46,10 +46,12 @@ namespace Sass {
     // if (selector_stack.back()) cerr << "expanding " << selector_stack.back()->perform(&to_string) << " and " << r->selector()->perform(&to_string) << endl;
     Selector* sel_ctx = r->selector()->perform(contextualize->with(selector_stack.back(), env, backtrace));
     // re-parse in order to restructure parent nodes correctly
-    sel_ctx = Parser::from_c_str((sel_ctx->perform(&to_string) + ";").c_str(), ctx, r->selector()->path(), r->selector()->position()).parse_selector_group();
+    sel_ctx = Parser::from_c_str((sel_ctx->perform(&to_string) + ";").c_str(), ctx, r->selector()->path(), r->selector()->position(), r->selector()->closure()).parse_selector_group();
     selector_stack.push_back(sel_ctx);
     Ruleset* rr = new (ctx.mem) Ruleset(r->path(),
                                         r->position(),
+                                        r->closure(),
+                                        309,
                                         sel_ctx,
                                         r->block()->perform(this)->block());
     selector_stack.pop_back();
@@ -66,10 +68,10 @@ namespace Sass {
       Statement* stm = (*expanded_block)[i];
       if (typeid(*stm) == typeid(Declaration)) {
         Declaration* dec = static_cast<Declaration*>(stm);
-        String_Schema* combined_prop = new (ctx.mem) String_Schema(p->path(), p->position());
+        String_Schema* combined_prop = new (ctx.mem) String_Schema(p->path(), p->position(), p->closure());
         if (!property_stack.empty()) {
           *combined_prop << property_stack.back()
-                         << new (ctx.mem) String_Constant(p->path(), p->position(), "-")
+                         << new (ctx.mem) String_Constant(p->path(), p->position(), p->closure(), 8210, "-")
                          << dec->property(); // TODO: eval the prop into a string constant
         }
         else {
@@ -93,6 +95,8 @@ namespace Sass {
     Expression* feature_queries = f->feature_queries()->perform(eval->with(env, backtrace));
     Feature_Block* ff = new (ctx.mem) Feature_Block(f->path(),
                                                     f->position(),
+                                                    f->closure(),
+                                                    9132,
                                                     static_cast<Feature_Queries*>(feature_queries),
                                                     f->block()->perform(this)->block());
     return ff;
@@ -103,6 +107,8 @@ namespace Sass {
     Expression* media_queries = m->media_queries()->perform(eval->with(env, backtrace));
     Media_Block* mm = new (ctx.mem) Media_Block(m->path(),
                                                 m->position(),
+                                                m->closure(),
+                                                310,
                                                 static_cast<List*>(media_queries),
                                                 m->block()->perform(this)->block());
     mm->selector(selector_stack.back());
@@ -120,6 +126,8 @@ namespace Sass {
     Block* bb = ab ? ab->perform(this)->block() : 0;
     At_Rule* aa = new (ctx.mem) At_Rule(a->path(),
                                         a->position(),
+                                        a->closure(),
+                                        311,
                                         a->keyword(),
                                         as,
                                         bb);
@@ -134,7 +142,10 @@ namespace Sass {
     String* new_p = static_cast<String*>(old_p->perform(eval->with(env, backtrace)));
     return new (ctx.mem) Declaration(d->path(),
                                      d->position(),
+                                     d->closure(),
+                                     667,
                                      new_p,
+                                     d->separator(),
                                      d->value()->perform(eval->with(env, backtrace)),
                                      d->is_important());
   }
@@ -153,7 +164,7 @@ namespace Sass {
 
   Statement* Expand::operator()(Import* imp)
   {
-    Import* result = new (ctx.mem) Import(imp->path(), imp->position());
+    Import* result = new (ctx.mem) Import(imp->path(), imp->position(), imp->closure(), 411);
     for ( size_t i = 0, S = imp->urls().size(); i < S; ++i) {
       result->urls().push_back(imp->urls()[i]->perform(eval->with(env, backtrace)));
     }
@@ -176,7 +187,7 @@ namespace Sass {
   Statement* Expand::operator()(Comment* c)
   {
     // TODO: eval the text, once we're parsing/storing it as a String_Schema
-    return new (ctx.mem) Comment(c->path(), c->position(), static_cast<String*>(c->text()->perform(eval->with(env, backtrace))));
+    return new (ctx.mem) Comment(c->path(), c->position(), c->closure(), 412, static_cast<String*>(c->text()->perform(eval->with(env, backtrace))));
   }
 
   Statement* Expand::operator()(If* i)
@@ -206,13 +217,13 @@ namespace Sass {
     double hi = static_cast<Number*>(high)->value();
     if (f->is_inclusive()) ++hi;
     Env new_env;
-    new_env[variable] = new (ctx.mem) Number(low->path(), low->position(), lo);
+    new_env[variable] = new (ctx.mem) Number(low->path(), low->position(), low->closure(), 8211, lo);
     new_env.link(env);
     env = &new_env;
     Block* body = f->block();
     for (double i = lo;
          i < hi;
-         (*env)[variable] = new (ctx.mem) Number(low->path(), low->position(), ++i)) {
+         (*env)[variable] = new (ctx.mem) Number(low->path(), low->position(), low->closure(), 8212, ++i)) {
       append_block(body);
     }
     env = new_env.parent();
@@ -229,7 +240,7 @@ namespace Sass {
       map = static_cast<Map*>(expr);
     }
     else if (expr->concrete_type() != Expression::LIST) {
-      list = new (ctx.mem) List(expr->path(), expr->position(), 1, List::COMMA);
+      list = new (ctx.mem) List(expr->path(), expr->position(), expr->closure(), 8213, 1, List::COMMA);
       *list << expr;
     }
     else {
@@ -252,7 +263,7 @@ namespace Sass {
       for (size_t i = 0, L = list->length(); i < L; ++i) {
         List* variable = 0;
         if ((*list)[i]->concrete_type() != Expression::LIST  || variables.size() == 1) {
-          variable = new (ctx.mem) List((*list)[i]->path(), (*list)[i]->position(), 1, List::COMMA);
+          variable = new (ctx.mem) List((*list)[i]->path(), (*list)[i]->position(), (*list)[i]->closure(), 4123, 1, List::COMMA);
           *variable << (*list)[i];
         }
         else {
@@ -263,7 +274,7 @@ namespace Sass {
             (*env)[variables[j]] = (*variable)[j]->perform(eval->with(env, backtrace));
           }
           else {
-            (*env)[variables[j]] = new (ctx.mem) Null(expr->path(), expr->position());
+            (*env)[variables[j]] = new (ctx.mem) Null(expr->path(), expr->position(), expr->closure(), 8218);
           }
         }
         append_block(body);
@@ -346,8 +357,10 @@ namespace Sass {
       // represent mixin content blocks as thunks/closures
       Definition* thunk = new (ctx.mem) Definition(c->path(),
                                                    c->position(),
+                                                   c->closure(),
+                                                   1233,
                                                    "@content",
-                                                   new (ctx.mem) Parameters(c->path(), c->position()),
+                                                   new (ctx.mem) Parameters(c->path(), c->position(), c->closure(), 90501),
                                                    c->block(),
                                                    Definition::MIXIN);
       thunk->environment(env);
@@ -368,16 +381,18 @@ namespace Sass {
     if (!env->has("@content[m]")) return 0;
     Mixin_Call* call = new (ctx.mem) Mixin_Call(c->path(),
                                                 c->position(),
+                                                c->closure(),
+                                                90022,
                                                 "@content",
-                                                new (ctx.mem) Arguments(c->path(), c->position()));
+                                                new (ctx.mem) Arguments(c->path(), c->position(), c->closure(), 90502));
     return call->perform(this);
   }
 
   inline Statement* Expand::fallback_impl(AST_Node* n)
   {
     error("unknown internal error; please contact the LibSass maintainers", n->path(), n->position(), backtrace);
-    String_Constant* msg = new (ctx.mem) String_Constant("", Position(), string("`Expand` doesn't handle ") + typeid(*n).name());
-    return new (ctx.mem) Warning("", Position(), msg);
+    String_Constant* msg = new (ctx.mem) String_Constant("", Position(), Position(), 8219, string("`Expand` doesn't handle ") + typeid(*n).name());
+    return new (ctx.mem) Warning("", Position(), Position(), 320, msg);
   }
 
   inline void Expand::append_block(Block* b)
