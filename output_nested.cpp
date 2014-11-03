@@ -110,7 +110,7 @@ namespace Sass {
       buffer.erase(buffer.length() - 1);
       if (ctx) ctx->source_map.remove_line(buffer);
       append_to_buffer(" }");
-      ctx->source_map.add_mapping(b->closure());
+      ctx->source_map.add_mapping_end(b);
       append_to_buffer("\n");
     }
 
@@ -170,7 +170,7 @@ namespace Sass {
       buffer.erase(buffer.length() - 1);
       if (ctx) ctx->source_map.remove_line(buffer);
       append_to_buffer(" }");
-      ctx->source_map.add_mapping(b->closure());
+      ctx->source_map.add_mapping_end(b);
       append_to_buffer("\n");
       --indentation;
 
@@ -202,7 +202,7 @@ namespace Sass {
     buffer.erase(buffer.length() - 1);
     if (ctx) ctx->source_map.remove_line(buffer);
     append_to_buffer(" }");
-    ctx->source_map.add_mapping(b->closure());
+    ctx->source_map.add_mapping_end(b);
     append_to_buffer("\n");
 
   }
@@ -257,7 +257,7 @@ namespace Sass {
     buffer.erase(buffer.length() - 1);
     if (ctx) ctx->source_map.remove_line(buffer);
     append_to_buffer(" }");
-    ctx->source_map.add_mapping(b->closure());
+    ctx->source_map.add_mapping_end(b);
     append_to_buffer("\n");
 
     if (ctx) ctx->source_map.remove_line(buffer);

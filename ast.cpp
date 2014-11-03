@@ -118,7 +118,7 @@ namespace Sass {
       (*cpy) << this;
       return cpy;
     }
-    Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->path(), rhs->position(), rhs->closure());
+    Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->path(), rhs->position(), rhs->closure(), 3200);
     for (size_t j = 0; j < i; ++j)
     { (*cpy) << (*rhs)[j]; }
     (*cpy) << this;
@@ -133,7 +133,7 @@ namespace Sass {
 
     // if the rhs is empty, just return a copy of this
     if (rhs->length() == 0) {
-      Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->path(), rhs->position(), rhs->closure());
+      Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->path(), rhs->position(), rhs->closure(), 3201);
       (*cpy) << this;
       return cpy;
     }
@@ -149,7 +149,7 @@ namespace Sass {
       // if rhs is universal, just return this tagname + rhs's qualifiers
       if (static_cast<Type_Selector*>(rhs_0)->name() == "*")
       {
-        Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->path(), rhs->position(), rhs->closure());
+        Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->path(), rhs->position(), rhs->closure(), 3203);
         (*cpy) << this;
         for (size_t i = 1, L = rhs->length(); i < L; ++i)
         { (*cpy) << (*rhs)[i]; }
@@ -163,7 +163,7 @@ namespace Sass {
       { return 0; }
     }
     // else it's a tag name and a bunch of qualifiers -- just append them
-    Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->path(), rhs->position(), rhs->closure());
+    Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->path(), rhs->position(), rhs->closure(), 3204);
     (*cpy) << this;
     (*cpy) += rhs;
     return cpy;
@@ -210,7 +210,7 @@ namespace Sass {
 
     // Check if pseudo-elements are the same between the selectors
     // Check if pseudo-elements are the same between the selectors
-    
+
     set<string> lpsuedoset, rpsuedoset;
     for (size_t i = 0, L = length(); i < L; ++i)
     {
@@ -267,7 +267,7 @@ namespace Sass {
     To_String to_string;
     // Check if pseudo-elements are the same between the selectors
     // Check if pseudo-elements are the same between the selectors
-    
+
     set<string> lpsuedoset, rpsuedoset;
     for (size_t i = 0, L = length(); i < L; ++i)
     {
@@ -413,7 +413,7 @@ namespace Sass {
   {
     if (!tail()) return 0;
     if (!head()) return tail()->context(ctx);
-    return new (ctx.mem) Complex_Selector(path(), position(), closure(), combinator(), head(), tail()->context(ctx));
+    return new (ctx.mem) Complex_Selector(path(), position(), closure(), 3205, combinator(), head(), tail()->context(ctx));
   }
 
   Complex_Selector* Complex_Selector::innermost()
@@ -534,7 +534,7 @@ namespace Sass {
   Compound_Selector* Compound_Selector::minus(Compound_Selector* rhs, Context& ctx)
   {
     To_String to_string;
-    Compound_Selector* result = new (ctx.mem) Compound_Selector(path(), position(), closure());
+    Compound_Selector* result = new (ctx.mem) Compound_Selector(path(), position(), closure(), 3208);
 
     // not very efficient because it needs to preserve order
     for (size_t i = 0, L = length(); i < L; ++i)

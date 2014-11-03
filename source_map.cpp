@@ -151,6 +151,13 @@ namespace Sass {
   }
 
   // called when something is added to the output
+  void SourceMap::add_mapping_end(AST_Node* node, size_t type)
+  {
+  	if (node)
+      mappings.push_back(Mapping(node->position(), output_position, node->type() +  10000));
+  }
+
+  // called when something is added to the output
   void SourceMap::add_mapping(Position position, size_t type)
   {
       mappings.push_back(Mapping(position, output_position, type));

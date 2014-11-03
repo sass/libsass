@@ -108,6 +108,7 @@ namespace Sass {
     Wrapped_Selector* neg = new (ctx.mem) Wrapped_Selector(s->path(),
                                                            s->position(),
                                                            s->closure(),
+                                                           7310,
                                                            s->name(),
                                                            s->selector()->perform(this));
     parent = old_parent;

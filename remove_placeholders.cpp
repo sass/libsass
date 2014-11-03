@@ -18,7 +18,7 @@ namespace Sass {
     Position noPosition;
 
         if (sl) {
-            Selector_List* new_sl = new (ctx.mem) Selector_List(sl->path(), sl->position(), noPosition);
+            Selector_List* new_sl = new (ctx.mem) Selector_List(sl->path(), sl->position(), noPosition, 3106);
 
             for (size_t i = 0, L = sl->length(); i < L; ++i) {
                 if (!(*sl)[i]->has_placeholder()) {
