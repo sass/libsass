@@ -1080,10 +1080,6 @@ namespace Sass {
     {
       List* l = ARGL("$list", ctx);
       Expression* v = ARG("$value", Expression);
-      if (!l) {
-        l = new (ctx.mem) List(path, position, 1);
-        *l << ARG("$list", Expression);
-      }
       for (size_t i = 0, L = l->length(); i < L; ++i) {
         if (eq(l->value_at_index(i), v, ctx)) return new (ctx.mem) Number(path, position, i+1);
       }
@@ -1097,15 +1093,6 @@ namespace Sass {
       List* l2 = ARGL("$list2", ctx);
       String_Constant* sep = ARG("$separator", String_Constant);
       List::Separator sep_val = (l1 ? l1->separator() : List::SPACE);
-      if (!l1) {
-        l1 = new (ctx.mem) List(path, position, 1);
-        *l1 << ARG("$list1", Expression);
-        sep_val = (l2 ? l2->separator() : List::SPACE);
-      }
-      if (!l2) {
-        l2 = new (ctx.mem) List(path, position, 1);
-        *l2 << ARG("$list2", Expression);
-      }
       size_t len = l1->length() + l2->length();
       string sep_str = unquote(sep->value());
       if (sep_str == "space") sep_val = List::SPACE;
@@ -1123,10 +1110,6 @@ namespace Sass {
       List* l = ARGL("$list", ctx);
       Expression* v = ARG("$val", Expression);
       String_Constant* sep = ARG("$separator", String_Constant);
-      if (!l) {
-        l = new (ctx.mem) List(path, position, 1);
-        *l << ARG("$list", Expression);
-      }
       List* result = new (ctx.mem) List(path, position, l->length() + 1, l->separator());
       string sep_str(unquote(sep->value()));
       if (sep_str == "space") result->separator(List::SPACE);
@@ -1195,10 +1178,6 @@ namespace Sass {
     BUILT_IN(list_separator)
     {
       List* l = ARGL("$list", ctx);
-      if (!l) {
-        l = new (ctx.mem) List(path, position, 1);
-        *l << ARG("$list", Expression);
-      }
       return new (ctx.mem) String_Constant(path,
                                            position,
                                            l->separator() == List::COMMA ? "comma" : "space");
