@@ -109,7 +109,7 @@ namespace Sass {
     Expression* expr = e->list()->perform(this);
     List* list = 0;
     Map* map = 0;
-    if (expr->concrete_type() != Expression::LIST) {
+    if (expr->concrete_type() == Expression::MAP) {
       map = static_cast<Map*>(expr);
     }
     else if (expr->concrete_type() != Expression::LIST) {
@@ -450,6 +450,16 @@ namespace Sass {
     // cerr << "name: " << v->name() << "; type: " << typeid(*value).name() << "; value: " << value->perform(&to_string) << endl;
     if (typeid(*value) == typeid(Argument)) value = static_cast<Argument*>(value)->value();
 
+    // behave according to as ruby sass (add leading zero)
+    if (value->concrete_type() == Expression::NUMBER) {
+      Number* n = static_cast<Number*>(value);
+      value = new (ctx.mem) Number(n->path(),
+                                   n->position(),
+                                   n->value(),
+                                   n->unit(),
+                                   true);
+    }
+
     // cerr << "\ttype is now: " << typeid(*value).name() << endl << endl;
     return value;
   }
@@ -458,24 +468,30 @@ namespace Sass {
   {
     using Prelexer::number;
     Expression* result = 0;
+    bool zero = !( t->value().substr(0, 1) == "." ||
+                   t->value().substr(0, 2) == "-." );
     switch (t->type())
     {
       case Textual::NUMBER:
         result = new (ctx.mem) Number(t->path(),
                                       t->position(),
-                                      atof(t->value().c_str()));
+                                      atof(t->value().c_str()),
+                                      "",
+                                      zero);
         break;
       case Textual::PERCENTAGE:
         result = new (ctx.mem) Number(t->path(),
                                       t->position(),
                                       atof(t->value().c_str()),
-                                      "%");
+                                      "%",
+                                      zero);
         break;
       case Textual::DIMENSION:
         result = new (ctx.mem) Number(t->path(),
                                       t->position(),
                                       atof(t->value().c_str()),
-                                      Token(number(t->value().c_str())));
+                                      Token(number(t->value().c_str())),
+                                      zero);
         break;
       case Textual::HEX: {
         string hext(t->value().substr(1)); // chop off the '#'
@@ -507,7 +523,12 @@ namespace Sass {
 
   Expression* Eval::operator()(Number* n)
   {
-    return n;
+    // behave according to as ruby sass (add leading zero)
+    return new (ctx.mem) Number(n->path(),
+                                n->position(),
+                                n->value(),
+                                n->unit(),
+                                true);
   }
 
   Expression* Eval::operator()(Boolean* b)
@@ -559,6 +580,35 @@ namespace Sass {
     return s;
   }
 
+  Expression* Eval::operator()(Feature_Query* q)
+  {
+    Feature_Query* qq = new (ctx.mem) Feature_Query(q->path(),
+                                                    q->position(),
+                                                    q->length());
+    for (size_t i = 0, L = q->length(); i < L; ++i) {
+      *qq << static_cast<Feature_Query_Condition*>((*q)[i]->perform(this));
+    }
+    return qq;
+  }
+
+  Expression* Eval::operator()(Feature_Query_Condition* c)
+  {
+    String* feature = c->feature();
+    Expression* value = c->value();
+    value = (value ? value->perform(this) : 0);
+    Feature_Query_Condition* cc = new (ctx.mem) Feature_Query_Condition(c->path(),
+                                                 c->position(),
+                                                 c->length(),
+                                                 feature,
+                                                 value,
+                                                 c->operand(),
+                                                 c->is_root());
+    for (size_t i = 0, L = c->length(); i < L; ++i) {
+      *cc << static_cast<Feature_Query_Condition*>((*c)[i]->perform(this));
+    }
+    return cc;
+  }
+
   Expression* Eval::operator()(Media_Query* q)
   {
     String* t = q->media_type();
@@ -599,20 +649,32 @@ namespace Sass {
     val->is_delayed(false);
     val = val->perform(this);
     val->is_delayed(false);
-    if (a->is_rest_argument() && (val->concrete_type() != Expression::LIST)) {
-      List* wrapper = new (ctx.mem) List(val->path(),
-                                         val->position(),
-                                         0,
-                                         List::COMMA,
-                                         true);
-      *wrapper << val;
-      val = wrapper;
+
+    bool is_rest_argument = a->is_rest_argument();
+    bool is_keyword_argument = a->is_keyword_argument();
+
+    if (a->is_rest_argument()) {
+      if (val->concrete_type() == Expression::MAP) {
+        is_rest_argument = false;
+        is_keyword_argument = true;
+      }
+      else
+      if(val->concrete_type() != Expression::LIST) {
+        List* wrapper = new (ctx.mem) List(val->path(),
+                                           val->position(),
+                                           0,
+                                           List::COMMA,
+                                           true);
+        *wrapper << val;
+        val = wrapper;
+      }
     }
     return new (ctx.mem) Argument(a->path(),
                                   a->position(),
                                   val,
                                   a->name(),
-                                  a->is_rest_argument());
+                                  is_rest_argument,
+                                  is_keyword_argument);
   }
 
   Expression* Eval::operator()(Arguments* a)

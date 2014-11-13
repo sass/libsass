@@ -89,6 +89,9 @@ namespace Sass {
       else if (peek< media >()) {
         (*root) << parse_media_block();
       }
+      else if (peek< supports >()) {
+        (*root) << parse_feature_block();
+      }
       else if (peek< warn >()) {
         (*root) << parse_warning();
         if (!lex< exactly<';'> >()) error("top-level @warn directive must be terminated by ';'");
@@ -254,12 +257,14 @@ namespace Sass {
     }
     else {
       bool is_arglist = false;
+      bool is_keyword = false;
       Expression* val = parse_space_list();
       val->is_delayed(false);
       if (lex< exactly< ellipsis > >()) {
-        is_arglist = true;
+        if (val->concrete_type() == Expression::MAP) is_keyword = true;
+        else is_arglist = true;
       }
-      arg = new (ctx.mem) Argument(path, source_position, val, "", is_arglist);
+      arg = new (ctx.mem) Argument(path, source_position, val, "", is_arglist, is_keyword);
     }
     return arg;
   }
@@ -609,7 +614,7 @@ namespace Sass {
           Comment* comment  = new (ctx.mem) Comment(path, source_position, contents);
           (*block) << comment;
         }
-        if (lex< exactly<'}'> >()) break;
+        if (lex< sequence< exactly<'}'>, zero_plus< exactly<';'> > > >()) break;
       }
       if (lex< block_comment >()) {
         String*  contents = parse_interpolated_chunk(lexed);
@@ -691,6 +696,9 @@ namespace Sass {
       else if (peek< media >()) {
         (*block) << parse_media_block();
       }
+      else if (peek< supports >()) {
+        (*block) << parse_feature_block();
+      }
       // ignore the @charset directive for now
       else if (lex< exactly< charset_kwd > >()) {
         lex< string_constant >();
@@ -760,34 +768,15 @@ namespace Sass {
 
   Expression* Parser::parse_map()
   {
-    if (!(peek< map_key >(position)))
-    { return parse_list(); }
-
-    lex< exactly<'('> >();
-
-    // empty maps so treat it like an empty list
-    if (peek< exactly<')'> >(position))
-    {
-      lex< exactly<')'> >();
-      return new (ctx.mem) List(path, source_position, 0);
-    }
-
     Expression* key = parse_list();
 
     // it's not a map so return the lexed value as a list value
-    if (!lex< exactly<':'> >())
-    {
-      if (!lex< exactly<')'> >()) error("unclosed parenthesis");
-      return key;
-    }
+    if (!peek< exactly<':'> >())
+    { return key; }
 
-    Expression* value;
-    if (peek< map_key >(position))
-    {
-      value = parse_map();
-    } else {
-      value = parse_space_list();
-    }
+    lex< exactly<':'> >();
+
+    Expression* value = parse_space_list();
 
     Map* map = new (ctx.mem) Map(path, source_position, 1);
     (*map) << make_pair(key, value);
@@ -803,18 +792,10 @@ namespace Sass {
       if (!(lex< exactly<':'> >()))
       { error("invalid syntax"); }
 
-      Expression* value;
-      if (peek< map_key >(position))
-      {
-        value = parse_map();
-      } else {
-        value = parse_space_list();
-      }
+      Expression* value = parse_space_list();
 
       (*map) << make_pair(key, value);
     }
-
-    if (!lex< exactly<')'> >()) error("unclosed parenthesis 3");
 
     return map;
   }
@@ -848,7 +829,7 @@ namespace Sass {
           peek< exactly<'}'> >(position) ||
           peek< exactly<'{'> >(position) ||
           peek< exactly<')'> >(position) ||
-          //peek< exactly<':'> >(position) ||
+          peek< exactly<':'> >(position) ||
           peek< exactly<ellipsis> >(position)) {
         break;
       }
@@ -861,9 +842,7 @@ namespace Sass {
 
   Expression* Parser::parse_space_list()
   {
-    Expression* disj1;
-    if (peek< map_key >(position)) disj1 = parse_map();
-    else disj1 = parse_disjunction();
+    Expression* disj1 = parse_disjunction();
     // if it's a singleton, return it directly; don't wrap it
     if (//peek< exactly<'!'> >(position) ||
         peek< exactly<';'> >(position) ||
@@ -992,7 +971,7 @@ namespace Sass {
   Expression* Parser::parse_factor()
   {
     if (lex< exactly<'('> >()) {
-      Expression* value = parse_list();
+      Expression* value = parse_map();
       if (!lex< exactly<')'> >()) error("unclosed parenthesis");
       value->is_delayed(false);
       // make sure wrapped lists and division expressions are non-delayed within parentheses
@@ -1547,6 +1526,97 @@ namespace Sass {
       error("unclosed parenthesis in media query expression");
     }
     return new (ctx.mem) Media_Query_Expression(path, feature->position(), feature, expression);
+  }
+
+  Feature_Block* Parser::parse_feature_block()
+  {
+    lex< supports >();
+    Position supports_source_position = source_position;
+
+    Feature_Query* feature_queries = parse_feature_queries();
+
+    if (!peek< exactly<'{'> >()) {
+      error("expected '{' in feature query");
+    }
+    Block* block = parse_block();
+
+    return new (ctx.mem) Feature_Block(path, supports_source_position, feature_queries, block);
+  }
+
+  Feature_Query* Parser::parse_feature_queries()
+  {
+    Feature_Query* fq = new (ctx.mem) Feature_Query(path, source_position);
+    Feature_Query_Condition* cond = new (ctx.mem) Feature_Query_Condition(path, source_position);
+    cond->is_root(true);
+    while (!peek< exactly<')'> >(position) && !peek< exactly<'{'> >(position))
+      (*cond) << parse_feature_query();
+    (*fq) << cond;
+
+    if (fq->empty()) error("expected @supports condition (e.g. (display: flexbox))");
+
+    return fq;
+  }
+
+  Feature_Query_Condition* Parser::parse_feature_query()
+  {
+    if (peek< not_op >(position)) return parse_supports_negation();
+    else if (peek< and_op >(position)) return parse_supports_conjunction();
+    else if (peek< or_op >(position)) return parse_supports_disjunction();
+    else if (peek< exactly<'('> >(position)) return parse_feature_query_in_parens();
+    else return parse_supports_declaration();
+  }
+
+  Feature_Query_Condition* Parser::parse_feature_query_in_parens()
+  {
+    Feature_Query_Condition* cond = new (ctx.mem) Feature_Query_Condition(path, source_position);
+
+    if (!lex< exactly<'('> >()) error("@supports declaration expected '('");
+    while (!peek< exactly<')'> >(position) && !peek< exactly<'{'> >(position))
+      (*cond) << parse_feature_query();
+    if (!lex< exactly<')'> >()) error("unclosed parenthesis in @supports declaration");
+
+    return (cond->length() == 1) ? (*cond)[0] : cond;
+  }
+
+  Feature_Query_Condition* Parser::parse_supports_negation()
+  {
+    lex< not_op >();
+
+    Feature_Query_Condition* cond = parse_feature_query();
+    cond->operand(Feature_Query_Condition::NOT);
+
+    return cond;
+  }
+
+  Feature_Query_Condition* Parser::parse_supports_conjunction()
+  {
+    lex< and_op >();
+
+    Feature_Query_Condition* cond = parse_feature_query();
+    cond->operand(Feature_Query_Condition::AND);
+
+    return cond;
+  }
+
+  Feature_Query_Condition* Parser::parse_supports_disjunction()
+  {
+    lex< or_op >();
+
+    Feature_Query_Condition* cond = parse_feature_query();
+    cond->operand(Feature_Query_Condition::OR);
+
+    return cond;
+  }
+
+  Feature_Query_Condition* Parser::parse_supports_declaration()
+  {
+    Declaration* declaration = parse_declaration();
+    Feature_Query_Condition* cond = new (ctx.mem) Feature_Query_Condition(declaration->path(),
+                                                                          declaration->position(),
+                                                                          1,
+                                                                          declaration->property(),
+                                                                          declaration->value());
+    return cond;
   }
 
   At_Rule* Parser::parse_at_rule()

@@ -61,6 +61,14 @@ namespace Sass {
     media_block->block()->perform(this);
   }
 
+  void Inspect::operator()(Feature_Block* feature_block)
+  {
+    if (ctx) ctx->source_map.add_mapping(feature_block);
+    append_to_buffer("@supports ");
+    feature_block->feature_queries()->perform(this);
+    feature_block->block()->perform(this);
+  }
+
   void Inspect::operator()(At_Rule* at_rule)
   {
     append_to_buffer(at_rule->keyword());
@@ -325,6 +333,10 @@ namespace Sass {
     if (n->numerator_units().size() > 1 || n->denominator_units().size() > 0) {
       error(d + n->unit() + " is not a valid CSS value", n->path(), n->position());
     }
+    if (!n->zero()) {
+      if (d.substr(0, 3) == "-0.") d.erase(1, 1);
+      if (d.substr(0, 2) == "0.") d.erase(0, 1);
+    }
     append_to_buffer(d == "-0" ? "0" : d);
     append_to_buffer(n->unit());
   }
@@ -394,6 +406,38 @@ namespace Sass {
   void Inspect::operator()(String_Constant* s)
   {
     append_to_buffer(s->needs_unquoting() ? unquote(s->value()) : s->value());
+  }
+
+  void Inspect::operator()(Feature_Query* fq)
+  {
+    size_t i = 0;
+    (*fq)[i++]->perform(this);
+    for (size_t L = fq->length(); i < L; ++i) {
+      (*fq)[i]->perform(this);
+    }
+  }
+
+  void Inspect::operator()(Feature_Query_Condition* fqc)
+  {
+    if (fqc->operand() == Feature_Query_Condition::AND)
+      append_to_buffer(" and ");
+    else if (fqc->operand() == Feature_Query_Condition::OR)
+      append_to_buffer(" or ");
+    else if (fqc->operand() == Feature_Query_Condition::NOT)
+      append_to_buffer(" not ");
+
+    if (!fqc->is_root()) append_to_buffer("(");
+
+    if (!fqc->length()) {
+      fqc->feature()->perform(this);
+      append_to_buffer(": ");
+      fqc->value()->perform(this);
+    }
+    // else
+    for (size_t i = 0, L = fqc->length(); i < L; ++i)
+      (*fqc)[i]->perform(this);
+
+    if (!fqc->is_root()) append_to_buffer(")");
   }
 
   void Inspect::operator()(Media_Query* mq)

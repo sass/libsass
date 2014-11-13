@@ -1,36 +1,38 @@
 language: cpp
 
+os:
+  - linux
+  # - osx
+
 compiler:
   - gcc
   - clang
 
+# don't create redundant code coverage reports
+# - AUTOTOOLS=yes COVERAGE=yes BUILD=static
+# - AUTOTOOLS=no COVERAGE=yes BUILD=shared
+# - AUTOTOOLS=no COVERAGE=no BUILD=static
+
+# further speed up day by day travis-ci builds
+# re-enable this if you change the makefiles
+# this will still catch all coding errors!
+# - AUTOTOOLS=no COVERAGE=no BUILD=shared
+# - AUTOTOOLS=yes COVERAGE=no BUILD=static
+
 env:
-  - AUTOTOOLS=yes
-  - AUTOTOOLS=no
+  - AUTOTOOLS=no COVERAGE=yes BUILD=static
+  - AUTOTOOLS=yes COVERAGE=no BUILD=shared
 
-script: ./script/cibuild
+# currenty there are various issues when
+# built with coverage, clang and autotools
+# - AUTOTOOLS=yes COVERAGE=yes BUILD=shared
 
-before_install:
-  - sudo pip install cpp-coveralls
-  # enable to debug coverage
-  - sudo pip install gcovr
-  - sudo apt-get install libjson-perl
-  - sudo apt-get install libjson-xs-perl
-  - sudo apt-get install libfile-slurp-perl
+matrix:
+  exclude:
+    - compiler: clang
+      env: AUTOTOOLS=yes COVERAGE=yes BUILD=static
 
-install:
-  # gcc >= 4.7 is needed for -std=c++11
-  - ./script/install-compiler
-  - gem install minitest
-
-after_success:
-  # exclude some directories from profiling (.libs is from autotools)
-  - export EXCLUDE_COVERAGE="--exclude sassc --exclude sass-spec --exclude .libs"
-  # debug via gcovr
-  - gcovr -r .
-  # debug via coveralls (dump result for futher analyzing)
-  - coveralls $EXCLUDE_COVERAGE --gcov-options '\-lp' --dump coveralls.json
-  # analyze the resulting json
-  - ./script/coveralls-debug
-  # generate and submit report to coveralls.io
-  - coveralls $EXCLUDE_COVERAGE --gcov-options '\-lp'
+script: ./script/ci-build-libsass
+before_install: ./script/ci-install-deps
+install: ./script/ci-install-compiler
+after_success: ./script/ci-report-coverage
