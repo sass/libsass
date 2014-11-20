@@ -57,6 +57,7 @@ namespace Sass {
     input_path              (make_canonical_path(initializers.input_path())),
     output_path             (make_canonical_path(initializers.output_path())),
     source_comments         (initializers.source_comments()),
+    import_once             (initializers.import_once()),
     output_style            (initializers.output_style()),
     source_map_file         (make_canonical_path(initializers.source_map_file())),
     source_map_embed        (initializers.source_map_embed()),
@@ -173,6 +174,7 @@ namespace Sass {
       if (contents) {
         add_source(full_path, real_path, contents);
         style_sheets[full_path] = 0;
+        ast_emitted[full_path] = false;
         return full_path;
       }
     }
@@ -191,6 +193,7 @@ namespace Sass {
     if (contents) {
       add_source(full_path, real_path, contents);
       style_sheets[full_path] = 0;
+      ast_emitted[full_path] = false;
       return full_path;
     }
     for (size_t i = 0, S = include_paths.size(); i < S; ++i) {
@@ -200,6 +203,7 @@ namespace Sass {
       if (contents) {
         add_source(full_path, real_path, contents);
         style_sheets[full_path] = 0;
+        ast_emitted[full_path] = false;
         return full_path;
       }
     }

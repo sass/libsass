@@ -122,6 +122,7 @@ extern "C" {
                        .include_paths_array(0)
                        .include_paths(vector<string>())
                        .precision(c_ctx->options.precision ? c_ctx->options.precision : 5)
+                       .import_once(c_ctx->options.import_once)
       );
       if (c_ctx->c_functions) {
         struct Sass_C_Function_Descriptor** this_func_data = c_ctx->c_functions;
@@ -209,6 +210,7 @@ extern "C" {
                        .include_paths_array(0)
                        .include_paths(vector<string>())
                        .precision(c_ctx->options.precision ? c_ctx->options.precision : 5)
+                       .import_once(c_ctx->options.import_once)
       );
       if (c_ctx->c_functions) {
         struct Sass_C_Function_Descriptor** this_func_data = c_ctx->c_functions;

@@ -37,6 +37,7 @@ struct sass_options {
   const char* image_path;
   // Precision for outputting fractional numbers
   int precision;
+  int import_once; // bool
 };
 
 struct sass_context {

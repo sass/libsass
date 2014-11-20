@@ -163,7 +163,11 @@ namespace Sass {
 
   Statement* Expand::operator()(Import_Stub* i)
   {
-    append_block(ctx.style_sheets[i->file_name()]);
+    string filename = i->file_name();
+    if (!ctx.import_once || !ctx.ast_emitted[filename]) {
+      append_block(ctx.style_sheets[filename]);
+      ctx.ast_emitted[filename] = true;
+    }
     return 0;
   }
 
