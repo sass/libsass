@@ -445,7 +445,7 @@ namespace Sass {
       if (sass_value_get_tag(c_val) == SASS_ERROR) {
         error("ERROR: C function " + c->name() + ": " + sass_error_get_message(c_val), c->path(), c->position(), backtrace);
       } else if (sass_value_get_tag(c_val) == SASS_WARNING) {
-        error("WARNING: C function " + c->name() + ": " + sass_error_get_message(c_val), c->path(), c->position(), backtrace);
+        error("WARNING: C function " + c->name() + ": " + sass_warning_get_message(c_val), c->path(), c->position(), backtrace);
       }
       result = cval_to_astnode(c_val, ctx, backtrace, c->path(), c->position());
 
@@ -1034,8 +1034,8 @@ namespace Sass {
         error("ERROR: C function " + string(sass_error_get_message(v)), path, position, backtrace);
       } break;
       case SASS_WARNING: {
-	    error("WARNING: C function " + string(sass_warning_get_message(v)), path, position, backtrace);
-	  } break;
+        error("WARNING: C function " + string(sass_warning_get_message(v)), path, position, backtrace);
+      } break;
     }
     return e;
   }

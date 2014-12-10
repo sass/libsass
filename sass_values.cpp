@@ -142,7 +142,7 @@ extern "C" {
   char* sass_error_get_message(union Sass_Value* v) { return v->error.message; };
   void sass_error_set_message(union Sass_Value* v, char* msg) { v->error.message = msg; };
 
-  // Getters and setters for Sass_Error
+  // Getters and setters for Sass_Warning
   char* sass_warning_get_message(union Sass_Value* v) { return v->warning.message; };
   void sass_warning_set_message(union Sass_Value* v, char* msg) { v->warning.message = msg; };
 
@@ -237,7 +237,7 @@ extern "C" {
     if (v == 0) return 0;
     v->warning.tag = SASS_WARNING;
     v->warning.message = strdup(msg);
-    if (v->error.message == 0) { free(v); return 0; }
+    if (v->warning.message == 0) { free(v); return 0; }
     return v;
   }
   // will free all associated sass values
