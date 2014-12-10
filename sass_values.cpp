@@ -62,6 +62,11 @@ extern "C" {
     char*         message;
   };
 
+  struct Sass_Warning {
+    enum Sass_Tag tag;
+    char*         message;
+  };
+
   union Sass_Value {
     struct Sass_Unknown unknown;
     struct Sass_Boolean boolean;
@@ -72,6 +77,7 @@ extern "C" {
     struct Sass_Map     map;
     struct Sass_Null    null;
     struct Sass_Error   error;
+    struct Sass_Warning warning;
   };
 
   struct Sass_MapPair {
@@ -135,6 +141,10 @@ extern "C" {
   // Getters and setters for Sass_Error
   char* sass_error_get_message(union Sass_Value* v) { return v->error.message; };
   void sass_error_set_message(union Sass_Value* v, char* msg) { v->error.message = msg; };
+
+  // Getters and setters for Sass_Error
+  char* sass_warning_get_message(union Sass_Value* v) { return v->warning.message; };
+  void sass_warning_set_message(union Sass_Value* v, char* msg) { v->warning.message = msg; };
 
   // Creator functions for all value types
 
@@ -221,6 +231,15 @@ extern "C" {
     return v;
   }
 
+  union Sass_Value* sass_make_warning(const char* msg)
+  {
+    Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
+    if (v == 0) return 0;
+    v->warning.tag = SASS_WARNING;
+    v->warning.message = strdup(msg);
+    if (v->error.message == 0) { free(v); return 0; }
+    return v;
+  }
   // will free all associated sass values
   void sass_delete_value(union Sass_Value* val) {
 
@@ -254,6 +273,9 @@ extern "C" {
         }   break;
         case SASS_ERROR: {
                 free(val->error.message);
+        }   break;
+        case SASS_WARNING: {
+                free(val->warning.message);
         }   break;
     }
 

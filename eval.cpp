@@ -443,7 +443,9 @@ namespace Sass {
       union Sass_Value* c_args = args->perform(&to_c);
       Sass_Value* c_val = c_func(c_args, def->cookie());
       if (sass_value_get_tag(c_val) == SASS_ERROR) {
-        error("error in C function " + c->name() + ": " + sass_error_get_message(c_val), c->path(), c->position(), backtrace);
+        error("ERROR: C function " + c->name() + ": " + sass_error_get_message(c_val), c->path(), c->position(), backtrace);
+      } else if (sass_value_get_tag(c_val) == SASS_WARNING) {
+        error("WARNING: C function " + c->name() + ": " + sass_error_get_message(c_val), c->path(), c->position(), backtrace);
       }
       result = cval_to_astnode(c_val, ctx, backtrace, c->path(), c->position());
 
@@ -1029,8 +1031,11 @@ namespace Sass {
         e = new (ctx.mem) Null(path, position);
       } break;
       case SASS_ERROR: {
-        error("error in C function: " + string(sass_error_get_message(v)), path, position, backtrace);
+        error("ERROR: C function " + string(sass_error_get_message(v)), path, position, backtrace);
       } break;
+      case SASS_WARNING: {
+	    error("WARNING: C function " + string(sass_warning_get_message(v)), path, position, backtrace);
+	  } break;
     }
     return e;
   }
