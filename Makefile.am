@@ -62,6 +62,7 @@ libsass_la_SOURCES = \
 	output_nested.cpp output_nested.hpp \
 	parser.cpp parser.hpp \
 	prelexer.cpp prelexer.hpp \
+	quote.cpp quote.hpp \
 	remove_placeholders.cpp remove_placeholders.hpp \
 	sass.cpp sass.h \
 	sass_util.cpp sass_util.hpp \
