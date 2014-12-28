@@ -2,6 +2,7 @@
 #include "ast.hpp"
 #include "context.hpp"
 #include <cmath>
+#include <string>
 #include <iostream>
 #include <iomanip>
 

@@ -12,7 +12,10 @@ namespace Sass {
       size_t column;
 
       Position()
-      : file(-1), line(0), column(0) { }
+      : file(-1), line(-1), column(-1) { }
+
+      Position(const size_t file)
+      : file(file), line(0), column(0) { }
 
       Position(const size_t line, const size_t column)
       : file(-1), line(line), column(column) { }
@@ -21,7 +24,7 @@ namespace Sass {
       : file(file), line(line), column(column) { }
 
       friend std::ostream& operator<<(std::ostream& strm, const Position& pos) {
-        return strm << pos.line << ":" << pos.column;
+        return strm << pos.file << ":" << pos.line << ":" << pos.column;
       }
 
   };

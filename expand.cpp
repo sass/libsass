@@ -59,7 +59,7 @@ namespace Sass {
     string str = isp.get_buffer();
     str += ";";
 
-    Parser p(ctx, r->selector()->path(), Position(0, 0));
+    Parser p(ctx, r->selector()->path(), Position(0, 0, 0));
     p.source   = str.c_str();
     p.position = str.c_str();
     p.end      = str.c_str() + strlen(str.c_str());
@@ -75,8 +75,9 @@ namespace Sass {
 
         if (pHead) {
           // pHead->position(isp.source_map.remap(pHead->position()));
-          (*pHead)[0]->position(isp.source_map.remap(pHead->position()));
           cerr << "got complex " << ((*pHead)[0])->position() << " [" << pHead->perform(&to_string) << "] @ " << pHead->position().line << ":" << pHead->position().column << endl;
+          (*pHead)[0]->position(isp.source_map.remap((*pHead)[0]->position()));
+          cerr << "now complex " << ((*pHead)[0])->position() << " [" << pHead->perform(&to_string) << "] @ " << pHead->position().line << ":" << pHead->position().column << endl;
           // pHead->position(Position(99, 99));
           // pHead->clearSources();
         }
