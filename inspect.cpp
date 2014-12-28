@@ -36,6 +36,7 @@ namespace Sass {
       if (l > 2 && buffer[l-1] == '\n' && buffer[l-2] == '\n') {
         buffer.erase(l-1);
         if (ctx) ctx->source_map.remove_line();
+        source_map.remove_line();
       }
     }
   }
@@ -56,6 +57,7 @@ namespace Sass {
   void Inspect::operator()(Media_Block* media_block)
   {
     if (ctx) ctx->source_map.add_mapping(media_block);
+    source_map.add_mapping(media_block);
     append_to_buffer("@media ");
     media_block->media_queries()->perform(this);
     media_block->block()->perform(this);
@@ -64,6 +66,7 @@ namespace Sass {
   void Inspect::operator()(Feature_Block* feature_block)
   {
     if (ctx) ctx->source_map.add_mapping(feature_block);
+    source_map.add_mapping(feature_block);
     append_to_buffer("@supports ");
     feature_block->feature_queries()->perform(this);
     feature_block->block()->perform(this);
@@ -88,9 +91,11 @@ namespace Sass {
   {
     if (dec->value()->concrete_type() == Expression::NULL_VAL) return;
     if (ctx) ctx->source_map.add_mapping(dec->property());
+    source_map.add_mapping(dec->property());
     dec->property()->perform(this);
     append_to_buffer(": ");
     if (ctx) ctx->source_map.add_mapping(dec->value());
+    source_map.add_mapping(dec->value());
     dec->value()->perform(this);
     if (dec->is_important()) append_to_buffer(" !important");
     append_to_buffer(";");
@@ -109,12 +114,14 @@ namespace Sass {
   {
     if (!import->urls().empty()) {
       if (ctx) ctx->source_map.add_mapping(import);
+      source_map.add_mapping(import);
       append_to_buffer("@import ");
       import->urls().front()->perform(this);
       append_to_buffer(";");
       for (size_t i = 1, S = import->urls().size(); i < S; ++i) {
         append_to_buffer("\n");
         if (ctx) ctx->source_map.add_mapping(import);
+        source_map.add_mapping(import);
         append_to_buffer("@import ");
         import->urls()[i]->perform(this);
         append_to_buffer(";");
@@ -125,6 +132,7 @@ namespace Sass {
   void Inspect::operator()(Import_Stub* import)
   {
     if (ctx) ctx->source_map.add_mapping(import);
+    source_map.add_mapping(import);
     append_to_buffer("@import ");
     append_to_buffer(import->file_name());
     append_to_buffer(";");
@@ -133,6 +141,7 @@ namespace Sass {
   void Inspect::operator()(Warning* warning)
   {
     if (ctx) ctx->source_map.add_mapping(warning);
+    source_map.add_mapping(warning);
     append_to_buffer("@warn ");
     warning->message()->perform(this);
     append_to_buffer(";");
@@ -141,6 +150,7 @@ namespace Sass {
   void Inspect::operator()(Error* error)
   {
     if (ctx) ctx->source_map.add_mapping(error);
+    source_map.add_mapping(error);
     append_to_buffer("@error ");
     error->message()->perform(this);
     append_to_buffer(";");
@@ -149,6 +159,7 @@ namespace Sass {
   void Inspect::operator()(Debug* debug)
   {
     if (ctx) ctx->source_map.add_mapping(debug);
+    source_map.add_mapping(debug);
     append_to_buffer("@debug ");
     debug->value()->perform(this);
     append_to_buffer(";");
@@ -245,6 +256,7 @@ namespace Sass {
   void Inspect::operator()(Content* content)
   {
     if (ctx) ctx->source_map.add_mapping(content);
+    source_map.add_mapping(content);
     append_to_buffer("@content;");
   }
 
@@ -600,18 +612,21 @@ namespace Sass {
   void Inspect::operator()(Type_Selector* s)
   {
     if (ctx) ctx->source_map.add_mapping(s);
+    source_map.add_mapping(s);
     append_to_buffer(s->name());
   }
 
   void Inspect::operator()(Selector_Qualifier* s)
   {
     if (ctx) ctx->source_map.add_mapping(s);
+    source_map.add_mapping(s);
     append_to_buffer(s->name());
   }
 
   void Inspect::operator()(Attribute_Selector* s)
   {
     if (ctx) ctx->source_map.add_mapping(s);
+    source_map.add_mapping(s);
     append_to_buffer("[");
     append_to_buffer(s->name());
     if (!s->matcher().empty()) {
@@ -627,6 +642,7 @@ namespace Sass {
   void Inspect::operator()(Pseudo_Selector* s)
   {
     if (ctx) ctx->source_map.add_mapping(s);
+    source_map.add_mapping(s);
     append_to_buffer(s->name());
     if (s->expression()) {
       s->expression()->perform(this);
@@ -637,6 +653,7 @@ namespace Sass {
   void Inspect::operator()(Wrapped_Selector* s)
   {
     if (ctx) ctx->source_map.add_mapping(s);
+    source_map.add_mapping(s);
     append_to_buffer(s->name());
     s->selector()->perform(this);
     append_to_buffer(")");
@@ -722,6 +739,7 @@ namespace Sass {
   void Inspect::append_to_buffer(const string& text)
   {
     buffer += text;
+    source_map.update_column(text);
   }
 
 }

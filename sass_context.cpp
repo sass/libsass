@@ -9,6 +9,7 @@
 #include "context.hpp"
 #include "sass_values.h"
 #include "sass_context.h"
+#include "error_handling.hpp"
 
 extern "C" {
   using namespace std;

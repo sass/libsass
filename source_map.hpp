@@ -2,12 +2,10 @@
 
 #include <vector>
 
+#include "ast_fwd_decl.hpp"
+
 #ifndef SASS_MAPPING
 #include "mapping.hpp"
-#endif
-
-#ifndef SASS_AST
-#include "ast.hpp"
 #endif
 
 #ifndef SASSS_BASE64VLQ
@@ -25,6 +23,7 @@ namespace Sass {
 
   public:
     vector<size_t> source_index;
+    SourceMap();
     SourceMap(const string& file);
 
     void remove_line();
@@ -32,6 +31,7 @@ namespace Sass {
     void add_mapping(AST_Node* node);
 
     string generate_source_map(Context &ctx);
+    Position remap(const Position& pos);
 
   private:
 

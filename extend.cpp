@@ -1904,6 +1904,7 @@ namespace Sass {
       // re-parse in order to restructure expanded placeholder nodes correctly.
       //
       // TODO: I don't know if this is needed, but it was in the original C++ implementation, so I kept it. Try running the tests without re-parsing.
+      // this probably messes up source-maps
       pObject->selector(
         Parser::from_c_str(
           (pNewSelectorList->perform(&to_string) + ";").c_str(),

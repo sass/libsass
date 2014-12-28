@@ -54,7 +54,14 @@
 #endif
 
 #include "ast_def_macros.hpp"
+
+#ifndef SASS_SOURCE_MAP
+#include "source_map.hpp"
+#endif
+
+#ifndef SASS_INSPECT
 #include "inspect.hpp"
+#endif
 
 #include <sstream>
 #include <iostream>

@@ -1,6 +1,10 @@
 #include "source_map.hpp"
 #include "json.hpp"
 
+#ifndef SASS_AST
+#include "ast.hpp"
+#endif
+
 #ifndef SASS_CONTEXT
 #include "context.hpp"
 #endif
@@ -12,6 +16,7 @@
 
 namespace Sass {
   using std::ptrdiff_t;
+  SourceMap::SourceMap() : current_position(Position(1, 1)), file("stdin") { }
   SourceMap::SourceMap(const string& file) : current_position(Position(1, 1)), file(file) { }
 
   string SourceMap::generate_source_map(Context &ctx) {
@@ -128,6 +133,17 @@ namespace Sass {
   void SourceMap::add_mapping(AST_Node* node)
   {
     mappings.push_back(Mapping(node->position(), current_position));
+  }
+
+  Position SourceMap::remap(const Position& pos) {
+    for (size_t i = 0; i < mappings.size(); ++i) {
+      if (
+        mappings[i].generated_position.line == pos.line &&
+        mappings[i].generated_position.column == pos.column
+      ) return mappings[i].original_position;
+    }
+    return Position(0, 0);
+
   }
 
 }
