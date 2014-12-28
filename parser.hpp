@@ -201,7 +201,7 @@ namespace Sass {
       }
 
       // create parsed token string (public member)
-      lexed = Token(it_before_token, it_after_token);
+      lexed = Token(it_before_token, it_after_token, before_token);
 
       // advance internal char iterator
       return position = it_after_token;

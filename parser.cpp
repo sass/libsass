@@ -400,16 +400,16 @@ namespace Sass {
       p = find_first_in_interval< exactly<hash_lbrace> >(i, end_of_selector);
       if (p) {
         // accumulate the preceding segment if there is one
-        if (i < p) (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, p));
+        if (i < p) (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, p, Position(0, 0)));
         // find the end of the interpolant and parse it
         const char* j = find_first_in_interval< exactly<rbrace> >(p, end_of_selector);
-        Expression* interp_node = Parser::from_token(Token(p+2, j), ctx, path, before_token).parse_list();
+        Expression* interp_node = Parser::from_token(Token(p+2, j, Position(0, 0)), ctx, path, before_token).parse_list();
         interp_node->is_interpolant(true);
         (*schema) << interp_node;
         i = j + 1;
       }
       else { // no interpolants left; add the last segment if there is one
-        if (i < end_of_selector) (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, end_of_selector));
+        if (i < end_of_selector) (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, end_of_selector, Position(0, 0)));
         break;
       }
     }
@@ -1028,7 +1028,7 @@ namespace Sass {
     vector<Expression*> operands;
     vector<Binary_Expression::Type> operators;
     while (lex< exactly<'+'> >() || lex< sequence< negate< number >, exactly<'-'> > >()) {
-      operators.push_back(lexed == "+" ? Binary_Expression::ADD : Binary_Expression::SUB);
+      operators.push_back(lexed.to_string() == "+" ? Binary_Expression::ADD : Binary_Expression::SUB);
       operands.push_back(parse_term());
     }
 
@@ -1056,8 +1056,8 @@ namespace Sass {
     vector<Expression*> operands;
     vector<Binary_Expression::Type> operators;
     while (lex< exactly<'*'> >() || lex< exactly<'/'> >() || lex< exactly<'%'> >()) {
-      if      (lexed == "*") operators.push_back(Binary_Expression::MUL);
-      else if (lexed == "/") operators.push_back(Binary_Expression::DIV);
+      if      (lexed.to_string() == "*") operators.push_back(Binary_Expression::MUL);
+      else if (lexed.to_string() == "/") operators.push_back(Binary_Expression::DIV);
       else                   operators.push_back(Binary_Expression::MOD);
       operands.push_back(parse_factor());
     }
@@ -1222,12 +1222,12 @@ namespace Sass {
       p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
       if (p) {
         if (i < p) {
-          (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, p)); // accumulate the preceding segment if it's nonempty
+          (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
         }
         const char* j = find_first_in_interval< exactly<rbrace> >(p, chunk.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
-          Expression* interp_node = Parser::from_token(Token(p+2, j), ctx, path, before_token).parse_list();
+          Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, path, before_token).parse_list();
           interp_node->is_interpolant(true);
           (*schema) << interp_node;
           i = j+1;
@@ -1238,7 +1238,7 @@ namespace Sass {
         }
       }
       else { // no interpolants left; add the last segment if nonempty
-        if (i < chunk.end) (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, chunk.end));
+        if (i < chunk.end) (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, chunk.end, before_token));
         break;
       }
     }
@@ -1317,12 +1317,12 @@ namespace Sass {
       p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, str.end);
       if (p) {
         if (i < p) {
-          (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, p)); // accumulate the preceding segment if it's nonempty
+          (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
         }
         const char* j = find_first_in_interval< exactly<rbrace> >(p, str.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
-          Expression* interp_node = Parser::from_token(Token(p+2, j), ctx, path, before_token).parse_list();
+          Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, path, before_token).parse_list();
           interp_node->is_interpolant(true);
           (*schema) << interp_node;
           i = j+1;
@@ -1333,7 +1333,7 @@ namespace Sass {
         }
       }
       else { // no interpolants left; add the last segment if nonempty
-        if (i < str.end) (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, str.end));
+        if (i < str.end) (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, str.end, before_token));
         break;
       }
     }
@@ -1365,7 +1365,7 @@ namespace Sass {
     size_t num_items = 0;
     while (position < end) {
       if (lex< interpolant >()) {
-        Token insides(Token(lexed.begin + 2, lexed.end - 1));
+        Token insides(Token(lexed.begin + 2, lexed.end - 1, before_token));
         Expression* interp_node = Parser::from_token(insides, ctx, path, before_token).parse_list();
         interp_node->is_interpolant(true);
         (*schema) << interp_node;
@@ -1409,12 +1409,12 @@ namespace Sass {
 
     while (position < end) {
       if (position[0] == '/') {
-        lexed = Token(position, position+1);
+        lexed = Token(position, position+1, before_token);
         (*schema) << new (ctx.mem) String_Constant(path, before_token, lexed);
         ++position;
       }
       else if (lex< interpolant >()) {
-        Token insides(Token(lexed.begin + 2, lexed.end - 1));
+        Token insides(Token(lexed.begin + 2, lexed.end - 1, before_token));
         Expression* interp_node = Parser::from_token(insides, ctx, path, before_token).parse_list();
         interp_node->is_interpolant(true);
         (*schema) << interp_node;
@@ -1448,12 +1448,12 @@ namespace Sass {
       p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, id.end);
       if (p) {
         if (i < p) {
-          (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, p)); // accumulate the preceding segment if it's nonempty
+          (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
         }
         const char* j = find_first_in_interval< exactly<rbrace> >(p, id.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
-          Expression* interp_node = Parser::from_token(Token(p+2, j), ctx, path, before_token).parse_list();
+          Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, path, before_token).parse_list();
           interp_node->is_interpolant(true);
           (*schema) << interp_node;
           schema->has_interpolants(true);
@@ -1465,7 +1465,7 @@ namespace Sass {
         }
       }
       else { // no interpolants left; add the last segment if nonempty
-        if (i < id.end) (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, id.end));
+        if (i < id.end) (*schema) << new (ctx.mem) String_Constant(path, before_token, Token(i, id.end, before_token));
         break;
       }
     }
@@ -1484,7 +1484,7 @@ namespace Sass {
     const char* arg_end = position;
     lex< exactly<')'> >();
 
-    Argument* arg = new (ctx.mem) Argument(path, arg_pos, parse_interpolated_chunk(Token(arg_beg, arg_end)));
+    Argument* arg = new (ctx.mem) Argument(path, arg_pos, parse_interpolated_chunk(Token(arg_beg, arg_end, before_token)));
     Arguments* args = new (ctx.mem) Arguments(path, arg_pos);
     *args << arg;
     return new (ctx.mem) Function_Call(path, call_pos, name, args);

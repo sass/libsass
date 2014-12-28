@@ -642,7 +642,7 @@ namespace Sass {
         result = new (ctx.mem) Number(t->path(),
                                       t->position(),
                                       atof(num.c_str()),
-                                      Token(number(text.c_str())),
+                                      Token(number(text.c_str()), t->position()),
                                       zero);
         break;
       case Textual::HEX: {
