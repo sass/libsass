@@ -43,13 +43,67 @@ namespace Sass {
   Statement* Expand::operator()(Ruleset* r)
   {
     To_String to_string;
-    // if (selector_stack.back()) cerr << "expanding " << selector_stack.back()->perform(&to_string) << " and " << r->selector()->perform(&to_string) << endl;
-    Selector* sel_ctx = r->selector()->perform(contextualize->with(selector_stack.back(), env, backtrace));
+
+    // Selector* sel_ctx = r->selector()->perform(contextualize->with(selector_stack.back(), env, backtrace));
+    // sel_ctx = Parser::from_c_str((sel_ctx->perform(&to_string) + ";").c_str(), ctx, r->selector()->path(), r->selector()->position()).parse_selector_group();
+
+        // if (selector_stack.back()) cerr << "expanding " << selector_stack.back()->perform(&to_string) << " and " << r->selector()->perform(&to_string) << endl;
+    Contextualize* contextual = contextualize->with(selector_stack.back(), env, backtrace);
+    Selector* sel_ctx = r->selector()->perform(contextual);
     // re-parse in order to restructure parent nodes correctly
-    sel_ctx = Parser::from_c_str((sel_ctx->perform(&to_string) + ";").c_str(), ctx, r->selector()->path(), r->selector()->position()).parse_selector_group();
+    // this messes up the source map since we loose all information
+   // Selector_List* test = Parser::from_c_str((sel_ctx->perform(&to_string) + ";").c_str(), ctx, r->selector()->path(), r->selector()->position()).parse_selector_group();
+
+    Inspect isp(0);
+    sel_ctx->perform(&isp);
+    string str = isp.get_buffer();
+    str += ";";
+
+    Parser p(ctx, r->selector()->path(), Position(0, 0));
+    p.source   = str.c_str();
+    p.position = str.c_str();
+    p.end      = str.c_str() + strlen(str.c_str());
+    cerr << "== reparse [" << str << "]" << endl;
+    Selector_List* sel_lst = p.parse_selector_group();
+    cerr << "got " << sel_lst->length() << " selector(s)" << endl;
+
+    for(size_t i = 0; i < sel_lst->length(); i++) {
+
+      Complex_Selector* pIter = (*sel_lst)[i];
+      while (pIter) {
+        Compound_Selector* pHead = pIter->head();
+
+        if (pHead) {
+          // pHead->position(isp.source_map.remap(pHead->position()));
+          (*pHead)[0]->position(isp.source_map.remap(pHead->position()));
+          cerr << "got complex " << ((*pHead)[0])->position() << " [" << pHead->perform(&to_string) << "] @ " << pHead->position().line << ":" << pHead->position().column << endl;
+          // pHead->position(Position(99, 99));
+          // pHead->clearSources();
+        }
+
+        pIter = pIter->tail();
+      }
+
+/*
+      Complex_Selector* outer = (*sel_lst)[i];
+      for(size_t n = 0; n < outer->length(); n++) {
+        Selector* sel = (*outer)[n];
+      }
+*/
+    }
+
+    sel_ctx = sel_lst;
+
+
+
+    // this should be a selector group pointing to the source-map
+    // we have currently stored on inspect, use it instead!
+
+
+
     selector_stack.push_back(sel_ctx);
     Ruleset* rr = new (ctx.mem) Ruleset(r->path(),
-                                        r->position(),
+                                        Position(99, 98),
                                         sel_ctx,
                                         r->block()->perform(this)->block());
     selector_stack.pop_back();

@@ -11,13 +11,14 @@
 
 #include <string>
 #include <sstream>
+#include <iostream>
 #include <cstddef>
 #include <iomanip>
 
 namespace Sass {
   using std::ptrdiff_t;
-  SourceMap::SourceMap() : current_position(Position(1, 1)), file("stdin") { }
-  SourceMap::SourceMap(const string& file) : current_position(Position(1, 1)), file(file) { }
+  SourceMap::SourceMap() : current_position(Position(0, 0)), file("stdin") { }
+  SourceMap::SourceMap(const string& file) : current_position(Position(0, 0)), file(file) { }
 
   string SourceMap::generate_source_map(Context &ctx) {
 
@@ -76,11 +77,11 @@ namespace Sass {
     size_t previous_original_column = 0;
     size_t previous_original_file = 0;
     for (size_t i = 0; i < mappings.size(); ++i) {
-      const size_t generated_line = mappings[i].generated_position.line - 1;
-      const size_t generated_column = mappings[i].generated_position.column - 1;
-      const size_t original_line = mappings[i].original_position.line - 1;
-      const size_t original_column = mappings[i].original_position.column - 1;
-      const size_t original_file = mappings[i].original_position.file - 1;
+      const size_t generated_line = mappings[i].generated_position.line;
+      const size_t generated_column = mappings[i].generated_position.column;
+      const size_t original_line = mappings[i].original_position.line;
+      const size_t original_column = mappings[i].original_position.column;
+      const size_t original_file = mappings[i].original_position.file;
 
       if (generated_line != previous_generated_line) {
         previous_generated_column = 0;
@@ -132,6 +133,7 @@ namespace Sass {
 
   void SourceMap::add_mapping(AST_Node* node)
   {
+    std::cerr << "add map " << node->position() << "\n";
     mappings.push_back(Mapping(node->position(), current_position));
   }
 

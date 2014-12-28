@@ -452,6 +452,7 @@ namespace Sass {
 
   Complex_Selector* Parser::parse_selector_combination()
   {
+    lex< spaces_and_comments >();
     Position sel_source_position = Position();
     Compound_Selector* lhs;
     if (peek< exactly<'+'> >() ||

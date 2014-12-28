@@ -134,8 +134,17 @@ namespace Sass {
       else if (mx == spaces) {
         after_whitespace = spaces(position);
         if (after_whitespace) {
-          source_position.line += count_interval<'\n'>(position, after_whitespace);
-          lexed = Token(position, after_whitespace);
+          const char* beg = position;
+          const char* end = after_whitespace;
+          while (beg < end && *beg) {
+            if (*beg == '\n') {
+              ++ source_position.line;
+              source_position.column = 0;
+            } else {
+              ++ source_position.column;
+            }
+            ++beg;
+          }
           return position = after_whitespace;
         }
         else {
@@ -149,24 +158,31 @@ namespace Sass {
         after_whitespace = spaces_and_comments(position);
       }
       const char* after_token = mx(after_whitespace);
+
       if (after_token) {
-        size_t previous_line = source_position.line;
-        source_position.line += count_interval<'\n'>(position, after_token);
+        // size_t previous_line = source_position.line;
+        Token tkn(after_whitespace, after_token);
+       // cerr << "lexed [" << tkn.to_string() << "] at " << source_position.line << ":" << source_position.column << endl;
 
-        size_t whitespace = 0;
-        const char* ptr = after_whitespace - 1;
-        while (ptr >= position) {
-          if (*ptr == '\n')
-            break;
-          whitespace++;
-          ptr--;
+        const char* beg = position;
+        const char* end = after_token;
+        // cerr << "... ";
+        while (beg < end && *beg) {
+          if (*beg == '\n') {
+            ++ source_position.line;
+            source_position.column = 0;
+            // cerr << "\\n";
+          } else {
+            ++ source_position.column;
+            // cerr << *beg;
+          }
+          ++beg;
         }
-        if (previous_line != source_position.line) {
-          column = 1;
-        }
+        // cerr << endl;
 
-        source_position.column = column + whitespace;
-        column += after_token - after_whitespace + whitespace;
+        // column += after_token - after_whitespace + whitespace;
+        // cerr << "COL + " << after_token - after_whitespace + whitespace <<  " == " << column + whitespace << endl;
+
         lexed = Token(after_whitespace, after_token);
 
         return position = after_token;
