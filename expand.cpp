@@ -63,9 +63,9 @@ namespace Sass {
     p.source   = str.c_str();
     p.position = str.c_str();
     p.end      = str.c_str() + strlen(str.c_str());
-    cerr << "== reparse [" << str << "]" << endl;
+    // cerr << "== reparse [" << str << "]" << endl;
     Selector_List* sel_lst = p.parse_selector_group();
-    cerr << "got " << sel_lst->length() << " selector(s)" << endl;
+    // cerr << "got " << sel_lst->length() << " selector(s)" << endl;
 
     for(size_t i = 0; i < sel_lst->length(); i++) {
 
@@ -75,9 +75,9 @@ namespace Sass {
 
         if (pHead) {
           // pHead->position(isp.source_map.remap(pHead->position()));
-          cerr << "got complex " << ((*pHead)[0])->slct() << " [" << pHead->perform(&to_string) << "] @ " << pHead->slct() << endl;
+          // cerr << "got complex " << ((*pHead)[0])->slct() << " [" << pHead->perform(&to_string) << "] @ " << pHead->slct() << endl;
           (*pHead)[0]->slct(isp.source_map.remap((*pHead)[0]->slct()));
-          cerr << "now complex " << ((*pHead)[0])->slct() << " [" << pHead->perform(&to_string) << "] @ " << pHead->slct() << endl;
+          // cerr << "now complex " << ((*pHead)[0])->slct() << " [" << pHead->perform(&to_string) << "] @ " << pHead->slct() << endl;
           // pHead->position(Position(99, 99));
           // pHead->clearSources();
         }
