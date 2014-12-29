@@ -129,7 +129,7 @@ namespace Sass {
     const ptrdiff_t new_line_count = std::count(str.begin(), str.end(), '\n');
     current_position.line += new_line_count;
     if (new_line_count > 0) {
-      current_position.column = str.size() - str.find_last_of('\n');
+      current_position.column = str.size() - str.find_last_of('\n') - 1;
     } else {
       current_position.column += str.size();
     }
@@ -143,7 +143,7 @@ namespace Sass {
 
   void SourceMap::add_end_mapping(AST_Node* node)
   {
-    // std::cerr << "add end map " << node->slct().offset << "\n";
+    // std::cerr << "add end map " << current_position << "\n";
     mappings.push_back(Mapping(node->slct() + node->slct().offset, current_position));
   }
 
