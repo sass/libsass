@@ -15,14 +15,14 @@ namespace Sass {
 
     Type type;
     string path;
-    Position position;
+    Selection slct;
     string message;
 
-    Sass_Error(Type type, string path, Position position, string message);
+    Sass_Error(Type type, Selection slct, string message);
 
   };
 
-  void error(string msg, string path, Position position);
-  void error(string msg, string path, Position position, Backtrace* bt);
+  void error(string msg, Selection slct);
+  void error(string msg, Selection slct, Backtrace* bt);
 
 }

@@ -31,7 +31,7 @@ namespace Sass {
     void add_mapping(AST_Node* node);
 
     string generate_source_map(Context &ctx);
-    Position remap(const Position& pos);
+    Selection remap(const Selection& slct);
 
   private:
 

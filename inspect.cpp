@@ -382,7 +382,7 @@ namespace Sass {
     }
     if (d[d.length()-1] == '.') d.resize(d.length()-1);
     if (n->numerator_units().size() > 1 || n->denominator_units().size() > 0) {
-      error(d + n->unit() + " is not a valid CSS value", n->path(), n->position());
+      error(d + n->unit() + " is not a valid CSS value", n->slct());
     }
     if (!n->zero()) {
       if (d.substr(0, 3) == "-0.") d.erase(1, 1);

@@ -9,6 +9,10 @@
 #include "context.hpp"
 #endif
 
+#ifndef SASS_POSITION
+#include "position.hpp"
+#endif
+
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -133,20 +137,20 @@ namespace Sass {
 
   void SourceMap::add_mapping(AST_Node* node)
   {
-    std::cerr << "add map " << node->position() << "\n";
-    mappings.push_back(Mapping(node->position(), current_position));
+    std::cerr << "add map " << node->slct().position << "\n";
+    mappings.push_back(Mapping(node->slct().position, current_position));
   }
 
-  Position SourceMap::remap(const Position& pos) {
+  Selection SourceMap::remap(const Selection& slct) {
     for (size_t i = 0; i < mappings.size(); ++i) {
       if (
         // pos.file == 0 &&
-        mappings[i].original_position.file == pos.file &&
-        mappings[i].generated_position.line == pos.line &&
-        mappings[i].generated_position.column == pos.column
-      ) return mappings[i].original_position;
+        mappings[i].original_position.file == slct.position.file &&
+        mappings[i].generated_position.line == slct.position.line &&
+        mappings[i].generated_position.column == slct.position.column
+      ) return Selection(slct.path, mappings[i].original_position);
     }
-    return Position(-1, -1, -1);
+    return Selection(slct.path, Position(-1, -1, -1));
 
   }
 

@@ -7,12 +7,14 @@
 
 namespace Sass {
 
+  using namespace std;
+
   class Position {
 
     public: // c-tor
       Position();
       Position(const size_t file);
-      Position(const std::string& data);
+      Position(const string& data);
       Position(const size_t line, const size_t column);
       Position(const size_t file, const size_t line, const size_t column);
 
@@ -25,13 +27,22 @@ namespace Sass {
       const Position operator+ (const Position &pos) const;
 
     public: // overload output stream operator
-      friend std::ostream& operator<<(std::ostream& strm, const Position& pos);
+      friend ostream& operator<<(ostream& strm, const Position& pos);
 
     public:
       size_t file;
       size_t line;
       size_t column;
 
+  };
+
+  class Selection {
+    public:
+      string path;
+      Position position;
+    public:
+      Selection();
+      Selection(string path, Position position);
   };
 
 }

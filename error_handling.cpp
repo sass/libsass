@@ -7,22 +7,22 @@
 
 namespace Sass {
 
-  Sass_Error::Sass_Error(Type type, string path, Position position, string message)
-  : type(type), path(path), position(position), message(message)
+  Sass_Error::Sass_Error(Type type, Selection slct, string message)
+  : type(type), slct(slct), message(message)
   { }
 
-  void error(string msg, string path, Position position)
-  { throw Sass_Error(Sass_Error::syntax, path, position, msg); }
+  void error(string msg, Selection slct)
+  { throw Sass_Error(Sass_Error::syntax, slct, msg); }
 
-  void error(string msg, string path, Position position, Backtrace* bt)
+  void error(string msg, Selection slct, Backtrace* bt)
   {
-    if (!path.empty() && Prelexer::string_constant(path.c_str()))
-      path = path.substr(1, path.size() - 1);
+    if (!slct.path.empty() && Prelexer::string_constant(slct.path.c_str()))
+      slct.path = slct.path.substr(1, slct.path.size() - 1);
 
-    Backtrace top(bt, path, position, "");
+    Backtrace top(bt, slct.path, slct.position, "");
     msg += top.to_string();
 
-    throw Sass_Error(Sass_Error::syntax, path, position, msg);
+    throw Sass_Error(Sass_Error::syntax, slct, msg);
   }
 
 }
