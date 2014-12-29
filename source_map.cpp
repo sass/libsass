@@ -143,7 +143,7 @@ namespace Sass {
 
   void SourceMap::add_end_mapping(AST_Node* node)
   {
-     std::cerr << "add end map " << current_position << "\n";
+    // std::cerr << "add end map " << node->slct().offset << "\n";
     mappings.push_back(Mapping(node->slct() + node->slct().offset, current_position));
   }
 

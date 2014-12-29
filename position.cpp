@@ -95,6 +95,13 @@ namespace Sass {
     return Position(file, line + off.line, off.line > 0 ? off.column : off.column + column);
   }
 
+  std::ostream& operator<<(std::ostream& strm, const Offset& off)
+  {
+    if (off.line == string::npos) strm << "-1:"; else strm << off.line << ":";
+    if (off.column == string::npos) strm << "-1"; else strm << off.column;
+    return strm;
+  }
+
   std::ostream& operator<<(std::ostream& strm, const Position& pos)
   {
     if (pos.file != string::npos) strm << pos.file << ":";

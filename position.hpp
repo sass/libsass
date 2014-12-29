@@ -23,6 +23,9 @@ namespace Sass {
       bool operator!= (const Offset &pos) const;
       const Offset operator+ (const Offset &off) const;
 
+    public: // overload output stream operator
+      friend ostream& operator<<(ostream& strm, const Offset& off);
+
     public:
       size_t line;
       size_t column;

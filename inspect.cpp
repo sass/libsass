@@ -62,6 +62,8 @@ namespace Sass {
     append_to_buffer("@media ");
     media_block->media_queries()->perform(this);
     media_block->block()->perform(this);
+    if (ctx) ctx->source_map.add_end_mapping(media_block);
+    source_map.add_end_mapping(media_block);
   }
 
   void Inspect::operator()(Feature_Block* feature_block)
@@ -71,6 +73,8 @@ namespace Sass {
     append_to_buffer("@supports ");
     feature_block->feature_queries()->perform(this);
     feature_block->block()->perform(this);
+    if (ctx) ctx->source_map.add_end_mapping(feature_block);
+    source_map.add_end_mapping(feature_block);
   }
 
   void Inspect::operator()(At_Rule* at_rule)
@@ -94,11 +98,15 @@ namespace Sass {
     if (ctx) ctx->source_map.add_mapping(dec->property());
     source_map.add_mapping(dec->property());
     dec->property()->perform(this);
+    if (ctx) ctx->source_map.add_end_mapping(dec->property());
+    source_map.add_end_mapping(dec->property());
     append_to_buffer(": ");
     if (ctx) ctx->source_map.add_mapping(dec->value());
     source_map.add_mapping(dec->value());
     dec->value()->perform(this);
     if (dec->is_important()) append_to_buffer(" !important");
+    if (ctx) ctx->source_map.add_end_mapping(dec->value());
+    source_map.add_end_mapping(dec->value());
     append_to_buffer(";");
   }
 
@@ -642,6 +650,8 @@ namespace Sass {
       // append_to_buffer(s->value());
     }
     append_to_buffer("]");
+    if (ctx) ctx->source_map.add_end_mapping(s);
+    source_map.add_end_mapping(s);
   }
 
   void Inspect::operator()(Pseudo_Selector* s)
@@ -649,6 +659,8 @@ namespace Sass {
     if (ctx) ctx->source_map.add_mapping(s);
     source_map.add_mapping(s);
     append_to_buffer(s->name());
+    if (ctx) ctx->source_map.add_end_mapping(s);
+    source_map.add_end_mapping(s);
     if (s->expression()) {
       s->expression()->perform(this);
       append_to_buffer(")");
@@ -660,10 +672,10 @@ namespace Sass {
     if (ctx) ctx->source_map.add_mapping(s);
     source_map.add_mapping(s);
     append_to_buffer(s->name());
-    s->selector()->perform(this);
-    append_to_buffer(")");
     if (ctx) ctx->source_map.add_end_mapping(s);
     source_map.add_end_mapping(s);
+    s->selector()->perform(this);
+    append_to_buffer(")");
   }
 
   void Inspect::operator()(Compound_Selector* s)

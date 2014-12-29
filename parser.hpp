@@ -207,7 +207,7 @@ namespace Sass {
       // create parsed token string (public member)
       lexed = Token(it_before_token, it_after_token, before_token);
 
-      slct = Selection(path, Position(before_token.file, before_token.line, before_token.column), Offset(0, 10));
+      slct = Selection(path, Position(before_token.file, before_token.line, before_token.column), size);
 
       // advance internal char iterator
       return position = it_after_token;
