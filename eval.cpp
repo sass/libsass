@@ -224,7 +224,7 @@ namespace Sass {
     }
 
     string result(unquote(message->perform(&to_string)));
-    Backtrace top(backtrace, w->slct().path, w->slct().position, "");
+    Backtrace top(backtrace, w->slct().path, w->slct(), "");
     cerr << "WARNING: " << result;
     cerr << top.to_string(true);
     cerr << endl << endl;
@@ -255,7 +255,7 @@ namespace Sass {
     }
 
     string result(unquote(message->perform(&to_string)));
-    Backtrace top(backtrace, e->slct().path, e->slct().position, "");
+    Backtrace top(backtrace, e->slct().path, e->slct(), "");
     cerr << "Error: " << result;
     cerr << top.to_string(true);
     cerr << endl << endl;
@@ -288,7 +288,7 @@ namespace Sass {
     string cwd(ctx.get_cwd());
     string result(unquote(message->perform(&to_string)));
     string rel_path(Sass::File::resolve_relative_path(d->slct().path, cwd, cwd));
-    cerr << rel_path << ":" << d->slct().position.line << ":" << " DEBUG: " << result;
+    cerr << rel_path << ":" << d->slct().line << ":" << " DEBUG: " << result;
     cerr << endl;
     return 0;
   }
@@ -468,7 +468,7 @@ namespace Sass {
       Env* old_env = env;
       env = &new_env;
 
-      Backtrace here(backtrace, c->slct().path, c->slct().position, ", in function `" + c->name() + "`");
+      Backtrace here(backtrace, c->slct().path, c->slct(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
       result = body->perform(this);
@@ -485,7 +485,7 @@ namespace Sass {
       Env* old_env = env;
       env = &new_env;
 
-      Backtrace here(backtrace, c->slct().path, c->slct().position, ", in function `" + c->name() + "`");
+      Backtrace here(backtrace, c->slct().path, c->slct(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
       result = func(*env, *old_env, ctx, def->signature(), c->slct(), backtrace);
@@ -509,7 +509,7 @@ namespace Sass {
       Env* old_env = env;
       env = &new_env;
 
-      Backtrace here(backtrace, c->slct().path, c->slct().position, ", in function `" + c->name() + "`");
+      Backtrace here(backtrace, c->slct().path, c->slct(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
       To_C to_c;
@@ -549,7 +549,7 @@ namespace Sass {
       Env* old_env = env;
       env = &newer_env;
 
-      Backtrace here(backtrace, c->slct().path, c->slct().position, ", in function `" + c->name() + "`");
+      Backtrace here(backtrace, c->slct().path, c->slct(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
       result = resolved_def->native_function()(*env, *old_env, ctx, resolved_def->signature(), c->slct(), backtrace);
@@ -632,7 +632,7 @@ namespace Sass {
       case Textual::DIMENSION:
         result = new (ctx.mem) Number(t->slct(),
                                       atof(num.c_str()),
-                                      Token(number(text.c_str()), t->slct().position),
+                                      Token(number(text.c_str()), t->slct()),
                                       zero);
         break;
       case Textual::HEX: {

@@ -19,7 +19,7 @@ namespace Sass {
     if (!slct.path.empty() && Prelexer::string_constant(slct.path.c_str()))
       slct.path = slct.path.substr(1, slct.path.size() - 1);
 
-    Backtrace top(bt, slct.path, slct.position, "");
+    Backtrace top(bt, slct.path, slct, "");
     msg += top.to_string();
 
     throw Sass_Error(Sass_Error::syntax, slct, msg);

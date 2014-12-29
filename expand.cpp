@@ -75,9 +75,9 @@ namespace Sass {
 
         if (pHead) {
           // pHead->position(isp.source_map.remap(pHead->position()));
-          cerr << "got complex " << ((*pHead)[0])->slct().position << " [" << pHead->perform(&to_string) << "] @ " << pHead->slct().position << endl;
+          cerr << "got complex " << ((*pHead)[0])->slct() << " [" << pHead->perform(&to_string) << "] @ " << pHead->slct() << endl;
           (*pHead)[0]->slct(isp.source_map.remap((*pHead)[0]->slct()));
-          cerr << "now complex " << ((*pHead)[0])->slct().position << " [" << pHead->perform(&to_string) << "] @ " << pHead->slct().position << endl;
+          cerr << "now complex " << ((*pHead)[0])->slct() << " [" << pHead->perform(&to_string) << "] @ " << pHead->slct() << endl;
           // pHead->position(Position(99, 99));
           // pHead->clearSources();
         }
@@ -427,7 +427,7 @@ namespace Sass {
     Parameters* params = def->parameters();
     Arguments* args = static_cast<Arguments*>(c->arguments()
                                                ->perform(eval->with(env, backtrace)));
-    Backtrace here(backtrace, c->slct().path, c->slct().position, ", in mixin `" + c->name() + "`");
+    Backtrace here(backtrace, c->slct().path, c->slct(), ", in mixin `" + c->name() + "`");
     backtrace = &here;
     Env new_env;
     new_env.link(def->environment());

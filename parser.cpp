@@ -1133,7 +1133,7 @@ namespace Sass {
         if (peek<line_comment_prefix>() || peek<block_comment_prefix>()) error("comment in URL"); // doesn't really matter what we throw
         Expression* expr = parse_list();
         if (!lex< exactly<')'> >()) error("dangling expression in URL"); // doesn't really matter what we throw
-        Argument* arg = new (ctx.mem) Argument(Selection(path, expr->slct().position), expr);
+        Argument* arg = new (ctx.mem) Argument(Selection(path, expr->slct()), expr);
         *args << arg;
         return result;
       }
@@ -1145,7 +1145,7 @@ namespace Sass {
       lex< spaces >();
       if (lex< url >()) {
         String* the_url = parse_interpolated_chunk(lexed);
-        Argument* arg = new (ctx.mem) Argument(Selection(path, the_url->slct().position), the_url);
+        Argument* arg = new (ctx.mem) Argument(Selection(path, the_url->slct()), the_url);
         *args << arg;
       }
       else {
@@ -1649,7 +1649,7 @@ namespace Sass {
     if (!lex< exactly<')'> >()) {
       error("unclosed parenthesis in media query expression");
     }
-    return new (ctx.mem) Media_Query_Expression(Selection(path, feature->slct().position), feature, expression);
+    return new (ctx.mem) Media_Query_Expression(Selection(path, feature->slct()), feature, expression);
   }
 
   Feature_Block* Parser::parse_feature_block()
@@ -1992,7 +1992,7 @@ namespace Sass {
   Expression* Parser::fold_operands(Expression* base, vector<Expression*>& operands, vector<Binary_Expression::Type>& ops)
   {
     for (size_t i = 0, S = operands.size(); i < S; ++i) {
-      base = new (ctx.mem) Binary_Expression(Selection(path, base->slct().position), ops[i], base, operands[i]);
+      base = new (ctx.mem) Binary_Expression(Selection(path, base->slct()), ops[i], base, operands[i]);
       Binary_Expression* b = static_cast<Binary_Expression*>(base);
       if (ops[i] == Binary_Expression::DIV && b->left()->is_delayed() && b->right()->is_delayed()) {
         base->is_delayed(true);

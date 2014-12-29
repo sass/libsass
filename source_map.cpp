@@ -137,17 +137,17 @@ namespace Sass {
 
   void SourceMap::add_mapping(AST_Node* node)
   {
-    std::cerr << "add map " << node->slct().position << "\n";
-    mappings.push_back(Mapping(node->slct().position, current_position));
+    std::cerr << "add map " << node->slct() << "\n";
+    mappings.push_back(Mapping(node->slct(), current_position));
   }
 
   Selection SourceMap::remap(const Selection& slct) {
     for (size_t i = 0; i < mappings.size(); ++i) {
       if (
         // pos.file == 0 &&
-        mappings[i].original_position.file == slct.position.file &&
-        mappings[i].generated_position.line == slct.position.line &&
-        mappings[i].generated_position.column == slct.position.column
+        mappings[i].original_position.file == slct.file &&
+        mappings[i].generated_position.line == slct.line &&
+        mappings[i].generated_position.column == slct.column
       ) return Selection(slct.path, mappings[i].original_position);
     }
     return Selection(slct.path, Position(-1, -1, -1));
