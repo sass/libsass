@@ -216,7 +216,7 @@ namespace Sass {
 
 #endif
 
-    void error(string msg, Position pos = Position());
+    void error(string msg, Position pos);
     void read_bom();
 
     Block* parse();

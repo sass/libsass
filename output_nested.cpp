@@ -79,7 +79,7 @@ namespace Sass {
       indent();
       if (source_comments) {
         stringstream ss;
-        ss << "/* line " << r->slct().line << ", " << r->slct().path << " */" << endl;
+        ss << "/* line " << r->slct().line+1 << ", " << r->slct().path << " */" << endl;
         append_to_buffer(ss.str());
         indent();
       }

@@ -272,7 +272,7 @@ namespace Sass {
     }
     if (root == 0) return 0;
     Env tge;
-    Backtrace backtrace(0, "", Position(), "");
+    Backtrace backtrace(0, "", Position(0, 0, 0), "");
     register_built_in_functions(*this, &tge);
     for (size_t i = 0, S = c_functions.size(); i < S; ++i) {
       register_c_function(*this, &tge, c_functions[i]);

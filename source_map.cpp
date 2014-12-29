@@ -21,8 +21,8 @@
 
 namespace Sass {
   using std::ptrdiff_t;
-  SourceMap::SourceMap() : current_position(Position(0, 0, 0)), file("stdin") { }
-  SourceMap::SourceMap(const string& file) : current_position(Position(0, 0, 0)), file(file) { }
+  SourceMap::SourceMap() : current_position(0, 0, 0), file("stdin") { }
+  SourceMap::SourceMap(const string& file) : current_position(0, 0, 0), file(file) { }
 
   string SourceMap::generate_source_map(Context &ctx) {
 
