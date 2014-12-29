@@ -189,21 +189,25 @@ namespace Sass {
       // copy position
       after_token = before_token;
 
+      Offset size(0, 0);
+
       // increase position to include current token
       while (position < it_after_token && *position) {
         if (*position == '\n') {
-          ++ after_token.line;
-          after_token.column = 0;
+          ++ size.line;
+          size.column = 0;
         } else {
-          ++ after_token.column;
+          ++ size.column;
         }
         ++position;
       }
 
+      after_token = after_token + size;
+
       // create parsed token string (public member)
       lexed = Token(it_before_token, it_after_token, before_token);
 
-      slct= Selection(path, Position(before_token.file, before_token.line, before_token.column));
+      slct = Selection(path, Position(before_token.file, before_token.line, before_token.column), Offset(0, 10));
 
       // advance internal char iterator
       return position = it_after_token;

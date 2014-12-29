@@ -615,6 +615,8 @@ namespace Sass {
     if (ctx) ctx->source_map.add_mapping(s);
     source_map.add_mapping(s);
     append_to_buffer(s->name());
+    if (ctx) ctx->source_map.add_end_mapping(s);
+    source_map.add_end_mapping(s);
   }
 
   void Inspect::operator()(Selector_Qualifier* s)
@@ -622,6 +624,8 @@ namespace Sass {
     if (ctx) ctx->source_map.add_mapping(s);
     source_map.add_mapping(s);
     append_to_buffer(s->name());
+    if (ctx) ctx->source_map.add_end_mapping(s);
+    source_map.add_end_mapping(s);
   }
 
   void Inspect::operator()(Attribute_Selector* s)
@@ -658,6 +662,8 @@ namespace Sass {
     append_to_buffer(s->name());
     s->selector()->perform(this);
     append_to_buffer(")");
+    if (ctx) ctx->source_map.add_end_mapping(s);
+    source_map.add_end_mapping(s);
   }
 
   void Inspect::operator()(Compound_Selector* s)

@@ -141,6 +141,12 @@ namespace Sass {
     mappings.push_back(Mapping(node->slct(), current_position));
   }
 
+  void SourceMap::add_end_mapping(AST_Node* node)
+  {
+     std::cerr << "add end map " << current_position << "\n";
+    mappings.push_back(Mapping(node->slct() + node->slct().offset, current_position));
+  }
+
   Selection SourceMap::remap(const Selection& slct) {
     for (size_t i = 0; i < mappings.size(); ++i) {
       if (
@@ -148,9 +154,9 @@ namespace Sass {
         mappings[i].generated_position.file == slct.file &&
         mappings[i].generated_position.line == slct.line &&
         mappings[i].generated_position.column == slct.column
-      ) return Selection(slct.path, mappings[i].original_position);
+      ) return Selection(slct.path, mappings[i].original_position, slct.offset);
     }
-    return Selection(slct.path, Position(-1, -1, -1));
+    return Selection(slct.path, Position(-1, -1, -1), Offset(0, 0));
 
   }
 

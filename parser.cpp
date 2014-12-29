@@ -233,14 +233,14 @@ namespace Sass {
     string name(Util::normalize_underscores(lexed));
     if (which_type == Definition::FUNCTION && (name == "and" || name == "or" || name == "not"))
     { error("Invalid function name \"" + name + "\".", slct); }
-    Position source_position_of_def = before_token;
+    Selection source_position_of_def = slct;
     Parameters* params = parse_parameters();
     if (!peek< exactly<'{'> >()) error("body for " + which_str + " " + name + " must begin with a '{'", slct);
     if (which_type == Definition::MIXIN) stack.push_back(mixin_def);
     else stack.push_back(function_def);
     Block* body = parse_block();
     stack.pop_back();
-    Definition* def = new (ctx.mem) Definition(Selection(path, source_position_of_def), name, params, body, which_type);
+    Definition* def = new (ctx.mem) Definition(source_position_of_def, name, params, body, which_type);
     return def;
   }
 
@@ -263,7 +263,7 @@ namespace Sass {
   {
     lex< variable >();
     string name(Util::normalize_underscores(lexed));
-    Position pos = before_token;
+    Selection pos = slct;
     Expression* val = 0;
     bool is_rest = false;
     if (lex< exactly<':'> >()) { // there's a default value
@@ -273,7 +273,7 @@ namespace Sass {
     else if (lex< exactly< ellipsis > >()) {
       is_rest = true;
     }
-    Parameter* p = new (ctx.mem) Parameter(Selection(path, pos), name, val, is_rest);
+    Parameter* p = new (ctx.mem) Parameter(pos, name, val, is_rest);
     return p;
   }
 
@@ -281,14 +281,14 @@ namespace Sass {
   {
     lex< include >() /* || lex< exactly<'+'> >() */;
     if (!lex< identifier >()) error("invalid name in @include directive", slct);
-    Position source_position_of_call = before_token;
+    Selection source_position_of_call = slct;
     string name(Util::normalize_underscores(lexed));
     Arguments* args = parse_arguments();
     Block* content = 0;
     if (peek< exactly<'{'> >()) {
       content = parse_block();
     }
-    Mixin_Call* the_call = new (ctx.mem) Mixin_Call(Selection(path, source_position_of_call), name, args, content);
+    Mixin_Call* the_call = new (ctx.mem) Mixin_Call(source_position_of_call, name, args, content);
     return the_call;
   }
 
@@ -315,11 +315,11 @@ namespace Sass {
     if (peek< sequence < variable, spaces_and_comments, exactly<':'> > >()) {
       lex< variable >();
       string name(Util::normalize_underscores(lexed));
-      Position p = before_token;
+      Selection p = slct;
       lex< exactly<':'> >();
       Expression* val = parse_space_list();
       val->is_delayed(false);
-      arg = new (ctx.mem) Argument(Selection(path, p), val, name);
+      arg = new (ctx.mem) Argument(p, val, name);
     }
     else {
       bool is_arglist = false;
@@ -339,7 +339,7 @@ namespace Sass {
   {
     lex< variable >();
     string name(Util::normalize_underscores(lexed));
-    Position var_source_position = before_token;
+    Selection var_source_position = slct;
     if (!lex< exactly<':'> >()) error("expected ':' after " + name + " in assignment statement", slct);
     Expression* val = parse_list();
     val->is_delayed(false);
@@ -349,7 +349,7 @@ namespace Sass {
       is_guarded = lex< default_flag >() || is_guarded;
       is_global = lex< global_flag >() || is_global;
     }
-    Assignment* var = new (ctx.mem) Assignment(Selection(path, var_source_position), name, val, is_guarded, is_global);
+    Assignment* var = new (ctx.mem) Assignment(var_source_position, name, val, is_guarded, is_global);
     return var;
   }
 
@@ -382,10 +382,10 @@ namespace Sass {
     else {
       sel = parse_selector_group();
     }
-    Position r_source_position = before_token;
+    Selection r_source_position = slct;
     if (!peek< exactly<'{'> >()) error("expected a '{' after the selector", slct);
     Block* block = parse_block();
-    Ruleset* ruleset = new (ctx.mem) Ruleset(Selection(path, r_source_position), sel, block);
+    Ruleset* ruleset = new (ctx.mem) Ruleset(r_source_position, sel, block);
     return ruleset;
   }
 
@@ -430,16 +430,16 @@ namespace Sass {
         break; // in case there are superfluous commas at the end
       Complex_Selector* comb = parse_selector_combination();
       if (!comb->has_reference()) {
-        Position sel_source_position = before_token;
-        Selector_Reference* ref = new (ctx.mem) Selector_Reference(Selection(path, sel_source_position));
-        Compound_Selector* ref_wrap = new (ctx.mem) Compound_Selector(Selection(path, sel_source_position));
+        Selection sel_source_position = slct;
+        Selector_Reference* ref = new (ctx.mem) Selector_Reference(sel_source_position);
+        Compound_Selector* ref_wrap = new (ctx.mem) Compound_Selector(sel_source_position);
         (*ref_wrap) << ref;
         if (!comb->head()) {
           comb->head(ref_wrap);
           comb->has_reference(true);
         }
         else {
-          comb = new (ctx.mem) Complex_Selector(Selection(path, sel_source_position), Complex_Selector::ANCESTOR_OF, ref_wrap, comb);
+          comb = new (ctx.mem) Complex_Selector(sel_source_position, Complex_Selector::ANCESTOR_OF, ref_wrap, comb);
           comb->has_reference(true);
         }
       }
@@ -487,7 +487,7 @@ namespace Sass {
       sel_source_position = before_token;
     }
     if (!sel_source_position.line) sel_source_position = before_token;
-    return new (ctx.mem) Complex_Selector(Selection(path, sel_source_position), cmb, lhs, rhs);
+    return new (ctx.mem) Complex_Selector(Selection(path, sel_source_position, Offset()), cmb, lhs, rhs);
   }
 
   Compound_Selector* Parser::parse_simple_selector_sequence()
@@ -561,33 +561,33 @@ namespace Sass {
   {
     lex< pseudo_not >();
     string name(lexed);
-    Position nsource_position = before_token;
+    Selection nsource_position = slct;
     Selector* negated = parse_selector_group();
     if (!lex< exactly<')'> >()) {
       error("negated selector is missing ')'", slct);
     }
-    return new (ctx.mem) Wrapped_Selector(Selection(path, nsource_position), name, negated);
+    return new (ctx.mem) Wrapped_Selector(nsource_position, name, negated);
   }
 
   Simple_Selector* Parser::parse_pseudo_selector() {
     if (lex< sequence< pseudo_prefix, functional > >() || lex< functional >()) {
       string name(lexed);
       String* expr = 0;
-      Position p = before_token;
+      Selection p = slct;
       Selector* wrapped = 0;
       if (lex< alternatives< even, odd > >()) {
-        expr = new (ctx.mem) String_Constant(Selection(path, p), lexed);
+        expr = new (ctx.mem) String_Constant(p, lexed);
       }
       else if (peek< binomial >(position)) {
         lex< sequence< optional< coefficient >, exactly<'n'> > >();
-        String_Constant* var_coef = new (ctx.mem) String_Constant(Selection(path, p), lexed);
+        String_Constant* var_coef = new (ctx.mem) String_Constant(p, lexed);
         lex< sign >();
-        String_Constant* op = new (ctx.mem) String_Constant(Selection(path, p), lexed);
+        String_Constant* op = new (ctx.mem) String_Constant(p, lexed);
         // Binary_Expression::Type op = (lexed == "+" ? Binary_Expression::ADD : Binary_Expression::SUB);
         lex< digits >();
-        String_Constant* constant = new (ctx.mem) String_Constant(Selection(path, p), lexed);
-        // expr = new (ctx.mem) Binary_Expression(Selection(path, p), op, var_coef, constant);
-        String_Schema* schema = new (ctx.mem) String_Schema(Selection(path, p), 3);
+        String_Constant* constant = new (ctx.mem) String_Constant(p, lexed);
+        // expr = new (ctx.mem) Binary_Expression(p, op, var_coef, constant);
+        String_Schema* schema = new (ctx.mem) String_Schema(p, 3);
         *schema << var_coef << op << constant;
         expr = schema;
       }
@@ -599,29 +599,29 @@ namespace Sass {
         lex< sequence< optional<sign>,
                        optional<digits>,
                        exactly<'n'> > >();
-        expr = new (ctx.mem) String_Constant(Selection(path, p), lexed);
+        expr = new (ctx.mem) String_Constant(p, lexed);
       }
       else if (lex< sequence< optional<sign>, digits > >()) {
-        expr = new (ctx.mem) String_Constant(Selection(path, p), lexed);
+        expr = new (ctx.mem) String_Constant(p, lexed);
       }
       else if (peek< sequence< identifier, spaces_and_comments, exactly<')'> > >()) {
         lex< identifier >();
-        expr = new (ctx.mem) String_Constant(Selection(path, p), lexed);
+        expr = new (ctx.mem) String_Constant(p, lexed);
       }
       else if (lex< string_constant >()) {
-        expr = new (ctx.mem) String_Constant(Selection(path, p), lexed);
+        expr = new (ctx.mem) String_Constant(p, lexed);
       }
       else if (peek< exactly<')'> >()) {
-        expr = new (ctx.mem) String_Constant(Selection(path, p), "");
+        expr = new (ctx.mem) String_Constant(p, "");
       }
       else {
         wrapped = parse_selector_group();
       }
       if (!lex< exactly<')'> >()) error("unterminated argument to " + name + "...)", slct);
       if (wrapped) {
-        return new (ctx.mem) Wrapped_Selector(Selection(path, p), name, wrapped);
+        return new (ctx.mem) Wrapped_Selector(p, name, wrapped);
       }
-      return new (ctx.mem) Pseudo_Selector(Selection(path, p), name, expr);
+      return new (ctx.mem) Pseudo_Selector(p, name, expr);
     }
     else if (lex < sequence< pseudo_prefix, identifier > >()) {
       return new (ctx.mem) Pseudo_Selector(slct, lexed);
@@ -636,10 +636,10 @@ namespace Sass {
   Attribute_Selector* Parser::parse_attribute_selector()
   {
     lex< exactly<'['> >();
-    Position p = before_token;
+    Selection p = slct;
     if (!lex< attribute_name >()) error("invalid attribute name in attribute selector", slct);
     string name(lexed);
-    if (lex< exactly<']'> >()) return new (ctx.mem) Attribute_Selector(Selection(path, p), name, "", 0);
+    if (lex< exactly<']'> >()) return new (ctx.mem) Attribute_Selector(p, name, "", 0);
     if (!lex< alternatives< exact_match, class_match, dash_match,
                             prefix_match, suffix_match, substring_match > >()) {
       error("invalid operator in attribute selector for " + name, slct);
@@ -648,7 +648,7 @@ namespace Sass {
 
     String* value = 0;
     if (lex< identifier >()) {
-      value = new (ctx.mem) String_Constant(Selection(path, p), lexed, true);
+      value = new (ctx.mem) String_Constant(p, lexed, true);
     }
     else if (lex< string_constant >()) {
       value = parse_interpolated_chunk(lexed);
@@ -658,7 +658,7 @@ namespace Sass {
     }
 
     if (!lex< exactly<']'> >()) error("unterminated attribute selector for " + name, slct);
-    return new (ctx.mem) Attribute_Selector(Selection(path, p), name, matcher, value);
+    return new (ctx.mem) Attribute_Selector(p, name, matcher, value);
   }
 
   Block* Parser::parse_block()
@@ -1133,7 +1133,7 @@ namespace Sass {
         if (peek<line_comment_prefix>() || peek<block_comment_prefix>()) error("comment in URL", slct); // doesn't really matter what we throw
         Expression* expr = parse_list();
         if (!lex< exactly<')'> >()) error("dangling expression in URL", slct); // doesn't really matter what we throw
-        Argument* arg = new (ctx.mem) Argument(Selection(path, expr->slct()), expr);
+        Argument* arg = new (ctx.mem) Argument(Selection(path, expr->slct(), Offset()), expr);
         *args << arg;
         return result;
       }
@@ -1145,7 +1145,7 @@ namespace Sass {
       lex< spaces >();
       if (lex< url >()) {
         String* the_url = parse_interpolated_chunk(lexed);
-        Argument* arg = new (ctx.mem) Argument(Selection(path, the_url->slct()), the_url);
+        Argument* arg = new (ctx.mem) Argument(Selection(path, the_url->slct(), Offset()), the_url);
         *args << arg;
       }
       else {
@@ -1484,35 +1484,35 @@ namespace Sass {
     const char* arg_end = position;
     lex< exactly<')'> >();
 
-    Argument* arg = new (ctx.mem) Argument(Selection(path, arg_pos), parse_interpolated_chunk(Token(arg_beg, arg_end, before_token)));
-    Arguments* args = new (ctx.mem) Arguments(Selection(path, arg_pos));
+    Argument* arg = new (ctx.mem) Argument(Selection(path, arg_pos, Offset()), parse_interpolated_chunk(Token(arg_beg, arg_end, before_token)));
+    Arguments* args = new (ctx.mem) Arguments(Selection(path, arg_pos, Offset()));
     *args << arg;
-    return new (ctx.mem) Function_Call(Selection(path, call_pos), name, args);
+    return new (ctx.mem) Function_Call(Selection(path, call_pos, Offset()), name, args);
   }
 
   Function_Call* Parser::parse_function_call()
   {
     lex< identifier >();
     string name(Util::normalize_underscores(lexed));
-    Position source_position_of_call = before_token;
+    Selection source_position_of_call = slct;
 
-    Function_Call* the_call = new (ctx.mem) Function_Call(Selection(path, source_position_of_call), name, parse_arguments());
+    Function_Call* the_call = new (ctx.mem) Function_Call(source_position_of_call, name, parse_arguments());
     return the_call;
   }
 
   Function_Call_Schema* Parser::parse_function_call_schema()
   {
     String* name = parse_identifier_schema();
-    Position source_position_of_call = before_token;
+    Selection source_position_of_call = slct;
 
-    Function_Call_Schema* the_call = new (ctx.mem) Function_Call_Schema(Selection(path, source_position_of_call), name, parse_arguments());
+    Function_Call_Schema* the_call = new (ctx.mem) Function_Call_Schema(source_position_of_call, name, parse_arguments());
     return the_call;
   }
 
   If* Parser::parse_if_directive(bool else_if)
   {
     lex< if_directive >() || (else_if && lex< exactly<if_after_else_kwd> >());
-    Position if_source_position = before_token;
+    Selection if_source_position = slct;
     Expression* predicate = parse_list();
     predicate->is_delayed(false);
     if (!peek< exactly<'{'> >()) error("expected '{' after the predicate for @if", slct);
@@ -1530,13 +1530,13 @@ namespace Sass {
         alternative = parse_block();
       }
     }
-    return new (ctx.mem) If(Selection(path, if_source_position), predicate, consequent, alternative);
+    return new (ctx.mem) If(if_source_position, predicate, consequent, alternative);
   }
 
   For* Parser::parse_for_directive()
   {
     lex< for_directive >();
-    Position for_source_position = before_token;
+    Selection for_source_position = slct;
     if (!lex< variable >()) error("@for directive requires an iteration variable", slct);
     string var(Util::normalize_underscores(lexed));
     if (!lex< from >()) error("expected 'from' keyword in @for directive", slct);
@@ -1550,13 +1550,13 @@ namespace Sass {
     upper_bound->is_delayed(false);
     if (!peek< exactly<'{'> >()) error("expected '{' after the upper bound in @for directive", slct);
     Block* body = parse_block();
-    return new (ctx.mem) For(Selection(path, for_source_position), var, lower_bound, upper_bound, body, inclusive);
+    return new (ctx.mem) For(for_source_position, var, lower_bound, upper_bound, body, inclusive);
   }
 
   Each* Parser::parse_each_directive()
   {
     lex < each_directive >();
-    Position each_source_position = before_token;
+    Selection each_source_position = slct;
     if (!lex< variable >()) error("@each directive requires an iteration variable", slct);
     vector<string> vars;
     vars.push_back(Util::normalize_underscores(lexed));
@@ -1575,23 +1575,23 @@ namespace Sass {
     }
     if (!peek< exactly<'{'> >()) error("expected '{' after the upper bound in @each directive", slct);
     Block* body = parse_block();
-    return new (ctx.mem) Each(Selection(path, each_source_position), vars, list, body);
+    return new (ctx.mem) Each(each_source_position, vars, list, body);
   }
 
   While* Parser::parse_while_directive()
   {
     lex< while_directive >();
-    Position while_source_position = before_token;
+    Selection while_source_position = slct;
     Expression* predicate = parse_list();
     predicate->is_delayed(false);
     Block* body = parse_block();
-    return new (ctx.mem) While(Selection(path, while_source_position), predicate, body);
+    return new (ctx.mem) While(while_source_position, predicate, body);
   }
 
   Media_Block* Parser::parse_media_block()
   {
     lex< media >();
-    Position media_source_position = before_token;
+    Selection media_source_position = slct;
 
     List* media_queries = parse_media_queries();
 
@@ -1600,7 +1600,7 @@ namespace Sass {
     }
     Block* block = parse_block();
 
-    return new (ctx.mem) Media_Block(Selection(path, media_source_position), media_queries, block);
+    return new (ctx.mem) Media_Block(media_source_position, media_queries, block);
   }
 
   List* Parser::parse_media_queries()
@@ -1649,13 +1649,13 @@ namespace Sass {
     if (!lex< exactly<')'> >()) {
       error("unclosed parenthesis in media query expression", slct);
     }
-    return new (ctx.mem) Media_Query_Expression(Selection(path, feature->slct()), feature, expression);
+    return new (ctx.mem) Media_Query_Expression(Selection(path, feature->slct(), Offset()), feature, expression);
   }
 
   Feature_Block* Parser::parse_feature_block()
   {
     lex< supports >();
-    Position supports_source_position = before_token;
+    Selection supports_source_position = slct;
 
     Feature_Query* feature_queries = parse_feature_queries();
 
@@ -1664,7 +1664,7 @@ namespace Sass {
     }
     Block* block = parse_block();
 
-    return new (ctx.mem) Feature_Block(Selection(path, supports_source_position), feature_queries, block);
+    return new (ctx.mem) Feature_Block(supports_source_position, feature_queries, block);
   }
 
   Feature_Query* Parser::parse_feature_queries()
@@ -1746,7 +1746,7 @@ namespace Sass {
   {
     lex<at_keyword>();
     string kwd(lexed);
-    Position at_source_position = before_token;
+    Selection at_source_position = slct;
     Selector* sel = 0;
     Expression* val = 0;
     Selector_Lookahead lookahead = lookahead_for_extension_target(position);
@@ -1763,7 +1763,7 @@ namespace Sass {
     }
     Block* body = 0;
     if (peek< exactly<'{'> >()) body = parse_block();
-    At_Rule* rule = new (ctx.mem) At_Rule(Selection(path, at_source_position), kwd, sel, body);
+    At_Rule* rule = new (ctx.mem) At_Rule(at_source_position, kwd, sel, body);
     if (!sel) rule->value(val);
     return rule;
   }
@@ -1992,7 +1992,7 @@ namespace Sass {
   Expression* Parser::fold_operands(Expression* base, vector<Expression*>& operands, vector<Binary_Expression::Type>& ops)
   {
     for (size_t i = 0, S = operands.size(); i < S; ++i) {
-      base = new (ctx.mem) Binary_Expression(Selection(path, base->slct()), ops[i], base, operands[i]);
+      base = new (ctx.mem) Binary_Expression(Selection(path, base->slct(), Offset()), ops[i], base, operands[i]);
       Binary_Expression* b = static_cast<Binary_Expression*>(base);
       if (ops[i] == Binary_Expression::DIV && b->left()->is_delayed() && b->right()->is_delayed()) {
         base->is_delayed(true);
@@ -2007,7 +2007,7 @@ namespace Sass {
 
   void Parser::error(string msg, Position pos)
   {
-    throw Sass_Error(Sass_Error::syntax, Selection(path, pos.line ? pos : before_token), msg);
+    throw Sass_Error(Sass_Error::syntax, Selection(path, pos.line ? pos : before_token, Offset()), msg);
   }
 
 }

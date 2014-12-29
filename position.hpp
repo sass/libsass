@@ -56,7 +56,7 @@ namespace Sass {
 
     public:
       Selection(string path);
-      Selection(string path, Position position);
+      Selection(string path, Position position, Offset offset);
 
     public: // getters
       const char* getPath() const;
@@ -65,6 +65,7 @@ namespace Sass {
 
     public:
       string path;
+      Offset offset;
 
   };
 

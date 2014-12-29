@@ -43,8 +43,8 @@ namespace Sass {
   Selection::Selection(string path)
   : Position(-1, -1, -1), path(path) { }
 
-  Selection::Selection(string path, Position position)
-  : Position(position), path(path) { }
+  Selection::Selection(string path, Position position, Offset offset)
+  : Position(position), path(path), offset(offset) { }
 
   Position::Position()
   : Offset(-1, -1), file(-1) { }

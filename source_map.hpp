@@ -29,6 +29,7 @@ namespace Sass {
     void remove_line();
     void update_column(const string& str);
     void add_mapping(AST_Node* node);
+    void add_end_mapping(AST_Node* node);
 
     string generate_source_map(Context &ctx);
     Selection remap(const Selection& slct);
