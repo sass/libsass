@@ -21,8 +21,8 @@
 
 namespace Sass {
   using std::ptrdiff_t;
-  SourceMap::SourceMap() : current_position(Position(3, 0, 0)), file("stdin") { }
-  SourceMap::SourceMap(const string& file) : current_position(Position(2, 0, 0)), file(file) { }
+  SourceMap::SourceMap() : current_position(Position(0, 0, 0)), file("stdin") { }
+  SourceMap::SourceMap(const string& file) : current_position(Position(0, 0, 0)), file(file) { }
 
   string SourceMap::generate_source_map(Context &ctx) {
 
@@ -145,7 +145,7 @@ namespace Sass {
     for (size_t i = 0; i < mappings.size(); ++i) {
       if (
         // pos.file == 0 &&
-        mappings[i].original_position.file == slct.file &&
+        mappings[i].generated_position.file == slct.file &&
         mappings[i].generated_position.line == slct.line &&
         mappings[i].generated_position.column == slct.column
       ) return Selection(slct.path, mappings[i].original_position);

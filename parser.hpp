@@ -50,9 +50,9 @@ namespace Sass {
     const char* position;
     const char* end;
     string path;
-    size_t column;
     Position before_token;
     Position after_token;
+    Selection slct;
 
 
     Token lexed;
@@ -60,7 +60,7 @@ namespace Sass {
 
     Parser(Context& ctx, string path, Position position)
     : ctx(ctx), stack(vector<Syntactic_Context>()),
-      source(0), position(0), end(0), path(path), column(1), before_token(position), after_token(position)
+      source(0), position(0), end(0), path(path),  before_token(position), after_token(position), slct("[NO]")
     { dequote = false; stack.push_back(nothing); }
 
     static Parser from_string(string src, Context& ctx, string path = "", Position before_token = Position());
@@ -202,6 +202,8 @@ namespace Sass {
 
       // create parsed token string (public member)
       lexed = Token(it_before_token, it_after_token, before_token);
+
+      slct= Selection(path, Position(before_token.file, before_token.line, before_token.column));
 
       // advance internal char iterator
       return position = it_after_token;
