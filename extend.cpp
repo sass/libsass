@@ -241,10 +241,10 @@ namespace Sass {
     // TODO: figure out a better way to create a Complex_Selector from scratch
     // TODO: There's got to be a better way. This got ugly quick...
     Position noPosition;
-    Type_Selector fakeParent(Selection(), "temp");
-    Compound_Selector fakeHead(Selection(), 1 /*size*/);
+    Type_Selector fakeParent(Selection("[FAKE]"), "temp");
+    Compound_Selector fakeHead(Selection("[FAKE]"), 1 /*size*/);
     fakeHead.elements().push_back(&fakeParent);
-    Complex_Selector fakeParentContainer(Selection(), Complex_Selector::ANCESTOR_OF, &fakeHead /*head*/, NULL /*tail*/);
+    Complex_Selector fakeParentContainer(Selection("[FAKE]"), Complex_Selector::ANCESTOR_OF, &fakeHead /*head*/, NULL /*tail*/);
 
     pOne->set_innermost(&fakeParentContainer, Complex_Selector::ANCESTOR_OF);
     pTwo->set_innermost(&fakeParentContainer, Complex_Selector::ANCESTOR_OF);
@@ -603,10 +603,10 @@ namespace Sass {
     // TODO: figure out a better way to create a Complex_Selector from scratch
     // TODO: There's got to be a better way. This got ugly quick...
     Position noPosition;
-    Type_Selector fakeParent(Selection(), "temp");
-    Compound_Selector fakeHead(Selection(), 1 /*size*/);
+    Type_Selector fakeParent(Selection("[FAKE]"), "temp");
+    Compound_Selector fakeHead(Selection("[FAKE]"), 1 /*size*/);
     fakeHead.elements().push_back(&fakeParent);
-    Complex_Selector fakeParentContainer(Selection(), Complex_Selector::ANCESTOR_OF, &fakeHead /*head*/, NULL /*tail*/);
+    Complex_Selector fakeParentContainer(Selection("[FAKE]"), Complex_Selector::ANCESTOR_OF, &fakeHead /*head*/, NULL /*tail*/);
 
     Complex_Selector* pOneWithFakeParent = nodeToComplexSelector(one, ctx);
     pOneWithFakeParent->set_innermost(&fakeParentContainer, Complex_Selector::ANCESTOR_OF);

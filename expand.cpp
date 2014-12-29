@@ -463,8 +463,8 @@ namespace Sass {
   inline Statement* Expand::fallback_impl(AST_Node* n)
   {
     error("unknown internal error; please contact the LibSass maintainers", n->slct(), backtrace);
-    String_Constant* msg = new (ctx.mem) String_Constant(Selection(), string("`Expand` doesn't handle ") + typeid(*n).name());
-    return new (ctx.mem) Warning(Selection(), msg);
+    String_Constant* msg = new (ctx.mem) String_Constant(Selection("[WARN]"), string("`Expand` doesn't handle ") + typeid(*n).name());
+    return new (ctx.mem) Warning(Selection("[WARN]"), msg);
   }
 
   inline void Expand::append_block(Block* b)

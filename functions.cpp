@@ -41,7 +41,7 @@ namespace Sass {
     sig_parser.lex<Prelexer::identifier>();
     string name(Util::normalize_underscores(sig_parser.lexed));
     Parameters* params = sig_parser.parse_parameters();
-    return new (ctx.mem) Definition(Selection(), // "[built-in function]",
+    return new (ctx.mem) Definition(Selection("[built-in function]"),
                                     sig,
                                     name,
                                     params,
@@ -60,7 +60,7 @@ namespace Sass {
                    >              >();
     string name(Util::normalize_underscores(sig_parser.lexed));
     Parameters* params = sig_parser.parse_parameters();
-    return new (ctx.mem) Definition(Selection(), // "[c function]",
+    return new (ctx.mem) Definition(Selection("[c function]"),
                                     sig,
                                     name,
                                     params,

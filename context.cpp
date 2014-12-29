@@ -110,7 +110,7 @@ namespace Sass {
     size_t i = 0;
     while (color_names[i]) {
       string name(color_names[i]);
-      Color* value = new (mem) Color(Selection(), // "[COLOR TABLE]"
+      Color* value = new (mem) Color(Selection("[COLOR TABLE]"),
                                      color_values[i*4],
                                      color_values[i*4+1],
                                      color_values[i*4+2],
@@ -378,7 +378,7 @@ namespace Sass {
 
   void register_overload_stub(Context& ctx, string name, Env* env)
   {
-    Definition* stub = new (ctx.mem) Definition(Selection(), // "[built-in function]",
+    Definition* stub = new (ctx.mem) Definition(Selection("[built-in function]"),
                                             0,
                                             name,
                                             0,

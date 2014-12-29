@@ -212,7 +212,7 @@ namespace Sass {
 
     string noPath("");
     Position noPosition;
-    Complex_Selector* pFirst = new (ctx.mem) Complex_Selector(Selection(), Complex_Selector::ANCESTOR_OF, NULL, NULL);
+    Complex_Selector* pFirst = new (ctx.mem) Complex_Selector(Selection("[NODE]"), Complex_Selector::ANCESTOR_OF, NULL, NULL);
     Complex_Selector* pCurrent = pFirst;
 
     for (NodeDeque::iterator childIter = childNodes.begin(), childIterEnd = childNodes.end(); childIter != childIterEnd; childIter++) {
@@ -229,7 +229,7 @@ namespace Sass {
         if (childIter+1 != childIterEnd) {
           Node& nextNode = *(childIter+1);
           if (nextNode.isCombinator()) {
-            pCurrent->tail(new (ctx.mem) Complex_Selector(Selection(), Complex_Selector::ANCESTOR_OF, NULL, NULL));
+            pCurrent->tail(new (ctx.mem) Complex_Selector(Selection("[NODE]"), Complex_Selector::ANCESTOR_OF, NULL, NULL));
             pCurrent = pCurrent->tail();
           }
         }
@@ -239,8 +239,8 @@ namespace Sass {
     }
 
     // Put the dummy Compound_Selector in the first position, for consistency with the rest of libsass
-    Compound_Selector* fakeHead = new (ctx.mem) Compound_Selector(Selection(), 1);
-    Selector_Reference* selectorRef = new (ctx.mem) Selector_Reference(Selection(), NULL);
+    Compound_Selector* fakeHead = new (ctx.mem) Compound_Selector(Selection("[NODE]"), 1);
+    Selector_Reference* selectorRef = new (ctx.mem) Selector_Reference(Selection("[NODE]"), NULL);
     fakeHead->elements().push_back(selectorRef);
     pFirst->head(fakeHead);
 
