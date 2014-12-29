@@ -30,8 +30,8 @@ namespace Sass {
       seen_utf8 = true;
     }
     buffer += text;
-    if (ctx && !ctx->_skip_source_map_update)
-      ctx->source_map.update_column(text);
+//    if (ctx && !ctx->_skip_source_map_update)
+//      ctx->source_map.update_column(text);
   }
 
   void Output_Nested::operator()(Import* imp)

@@ -137,7 +137,7 @@ namespace Sass {
 
   void SourceMap::add_mapping(AST_Node* node)
   {
-    // std::cerr << "add map " << node->slct() << "\n";
+    // std::cerr << "add map " << current_position << "\n";
     mappings.push_back(Mapping(node->slct(), current_position));
   }
 

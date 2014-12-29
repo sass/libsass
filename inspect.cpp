@@ -740,6 +740,7 @@ namespace Sass {
   void Inspect::append_to_buffer(const string& text)
   {
     buffer += text;
+    if (ctx) ctx->source_map.update_column(text);
     source_map.update_column(text);
   }
 
