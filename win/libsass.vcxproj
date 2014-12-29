@@ -177,6 +177,7 @@
     <ClCompile Include="..\output_compressed.cpp" />
     <ClCompile Include="..\output_nested.cpp" />
     <ClCompile Include="..\parser.cpp" />
+    <ClCompile Include="..\position.cpp" />
     <ClCompile Include="..\prelexer.cpp" />
     <ClCompile Include="..\remove_placeholders.cpp" />
     <ClCompile Include="..\sass.cpp" />
@@ -184,7 +185,7 @@
     <ClCompile Include="..\sass_interface.cpp" />
     <ClCompile Include="..\sass_context.cpp" />
     <ClCompile Include="..\sass_functions.cpp" />
-    <ClCompile Include="..\sass_values.cpp" />	
+    <ClCompile Include="..\sass_values.cpp" />
     <ClCompile Include="..\sass_util.cpp" />
     <ClCompile Include="..\source_map.cpp" />
     <ClCompile Include="..\to_c.cpp" />
