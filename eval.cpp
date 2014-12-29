@@ -144,7 +144,7 @@ namespace Sass {
         Expression* value = map->at(key);
 
         if (variables.size() == 1) {
-          List* variable = new (ctx.mem) List(map->path(), map->position(), 2, List::SPACE);
+          List* variable = new (ctx.mem) List(map->slct(), 2, List::SPACE);
           *variable << key;
           *variable << value;
           (*env)[variables[0]] = variable;

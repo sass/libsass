@@ -326,7 +326,7 @@ namespace Sass {
         Expression* v = map->at(key)->perform(eval->with(env, backtrace));
 
         if (variables.size() == 1) {
-          List* variable = new (ctx.mem) List(map->path(), map->position(), 2, List::SPACE);
+          List* variable = new (ctx.mem) List(map->slct(), 2, List::SPACE);
           *variable << k;
           *variable << v;
           (*env)[variables[0]] = variable;
