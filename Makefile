@@ -109,6 +109,7 @@ SOURCES = \
 	output_compressed.cpp \
 	output_nested.cpp \
 	parser.cpp \
+	position.cpp \
 	prelexer.cpp \
 	remove_placeholders.cpp \
 	sass.cpp \
@@ -127,14 +128,14 @@ SOURCES = \
 
 CSOURCES = cencode.c
 
-RESOURCES = 
+RESOURCES =
 
 LIBRARIES = lib/libsass.so
 
 ifeq (MinGW,$(UNAME))
 	ifeq (shared,$(BUILD))
-		CFLAGS    += -D ADD_EXPORTS 
-		CXXFLAGS  += -D ADD_EXPORTS 
+		CFLAGS    += -D ADD_EXPORTS
+		CXXFLAGS  += -D ADD_EXPORTS
 		LIBRARIES += lib/libsass.dll
 		RESOURCES += res/resource.rc
 	endif

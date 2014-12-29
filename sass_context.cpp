@@ -4,6 +4,7 @@
 #include <unistd.h>
 #endif
 
+#include <cstring>
 #include <stdexcept>
 #include "json.hpp"
 #include "context.hpp"
