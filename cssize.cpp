@@ -44,17 +44,41 @@ namespace Sass {
                                         r->block()->perform(this)->block());
     p_stack.pop_back();
 
-    return rr;
+    Block* props = new Block(rr->block()->path(), rr->block()->position());
+    for (size_t i = 0, L = rr->block()->length(); i < L; i++)
+    {
+      Statement* s = (*rr->block())[i];
+      if (!bubblable(s)) *props << s;
+    }
+
+    Block* rules = new Block(rr->block()->path(), rr->block()->position());
+    for (size_t i = 0, L = rr->block()->length(); i < L; i++)
+    {
+      Statement* s = (*rr->block())[i];
+      if (bubblable(s)) *rules << s;
+    }
+
+    if (props->length())
+    {
+      Block* bb = new Block(rr->block()->path(), rr->block()->position());
+      *bb += props;
+      // rules.each {|r| r.tabs += 1} if node.style == :nested
+      rr->block(bb);
+      rules->unshift(rr);
+    }
+
+    rules = debubble(rules)->block();
+
+    return rules;
   }
 
   Statement* Cssize::operator()(Media_Block* m)
   {
-    To_String to_string;
+    if (parent()->statement_type() == Statement::RULESET)
+    { return bubble(m); }
 
     if (parent()->statement_type() == Statement::MEDIA)
-    {
-      return new (ctx.mem) Bubble(m->path(), m->position(), m); }
-
+    { return new (ctx.mem) Bubble(m->path(), m->position(), m); }
 
     p_stack.push_back(m);
 
@@ -64,12 +88,39 @@ namespace Sass {
                                                 m->block()->perform(this)->block());
     p_stack.pop_back();
 
-    return debubble(mm->block(), m)->block();
+    return debubble(mm->block(), mm)->block();
+  }
+
+  inline Statement* Cssize::bubble(Media_Block* m)
+  {
+    Ruleset* parent = static_cast<Ruleset*>(this->parent());
+
+    Block* bb = new (ctx.mem) Block(parent->block()->path(), parent->block()->position());
+    Ruleset* new_rule = new (ctx.mem) Ruleset(parent->path(),
+                                              parent->position(),
+                                              parent->selector(),
+                                              bb);
+
+    for (size_t i = 0, L = m->block()->length(); i < L; ++i) {
+      *new_rule->block() << (*m->block())[i];
+    }
+
+    Block* bbbb = new (ctx.mem) Block(m->block()->path(), m->block()->position());
+    *bbbb << new_rule;
+    Media_Block* mm = new (ctx.mem) Media_Block(m->path(),
+                                                m->position(),
+                                                m->media_queries(),
+                                                bbbb);
+    mm->selector(m->selector());
+
+    Bubble* bubble = new (ctx.mem) Bubble(mm->path(), mm->position(), mm);
+
+    return bubble;
   }
 
   inline bool Cssize::bubblable(Statement* s)
   {
-    return s->statement_type() == Statement::MEDIA || s->bubbles();
+    return s->statement_type() == Statement::RULESET || s->bubbles();
   }
 
   inline Statement* Cssize::fallback_impl(AST_Node* n)
@@ -126,26 +177,26 @@ namespace Sass {
     return results;
   }
 
-  inline Statement* Cssize::debubble(Block* children, Media_Block* parent = 0)
+  inline Statement* Cssize::debubble(Block* children, Media_Block* parent)
   {
-    To_String to_string;
-
     Media_Block* previous_parent = 0;
     vector<pair<bool, Block*>> baz = slice_by(children);
-    Block* bar = new (ctx.mem) Block(parent->path(), parent->position());
-
+    Block* bar = new (ctx.mem) Block(children->path(), children->position());
 
     for (size_t i = 0, L = baz.size(); i < L; ++i) {
       bool is_bubble = baz[i].first;
       Block* slice = baz[i].second;
-
 
       if (!is_bubble) {
         if (!parent) {
           *bar << slice;
           continue;
         }
-        if (!previous_parent) {
+        if (previous_parent) {
+          *previous_parent->block() += slice;
+          continue;
+        }
+        else {
           previous_parent = new (ctx.mem) Media_Block(parent->path(),
                                                       parent->position(),
                                                       parent->media_queries(),
@@ -163,30 +214,36 @@ namespace Sass {
         }
       }
 
-
-      Block* foo = new (ctx.mem) Block(parent->block()->path(),
-                                        parent->block()->position(),
-                                        parent->block()->length(),
-                                        parent->block()->is_root());
+      Block* foo = new (ctx.mem) Block(children->block()->path(),
+                                        children->block()->position(),
+                                        children->block()->length(),
+                                        children->block()->is_root());
 
       for (size_t j = 0, K = slice->length(); j < K; ++j) {
         Statement* ss = 0;
         Bubble* b = static_cast<Bubble*>((*slice)[j]);
 
         if (b->node()->statement_type() != Statement::MEDIA) ss = b->node();
+        else if (!parent) ss = b->node();
         else if (static_cast<Media_Block*>(b->node())->media_queries() == parent->media_queries()) ss = b->node();
         else {
           List* mq = merge_media_queries(static_cast<Media_Block*>(b->node()), parent);
-          if (!mq->length()) continue;
           static_cast<Media_Block*>(b->node())->media_queries(mq);
           ss = b->node();
         }
 
         if (!ss) continue;
-
-        Statement* ssss = ss->perform(this);
-        Statement* sssss = flatten(ssss);
+        Block* bbbb = new (ctx.mem) Block(children->block()->path(),
+                                          children->block()->position(),
+                                          children->block()->length(),
+                                          children->block()->is_root());
+        *bbbb << ss->perform(this);
+        Statement* sssss = flatten(bbbb);
         *foo << sssss;
+
+        if (sssss->block()->length()) {
+          previous_parent = 0;
+        }
       }
 
       if (foo) {

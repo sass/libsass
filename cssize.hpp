@@ -66,7 +66,9 @@ namespace Sass {
 
     Statement* parent();
     vector<pair<bool, Block*>> slice_by(Statement*);
-    Statement* debubble(Block*, Media_Block*);
+    Statement* bubble(Media_Block*);
+    // Statement* bubble(Media_Block*, Media_Block*);
+    Statement* debubble(Block* children, Media_Block* parent = 0);
     Statement* flatten(Media_Block*);
     Statement* flatten(Block*);
     Statement* flatten(Statement*);

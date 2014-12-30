@@ -187,6 +187,11 @@ namespace Sass {
       for (size_t i = 0, L = v->length(); i < L; ++i) *this << (*v)[i];
       return *this;
     }
+    Vectorized& unshift(T element)
+    {
+      elements_.insert(elements_.begin(), element);
+      return *this;
+    }
     vector<T>& elements() { return elements_; }
     const vector<T>& elements() const { return elements_; }
     vector<T>& elements(vector<T>& e) { elements_ = e; return elements_; }
@@ -360,6 +365,7 @@ namespace Sass {
     Bubble(string path, Position position, Statement* n, Statement* g = 0, size_t t = 0)
     : Statement(path, position), node_(n), group_end_(g), tabs_(t)
     { statement_type(BUBBLE); }
+    bool bubbles() { return true; }
     ATTACH_OPERATIONS();
   };
 
