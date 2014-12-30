@@ -110,7 +110,7 @@ namespace Sass {
     size_t i = 0;
     while (color_names[i]) {
       string name(color_names[i]);
-      Color* value = new (mem) Color(Selection("[COLOR TABLE]"),
+      Color* value = new (mem) Color(ParserState("[COLOR TABLE]"),
                                      color_values[i*4],
                                      color_values[i*4+1],
                                      color_values[i*4+2],
@@ -263,7 +263,7 @@ namespace Sass {
         0, 0
       );
       import_stack.push_back(import);
-      Parser p(Parser::from_c_str(queue[i].source, *this, Selection(queue[i].abs_path, i)));
+      Parser p(Parser::from_c_str(queue[i].source, *this, ParserState(queue[i].abs_path, i)));
       Block* ast = p.parse();
       sass_delete_import(import_stack.back());
       import_stack.pop_back();
@@ -378,7 +378,7 @@ namespace Sass {
 
   void register_overload_stub(Context& ctx, string name, Env* env)
   {
-    Definition* stub = new (ctx.mem) Definition(Selection("[built-in function]"),
+    Definition* stub = new (ctx.mem) Definition(ParserState("[built-in function]"),
                                             0,
                                             name,
                                             0,

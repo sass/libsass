@@ -36,7 +36,7 @@ namespace Sass {
   using std::map;
   using namespace Prelexer;
 
-  class Parser : public Selection {
+  class Parser : public ParserState {
   private:
     void add_single_file (Import* imp, string import_path);
   public:
@@ -52,20 +52,20 @@ namespace Sass {
     string path;
     Position before_token;
     Position after_token;
-    Selection slct;
+    ParserState pstate;
 
 
     Token lexed;
     bool dequote;
 
-    Parser(Context& ctx, Selection slct)
-    : Selection(slct), ctx(ctx), stack(vector<Syntactic_Context>()),
-      source(0), position(0), end(0), path(slct.path),  before_token(slct), after_token(slct), slct("[NO]")
+    Parser(Context& ctx, ParserState pstate)
+    : ParserState(pstate), ctx(ctx), stack(vector<Syntactic_Context>()),
+      source(0), position(0), end(0), path(pstate.path),  before_token(pstate), after_token(pstate), pstate("[NO]")
     { dequote = false; stack.push_back(nothing); }
 
-    static Parser from_string(string src, Context& ctx, Selection slct = Selection("[STRING]"));
-    static Parser from_c_str(const char* src, Context& ctx, Selection slct = Selection("[CSTRING]"));
-    static Parser from_token(Token t, Context& ctx, Selection slct = Selection("[TOKEN]"));
+    static Parser from_string(string src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
+    static Parser from_c_str(const char* src, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
+    static Parser from_token(Token t, Context& ctx, ParserState pstate = ParserState("[TOKEN]"));
 
 #ifdef __clang__
 
@@ -207,7 +207,7 @@ namespace Sass {
       // create parsed token string (public member)
       lexed = Token(it_before_token, it_after_token, before_token);
 
-      slct = Selection(path, Position(before_token.file, before_token.line, before_token.column), size);
+      pstate = ParserState(path, Position(before_token.file, before_token.line, before_token.column), size);
 
       // advance internal char iterator
       return position = it_after_token;

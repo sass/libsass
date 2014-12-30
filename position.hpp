@@ -55,12 +55,12 @@ namespace Sass {
 
   };
 
-  class Selection : public Position{
+  class ParserState : public Position{
 
     public:
-      Selection(string path);
-      Selection(string path, const size_t file);
-      Selection(string path, Position position, Offset offset);
+      ParserState(string path);
+      ParserState(string path, const size_t file);
+      ParserState(string path, Position position, Offset offset);
 
     public: // getters
       const char* getPath() const;

@@ -138,25 +138,25 @@ namespace Sass {
   void SourceMap::add_mapping(AST_Node* node)
   {
     // std::cerr << "add map " << current_position << "\n";
-    mappings.push_back(Mapping(node->slct(), current_position));
+    mappings.push_back(Mapping(node->pstate(), current_position));
   }
 
   void SourceMap::add_end_mapping(AST_Node* node)
   {
     // std::cerr << "add end map " << current_position << "\n";
-    mappings.push_back(Mapping(node->slct() + node->slct().offset, current_position));
+    mappings.push_back(Mapping(node->pstate() + node->pstate().offset, current_position));
   }
 
-  Selection SourceMap::remap(const Selection& slct) {
+  ParserState SourceMap::remap(const ParserState& pstate) {
     for (size_t i = 0; i < mappings.size(); ++i) {
       if (
         // pos.file == 0 &&
-        mappings[i].generated_position.file == slct.file &&
-        mappings[i].generated_position.line == slct.line &&
-        mappings[i].generated_position.column == slct.column
-      ) return Selection(slct.path, mappings[i].original_position, slct.offset);
+        mappings[i].generated_position.file == pstate.file &&
+        mappings[i].generated_position.line == pstate.line &&
+        mappings[i].generated_position.column == pstate.column
+      ) return ParserState(pstate.path, mappings[i].original_position, pstate.offset);
     }
-    return Selection(slct.path, Position(-1, -1, -1), Offset(0, 0));
+    return ParserState(pstate.path, Position(-1, -1, -1), Offset(0, 0));
 
   }
 

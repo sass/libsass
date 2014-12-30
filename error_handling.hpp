@@ -15,14 +15,14 @@ namespace Sass {
 
     Type type;
     string path;
-    Selection slct;
+    ParserState pstate;
     string message;
 
-    Sass_Error(Type type, Selection slct, string message);
+    Sass_Error(Type type, ParserState pstate, string message);
 
   };
 
-  void error(string msg, Selection slct);
-  void error(string msg, Selection slct, Backtrace* bt);
+  void error(string msg, ParserState pstate);
+  void error(string msg, ParserState pstate, Backtrace* bt);
 
 }

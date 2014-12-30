@@ -32,7 +32,7 @@ namespace Sass {
     void add_end_mapping(AST_Node* node);
 
     string generate_source_map(Context &ctx);
-    Selection remap(const Selection& slct);
+    ParserState remap(const ParserState& pstate);
 
   private:
 

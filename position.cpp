@@ -40,13 +40,13 @@ namespace Sass {
     return Offset(line + off.line, off.line > 0 ? off.column : off.column + column);
   }
 
-  Selection::Selection(string path)
+  ParserState::ParserState(string path)
   : Position(-1, -1, -1), path(path) { }
 
-  Selection::Selection(string path, const size_t file)
+  ParserState::ParserState(string path, const size_t file)
   : Position(file, 0, 0), path(path) { }
 
-  Selection::Selection(string path, Position position, Offset offset)
+  ParserState::ParserState(string path, Position position, Offset offset)
   : Position(position), path(path), offset(offset) { }
 
   Position::Position()
