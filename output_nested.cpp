@@ -19,7 +19,14 @@ namespace Sass {
   inline void Output_Nested::fallback_impl(AST_Node* n)
   {
     Inspect i(ctx);
+    ParserState pstate = n->pstate();
+    ParserState rebase(pstate);
+    rebase.file = 9;
+    n->pstate(rebase);
+    ctx->source_map.add_mapping(n);
     n->perform(&i);
+    ctx->source_map.add_end_mapping(n);
+    n->pstate(pstate);
     const string& text = i.get_buffer();
     for(const char& chr : text) {
       // abort clause
@@ -30,8 +37,8 @@ namespace Sass {
       seen_utf8 = true;
     }
     buffer += text;
-    if (ctx && !ctx->_skip_source_map_update)
-      ctx->source_map.update_column(text);
+//    if (ctx && !ctx->_skip_source_map_update)
+//      ctx->source_map.update_column(text);
   }
 
   void Output_Nested::operator()(Import* imp)
@@ -79,7 +86,7 @@ namespace Sass {
       indent();
       if (source_comments) {
         stringstream ss;
-        ss << "/* line " << r->position().line << ", " << r->path() << " */" << endl;
+        ss << "/* line " << r->pstate().line+1 << ", " << r->pstate().path << " */" << endl;
         append_to_buffer(ss.str());
         indent();
       }
@@ -229,7 +236,9 @@ namespace Sass {
 
     indent();
     ctx->source_map.add_mapping(m);
-    append_to_buffer("@media ");
+    append_to_buffer("@media");
+    ctx->source_map.add_end_mapping(m);
+    append_to_buffer(" ");
     q->perform(this);
     append_to_buffer(" {\n");
 

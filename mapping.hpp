@@ -1,5 +1,7 @@
 #define SASS_MAPPING
 
+#include <string>
+
 #ifndef SASS_POSITION
 #include "position.hpp"
 #endif
