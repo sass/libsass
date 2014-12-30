@@ -19,7 +19,9 @@ namespace Sass {
   inline void Output_Nested::fallback_impl(AST_Node* n)
   {
     Inspect i(ctx);
+    ctx->source_map.add_mapping(n);
     n->perform(&i);
+    ctx->source_map.add_end_mapping(n);
     const string& text = i.get_buffer();
     for(const char& chr : text) {
       // abort clause

@@ -473,7 +473,11 @@ namespace Sass {
 
   void Inspect::operator()(String_Constant* s)
   {
+    if (ctx) ctx->source_map.add_mapping(s);
+    source_map.add_mapping(s);
     append_to_buffer(s->needs_unquoting() ? unquote(s->value()) : s->value());
+    if (ctx) ctx->source_map.add_end_mapping(s);
+    source_map.add_end_mapping(s);
   }
 
   void Inspect::operator()(Feature_Query* fq)
