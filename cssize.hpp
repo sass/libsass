@@ -38,7 +38,7 @@ namespace Sass {
     using Operation<Statement*>::operator();
 
     Statement* operator()(Block*);
-    // Statement* operator()(Ruleset*);
+    Statement* operator()(Ruleset*);
     // Statement* operator()(Propset*);
     // Statement* operator()(Bubble*);
     Statement* operator()(Media_Block*);
@@ -70,6 +70,10 @@ namespace Sass {
     Statement* flatten(Media_Block*);
     Statement* flatten(Block*);
     Statement* flatten(Statement*);
+    bool bubblable(Statement*);
+
+    List* merge_media_queries(Media_Block*, Media_Block*);
+    Media_Query* merge_media_query(Media_Query*, Media_Query*);
 
     // Bubble* bubble(Media_Block*);
     void append_block(Block*);
