@@ -16,7 +16,7 @@ namespace Sass {
     Position before;
     Position after;
 
-    Token()                             : begin(0), end(0)             { }
+    Token()                             : begin(0), end(0), before(0), after(0)             { }
     Token(const char* s, const Position pos)                : begin(s), end(s + strlen(s)), before(pos), after(pos.inc(s, s + strlen(s))) { }
     Token(const char* b, const char* e, const Position pos) : begin(b), end(e), before(pos), after(pos.inc(b, e))             { }
 

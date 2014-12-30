@@ -211,7 +211,7 @@ namespace Sass {
     NodeDeque& childNodes = *toConvert.collection();
 
     string noPath("");
-    Position noPosition;
+    Position noPosition(-1, -1, -1);
     Complex_Selector* pFirst = new (ctx.mem) Complex_Selector(ParserState("[NODE]"), Complex_Selector::ANCESTOR_OF, NULL, NULL);
     Complex_Selector* pCurrent = pFirst;
 

@@ -453,7 +453,7 @@ namespace Sass {
   Complex_Selector* Parser::parse_selector_combination()
   {
     lex< spaces_and_comments >();
-    Position sel_source_position = Position();
+    Position sel_source_position(-1);
     Compound_Selector* lhs;
     if (peek< exactly<'+'> >() ||
         peek< exactly<'~'> >() ||
@@ -487,7 +487,7 @@ namespace Sass {
       sel_source_position = before_token;
     }
     if (!sel_source_position.line) sel_source_position = before_token;
-    return new (ctx.mem) Complex_Selector(ParserState(path, sel_source_position, Offset()), cmb, lhs, rhs);
+    return new (ctx.mem) Complex_Selector(ParserState(path, sel_source_position, Offset(0, 0)), cmb, lhs, rhs);
   }
 
   Compound_Selector* Parser::parse_simple_selector_sequence()
@@ -2007,7 +2007,7 @@ namespace Sass {
 
   void Parser::error(string msg, Position pos)
   {
-    throw Sass_Error(Sass_Error::syntax, ParserState(path, pos.line ? pos : before_token, Offset()), msg);
+    throw Sass_Error(Sass_Error::syntax, ParserState(path, pos.line ? pos : before_token, Offset(0, 0)), msg);
   }
 
 }

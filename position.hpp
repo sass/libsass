@@ -12,7 +12,6 @@ namespace Sass {
   class Offset {
 
     public: // c-tor
-      Offset();
       Offset(const size_t line, const size_t column);
 
       // return new position, incremented by the given string
@@ -35,9 +34,8 @@ namespace Sass {
   class Position : public Offset {
 
     public: // c-tor
-      Position();
-      Position(const size_t file);
-      Position(const size_t line, const size_t column);
+      Position(const size_t file); // line(0), column(0)
+      Position(const size_t line, const size_t column); // file(-1)
       Position(const size_t file, const size_t line, const size_t column);
 
     public: // overload operators for position
@@ -61,11 +59,6 @@ namespace Sass {
       ParserState(string path);
       ParserState(string path, const size_t file);
       ParserState(string path, Position position, Offset offset);
-
-    public: // getters
-      const char* getPath() const;
-    public: // setters
-      void setPath(const char* path);
 
     public:
       string path;

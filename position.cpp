@@ -4,12 +4,11 @@ namespace Sass {
 
   using namespace std;
 
-  Offset::Offset()
-  : line(0), column(0) { }
-
   Offset::Offset(const size_t line, const size_t column)
   : line(line), column(column) { }
 
+  // increase offset by given string (mostly called by lexer)
+  // increase line counter and count columns on the last line
   Offset Offset::inc(const char* begin, const char* end) const
   {
     Offset offset(line, column);
@@ -40,18 +39,6 @@ namespace Sass {
     return Offset(line + off.line, off.line > 0 ? off.column : off.column + column);
   }
 
-  ParserState::ParserState(string path)
-  : Position(-1, -1, -1), path(path) { }
-
-  ParserState::ParserState(string path, const size_t file)
-  : Position(file, 0, 0), path(path) { }
-
-  ParserState::ParserState(string path, Position position, Offset offset)
-  : Position(position), path(path), offset(offset) { }
-
-  Position::Position()
-  : Offset(-1, -1), file(-1) { }
-
   Position::Position(const size_t file)
   : Offset(0, 0), file(file) { }
 
@@ -61,16 +48,20 @@ namespace Sass {
   Position::Position(const size_t file, const size_t line, const size_t column)
   : Offset(line, column), file(file) { }
 
-  /*
-  Position::Position(const char* begin, const char* end)
-  : file(-1), line(0), column(0)
-  {
-  }
-  */
+
+  ParserState::ParserState(string path)
+  : Position(-1, 0, 0), path(path), offset(0, 0) { }
+
+  ParserState::ParserState(string path, const size_t file)
+  : Position(file, 0, 0), path(path), offset(0, 0) { }
+
+  ParserState::ParserState(string path, Position position, Offset offset)
+  : Position(position), path(path), offset(offset) { }
+
 
   Position Position::inc(const char* begin, const char* end) const
   {
-    Position pos(line, column);
+    Position pos(file, line, column);
     while (begin < end && *begin) {
       if (*begin == '\n') {
         ++ pos.line;

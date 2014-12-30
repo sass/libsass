@@ -240,7 +240,7 @@ namespace Sass {
   static bool parentSuperselector(Complex_Selector* pOne, Complex_Selector* pTwo, Context& ctx) {
     // TODO: figure out a better way to create a Complex_Selector from scratch
     // TODO: There's got to be a better way. This got ugly quick...
-    Position noPosition;
+    Position noPosition(-1, -1, -1);
     Type_Selector fakeParent(ParserState("[FAKE]"), "temp");
     Compound_Selector fakeHead(ParserState("[FAKE]"), 1 /*size*/);
     fakeHead.elements().push_back(&fakeParent);
@@ -602,7 +602,7 @@ namespace Sass {
   static bool parentSuperselector(const Node& one, const Node& two, Context& ctx) {
     // TODO: figure out a better way to create a Complex_Selector from scratch
     // TODO: There's got to be a better way. This got ugly quick...
-    Position noPosition;
+    Position noPosition(-1, -1, -1);
     Type_Selector fakeParent(ParserState("[FAKE]"), "temp");
     Compound_Selector fakeHead(ParserState("[FAKE]"), 1 /*size*/);
     fakeHead.elements().push_back(&fakeParent);
