@@ -104,6 +104,7 @@ namespace Sass {
 
     ctx->source_map.add_mapping(m);
     append_singleline_part_to_buffer("@media ");
+    ctx->source_map.add_end_mapping(m);
     q->perform(this);
     append_singleline_part_to_buffer("{");
 

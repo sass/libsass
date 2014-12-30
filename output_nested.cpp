@@ -229,7 +229,9 @@ namespace Sass {
 
     indent();
     ctx->source_map.add_mapping(m);
-    append_to_buffer("@media ");
+    append_to_buffer("@media");
+    ctx->source_map.add_end_mapping(m);
+    append_to_buffer(" ");
     q->perform(this);
     append_to_buffer(" {\n");
 
