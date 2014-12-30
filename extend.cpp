@@ -1909,7 +1909,6 @@ namespace Sass {
         Parser::from_c_str(
           (pNewSelectorList->perform(&to_string) + ";").c_str(),
           ctx,
-          pNewSelectorList->slct().path,
           pNewSelectorList->slct()
         ).parse_selector_group()
       );

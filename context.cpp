@@ -263,7 +263,7 @@ namespace Sass {
         0, 0
       );
       import_stack.push_back(import);
-      Parser p(Parser::from_c_str(queue[i].source, *this, queue[i].abs_path, Position(i, 0, 0)));
+      Parser p(Parser::from_c_str(queue[i].source, *this, Selection(queue[i].abs_path, i)));
       Block* ast = p.parse();
       sass_delete_import(import_stack.back());
       import_stack.pop_back();

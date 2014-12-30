@@ -37,7 +37,7 @@ namespace Sass {
 
   Definition* make_native_function(Signature sig, Native_Function f, Context& ctx)
   {
-    Parser sig_parser = Parser::from_c_str(sig, ctx, "[built-in function]");
+    Parser sig_parser = Parser::from_c_str(sig, ctx, Selection("[built-in function]"));
     sig_parser.lex<Prelexer::identifier>();
     string name(Util::normalize_underscores(sig_parser.lexed));
     Parameters* params = sig_parser.parse_parameters();
@@ -51,7 +51,7 @@ namespace Sass {
 
   Definition* make_c_function(Signature sig, Sass_C_Function f, void* cookie, Context& ctx)
   {
-    Parser sig_parser = Parser::from_c_str(sig, ctx, "[c function]");
+    Parser sig_parser = Parser::from_c_str(sig, ctx, Selection("[c function]"));
     // allow to overload generic callback plus @warn, @error and @debug with custom functions
     sig_parser.lex < alternatives < identifier, exactly <'*'>,
                                     exactly < Constants::warn_kwd >,

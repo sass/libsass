@@ -59,7 +59,8 @@ namespace Sass {
     string str = isp.get_buffer();
     str += ";";
 
-    Parser p(ctx, r->selector()->slct().path, Position(0, 0, 0));
+//    Parser p(ctx, Selection(r->selector()->slct().path, Position(0, 0, 0), Offset()));
+    Parser p(ctx, Selection("[REPARSE]", 0));
     p.source   = str.c_str();
     p.position = str.c_str();
     p.end      = str.c_str() + strlen(str.c_str());

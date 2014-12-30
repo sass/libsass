@@ -59,6 +59,7 @@ namespace Sass {
 
     public:
       Selection(string path);
+      Selection(string path, const size_t file);
       Selection(string path, Position position, Offset offset);
 
     public: // getters

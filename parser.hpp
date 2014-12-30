@@ -36,7 +36,7 @@ namespace Sass {
   using std::map;
   using namespace Prelexer;
 
-  class Parser {
+  class Parser : public Selection {
   private:
     void add_single_file (Import* imp, string import_path);
   public:
@@ -58,14 +58,14 @@ namespace Sass {
     Token lexed;
     bool dequote;
 
-    Parser(Context& ctx, string path, Position position)
-    : ctx(ctx), stack(vector<Syntactic_Context>()),
-      source(0), position(0), end(0), path(path),  before_token(position), after_token(position), slct("[NO]")
+    Parser(Context& ctx, Selection slct)
+    : Selection(slct), ctx(ctx), stack(vector<Syntactic_Context>()),
+      source(0), position(0), end(0), path(slct.path),  before_token(slct), after_token(slct), slct("[NO]")
     { dequote = false; stack.push_back(nothing); }
 
-    static Parser from_string(string src, Context& ctx, string path = "", Position before_token = Position());
-    static Parser from_c_str(const char* src, Context& ctx, string path = "", Position before_token = Position());
-    static Parser from_token(Token t, Context& ctx, string path = "", Position before_token = Position());
+    static Parser from_string(string src, Context& ctx, Selection slct = Selection("[STRING]"));
+    static Parser from_c_str(const char* src, Context& ctx, Selection slct = Selection("[CSTRING]"));
+    static Parser from_token(Token t, Context& ctx, Selection slct = Selection("[TOKEN]"));
 
 #ifdef __clang__
 

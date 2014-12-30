@@ -560,7 +560,13 @@ namespace Sass {
 
     // backtrace = here.parent;
     // env = old_env;
-    result->slct(c->slct());
+
+
+    // link back to function definition
+    // only do this for custom functions
+    if (result->slct().file == string::npos)
+      result->slct(c->slct());
+
     return result;
   }
 
