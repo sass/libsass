@@ -71,14 +71,12 @@ namespace Sass {
     for(size_t i = 0; i < sel_lst->length(); i++) {
 
       Complex_Selector* pIter = (*sel_lst)[i];
-      pIter->pstate(isp.source_map.remap(pIter->pstate()));
       while (pIter) {
         Compound_Selector* pHead = pIter->head();
-
-        ParserState state = isp.source_map.remap(pHead->pstate());
-        pHead->pstate(state);
+        pIter->pstate(isp.source_map.remap(pIter->pstate()));
 
         if (pHead) {
+          pHead->pstate(isp.source_map.remap(pHead->pstate()));
           // pHead->position(isp.source_map.remap(pHead->position()));
           // cerr << "got complex " << ((*pHead)[0])->pos() << " [" << pHead->perform(&to_string) << "] @ " << pHead->pos() << endl;
           ParserState state = isp.source_map.remap((*pHead)[0]->pstate());
@@ -434,7 +432,7 @@ namespace Sass {
     Parameters* params = def->parameters();
     Arguments* args = static_cast<Arguments*>(c->arguments()
                                                ->perform(eval->with(env, backtrace)));
-    Backtrace here(backtrace, c->pstate().path, c->pstate(), ", in mixin `" + c->name() + "`");
+    Backtrace here(backtrace, c->pstate(), ", in mixin `" + c->name() + "`");
     backtrace = &here;
     Env new_env;
     new_env.link(def->environment());

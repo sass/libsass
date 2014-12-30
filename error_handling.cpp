@@ -19,7 +19,7 @@ namespace Sass {
     if (!pstate.path.empty() && Prelexer::string_constant(pstate.path.c_str()))
       pstate.path = pstate.path.substr(1, pstate.path.size() - 1);
 
-    Backtrace top(bt, pstate.path, pstate, "");
+    Backtrace top(bt, pstate, "");
     msg += top.to_string();
 
     throw Sass_Error(Sass_Error::syntax, pstate, msg);

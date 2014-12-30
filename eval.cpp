@@ -224,7 +224,7 @@ namespace Sass {
     }
 
     string result(unquote(message->perform(&to_string)));
-    Backtrace top(backtrace, w->pstate().path, w->pstate(), "");
+    Backtrace top(backtrace, w->pstate(), "");
     cerr << "WARNING: " << result;
     cerr << top.to_string(true);
     cerr << endl << endl;
@@ -255,7 +255,7 @@ namespace Sass {
     }
 
     string result(unquote(message->perform(&to_string)));
-    Backtrace top(backtrace, e->pstate().path, e->pstate(), "");
+    Backtrace top(backtrace, e->pstate(), "");
     cerr << "Error: " << result;
     cerr << top.to_string(true);
     cerr << endl << endl;
@@ -468,7 +468,7 @@ namespace Sass {
       Env* old_env = env;
       env = &new_env;
 
-      Backtrace here(backtrace, c->pstate().path, c->pstate(), ", in function `" + c->name() + "`");
+      Backtrace here(backtrace, c->pstate(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
       result = body->perform(this);
@@ -485,7 +485,7 @@ namespace Sass {
       Env* old_env = env;
       env = &new_env;
 
-      Backtrace here(backtrace, c->pstate().path, c->pstate(), ", in function `" + c->name() + "`");
+      Backtrace here(backtrace, c->pstate(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
       result = func(*env, *old_env, ctx, def->signature(), c->pstate(), backtrace);
@@ -509,7 +509,7 @@ namespace Sass {
       Env* old_env = env;
       env = &new_env;
 
-      Backtrace here(backtrace, c->pstate().path, c->pstate(), ", in function `" + c->name() + "`");
+      Backtrace here(backtrace, c->pstate(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
       To_C to_c;
@@ -549,7 +549,7 @@ namespace Sass {
       Env* old_env = env;
       env = &newer_env;
 
-      Backtrace here(backtrace, c->pstate().path, c->pstate(), ", in function `" + c->name() + "`");
+      Backtrace here(backtrace, c->pstate(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
       result = resolved_def->native_function()(*env, *old_env, ctx, resolved_def->signature(), c->pstate(), backtrace);
