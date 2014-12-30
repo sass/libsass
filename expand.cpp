@@ -59,7 +59,6 @@ namespace Sass {
     string str = isp.get_buffer();
     str += ";";
 
-//    Parser p(ctx, ParserState(r->selector()->pstate().path, Position(0, 0, 0), Offset()));
     Parser p(ctx, ParserState("[REPARSE]", 0));
     p.source   = str.c_str();
     p.position = str.c_str();
@@ -67,18 +66,25 @@ namespace Sass {
     // cerr << "== reparse [" << str << "]" << endl;
     Selector_List* sel_lst = p.parse_selector_group();
     // cerr << "got " << sel_lst->length() << " selector(s)" << endl;
+    sel_lst->pstate(isp.source_map.remap(sel_lst->pstate()));
 
     for(size_t i = 0; i < sel_lst->length(); i++) {
 
       Complex_Selector* pIter = (*sel_lst)[i];
+      pIter->pstate(isp.source_map.remap(pIter->pstate()));
       while (pIter) {
         Compound_Selector* pHead = pIter->head();
 
+        ParserState state = isp.source_map.remap(pHead->pstate());
+        pHead->pstate(state);
+
         if (pHead) {
           // pHead->position(isp.source_map.remap(pHead->position()));
-          // cerr << "got complex " << ((*pHead)[0])->pstate() << " [" << pHead->perform(&to_string) << "] @ " << pHead->pstate() << endl;
-          (*pHead)[0]->pstate(isp.source_map.remap((*pHead)[0]->pstate()));
-          // cerr << "now complex " << ((*pHead)[0])->pstate() << " [" << pHead->perform(&to_string) << "] @ " << pHead->pstate() << endl;
+          // cerr << "got complex " << ((*pHead)[0])->pos() << " [" << pHead->perform(&to_string) << "] @ " << pHead->pos() << endl;
+          ParserState state = isp.source_map.remap((*pHead)[0]->pstate());
+          // state.file = 3;
+          (*pHead)[0]->pstate(state);
+          // cerr << "now complex " << ((*pHead)[0])->pos() << " [" << pHead->perform(&to_string) << "] @ " << pHead->pos() << endl;
           // pHead->position(Position(99, 99));
           // pHead->clearSources();
         }

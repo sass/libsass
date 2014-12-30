@@ -19,9 +19,14 @@ namespace Sass {
   inline void Output_Nested::fallback_impl(AST_Node* n)
   {
     Inspect i(ctx);
+    ParserState pstate = n->pstate();
+    ParserState rebase(pstate);
+    rebase.file = 9;
+    n->pstate(rebase);
     ctx->source_map.add_mapping(n);
     n->perform(&i);
     ctx->source_map.add_end_mapping(n);
+    n->pstate(pstate);
     const string& text = i.get_buffer();
     for(const char& chr : text) {
       // abort clause

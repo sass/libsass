@@ -26,6 +26,9 @@ namespace Sass {
       friend ostream& operator<<(ostream& strm, const Offset& off);
 
     public:
+      Offset off() { return *this; };
+
+    public:
       size_t line;
       size_t column;
 
@@ -59,6 +62,10 @@ namespace Sass {
       ParserState(string path);
       ParserState(string path, const size_t file);
       ParserState(string path, Position position, Offset offset);
+
+    public:
+      Offset off() { return *this; };
+      Position pos() { return *this; };
 
     public:
       string path;

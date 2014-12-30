@@ -89,6 +89,9 @@ namespace Sass {
     AST_Node(ParserState pstate) : pstate_(pstate) { }
     virtual ~AST_Node() = 0;
     // virtual Block* block() { return 0; }
+  public:
+    Offset off() { return pstate(); };
+    Position pos() { return pstate(); };
     ATTACH_OPERATIONS();
   };
   inline AST_Node::~AST_Node() { }

@@ -31,10 +31,10 @@ namespace Sass {
     string buffer;
     size_t indentation;
     Context* ctx;
-    void indent();
 
     void fallback_impl(AST_Node* n);
 
+    void append_indent_to_buffer();
     void append_to_buffer(const string& text);
 
   public:
