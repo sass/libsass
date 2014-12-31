@@ -66,14 +66,16 @@ TEST_CASE( "unquote handles string-initial escaped quote", "[unquote]" ) {
 }
 
 TEST_CASE( "unquote throws on string-initial unescaped quote", "[unquote][ill-formed][bug]" ) {
-  REQUIRE_THROWS( Sass::unquote("''Hello,\\' I said.'") );
-  REQUIRE_THROWS( Sass::unquote("\"\"Hello,\\\" I said.\"") );
+  REQUIRE( std::string("'Hello,' I said.") ==
+           Sass::unquote("''Hello,\\' I said.'") );
+  REQUIRE( std::string("\"Hello,\" I said.") ==
+           Sass::unquote("\"\"Hello,\\\" I said.\"") );
 }
 
 TEST_CASE( "unquote eats previous char on string-final unescaped quote", "[unquote][ill-formed][bug]" ) {
-  REQUIRE( std::string("I said, 'Hello'") ==
+  REQUIRE( std::string("I said, 'Hello.'") ==
            Sass::unquote("'I said, \\'Hello.''") );
-  REQUIRE( std::string("I said, \"Hello\"") ==
+  REQUIRE( std::string("I said, \"Hello.\"") ==
            Sass::unquote("\"I said, \\\"Hello.\"\"") );
 }
 
