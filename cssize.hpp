@@ -65,9 +65,8 @@ namespace Sass {
     Statement* fallback(U x) { return fallback_impl(x); }
 
     Statement* parent();
-    vector<pair<bool, Block*>> slice_by(Statement*);
+    vector<pair<bool, Block*>> slice_by_bubble(Statement*);
     Statement* bubble(Media_Block*);
-    // Statement* bubble(Media_Block*, Media_Block*);
     Statement* debubble(Block* children, Media_Block* parent = 0);
     Statement* flatten(Media_Block*);
     Statement* flatten(Block*);
@@ -77,7 +76,6 @@ namespace Sass {
     List* merge_media_queries(Media_Block*, Media_Block*);
     Media_Query* merge_media_query(Media_Query*, Media_Query*);
 
-    // Bubble* bubble(Media_Block*);
     void append_block(Block*);
   };
 

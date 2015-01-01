@@ -382,6 +382,9 @@ namespace Sass {
     Media_Block(string path, Position position, List* mqs, Block* b)
     : Has_Block(path, position, b), media_queries_(mqs), selector_(0)
     { statement_type(MEDIA); }
+    Media_Block(string path, Position position, List* mqs, Block* b, Selector* s)
+    : Has_Block(path, position, b), media_queries_(mqs), selector_(s)
+    { statement_type(MEDIA); }
     bool is_hoistable() { return true; }
     bool bubbles() { return true; }
     bool is_invisible() {
