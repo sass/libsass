@@ -65,24 +65,24 @@ TEST_CASE( "unquote handles string-initial escaped quote", "[unquote]" ) {
            Sass::unquote("\"\\\"Hello,\\\" I said.\"") );
 }
 
-TEST_CASE( "unquote throws on string-initial unescaped quote", "[unquote][ill-formed][bug]" ) {
+TEST_CASE( "unquote no longer throws on string-initial unescaped quote", "[unquote][ill-formed]" ) {
   REQUIRE( std::string("'Hello,' I said.") ==
            Sass::unquote("''Hello,\\' I said.'") );
   REQUIRE( std::string("\"Hello,\" I said.") ==
            Sass::unquote("\"\"Hello,\\\" I said.\"") );
 }
 
-TEST_CASE( "unquote eats previous char on string-final unescaped quote", "[unquote][ill-formed][bug]" ) {
+TEST_CASE( "unquote no longer eats previous char on string-final unescaped quote", "[unquote][ill-formed]" ) {
   REQUIRE( std::string("I said, 'Hello.'") ==
            Sass::unquote("'I said, \\'Hello.''") );
   REQUIRE( std::string("I said, \"Hello.\"") ==
            Sass::unquote("\"I said, \\\"Hello.\"\"") );
 }
 
-TEST_CASE( "unquote only honors backslash before quote char", "[unquote][bug]" ) {
-  REQUIRE( std::string("quoted ' ignored \\\\ end") ==
+TEST_CASE( "unquote always honors backslash", "[unquote]" ) {
+  REQUIRE( std::string("quoted ' ignored \\ end") ==
            Sass::unquote("'quoted \\' ignored \\\\ end'") );
-  REQUIRE( std::string("quoted \" ignored \\\\ end") ==
+  REQUIRE( std::string("quoted \" ignored \\ end") ==
            Sass::unquote("\"quoted \\\" ignored \\\\ end\"") );
 }
 
@@ -130,10 +130,42 @@ TEST_CASE( "only leading quote is checked", "[quote][ill-formed][edge-case]") {
   REQUIRE( std::string("'foo\\''") == Sass::quote("foo'", '\'') );
 }
 
-TEST_CASE( "backslash is not quoted", "[quote][edge-case]") {
-  REQUIRE( std::string("\"foo\\\\\"\"") == Sass::quote("foo\\\"", '"') );
-  REQUIRE( std::string("'foo\\\"'") == Sass::quote("foo\\\"", '\'') );
+TEST_CASE( "backslash is not quoted", "[quote][edge-case][bug]") {
+  REQUIRE( std::string("\"foo\\\\\\\"\"") == Sass::quote("foo\\\"", '"') );
+  REQUIRE( std::string("'foo\\\\\"'") == Sass::quote("foo\\\"", '\'') );
 
-  REQUIRE( std::string("\"foo\\'\"") == Sass::quote("foo\\'", '"') );
-  REQUIRE( std::string("'foo\\\\''") == Sass::quote("foo\\'", '\'') );
+  REQUIRE( std::string("\"foo\\\\'\"") == Sass::quote("foo\\'", '"') );
+  REQUIRE( std::string("'foo\\\\\\''") == Sass::quote("foo\\'", '\'') );
+}
+
+TEST_CASE( "unquote with final backslash does not throw", "[unquote][ill-formed]" ) {
+  REQUIRE( std::string("foo\'") == Sass::unquote("'foo\\'") );
+  REQUIRE( std::string("foo\"") == Sass::unquote("\"foo\\\"") );
+}
+
+TEST_CASE( "unquote quoted string is same string", "[quote][unquote]" ) {
+  const char * strings[] = {
+    "",
+    "a",
+    "abc",
+    "abc.def",
+    "foo;bar",
+    ".",
+    "123",
+    "10.34",
+    ".34",
+    "foo\\bar",
+    "foo\\",
+    NULL
+  };
+
+  int i = 0;
+  const char * s = NULL;
+  for (i = 0, s = strings[i]; s != NULL && i < 10; i += 1) {
+    std::string orig(s);
+
+    REQUIRE( orig == Sass::unquote(Sass::quote(s, '"')) );
+    REQUIRE( orig == Sass::unquote(Sass::quote(s, '\'')) );
+  }
+
 }
