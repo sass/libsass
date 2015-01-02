@@ -16,8 +16,11 @@ namespace Sass {
     string t;
     t.reserve(s.length()-2);
     for (size_t i = 1, L = s.length()-1; i < L; ++i) {
-      // if we see a quote, we need to remove the preceding backslash from t
-      if (s[i-1] == '\\' && s[i] == q) t.erase(t.length()-1);
+      // if we see a backslash, we remove it because it quotes
+      // the following character
+      if (s[i] == '\\') {
+        ++i;
+      }
       t.push_back(s[i]);
     }
     return t;
@@ -31,7 +34,7 @@ namespace Sass {
     t.reserve(s.length()+2);
     t.push_back(q);
     for (size_t i = 0, L = s.length(); i < L; ++i) {
-      if (s[i] == q) t.push_back('\\');
+      if (s[i] == q || s[i] == '\\') t.push_back('\\');
       t.push_back(s[i]);
     }
     t.push_back(q);
