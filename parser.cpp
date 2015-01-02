@@ -1204,7 +1204,13 @@ namespace Sass {
   }
 
   const char* Parser::next_unescaped_interpolant(const char* b, const char* e) {
-    return find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(b, e);
+    const char * p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(b, e);
+
+    if (p > b && p[-1] == '\\') {
+      return next_unescaped_interpolant(p+1, e);
+    }
+
+    return p;
   }
 
   const char* Parser::next_interpolant(const char* b, const char* e) {
