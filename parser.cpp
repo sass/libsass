@@ -397,14 +397,13 @@ namespace Sass {
     String_Schema* schema = new (ctx.mem) String_Schema(path, source_position);
 
     while (i < end_of_selector) {
-      p = find_first_in_interval< exactly<hash_lbrace> >(i, end_of_selector);
+      p = next_interpolant(i, end_of_selector);
       if (p) {
         // accumulate the preceding segment if there is one
         if (i < p) (*schema) << new (ctx.mem) String_Constant(path, source_position, Token(i, p));
         // find the end of the interpolant and parse it
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, end_of_selector);
-        Expression* interp_node = Parser::from_token(Token(p+2, j), ctx, path, source_position).parse_list();
-        interp_node->is_interpolant(true);
+        const char* j = end_interpolant(p, end_of_selector);
+        Expression* interp_node = parse_interpolant(Token(p+2, j));
         (*schema) << interp_node;
         i = j + 1;
       }
@@ -1204,13 +1203,36 @@ namespace Sass {
     return 0;
   }
 
+  const char* Parser::next_unescaped_interpolant(const char* b, const char* e) {
+    return find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(b, e);
+  }
+
+  const char* Parser::next_interpolant(const char* b, const char* e) {
+    return find_first_in_interval< exactly<hash_lbrace> >(b, e);
+  }
+
+  const char* Parser::end_interpolant(const char* b, const char * e) {
+    return find_first_in_interval< exactly<rbrace> >(b, e); // find the closing brace
+  }
+
+  String_Constant* Parser::make_string_constant(Token chunk, bool unq = false) {
+    return new (ctx.mem) String_Constant(path, source_position, chunk, unq);
+  }
+
+  Expression* Parser::parse_interpolant(Token chunk) {
+    Expression * interp_node = Parser::from_token(chunk, ctx, path, source_position).parse_list();
+    interp_node->is_interpolant(true);
+    return interp_node;
+  }
+
   String* Parser::parse_interpolated_chunk(Token chunk)
   {
     const char* i = chunk.begin;
-    // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(chunk.begin, chunk.end);
+
+    const char* p = next_unescaped_interpolant(chunk.begin, chunk.end);
     if (!p) {
-      String_Constant* str_node = new (ctx.mem) String_Constant(path, source_position, chunk, dequote);
+      // if no interpolants
+      String_Constant* str_node = make_string_constant(chunk, dequote);
       str_node->is_delayed(true);
       return str_node;
     }
@@ -1218,17 +1240,18 @@ namespace Sass {
     String_Schema* schema = new (ctx.mem) String_Schema(path, source_position);
     schema->quote_mark(*chunk.begin);
     while (i < chunk.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
+      p = next_unescaped_interpolant(i, chunk.end);
       if (p) {
         if (i < p) {
-          (*schema) << new (ctx.mem) String_Constant(path, source_position, Token(i, p)); // accumulate the preceding segment if it's nonempty
+          // accumulate the preceding segment if it's nonempty
+          (*schema) << make_string_constant(Token(i, p));
         }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, chunk.end); // find the closing brace
+
+        const char* j = end_interpolant(p, chunk.end);
+
         if (j) {
           // parse the interpolant and accumulate it
-          Expression* interp_node = Parser::from_token(Token(p+2, j), ctx, path, source_position).parse_list();
-          interp_node->is_interpolant(true);
-          (*schema) << interp_node;
+          (*schema) << parse_interpolant(Token(p+2, j));
           i = j+1;
         }
         else {
@@ -1236,8 +1259,12 @@ namespace Sass {
           error("unterminated interpolant inside string constant " + chunk.to_string());
         }
       }
-      else { // no interpolants left; add the last segment if nonempty
-        if (i < chunk.end) (*schema) << new (ctx.mem) String_Constant(path, source_position, Token(i, chunk.end));
+      else { 
+        // no interpolants left
+        if (i < chunk.end) {
+          // add the last segment if nonempty
+          (*schema) << make_string_constant(Token(i, chunk.end));
+        }
         break;
       }
     }
@@ -1304,7 +1331,7 @@ namespace Sass {
     Token str(lexed);
     const char* i = str.begin;
     // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(str.begin, str.end);
+    const char* p = next_unescaped_interpolant(str.begin, str.end);
     if (!p) {
       String_Constant* str_node = new (ctx.mem) String_Constant(path, source_position, str);
       str_node->is_delayed(true);
@@ -1313,16 +1340,15 @@ namespace Sass {
 
     String_Schema* schema = new (ctx.mem) String_Schema(path, source_position);
     while (i < str.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, str.end);
+      p = next_unescaped_interpolant(i, str.end);
       if (p) {
         if (i < p) {
           (*schema) << new (ctx.mem) String_Constant(path, source_position, Token(i, p)); // accumulate the preceding segment if it's nonempty
         }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, str.end); // find the closing brace
+        const char* j = end_interpolant(p, str.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
-          Expression* interp_node = Parser::from_token(Token(p+2, j), ctx, path, source_position).parse_list();
-          interp_node->is_interpolant(true);
+          Expression* interp_node = parse_interpolant(Token(p+2, j));
           (*schema) << interp_node;
           i = j+1;
         }
@@ -1364,9 +1390,8 @@ namespace Sass {
     size_t num_items = 0;
     while (position < end) {
       if (lex< interpolant >()) {
-        Token insides(Token(lexed.begin + 2, lexed.end - 1));
-        Expression* interp_node = Parser::from_token(insides, ctx, path, source_position).parse_list();
-        interp_node->is_interpolant(true);
+        Token insides(lexed.begin + 2, lexed.end - 1);
+        Expression* interp_node = parse_interpolant(insides);
         (*schema) << interp_node;
       }
       else if (lex< exactly<'%'> >()) {
@@ -1413,9 +1438,8 @@ namespace Sass {
         ++position;
       }
       else if (lex< interpolant >()) {
-        Token insides(Token(lexed.begin + 2, lexed.end - 1));
-        Expression* interp_node = Parser::from_token(insides, ctx, path, source_position).parse_list();
-        interp_node->is_interpolant(true);
+        Token insides(lexed.begin + 2, lexed.end - 1);
+        Expression* interp_node = parse_interpolant(insides);
         (*schema) << interp_node;
       }
       else if (lex< sequence< identifier, exactly<':'> > >()) {
@@ -1437,23 +1461,22 @@ namespace Sass {
     Token id(lexed);
     const char* i = id.begin;
     // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(id.begin, id.end);
+    const char* p = next_unescaped_interpolant(id.begin, id.end);
     if (!p) {
       return new (ctx.mem) String_Constant(path, source_position, id);
     }
 
     String_Schema* schema = new (ctx.mem) String_Schema(path, source_position);
     while (i < id.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, id.end);
+      p = next_unescaped_interpolant(i, id.end);
       if (p) {
         if (i < p) {
           (*schema) << new (ctx.mem) String_Constant(path, source_position, Token(i, p)); // accumulate the preceding segment if it's nonempty
         }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, id.end); // find the closing brace
+        const char* j = end_interpolant(p, id.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
-          Expression* interp_node = Parser::from_token(Token(p+2, j), ctx, path, source_position).parse_list();
-          interp_node->is_interpolant(true);
+          Expression* interp_node = parse_interpolant(Token(p+2, j));
           (*schema) << interp_node;
           schema->has_interpolants(true);
           i = j+1;
