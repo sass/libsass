@@ -173,6 +173,7 @@ namespace Sass {
     virtual ~Vectorized() = 0;
     size_t length() const   { return elements_.size(); }
     bool empty() const      { return elements_.empty(); }
+    T last()                { return elements_.back(); }
     T& operator[](size_t i) { return elements_[i]; }
     const T& operator[](size_t i) const { return elements_[i]; }
     Vectorized& operator<<(T element)
@@ -185,6 +186,11 @@ namespace Sass {
     Vectorized& operator+=(Vectorized* v)
     {
       for (size_t i = 0, L = v->length(); i < L; ++i) *this << (*v)[i];
+      return *this;
+    }
+    Vectorized& unshift(T element)
+    {
+      elements_.insert(elements_.begin(), element);
       return *this;
     }
     vector<T>& elements() { return elements_; }
@@ -258,10 +264,30 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   class Statement : public AST_Node {
   public:
-    Statement(string path, Position position) : AST_Node(path, position) { }
+    enum Statement_Type {
+      NONE,
+      RULESET,
+      MEDIA,
+      DIRECTIVE,
+      KEYFRAME,
+      FEATURE,
+      BUBBLE
+    };
+  private:
+    ADD_PROPERTY(Block*, block);
+    ADD_PROPERTY(Statement_Type, statement_type);
+    ADD_PROPERTY(size_t, tabs);
+    ADD_PROPERTY(bool, group_end);
+  public:
+    Statement(string path, Position position, Statement_Type st = NONE, size_t t = 0)
+    : AST_Node(path, position),
+      statement_type_(st), tabs_(t), group_end_(false)
+     { }
     virtual ~Statement() = 0;
     // needed for rearranging nested rulesets during CSS emission
     virtual bool   is_hoistable() { return false; }
+    virtual bool   bubbles() { return false; }
+    virtual bool   is_invisible() { return false; }
     virtual Block* block()  { return 0; }
   };
   inline Statement::~Statement() { }
@@ -313,7 +339,8 @@ namespace Sass {
   public:
     Ruleset(string path, Position position, Selector* s, Block* b)
     : Has_Block(path, position, b), selector_(s)
-    { }
+    { statement_type(RULESET); }
+    bool is_invisible();
     // nested rulesets need to be hoisted out of their enclosing blocks
     bool is_hoistable() { return true; }
     ATTACH_OPERATIONS();
@@ -333,6 +360,20 @@ namespace Sass {
   };
 
   /////////////////
+  // Bubble.
+  /////////////////
+  class Bubble : public Statement {
+    ADD_PROPERTY(Statement*, node);
+    ADD_PROPERTY(Statement*, group_end);
+  public:
+    Bubble(string path, Position position, Statement* n, Statement* g = 0, size_t t = 0)
+    : Statement(path, position, Statement::BUBBLE, t), node_(n), group_end_(g)
+    { }
+    bool bubbles() { return true; }
+    ATTACH_OPERATIONS();
+  };
+
+  /////////////////
   // Media queries.
   /////////////////
   class List;
@@ -342,8 +383,18 @@ namespace Sass {
   public:
     Media_Block(string path, Position position, List* mqs, Block* b)
     : Has_Block(path, position, b), media_queries_(mqs), selector_(0)
-    { }
+    { statement_type(MEDIA); }
+    Media_Block(string path, Position position, List* mqs, Block* b, Selector* s)
+    : Has_Block(path, position, b), media_queries_(mqs), selector_(s)
+    { statement_type(MEDIA); }
     bool is_hoistable() { return true; }
+    bool bubbles() { return true; }
+    bool is_invisible() {
+      bool is_invisible = true;
+      for (size_t i = 0, L = block()->length(); i < L && is_invisible; i++)
+        is_invisible &= (*block())[i]->is_invisible();
+      return is_invisible;
+    }
     ATTACH_OPERATIONS();
   };
 
@@ -1920,6 +1971,14 @@ namespace Sass {
     // vector<Complex_Selector*> members() { return elements_; }
     ATTACH_OPERATIONS();
   };
+
+  inline bool Ruleset::is_invisible() {
+    bool is_invisible = true;
+    Selector_List* sl = static_cast<Selector_List*>(selector());
+    for (size_t i = 0, L = sl->length(); i < L && is_invisible; ++i)
+      is_invisible &= (*sl)[i]->has_placeholder();
+    return is_invisible;
+  }
 
 
   template<typename SelectorType>

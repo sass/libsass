@@ -213,6 +213,8 @@ namespace Sass {
 
   void Output_Nested::operator()(Media_Block* m)
   {
+    if (m->is_invisible()) return;
+
     List*  q     = m->media_queries();
     Block* b     = m->block();
 
@@ -227,6 +229,7 @@ namespace Sass {
       return;
     }
 
+    indentation += m->tabs();
     indent();
     ctx->source_map.add_mapping(m);
     append_to_buffer("@media ");
@@ -284,7 +287,8 @@ namespace Sass {
 
     buffer.erase(buffer.length()-1);
     if (ctx) ctx->source_map.remove_line();
-    append_to_buffer(" }" + ctx->linefeed);
+    append_to_buffer(" }");
+    if (m->group_end()) append_to_buffer(ctx->linefeed);
   }
 
   void Output_Nested::operator()(At_Rule* a)
