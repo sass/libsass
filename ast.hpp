@@ -43,6 +43,8 @@
 #include "environment.hpp"
 #endif
 
+#include "quote.hpp"
+
 #include "sass.h"
 #include "sass_values.h"
 #include "sass_functions.h"

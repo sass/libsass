@@ -258,6 +258,13 @@ namespace Sass {
 
     void throw_syntax_error(string message, size_t ln = 0);
     void throw_read_error(string message, size_t ln = 0);
+
+    static const char* next_unescaped_interpolant(const char* b, const char* e);
+    static const char* next_interpolant(const char* b, const char* e);    
+    static const char* end_interpolant(const char* b, const char* e);
+
+    String_Constant * make_string_constant(Token chunk, bool unq);
+    Expression* parse_interpolant(Token);
   };
 
   size_t check_bom_chars(const char* src, const char *end, const unsigned char* bom, size_t len);

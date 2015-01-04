@@ -1,0 +1,23 @@
+{
+  "name": "libsass",
+  "version": "3.1.0-beta19",
+  "description": "Libsass",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "make test",
+    "qt": "ruby sass-spec/sass-spec.rb -c sassc/bin/sassc -s sass-spec/spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sass/libsass.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sass/libsass/issues"
+  },
+  "homepage": "https://github.com/sass/libsass",
+  "devDependencies": {
+    "catch": "^1.0.48"
+  }
+}

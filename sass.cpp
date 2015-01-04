@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include "sass.h"
-#include "inspect.hpp"
+#include "quote.hpp"
 
 extern "C" {
   using namespace std;
