@@ -138,18 +138,9 @@ namespace Sass {
     return s->statement_type() == Statement::RULESET || s->bubbles();
   }
 
-  inline Statement* Cssize::flatten(Media_Block* b)
-  {
-    return flatten(b->block());
-  }
-
   inline Statement* Cssize::flatten(Statement* s)
   {
-    return flatten(s->block());
-  }
-
-  inline Statement* Cssize::flatten(Block* bb)
-  {
+    Block* bb = s->block();
     Block* result = new (ctx.mem) Block(bb->path(), bb->position(), 0, bb->is_root());
     for (size_t i = 0, L = bb->length(); i < L; ++i) {
       Statement* ss = (*bb)[i];
@@ -188,9 +179,9 @@ namespace Sass {
     return results;
   }
 
-  inline Statement* Cssize::debubble(Block* children, Media_Block* parent)
+  inline Statement* Cssize::debubble(Block* children, Statement* parent)
   {
-    Media_Block* previous_parent = 0;
+    Statement* previous_parent = 0;
     vector<pair<bool, Block*>> baz = slice_by_bubble(children);
     Block* result = new (ctx.mem) Block(children->path(), children->position());
 
@@ -206,18 +197,11 @@ namespace Sass {
           *previous_parent->block() += slice;
         }
         else {
-          previous_parent = new (ctx.mem) Media_Block(parent->path(),
-                                                      parent->position(),
-                                                      parent->media_queries(),
-                                                      parent->block(),
-                                                      parent->selector());
+          Has_Block* previous_parent = static_cast<Has_Block*>(parent);
           previous_parent->tabs(parent->tabs());
 
-          Media_Block* new_parent = new (ctx.mem) Media_Block(parent->path(),
-                                                              parent->position(),
-                                                              parent->media_queries(),
-                                                              slice,
-                                                              parent->selector());
+          Has_Block* new_parent = static_cast<Has_Block*>(parent);
+          new_parent->block(slice);
           new_parent->tabs(parent->tabs());
 
           *result << new_parent;
@@ -236,14 +220,15 @@ namespace Sass {
         Bubble* b = static_cast<Bubble*>((*slice)[j]);
 
         if (!parent ||
+            parent->statement_type() != Statement::MEDIA ||
             b->node()->statement_type() != Statement::MEDIA ||
-            static_cast<Media_Block*>(b->node())->media_queries() == parent->media_queries())
+            static_cast<Media_Block*>(b->node())->media_queries() == static_cast<Media_Block*>(parent)->media_queries())
         {
           ss = b->node();
         }
         else
         {
-          List* mq = merge_media_queries(static_cast<Media_Block*>(b->node()), parent);
+          List* mq = merge_media_queries(static_cast<Media_Block*>(b->node()), static_cast<Media_Block*>(parent));
           static_cast<Media_Block*>(b->node())->media_queries(mq);
           ss = b->node();
         }
