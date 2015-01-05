@@ -44,6 +44,7 @@ libsass/*
 *.a
 a.out
 libsass.js
+TAGS
 
 bin/*
 .deps/
