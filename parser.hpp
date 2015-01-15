@@ -65,6 +65,9 @@ namespace Sass {
 
 #endif
 
+
+    bool peek_newline(const char* start = 0);
+
     template <prelexer mx>
     const char* peek(const char* start = 0)
     {

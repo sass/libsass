@@ -9,42 +9,34 @@
 namespace Sass {
   using namespace std;
 
-  Inspect::Inspect(Context* ctx)
-  : buffer(""),
-    indentation(0),
-    ctx(ctx),
+  Inspect::Inspect(Emitter emi)
+  : Emitter(emi),
     in_declaration(false),
     in_declaration_list(false)
-  { }
+  {
+    // if (emi.buffer) buffer = emi.buffer;
+    // if (emi) Emitter(*emi);
+  }
   Inspect::~Inspect() { }
 
   // statements
   void Inspect::operator()(Block* block)
   {
+    // cerr << "INSPECT Block\n";
     if (!block->is_root()) {
-      append_to_buffer(" {" + ctx->linefeed);
-      ++ indentation;
+      append_open_bracket();
     }
+    indentation += block->tabs();
     for (size_t i = 0, L = block->length(); i < L; ++i) {
-      append_indent_to_buffer();
+      // append_indent_to_buffer();
       (*block)[i]->perform(this);
       // extra newline at the end of top-level statements
-      if (block->is_root()) append_to_buffer(ctx->linefeed);
-      append_to_buffer(ctx->linefeed);
+//      if (block->is_root()) append_optional_linefeed();
+//      append_optional_linefeed();
     }
+    indentation -= block->tabs();
     if (!block->is_root()) {
-      -- indentation;
-      append_indent_to_buffer();
-      append_to_buffer("}");
-    }
-    // remove extra newline that gets added after the last top-level block
-    if (block->is_root()) {
-      size_t l = buffer.length();
-      if (l > 2 && buffer[l-1] == '\n' && buffer[l-2] == '\n') {
-        buffer.erase(l-1);
-        if (ctx) ctx->source_map.remove_line();
-        source_map.remove_line();
-      }
+      append_close_bracket();
     }
   }
 
@@ -57,7 +49,7 @@ namespace Sass {
   void Inspect::operator()(Propset* propset)
   {
     propset->property_fragment()->perform(this);
-    append_to_buffer(": ");
+    append_colon_separator();
     propset->block()->perform(this);
   }
 
@@ -100,7 +92,7 @@ namespace Sass {
       at_rule->block()->perform(this);
     }
     else {
-      append_to_buffer(";");
+      append_delimiter();
     }
   }
 
@@ -108,29 +100,34 @@ namespace Sass {
   {
     if (dec->value()->concrete_type() == Expression::NULL_VAL) return;
     in_declaration = true;
-    if (ctx) ctx->source_map.add_open_mapping(dec->property());
+    indentation += dec->tabs();
+    append_indent_to_buffer();
     source_map.add_open_mapping(dec->property());
     dec->property()->perform(this);
-    if (ctx) ctx->source_map.add_close_mapping(dec->property());
     source_map.add_close_mapping(dec->property());
-    append_to_buffer(": ");
-    if (ctx) ctx->source_map.add_open_mapping(dec->value());
+    append_colon_separator();
     source_map.add_open_mapping(dec->value());
     dec->value()->perform(this);
-    if (dec->is_important()) append_to_buffer(" !important");
-    if (ctx) ctx->source_map.add_close_mapping(dec->value());
+    if (dec->is_important()) {
+      append_optional_space();
+      append_to_buffer("!important");
+    }
     source_map.add_close_mapping(dec->value());
-    append_to_buffer(";");
+    append_delimiter();
+    indentation -= dec->tabs();
     in_declaration = false;
   }
 
   void Inspect::operator()(Assignment* assn)
   {
     append_to_buffer(assn->variable());
-    append_to_buffer(": ");
+    append_colon_separator();
     assn->value()->perform(this);
-    if (assn->is_guarded()) append_to_buffer(" !default");
-    append_to_buffer(";");
+    if (assn->is_guarded()) {
+      append_optional_space();
+      append_to_buffer("!default");
+    }
+    append_delimiter();
   }
 
   void Inspect::operator()(Import* import)
@@ -138,12 +135,12 @@ namespace Sass {
     if (!import->urls().empty()) {
       append_to_buffer("@import", import, " ");
       import->urls().front()->perform(this);
-      append_to_buffer(";");
+      append_delimiter();
       for (size_t i = 1, S = import->urls().size(); i < S; ++i) {
-        append_to_buffer(ctx->linefeed);
+        append_optional_linefeed();
         append_to_buffer("@import", import, " ");
         import->urls()[i]->perform(this);
-        append_to_buffer(";");
+        append_delimiter();
       }
     }
   }
@@ -152,28 +149,28 @@ namespace Sass {
   {
     append_to_buffer("@import", import, " ");
     append_to_buffer(import->file_name());
-    append_to_buffer(";");
+    append_delimiter();
   }
 
   void Inspect::operator()(Warning* warning)
   {
     append_to_buffer("@warn", warning, " ");
     warning->message()->perform(this);
-    append_to_buffer(";");
+    append_delimiter();
   }
 
   void Inspect::operator()(Error* error)
   {
     append_to_buffer("@error", error, " ");
     error->message()->perform(this);
-    append_to_buffer(";");
+    append_delimiter();
   }
 
   void Inspect::operator()(Debug* debug)
   {
     append_to_buffer("@debug", debug, " ");
     debug->value()->perform(this);
-    append_to_buffer(";");
+    append_delimiter();
   }
 
   void Inspect::operator()(Comment* comment)
@@ -187,8 +184,8 @@ namespace Sass {
     cond->predicate()->perform(this);
     cond->consequent()->perform(this);
     if (cond->alternative()) {
-      append_to_buffer(ctx->linefeed);
-      append_indent_to_buffer();
+      append_optional_linefeed();
+      // append_indent_to_buffer();
       append_to_buffer("else");
       cond->alternative()->perform(this);
     }
@@ -210,7 +207,8 @@ namespace Sass {
     append_to_buffer("@each", loop, " ");
     append_to_buffer(loop->variables()[0]);
     for (size_t i = 1, L = loop->variables().size(); i < L; ++i) {
-      append_to_buffer(", ");
+      append_to_buffer(",");
+      append_optional_space();
       append_to_buffer(loop->variables()[i]);
     }
     append_to_buffer(" in ");
@@ -229,14 +227,14 @@ namespace Sass {
   {
     append_to_buffer("@return", ret, " ");
     ret->value()->perform(this);
-    append_to_buffer(";");
+    append_delimiter();
   }
 
   void Inspect::operator()(Extension* extend)
   {
     append_to_buffer("@extend", extend, " ");
     extend->selector()->perform(this);
-    append_to_buffer(";");
+    append_delimiter();
   }
 
   void Inspect::operator()(Definition* def)
@@ -259,10 +257,10 @@ namespace Sass {
       call->arguments()->perform(this);
     }
     if (call->block()) {
-      append_to_buffer(" ");
+      append_optional_space();
       call->block()->perform(this);
     }
-    if (!call->block()) append_to_buffer(";");
+    if (!call->block()) append_delimiter();
   }
 
   void Inspect::operator()(Content* content)
@@ -279,9 +277,9 @@ namespace Sass {
     for (auto key : map->keys()) {
       if (key->is_invisible()) continue;
       if (map->at(key)->is_invisible()) continue;
-      if (items_output) append_to_buffer(", ");
+      if (items_output) append_comma_separator();
       key->perform(this);
-      append_to_buffer(": ");
+      append_colon_separator();
       map->at(key)->perform(this);
       items_output = true;
     }
@@ -290,7 +288,7 @@ namespace Sass {
 
   void Inspect::operator()(List* list)
   {
-    string sep(list->separator() == List::SPACE ? " " : ", ");
+    string sep(list->separator() == List::SPACE ? " " : ",");
     if (list->empty()) return;
     bool items_output = false;
     in_declaration_list = in_declaration;
@@ -300,6 +298,9 @@ namespace Sass {
         continue;
       }
       if (items_output) append_to_buffer(sep);
+      if (items_output && sep != " ") append_optional_space();
+      // if (items_output && sep != " ") append_optional_linefeed();
+      // if (items_output && sep != " ") append_indent_to_buffer();
       list_item->perform(this);
       items_output = true;
     }
@@ -421,35 +422,76 @@ namespace Sass {
     else                return c;
   }
 
+  inline bool is_doublet(double n) {
+    return n == 0x00 || n == 0x11 || n == 0x22 || n == 0x33 ||
+           n == 0x44 || n == 0x55 || n == 0x66 || n == 0x77 ||
+           n == 0x88 || n == 0x99 || n == 0xAA || n == 0xBB ||
+           n == 0xCC || n == 0xDD || n == 0xEE || n == 0xFF ;
+  }
+
+  inline bool is_color_doublet(double r, double g, double b) {
+    return is_doublet(r) && is_doublet(g) && is_doublet(b);
+  }
+
   void Inspect::operator()(Color* c)
   {
     stringstream ss;
+
+    // original color name
+    // maybe an unknown token
+    string name = c->disp();
+
+    // resolved color
+    string res_name = name;
+
     double r = round(cap_channel<0xff>(c->r()));
     double g = round(cap_channel<0xff>(c->g()));
     double b = round(cap_channel<0xff>(c->b()));
     double a = cap_channel<1>   (c->a());
 
+    if (name != "" && ctx && ctx->names_to_colors.count(name)) {
+      Color* n = ctx->names_to_colors[name];
+      r = round(cap_channel<0xff>(n->r()));
+      g = round(cap_channel<0xff>(n->g()));
+      b = round(cap_channel<0xff>(n->b()));
+      a = cap_channel<1>   (n->a());
+      if (output_style != NESTED) name = "";
+    } else {
+
+    int numval = r * 0x10000 + g * 0x100 + b;
+    if (ctx && ctx->colors_to_names.count(numval))
+      res_name = ctx->colors_to_names[numval];
+}
+
+    stringstream hexlet;
+    hexlet << '#' << setw(1) << setfill('0');
+    // create a short color hexlet if not in nested output mode
+    if (output_style != NESTED && is_color_doublet(r, g, b) && a == 1) {
+      hexlet << hex << setw(1) << (static_cast<unsigned long>(r) >> 4);
+      hexlet << hex << setw(1) << (static_cast<unsigned long>(g) >> 4);
+      hexlet << hex << setw(1) << (static_cast<unsigned long>(b) >> 4);
+    } else {
+      hexlet << hex << setw(2) << static_cast<unsigned long>(r);
+      hexlet << hex << setw(2) << static_cast<unsigned long>(g);
+      hexlet << hex << setw(2) << static_cast<unsigned long>(b);
+    }
+
     // retain the originally specified color definition if unchanged
-    if (!c->disp().empty()) {
-      ss << c->disp();
+    if (name != "") {
+        ss << name;
     }
     else if (r == 0 && g == 0 && b == 0 && a == 0) {
         ss << "transparent";
     }
     else if (a >= 1) {
-      // see if it's a named color
-      int numval = r * 0x10000;
-      numval += g * 0x100;
-      numval += b;
-      if (ctx && ctx->colors_to_names.count(numval)) {
-        ss << ctx->colors_to_names[numval];
+      if (output_style != NESTED)
+        if (hexlet.str().size() < res_name.size())
+          res_name = "";
+      if (res_name != "") {
+        ss << res_name;
       }
       else {
-        // otherwise output the hex triplet
-        ss << '#' << setw(2) << setfill('0');
-        ss << hex << setw(2) << static_cast<unsigned long>(r);
-        ss << hex << setw(2) << static_cast<unsigned long>(g);
-        ss << hex << setw(2) << static_cast<unsigned long>(b);
+        ss << hexlet.str();
       }
     }
     else {
@@ -474,7 +516,7 @@ namespace Sass {
     for (size_t i = 0, L = ss->length(); i < L; ++i) {
       if ((*ss)[i]->is_interpolant()) append_to_buffer("#{");
       (*ss)[i]->perform(this);
-      if ((*ss)[i]->is_interpolant()) append_to_buffer("}");
+      if ((*ss)[i]->is_interpolant()) append_scope_closer();
     }
   }
 
@@ -498,14 +540,15 @@ namespace Sass {
       append_to_buffer(" and ");
     else if (fqc->operand() == Feature_Query_Condition::OR)
       append_to_buffer(" or ");
-    else if (fqc->operand() == Feature_Query_Condition::NOT)
+    else if (fqc->operand() == Feature_Query_Condition::NOT) {
       append_to_buffer(" not ");
+    }
 
     if (!fqc->is_root()) append_to_buffer("(");
 
     if (!fqc->length()) {
       fqc->feature()->perform(this);
-      append_to_buffer(": ");
+      append_colon_separator();
       fqc->value()->perform(this);
     }
     // else
@@ -535,25 +578,20 @@ namespace Sass {
   void Inspect::operator()(Media_Query_Expression* mqe)
   {
     if (mqe->is_interpolated()) {
-      if (ctx) ctx->source_map.add_open_mapping(mqe->feature());
       source_map.add_open_mapping(mqe->feature());
       mqe->feature()->perform(this);
-      if (ctx) ctx->source_map.add_close_mapping(mqe->feature());
       source_map.add_close_mapping(mqe->feature());
     }
     else {
       append_to_buffer("(");
-      if (ctx) ctx->source_map.add_open_mapping(mqe->feature());
       source_map.add_open_mapping(mqe->feature());
       mqe->feature()->perform(this);
-      if (ctx) ctx->source_map.add_close_mapping(mqe->feature());
       source_map.add_close_mapping(mqe->feature());
       if (mqe->value()) {
         append_to_buffer(": ");
-        if (ctx) ctx->source_map.add_open_mapping(mqe->value());
+        // append_optional_space();
         source_map.add_open_mapping(mqe->value());
         mqe->value()->perform(this);
-        if (ctx) ctx->source_map.add_close_mapping(mqe->value());
         source_map.add_close_mapping(mqe->value());
       }
       append_to_buffer(")");
@@ -569,7 +607,7 @@ namespace Sass {
       append_to_buffer("(");
       ae->feature()->perform(this);
       if (ae->value()) {
-        append_to_buffer(": ");
+        append_colon_separator();
         ae->value()->perform(this);
       }
       append_to_buffer(")");
@@ -586,7 +624,7 @@ namespace Sass {
   {
     append_to_buffer(p->name());
     if (p->default_value()) {
-      append_to_buffer(": ");
+      append_colon_separator();
       p->default_value()->perform(this);
     }
     else if (p->is_rest_parameter()) {
@@ -600,7 +638,8 @@ namespace Sass {
     if (!p->empty()) {
       (*p)[0]->perform(this);
       for (size_t i = 1, L = p->length(); i < L; ++i) {
-        append_to_buffer(", ");
+        append_to_buffer(",");
+        append_optional_space();
         (*p)[i]->perform(this);
       }
     }
@@ -611,7 +650,7 @@ namespace Sass {
   {
     if (!a->name().empty()) {
       append_to_buffer(a->name());
-      append_to_buffer(": ");
+      append_colon_separator();
     }
     // Special case: argument nulls can be ignored
     if (a->value()->concrete_type() == Expression::NULL_VAL) {
@@ -633,7 +672,8 @@ namespace Sass {
     if (!a->empty()) {
       (*a)[0]->perform(this);
       for (size_t i = 1, L = a->length(); i < L; ++i) {
-        append_to_buffer(", ");
+        append_to_buffer(",");
+        append_optional_space();
         (*a)[i]->perform(this);
       }
     }
@@ -659,7 +699,9 @@ namespace Sass {
 
   void Inspect::operator()(Type_Selector* s)
   {
+    // else append_optional_space();
     append_to_buffer(s->name(), s);
+    if (s->has_line_break()) append_optional_linefeed();
   }
 
   void Inspect::operator()(Selector_Qualifier* s)
@@ -670,7 +712,6 @@ namespace Sass {
   void Inspect::operator()(Attribute_Selector* s)
   {
     append_to_buffer("[");
-    if (ctx) ctx->source_map.add_open_mapping(s);
     source_map.add_open_mapping(s);
     append_to_buffer(s->name());
     if (!s->matcher().empty()) {
@@ -680,7 +721,6 @@ namespace Sass {
       }
       // append_to_buffer(s->value());
     }
-    if (ctx) ctx->source_map.add_close_mapping(s);
     source_map.add_close_mapping(s);
     append_to_buffer("]");
   }
@@ -703,6 +743,7 @@ namespace Sass {
 
   void Inspect::operator()(Compound_Selector* s)
   {
+    // append_to_buffer(s->wspace);
     for (size_t i = 0, L = s->length(); i < L; ++i) {
       (*s)[i]->perform(this);
     }
@@ -714,46 +755,46 @@ namespace Sass {
     Complex_Selector*            tail = c->tail();
     Complex_Selector::Combinator comb = c->combinator();
     if (head && !head->is_empty_reference()) head->perform(this);
-    if (head && !head->is_empty_reference() && tail) append_to_buffer(" ");
+    // if (head && !head->is_empty_reference() && head->linebreak && tail) append_optional_linefeed();
+    if (head && !head->is_empty_reference() && tail) append_optional_space();
+
     switch (comb) {
-      case Complex_Selector::ANCESTOR_OF:                                        break;
+      case Complex_Selector::ANCESTOR_OF: if(tail) append_to_buffer("");  break;
       case Complex_Selector::PARENT_OF:   append_to_buffer(">"); break;
       case Complex_Selector::PRECEDES:    append_to_buffer("~"); break;
       case Complex_Selector::ADJACENT_TO: append_to_buffer("+"); break;
     }
     if (tail && comb != Complex_Selector::ANCESTOR_OF) {
-      append_to_buffer(" ");
+      append_optional_space();
     }
     if (tail) tail->perform(this);
   }
 
   void Inspect::operator()(Selector_List* g)
   {
+//    cerr << "INSPECT Selector_List\n";
+    // debug_ast(g, "** ");
     if (g->empty()) return;
-    if (ctx) ctx->source_map.add_open_mapping((*g)[0]);
+    append_indent_to_buffer();
     source_map.add_open_mapping((*g)[0]);
     (*g)[0]->perform(this);
-    if (ctx) ctx->source_map.add_close_mapping((*g)[0]);
     source_map.add_close_mapping((*g)[0]);
     for (size_t i = 1, L = g->length(); i < L; ++i) {
-      append_to_buffer(", ");
-      if (ctx) ctx->source_map.add_open_mapping((*g)[i]);
+      append_to_buffer(",");
+      // append_optional_linefeed();
+      if ((*g)[i-1]->has_line_break()) {
+        append_optional_linefeed();
+      } else {
+        append_optional_space();
+      }
       source_map.add_open_mapping((*g)[i]);
       (*g)[i]->perform(this);
-      if (ctx) ctx->source_map.add_close_mapping((*g)[i]);
       source_map.add_close_mapping((*g)[i]);
     }
   }
 
-  inline void Inspect::fallback_impl(AST_Node* n)
-  { }
-
-  void Inspect::append_indent_to_buffer()
+  void Inspect::fallback_impl(AST_Node* n)
   {
-    string indent = "";
-    for (size_t i = 0; i < indentation; i++)
-      indent += ctx->indent;
-    append_to_buffer(indent);
   }
 
   string unquote(const string& s)
@@ -789,28 +830,6 @@ namespace Sass {
     }
     t.push_back(q);
     return t;
-  }
-
-  void Inspect::append_to_buffer(const string& text)
-  {
-    buffer += text;
-    if (ctx) ctx->source_map.update_column(text);
-    source_map.update_column(text);
-  }
-
-  void Inspect::append_to_buffer(const string& text, AST_Node* node)
-  {
-    if (ctx) ctx->source_map.add_open_mapping(node);
-    source_map.add_open_mapping(node);
-    append_to_buffer(text);
-    if (ctx) ctx->source_map.add_close_mapping(node);
-    source_map.add_close_mapping(node);
-  }
-
-  void Inspect::append_to_buffer(const string& text, AST_Node* node, const string& tail)
-  {
-    append_to_buffer(text, node);
-    append_to_buffer(tail);
   }
 
 }

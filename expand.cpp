@@ -49,7 +49,9 @@ namespace Sass {
 
     Selector* sel_ctx = r->selector()->perform(contextual);
 
-    Inspect isp(0);
+    OutputBuffer buffer;
+    Emitter emitter(buffer, 0, NESTED);
+    Inspect isp(emitter);
     sel_ctx->perform(&isp);
     string str = isp.get_buffer();
     str += ";";
@@ -77,9 +79,12 @@ namespace Sass {
     sel_ctx = sel_lst;
 
     selector_stack.push_back(sel_ctx);
+    Block* blk = r->block()->perform(this)->block();
+    blk->tabs(r->block()->tabs());
     Ruleset* rr = new (ctx.mem) Ruleset(r->pstate(),
                                         sel_ctx,
-                                        r->block()->perform(this)->block());
+                                        blk);
+    rr->tabs(r->tabs());
     selector_stack.pop_back();
     in_at_root = old_in_at_root;
     old_in_at_root = false;
@@ -96,6 +101,7 @@ namespace Sass {
       Statement* stm = (*expanded_block)[i];
       if (typeid(*stm) == typeid(Declaration)) {
         Declaration* dec = static_cast<Declaration*>(stm);
+        dec->tabs(p->tabs());
         String_Schema* combined_prop = new (ctx.mem) String_Schema(p->pstate());
         if (!property_stack.empty()) {
           *combined_prop << property_stack.back()

@@ -16,9 +16,12 @@ namespace Sass {
 
   inline string To_String::fallback_impl(AST_Node* n)
   {
-    Inspect i(ctx);
+
+    OutputBuffer buffer;
+    Emitter emitter(buffer, ctx, NESTED);
+    Inspect i(emitter);
     n->perform(&i);
-    return i.get_buffer();
+    return buffer.buffer;
   }
 
   inline string To_String::operator()(Null* n)

@@ -45,6 +45,7 @@ namespace Sass {
         for (size_t j = 0, L = s->length(); j < L; ++j) {
           parent = (*p)[i];
           Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
+          if (parent->has_line_break()) comb->has_line_break(parent->has_line_break());
           if (comb) *ss << comb;
         }
       }
@@ -53,6 +54,7 @@ namespace Sass {
       ss = new (ctx.mem) Selector_List(s->pstate(), s->length());
       for (size_t j = 0, L = s->length(); j < L; ++j) {
         Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
+        // comb->has_line_break(((*s)[j]->has_line_break()));
         if (comb) *ss << comb;
       }
     }
@@ -71,6 +73,7 @@ namespace Sass {
     }
     if (ss->tail()) {
       new_tail = static_cast<Complex_Selector*>(s->tail()->perform(this));
+      new_tail->has_line_break(s->has_line_break());
       ss->tail(new_tail);
     }
     if ((new_head && new_head->has_placeholder()) || (new_tail && new_tail->has_placeholder())) {

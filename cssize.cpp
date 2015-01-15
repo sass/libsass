@@ -27,6 +27,7 @@ namespace Sass {
     new_env.link(*env);
     env = &new_env;
     Block* bb = new (ctx.mem) Block(b->pstate(), b->length(), b->is_root());
+bb->tabs(b->tabs());
     block_stack.push_back(bb);
     append_block(b);
     block_stack.pop_back();
@@ -87,6 +88,7 @@ namespace Sass {
     Ruleset* rr = new (ctx.mem) Ruleset(r->pstate(),
                                         r->selector(),
                                         r->block()->perform(this)->block());
+ rr->tabs(r->block()->tabs());
     p_stack.pop_back();
 
     Block* props = new Block(rr->block()->pstate());
@@ -181,6 +183,7 @@ namespace Sass {
     {
       Block* bb = m->block()->perform(this)->block();
       for (size_t i = 0, L = bb->length(); i < L; ++i) {
+        (bb->elements())[i]->tabs(m->tabs());
         if (bubblable(m)) (*m->block())[i]->tabs((*m->block())[i]->tabs() + m->tabs());
       }
       if (bb->length() && bubblable(bb->last())) bb->last()->group_end(m->group_end());

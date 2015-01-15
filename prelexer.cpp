@@ -76,6 +76,14 @@ namespace Sass {
       >(src);
     }
 
+    const char* tabspace(const char* src) {
+      return
+      alternatives<
+        exactly<' '>,
+        exactly<'\t'>
+      >(src);
+    }
+
     const char* escape(const char* src) {
       return
       sequence<

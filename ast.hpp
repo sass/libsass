@@ -1670,9 +1670,13 @@ namespace Sass {
   class Selector : public AST_Node {
     ADD_PROPERTY(bool, has_reference);
     ADD_PROPERTY(bool, has_placeholder);
+    ADD_PROPERTY(bool, has_line_break);
   public:
     Selector(ParserState pstate, bool r = false, bool h = false)
-    : AST_Node(pstate), has_reference_(r), has_placeholder_(h)
+    : AST_Node(pstate),
+      has_reference_(r),
+      has_placeholder_(h),
+      has_line_break_(false)
     { }
     virtual ~Selector() = 0;
     virtual Selector_Placeholder* find_placeholder();

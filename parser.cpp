@@ -25,6 +25,17 @@ namespace Sass {
     return p;
   }
 
+    bool Parser::peek_newline(const char* start)
+    {
+      if (!start) start = position;
+
+      if(*start == '\n' || *start == '\r') return true;;
+
+      const char* linefeed = tabspace(start);
+      if (linefeed == 0) return false;
+      return *linefeed == '\n' || *linefeed == '\r';
+    }
+
   Parser Parser::from_token(Token t, Context& ctx, ParserState pstate)
   {
     Parser p(ctx, pstate);
@@ -377,6 +388,8 @@ namespace Sass {
 
     propset->block(parse_block());
 
+    // propset->tabs(1);
+
     return propset;
   }
 
@@ -430,6 +443,7 @@ namespace Sass {
 
   Selector_List* Parser::parse_selector_group()
   {
+    bool run = true;
     To_String to_string;
     lex< spaces_and_comments >();
     Selector_List* group = new (ctx.mem) Selector_List(pstate);
@@ -451,19 +465,40 @@ namespace Sass {
         }
         else {
           comb = new (ctx.mem) Complex_Selector(sel_source_position, Complex_Selector::ANCESTOR_OF, ref_wrap, comb);
+          comb->has_line_break(peek < one_plus< alternatives < exactly<'\n'>, exactly<'\n'> > > >());
+          OutputBuffer buffer;
+          Emitter emitter(buffer, &ctx);
+          Inspect isp(emitter);
+          comb->perform(&isp);
+          // debug_ast(comb, "** ");
+          // cerr << "COMPLEX == " << buffer.buffer << endl;
           comb->has_reference(true);
         }
       }
+
+run = false;
+
+      while (peek< sequence< spaces_and_comments, exactly<','> > >())
+      {
+        // consume everything up and including the comma speparator
+        run = lex< sequence< spaces_and_comments, exactly<','> > >();
+        // remember line break (also between some commas)
+        if (peek_newline()) comb->has_line_break(true);
+      }
+
       (*group) << comb;
+
     }
-    while (lex< one_plus< sequence< spaces_and_comments, exactly<','> > > >());
+    while (run);
     while (lex< optional >());    // JMA - ignore optional flag if it follows the selector group
     return group;
   }
 
   Complex_Selector* Parser::parse_selector_combination()
   {
-    lex< spaces_and_comments >();
+    // lex< exactly < ' ' > >();
+    // lex< spaces_and_comments >();
+    // cerr << "LEX1 [" << string(wspace) << "]" << endl;
     Position sel_source_position(-1);
     Compound_Selector* lhs;
     if (peek< exactly<'+'> >() ||
@@ -516,10 +551,14 @@ namespace Sass {
     }
     if (sawsomething && lex< sequence< negate< functional >, alternatives< identifier_fragment, universal, string_constant, dimension, percentage, number > > >()) {
       // saw an ampersand, then allow type selectors with arbitrary number of hyphens at the beginning
-      (*seq) << new (ctx.mem) Type_Selector(pstate, lexed);
+      Type_Selector* type_sel = new (ctx.mem) Type_Selector(pstate, lexed);
+      type_sel->has_line_break(peek_newline());
+      (*seq) << type_sel;
     } else if (lex< sequence< negate< functional >, alternatives< type_selector, universal, string_constant, dimension, percentage, number > > >()) {
       // if you see a type selector
-      (*seq) << new (ctx.mem) Type_Selector(pstate, lexed);
+      Type_Selector* type_sel = new (ctx.mem) Type_Selector(pstate, lexed);
+      type_sel->has_line_break(peek_newline());
+      (*seq) << type_sel;
       sawsomething = true;
     }
     if (!sawsomething) {
@@ -822,6 +861,7 @@ namespace Sass {
           if (peek< exactly<'{'> >()) {
             // parse a propset that rides on the declaration's property
             Propset* ps = new (ctx.mem) Propset(pstate, decl->property(), parse_block());
+            ps->tabs(1);
             (*block) << ps;
           }
           else {
