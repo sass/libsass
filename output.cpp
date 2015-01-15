@@ -29,6 +29,11 @@ namespace Sass {
 
   void Output::operator()(Comment* c)
   {
+    To_String to_string;
+    string txt = c->text()->perform(&to_string);
+    bool important = txt[2] == '!';
+
+    if (output_style == NESTED || important) {
     if (output->buffer.size() + top_imports.size() == 0) {
       top_comments.push_back(c);
     } else {
@@ -42,16 +47,17 @@ namespace Sass {
       append_optional_linefeed();
       // append_to_buffer(i.get_buffer());
     }
+    }
   };
 
   void Output::fallback_impl(AST_Node* n)
   {
     if (outdbg) cerr << "Output fallback\n";
-    Inspect i(*this);
+    // Inspect i(*this);
     // this needs to use the same buffer?
     // or at least a chance to pass one!
     // cerr << "perform " << *this->buffer << endl;
-    n->perform(&i);
+    n->perform(this);
     // append_to_buffer(i.get_buffer());
   }
 
@@ -218,8 +224,8 @@ namespace Sass {
 
     indentation += f->tabs();
     append_indent_to_buffer();
-    append_to_buffer("@supports", f);
-    append_optional_space();
+    append_to_buffer("@supports", f, " ");
+    // append_mandatory_space();
     q->perform(this);
 append_open_bracket();
     // append_to_buffer(" ");
@@ -408,7 +414,7 @@ append_open_bracket();
     if (!in_keyframes) indentation += a->tabs();
 
     // append_indent_to_buffer();
-    append_to_buffer(kwd);
+    append_to_buffer(kwd, a, " ");
     if (s) {
       append_optional_space();
       s->perform(this);

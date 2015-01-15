@@ -422,35 +422,76 @@ namespace Sass {
     else                return c;
   }
 
+  inline bool is_doublet(double n) {
+    return n == 0x00 || n == 0x11 || n == 0x22 || n == 0x33 ||
+           n == 0x44 || n == 0x55 || n == 0x66 || n == 0x77 ||
+           n == 0x88 || n == 0x99 || n == 0xAA || n == 0xBB ||
+           n == 0xCC || n == 0xDD || n == 0xEE || n == 0xFF ;
+  }
+
+  inline bool is_color_doublet(double r, double g, double b) {
+    return is_doublet(r) && is_doublet(g) && is_doublet(b);
+  }
+
   void Inspect::operator()(Color* c)
   {
     stringstream ss;
+
+    // original color name
+    // maybe an unknown token
+    string name = c->disp();
+
+    // resolved color
+    string res_name = name;
+
     double r = round(cap_channel<0xff>(c->r()));
     double g = round(cap_channel<0xff>(c->g()));
     double b = round(cap_channel<0xff>(c->b()));
     double a = cap_channel<1>   (c->a());
 
+    if (name != "" && ctx && ctx->names_to_colors.count(name)) {
+      Color* n = ctx->names_to_colors[name];
+      r = round(cap_channel<0xff>(n->r()));
+      g = round(cap_channel<0xff>(n->g()));
+      b = round(cap_channel<0xff>(n->b()));
+      a = cap_channel<1>   (n->a());
+      if (output_style != NESTED) name = "";
+    } else {
+
+    int numval = r * 0x10000 + g * 0x100 + b;
+    if (ctx && ctx->colors_to_names.count(numval))
+      res_name = ctx->colors_to_names[numval];
+}
+
+    stringstream hexlet;
+    hexlet << '#' << setw(1) << setfill('0');
+    // create a short color hexlet if not in nested output mode
+    if (output_style != NESTED && is_color_doublet(r, g, b) && a == 1) {
+      hexlet << hex << setw(1) << (static_cast<unsigned long>(r) >> 4);
+      hexlet << hex << setw(1) << (static_cast<unsigned long>(g) >> 4);
+      hexlet << hex << setw(1) << (static_cast<unsigned long>(b) >> 4);
+    } else {
+      hexlet << hex << setw(2) << static_cast<unsigned long>(r);
+      hexlet << hex << setw(2) << static_cast<unsigned long>(g);
+      hexlet << hex << setw(2) << static_cast<unsigned long>(b);
+    }
+
     // retain the originally specified color definition if unchanged
-    if (!c->disp().empty()) {
-      ss << c->disp();
+    if (name != "") {
+        ss << name;
     }
     else if (r == 0 && g == 0 && b == 0 && a == 0) {
         ss << "transparent";
     }
     else if (a >= 1) {
-      // see if it's a named color
-      int numval = r * 0x10000;
-      numval += g * 0x100;
-      numval += b;
-      if (ctx && ctx->colors_to_names.count(numval)) {
-        ss << ctx->colors_to_names[numval];
+      if (output_style != NESTED)
+        if (hexlet.str().size() < res_name.size())
+          res_name = "";
+      if (res_name != "") {
+        ss << res_name;
       }
       else {
-        // otherwise output the hex triplet
-        ss << '#' << setw(2) << setfill('0');
-        ss << hex << setw(2) << static_cast<unsigned long>(r);
-        ss << hex << setw(2) << static_cast<unsigned long>(g);
-        ss << hex << setw(2) << static_cast<unsigned long>(b);
+        ss << hexlet.str();
       }
     }
     else {
@@ -718,7 +759,7 @@ namespace Sass {
     if (head && !head->is_empty_reference() && tail) append_optional_space();
 
     switch (comb) {
-      case Complex_Selector::ANCESTOR_OF:                                        break;
+      case Complex_Selector::ANCESTOR_OF: if(tail) append_to_buffer("");  break;
       case Complex_Selector::PARENT_OF:   append_to_buffer(">"); break;
       case Complex_Selector::PRECEDES:    append_to_buffer("~"); break;
       case Complex_Selector::ADJACENT_TO: append_to_buffer("+"); break;

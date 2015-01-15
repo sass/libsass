@@ -60,6 +60,33 @@ namespace Sass {
     if (text.size() > 0 && text[0] == ' ') {
       space_scheduled = false;
     }
+    if (text.size() > 0 && text[0] == ',') {
+      space_scheduled = false;
+    }
+    if (text.size() > 0 && text[0] == ':') {
+      space_scheduled = false;
+    }
+    if (output_style != NESTED) {
+      if (text.size() > 0 && text[0] == '+') {
+        space_scheduled = false;
+      }
+      if (text.size() > 0 && text[0] == '-') {
+        space_scheduled = false;
+      }
+      if (text.size() > 0 && text[0] == '>') {
+        space_scheduled = false;
+      }
+      if (text.size() > 0 && text[0] == '~') {
+      //  space_scheduled = false;
+      }
+      if (text.size() > 0 && text[0] == '(') {
+        space_scheduled = false;
+      }
+    }
+    if (text.size() > 0 && text[0] == '}') {
+      if (output_style != NESTED)
+        space_scheduled = false;
+    }
     if (text.size() > 0 && text[0] == '}') {
       if (output->buffer.size() && *output->buffer.rbegin() == '{') {
       space_scheduled = false;
@@ -80,7 +107,7 @@ namespace Sass {
       if (output_style == NESTED) {
         if (!ctx) append_to_buffer("\n");
         else append_to_buffer(ctx->linefeed);
-      }
+      } else { space_scheduled = true; }
     }
 
     output->buffer += text;
@@ -105,13 +132,36 @@ namespace Sass {
 
     if (linefeed_scheduled) return;
     if (output->buffer.size() == 0) return;
+    if (output_style != NESTED && ends_with(output->buffer, "+")) return;
+    if (output_style != NESTED && ends_with(output->buffer, ">")) return;
+    if (output_style != NESTED && ends_with(output->buffer, "(")) return;
+    // if (output_style != NESTED && ends_with(output->buffer, "~")) return;
     if (ends_with(output->buffer, "\r")) return;
     if (ends_with(output->buffer, "\n")) return;
 
-    if (output_style == NESTED)
-      space_scheduled = true;
-    else if (output_style == COMPACT)
-      space_scheduled = true;
+    space_scheduled = true;
+
+  }
+
+  void Emitter::append_mandatory_space()
+  {
+
+ 	// space_scheduled = true;
+  	append_to_buffer("");
+  	return;
+
+    if (linefeed_scheduled) return;
+    if (output->buffer.size() == 0) return;
+    if (output_style != NESTED && ends_with(output->buffer, "+")) return;
+    if (output_style != NESTED && ends_with(output->buffer, ">")) return;
+    if (output_style != NESTED && ends_with(output->buffer, "(")) return;
+    // if (output_style != NESTED && ends_with(output->buffer, "~")) return;
+    if (ends_with(output->buffer, "\r")) return;
+    if (ends_with(output->buffer, "\n")) return;
+
+    if (output->buffer.size() == 0 ||
+        !ends_with(output->buffer, " "))
+            space_scheduled = true;
   }
 
   void Emitter::append_optional_linefeed()

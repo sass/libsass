@@ -56,6 +56,7 @@ namespace Sass {
       virtual void append_comma_separator();
 
       virtual void append_optional_space();
+      virtual void append_mandatory_space();
       virtual void append_optional_linefeed();
 
       Output_Style output_style;

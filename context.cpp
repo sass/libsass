@@ -228,6 +228,7 @@ namespace Sass {
     Output emitter(buffer, this, output_style);
     // emmitter.source_comments(source_comments);
     root->perform(&emitter);
+    emitter.append_to_buffer("");
     string output = emitter.get_buffer();
     if (source_map_file != "" && !omit_source_map_url) {
       output += linefeed + format_source_mapping_url(source_map_file);
