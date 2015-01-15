@@ -60,8 +60,8 @@ libsass_la_SOURCES = \
 	inspect.cpp inspect.hpp \
 	node.cpp node.hpp \
 	json.cpp json.hpp \
-	output_compressed.cpp output_compressed.hpp \
-	output_nested.cpp output_nested.hpp \
+	output.cpp output.hpp \
+	emitter.cpp emitter.hpp \
 	parser.cpp parser.hpp \
 	prelexer.cpp prelexer.hpp \
 	remove_placeholders.cpp remove_placeholders.hpp \

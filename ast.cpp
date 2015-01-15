@@ -479,6 +479,7 @@ namespace Sass {
   {
     if (c->has_reference())   has_reference(true);
     if (c->has_placeholder()) has_placeholder(true);
+    // if (c->has_line_break())  has_line_break(true);
 
 #ifdef DEBUG
     To_String to_string;

@@ -3,40 +3,28 @@
 
 #include <string>
 
+#include "context.hpp"
 #include "position.hpp"
 #include "operation.hpp"
-#include "source_map.hpp"
+#include "emitter.hpp"
 
 namespace Sass {
   using namespace std;
   struct Context;
 
-  class Inspect : public Operation_CRTP<void, Inspect> {
+  class Inspect : public Operation_CRTP<void, Inspect>, public Emitter {
+  protected:
     // import all the class-specific methods and override as desired
     using Operation_CRTP<void, Inspect>::operator();
-
-    // To_String* to_string;
-    string buffer;
-    size_t indentation;
-    Context* ctx;
     bool in_declaration;
     bool in_declaration_list;
 
     void fallback_impl(AST_Node* n);
 
   public:
-    void append_indent_to_buffer();
-    void append_to_buffer(const string& text);
-    void append_to_buffer(const string& text, AST_Node* node);
-    void append_to_buffer(const string& text, AST_Node* node, const string& tail);
 
-  public:
-
-    SourceMap source_map;
-    Inspect(Context* ctx = 0);
+    Inspect(Emitter emi);
     virtual ~Inspect();
-
-    string get_buffer() { return buffer; }
 
     // statements
     virtual void operator()(Block*);

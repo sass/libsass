@@ -107,8 +107,8 @@ SOURCES = \
 	inspect.cpp \
 	node.cpp \
 	json.cpp \
-	output_compressed.cpp \
-	output_nested.cpp \
+	output.cpp \
+	emitter.cpp \
 	parser.cpp \
 	position.cpp \
 	prelexer.cpp \

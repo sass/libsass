@@ -306,6 +306,10 @@ namespace Sass {
     const char* xdigits(const char* src);
     const char* alnums(const char* src);
     const char* puncts(const char* src);
+    // Match certain white-space charactes.
+    const char* newline(const char* src);
+    const char* whitespace(const char* src);
+    const char* tabspace(const char* src);
 
     // Match a line comment.
     const char* line_comment(const char* src);
