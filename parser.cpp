@@ -413,7 +413,7 @@ namespace Sass {
         // accumulate the preceding segment if there is one
         if (i < p) (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, Position(0, 0)));
         // find the end of the interpolant and parse it
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, end_of_selector);
+        const char* j = find_matching_closure< exactly<hash_lbrace>, exactly<rbrace> >(p+1, end_of_selector);
         Expression* interp_node = Parser::from_token(Token(p+2, j, Position(0, 0)), ctx, pstate).parse_list();
         interp_node->is_interpolant(true);
         (*schema) << interp_node;
@@ -1244,7 +1244,7 @@ namespace Sass {
         if (i < p) {
           (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
         }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, chunk.end); // find the closing brace
+        const char* j = find_matching_closure< exactly<hash_lbrace>, exactly<rbrace> >(p+1, chunk.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
           Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
@@ -1339,7 +1339,7 @@ namespace Sass {
         if (i < p) {
           (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
         }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, str.end); // find the closing brace
+        const char* j = find_matching_closure< exactly<hash_lbrace>, exactly<rbrace> >(p+1, str.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
           Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
@@ -1470,7 +1470,7 @@ namespace Sass {
         if (i < p) {
           (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
         }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, id.end); // find the closing brace
+        const char* j = find_matching_closure< exactly<hash_lbrace>, exactly<rbrace> >(p+1, id.end); // find the matching closing brace
         if (j) {
           // parse the interpolant and accumulate it
           Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
