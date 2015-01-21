@@ -98,7 +98,7 @@ namespace Sass {
         if (!*src) return 0;
           
         inner_beg = exactly<beg>(src);
-        if (inner_beg) {
+        if (inner_beg && (!esc || *(src - 1) != '\\')) {
           src = inner_beg;
           n++;
           continue;
@@ -106,12 +106,10 @@ namespace Sass {
         
         stop = exactly<end>(src);
           
-        if (stop) {
+        if (stop && (!esc || *(src - 1) != '\\')) {
           if (n > 0) {
             n--;
-            src = stop;
-            continue;
-          } else if (!esc || *(src - 1) != '\\') {
+          } else {
             return stop;
           }
         }
@@ -526,6 +524,12 @@ namespace Sass {
     const char* find_matching_closure(const char* beg, const char* end) {
         int i = 0;
         while ((beg <= end) && *beg) {
+            if (*beg == '\\') {
+                ++beg;
+                if (*beg) ++beg; // skip the escaped
+                continue;
+            }
+            
             if (bmx(beg)) {
                 i++;
             } else if (emx(beg)) {
