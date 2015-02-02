@@ -141,15 +141,36 @@ namespace Sass {
     }
 
     // Match a sequence of characters delimited by the supplied strings.
+    // Any nested inner delimiter-pairs are skipped!
     template <const char* beg, const char* end, bool esc>
     const char* delimited_by(const char* src) {
       src = exactly<beg>(src);
       if (!src) return 0;
+      
       const char* stop;
+      const char* inner_beg = 0;
+      int n = 0;
+    
       while (1) {
         if (!*src) return 0;
+          
+        inner_beg = exactly<beg>(src);
+        if (inner_beg && (!esc || *(src - 1) != '\\')) {
+          src = inner_beg;
+          n++;
+          continue;
+        }
+        
         stop = exactly<end>(src);
-        if (stop && (!esc || *(src - 1) != '\\')) return stop;
+          
+        if (stop && (!esc || *(src - 1) != '\\')) {
+          if (n > 0) {
+            n--;
+          } else {
+            return stop;
+          }
+        }
+        
         src = stop ? stop : src + 1;
       }
     }
@@ -607,6 +628,29 @@ namespace Sass {
         ++beg;
       }
       return 0;
+    }
+    template<prelexer bmx, prelexer emx>
+    const char* find_matching_closure(const char* beg, const char* end) {
+        int i = 0;
+        while ((beg <= end) && *beg) {
+            if (*beg == '\\') {
+                ++beg;
+                if (*beg) ++beg; // skip the escaped
+                continue;
+            }
+            
+            if (bmx(beg)) {
+                i++;
+            } else if (emx(beg)) {
+                if (i == 0) {
+                    return beg;
+                } else {
+                    i--;
+                }
+            }
+            ++beg;
+        }
+        return 0;
     }
     template <char c>
     unsigned int count_interval(const char* beg, const char* end) {
