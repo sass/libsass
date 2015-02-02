@@ -138,7 +138,7 @@ extern "C" {
   struct Sass_Data_Context : Sass_Context {
 
     // provided source string
-    char* source_string;
+    const char* source_string;
 
   };
 
@@ -460,7 +460,7 @@ extern "C" {
     return ctx;
   }
 
-  Sass_Data_Context* ADDCALL sass_make_data_context(char* source_string)
+  Sass_Data_Context* ADDCALL sass_make_data_context(const char* source_string)
   {
     struct Sass_Data_Context* ctx = (struct Sass_Data_Context*) calloc(1, sizeof(struct Sass_Data_Context));
     if (ctx == 0) { cerr << "Error allocating memory for data context" << endl; return 0; }
