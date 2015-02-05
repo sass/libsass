@@ -212,7 +212,54 @@ namespace Sass {
       if (!a->is_guarded() || v->concrete_type() == Expression::NULL_VAL) (*env)[var] = a->value()->perform(eval->with(env, backtrace));
     }
     else {
-      env->current_frame()[var] = a->value()->perform(eval->with(env, backtrace));
+      Selector_Reference* v = static_cast<Selector_Reference*> (a->value ());
+      if (v->concrete_type () == Expression::SELECTOR) {
+	bool old_in_at_root = in_at_root;
+	in_at_root = false;
+	Contextualize* contextual = contextualize->with (
+	    selector_stack.back (), env, backtrace);
+	if (old_in_at_root && !v->has_reference ())
+	  contextual = contextualize->with (at_root_selector_stack.back (),
+					    env, backtrace);
+
+	Selector* sel_ctx = v->perform (contextual);
+
+	Inspect isp (0);
+	sel_ctx->perform (&isp);
+	string str = isp.get_buffer ();
+	str += ";";
+
+	Parser p (ctx, ParserState ("[REPARSE]", 0));
+	p.source = str.c_str ();
+	p.position = str.c_str ();
+	p.end = str.c_str () + strlen (str.c_str ());
+	Selector_List* sel_lst = p.parse_selector_group ();
+	sel_lst->pstate (isp.source_map.remap (sel_lst->pstate ()));
+
+	for (size_t i = 0; i < sel_lst->length (); i++) {
+	  Complex_Selector* pIter = (*sel_lst)[i];
+	  while (pIter) {
+	    Compound_Selector* pHead = pIter->head ();
+	    pIter->pstate (isp.source_map.remap (pIter->pstate ()));
+	    if (pHead) {
+	      pHead->pstate (isp.source_map.remap (pHead->pstate ()));
+	      (*pHead)[0]->pstate (
+		  isp.source_map.remap ((*pHead)[0]->pstate ()));
+	    }
+	    pIter = pIter->tail ();
+	  }
+	}
+	sel_ctx = sel_lst;
+
+	selector_stack.push_back (sel_ctx);
+	selector_stack.pop_back ();
+	in_at_root = old_in_at_root;
+	old_in_at_root = false;
+	env->current_frame ()[var] = sel_ctx;
+      }
+      else {
+	    env->current_frame()[var] = a->value()->perform(eval->with(env, backtrace));
+      }
     }
     return 0;
   }

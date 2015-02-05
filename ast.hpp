@@ -85,6 +85,7 @@ namespace Sass {
       STRING,
       LIST,
       MAP,
+	  SELECTOR,
       NULL_VAL,
       NUM_TYPES
     };
@@ -1685,13 +1686,13 @@ namespace Sass {
   /////////////////////////////////////////
   // Abstract base class for CSS selectors.
   /////////////////////////////////////////
-  class Selector : public AST_Node {
+  class Selector : public Expression {
     ADD_PROPERTY(bool, has_reference);
     ADD_PROPERTY(bool, has_placeholder);
   public:
     Selector(ParserState pstate, bool r = false, bool h = false)
-    : AST_Node(pstate), has_reference_(r), has_placeholder_(h)
-    { }
+    : Expression(pstate), has_reference_(r), has_placeholder_(h)
+  {  concrete_type(SELECTOR); }
     virtual ~Selector() = 0;
     virtual Selector_Placeholder* find_placeholder();
     virtual int specificity() { return Constants::SPECIFICITY_BASE; }

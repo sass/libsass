@@ -1219,6 +1219,10 @@ namespace Sass {
     if (lex< sequence< exactly<'%'>, optional< percentage > > >())
     { return new (ctx.mem) String_Constant(pstate, lexed); }
 
+    if (lex< ampersand >())
+    {
+      return new (ctx.mem) Selector_Reference(pstate);
+    }
     error("error reading values after " + lexed.to_string(), pstate);
 
     // unreachable statement

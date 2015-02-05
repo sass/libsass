@@ -809,6 +809,11 @@ namespace Sass {
                                                 e->is_interpolated());
   }
 
+  Expression* Eval::operator()(Selector_Reference* e)
+  {
+	  return e;
+  }
+
   Expression* Eval::operator()(Null* n)
   {
     return n;

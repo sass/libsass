@@ -404,6 +404,9 @@ namespace Sass {
     const char* percentage(const char* src) {
       return sequence< number, exactly<'%'> >(src);
     }
+    const char* ampersand(const char* src) {
+      return exactly<'&'>(src);
+    }
 
     const char* em(const char* src) {
       return sequence< number, exactly<em_kwd> >(src);
