@@ -2095,11 +2095,7 @@ namespace Sass {
     void adjust_after_pushing(Complex_Selector* c);
   public:
     Selector_List(ParserState pstate, size_t s = 0)
-    : Selector(pstate), Vectorized<Complex_Selector*>(s),
-#ifdef DEBUG
-     mCachedSelector_(""),
-#endif
-     wspace_(s)
+    : Selector(pstate), Vectorized<Complex_Selector*>(s)
     { }
     virtual Selector_Placeholder* find_placeholder();
     virtual int specificity()
