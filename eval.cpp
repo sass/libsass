@@ -836,7 +836,6 @@ str_constant->mynr(771);
     }
     String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), (acc), 718, false);
     if (!str->was_quoted()) str->value(string_unescape(str->value()));
-//    if (!s->is_in_string()) str->value(string_to_output(str->value()));
     str->quotemark('*');
     return str;
   }
@@ -1215,18 +1214,10 @@ str_constant->mynr(771);
     }
     if (ltype == Expression::NULL_VAL) error("invalid null operation: \"null plus "+quote(unquote(rstr), '"')+"\".", lhs->pstate());
     if (rtype == Expression::NULL_VAL) error("invalid null operation: \""+quote(unquote(lstr), '"')+" plus null\".", lhs->pstate());
-    // char q = '\0';
-    // if (lstr[0] == '"' || lstr[0] == '\'') q = lstr[0];
-    // else if (rstr[0] == '"' || rstr[0] == '\'') q = rstr[0];
     string result((lstr) + sep + (rstr));
-//    String_Constant* str = new (ctx.mem) String_Constant(722, lhs->pstate(), false,
-//                               unquoted ? result : (result));
-
-    // String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), (acc), 718, false);
 
     String_Quoted* str = new (ctx.mem) String_Quoted(lhs->pstate(), unquoted ? result : (result), 722, false);
     str->was_quoted(false);
-    // str->quotemark('*');
     return str;
   }
 
