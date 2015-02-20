@@ -40,7 +40,7 @@
 #include "environment.hpp"
 #include "error_handling.hpp"
 #include "ast_def_macros.hpp"
- #include "to_string.hpp"
+#include "to_string.hpp"
 
 #include "sass.h"
 #include "sass_values.h"
@@ -100,7 +100,10 @@ namespace Sass {
     Expression(ParserState pstate,
                bool d = false, bool e = false, bool i = false, Concrete_Type ct = NONE)
     : AST_Node(pstate),
-      is_delayed_(d), is_expanded_(d), is_interpolant_(i), concrete_type_(ct)
+      is_delayed_(d),
+      is_expanded_(d),
+      is_interpolant_(i),
+      concrete_type_(ct)
     { }
     virtual operator bool() { return true; }
     virtual ~Expression() { };
@@ -186,7 +189,7 @@ namespace Sass {
   inline Vectorized<T>::~Vectorized() { }
 
   /////////////////////////////////////////////////////////////////////////////
-  // Mixin class for AST nodes that should behave like ahash table. Uses an
+  // Mixin class for AST nodes that should behave like a hash table. Uses an
   // extra <vector> internally to maintain insertion order for interation.
   /////////////////////////////////////////////////////////////////////////////
   class Hashed {
@@ -473,7 +476,7 @@ namespace Sass {
   ////////////////////////////////////////////////////////////////////////////
   class Import : public Statement {
     vector<string>         files_;
-    vector<Expression*> urls_;
+    vector<Expression*>    urls_;
   public:
     Import(ParserState pstate)
     : Statement(pstate),
