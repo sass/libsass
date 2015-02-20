@@ -1427,8 +1427,9 @@ namespace Sass {
       return hash_;
     }
 
-    static char single_quote() { return '\''; }
+    static char auto_quote() { return '*'; }
     static char double_quote() { return '"'; }
+    static char single_quote() { return '\''; }
 
     bool is_quoted() { return value_.length() && (value_[0] == '"' || value_[0] == '\''); }
     char quote_mark() { return is_quoted() ? value_[0] : '\0'; }

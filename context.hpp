@@ -29,8 +29,6 @@ namespace Sass {
   // typedef Environment<AST_Node*> Env;
   // typedef Expression* (*Native_Function)(Env&, Context&, Signature, string, size_t);
 
-  enum Output_Style { NESTED, EXPANDED, COMPACT, COMPRESSED, FORMATTED };
-
   struct Sass_Queued {
     string abs_path;
     string load_path;
