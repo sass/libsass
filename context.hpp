@@ -54,7 +54,7 @@ namespace Sass {
     vector<string> include_paths; // lookup paths for includes
     vector<Sass_Queued> queue; // queue of files to be parsed
     map<string, Block*> style_sheets; // map of paths to ASTs
-    // SourceMap source_map;
+    SourceMap source_map;
     vector<Sass_C_Function_Callback> c_functions;
 
     string       indent; // String to be used for indentation

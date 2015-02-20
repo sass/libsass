@@ -51,7 +51,7 @@ namespace Sass {
     include_paths           (initializers.include_paths()),
     queue                   (vector<Sass_Queued>()),
     style_sheets            (map<string, Block*>()),
-//    source_map              (resolve_relative_path(initializers.output_path(), initializers.source_map_file(), get_cwd())),
+    source_map              (resolve_relative_path(initializers.output_path(), initializers.source_map_file(), get_cwd())),
     c_functions             (vector<Sass_C_Function_Callback>()),
     indent                  (initializers.indent()),
     linefeed                (initializers.linefeed()),
@@ -163,7 +163,7 @@ namespace Sass {
     sources.push_back(contents);
     included_files.push_back(abs_path);
     queue.push_back(Sass_Queued(load_path, abs_path, contents));
-    // source_map.source_index.push_back(sources.size() - 1);
+    source_map.source_index.push_back(sources.size() - 1);
     include_links.push_back(resolve_relative_path(abs_path, source_map_file, cwd));
   }
 
