@@ -31,7 +31,7 @@
 #endif
 
 #include "units.hpp"
-#include "token.hpp"
+#include "position.hpp"
 #include "constants.hpp"
 #include "operation.hpp"
 #include "position.hpp"
@@ -59,7 +59,9 @@ namespace Sass {
   class AST_Node {
     ADD_PROPERTY(ParserState, pstate);
   public:
-    AST_Node(ParserState pstate) : pstate_(pstate) { }
+    AST_Node(ParserState pstate)
+    : pstate_(pstate)
+    { }
     virtual ~AST_Node() = 0;
     // virtual Block* block() { return 0; }
   public:

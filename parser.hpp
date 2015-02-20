@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "ast.hpp"
-#include "token.hpp"
+#include "position.hpp"
 #include "context.hpp"
 #include "position.hpp"
 #include "prelexer.hpp"
@@ -110,6 +110,9 @@ namespace Sass {
     template <prelexer mx>
     const char* lex()
     {
+      
+      // remeber interesting position
+      const char* wspace_start = position;
 
       // advance position for next call
       before_token = after_token;
@@ -180,9 +183,9 @@ namespace Sass {
       after_token = after_token + size;
 
       // create parsed token string (public member)
-      lexed = Token(it_before_token, it_after_token, before_token);
-
-      pstate = ParserState(path, Position(before_token.file, before_token.line, before_token.column), size);
+      lexed = Token(wspace_start, it_before_token, it_after_token, spaces_and_comments(it_after_token) ? spaces_and_comments(it_after_token) : it_after_token, before_token);
+      Position pos(before_token.file, before_token.line, before_token.column);
+      pstate = ParserState(path, lexed, pos, size);
 
       // advance internal char iterator
       return position = it_after_token;
