@@ -241,24 +241,19 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     cerr << ind << "String_Quoted : " << expression << " [" << prettyprint(expression->value()) << "]" <<
       (expression->marker() ? " {marker}" : "") <<
       (expression->is_parsed() ? " {parsed}" : "") <<
-      (expression->was_in_string() ? " {was_in_string}" : "") <<
       (expression->needs_unquoting() ? " {needs_unquoting}" : "") <<
-      (expression->was_schema() ? " {schema}" : "") <<
       (expression->is_delayed() ? " {delayed}" : "") <<
       (expression->needs_unquoting() ? " {unquote}" : "") <<
       (expression->was_quoted() ? " {quoted}" : "") <<
-      (expression->is_static() ? " {static}" : "") <<
       (expression->quotemark() != 0 ? " {qm:" + string(1, expression->quotemark()) + "}" : "") <<
       " <" << prettyprint(expression->pstate().token.ws_before()) << "> X <" << prettyprint(expression->pstate().token.ws_after()) << ">" << endl;
   } else if (dynamic_cast<String_Constant*>(node)) {
     String_Constant* expression = dynamic_cast<String_Constant*>(node);
     cerr << ind << "String_Constant : " << expression << " [" << prettyprint(expression->value()) << "]" <<
       (expression->is_parsed() ? " {parsed}" : "") <<
-      (expression->was_schema() ? " {schema}" : "") <<
       (expression->is_delayed() ? " {delayed}" : "") <<
       (expression->needs_unquoting() ? " {unquote}" : "") <<
       (expression->was_quoted() ? " {quoted}" : "") <<
-      (expression->is_static() ? " {static}" : "") <<
       (expression->quotemark() != 0 ? " {qm:" + string(1, expression->quotemark()) + "}" : "") <<
       " <" << prettyprint(expression->pstate().token.ws_before()) << "> X <" << prettyprint(expression->pstate().token.ws_after()) << ">" << endl;
   } else if (dynamic_cast<String_Schema*>(node)) {

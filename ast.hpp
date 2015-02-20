@@ -1424,28 +1424,24 @@ inline string normalize(const string& str) {
   class String_Constant : public String {
     ADD_PROPERTY(bool, marker);
     ADD_PROPERTY(bool, was_quoted);
-    ADD_PROPERTY(bool, was_schema);
-    ADD_PROPERTY(bool, was_in_string);
     ADD_PROPERTY(char, quotemark);
     ADD_PROPERTY(bool, is_parsed);
-    ADD_PROPERTY(bool, is_static);
     ADD_PROPERTY(string, value);
   protected:
-    string unquoted_;
     size_t hash_;
   public:
     String_Constant(ParserState pstate, bool wq, string val, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(val), hash_(0)
-    { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
+    : String(pstate, unq, true), marker_(false), was_quoted_(wq), quotemark_(0), is_parsed_(false), value_(val), hash_(0)
+    { if(norm) value_ = normalize(value_); }
     String_Constant(ParserState pstate, bool wq, const char* beg, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg)), hash_(0)
-    { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
+    : String(pstate, unq, true), marker_(false), was_quoted_(wq), quotemark_(0), is_parsed_(false), value_(string(beg)), hash_(0)
+    { if(norm) value_ = normalize(value_); }
     String_Constant(ParserState pstate, bool wq, const char* beg, const char* end, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg, end-beg)), hash_(0)
-    { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
+    : String(pstate, unq, true), marker_(false), was_quoted_(wq), quotemark_(0), is_parsed_(false), value_(string(beg, end-beg)), hash_(0)
+    { if(norm) value_ = normalize(value_); }
     String_Constant(ParserState pstate, bool wq, const Token& tok, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(tok.begin, tok.end)), hash_(0)
-    { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
+    : String(pstate, unq, true), marker_(false), was_quoted_(wq), quotemark_(0), is_parsed_(false), value_(string(tok.begin, tok.end)), hash_(0)
+    { if(norm) value_ = normalize(value_); }
     string type() { return "string"; }
     static string type_name() { return "string"; }
 
@@ -1454,7 +1450,7 @@ inline string normalize(const string& str) {
       try
       {
         String_Constant& e = dynamic_cast<String_Constant&>(rhs);
-        return e && unquoted_ == e.unquoted_;
+        return e && value_ == e.value_;
       }
       catch (std::bad_cast&)
       {
@@ -1465,7 +1461,7 @@ inline string normalize(const string& str) {
 
     virtual size_t hash()
     {
-      if (hash_ == 0) hash_ = std::hash<string>()(unquoted_);
+      if (hash_ == 0) hash_ = std::hash<string>()(value_);
       return hash_;
     }
 
@@ -1499,7 +1495,6 @@ inline string normalize(const string& str) {
       } else {
         // value_ = string_unescape(value_);
       }
-      unquoted_ = value_;
     }
     String_Quoted(ParserState pstate, bool parsed, const char* beg, bool unq = false, bool norm = false)
     : String_Constant(pstate, false, beg, unq, norm)
