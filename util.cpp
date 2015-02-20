@@ -96,7 +96,7 @@ namespace Sass {
 
   string string_read_quoted(const string& str2, char* qd)
   {
-    string str = unquote(str2, qd, 623);
+    string str = unquote(str2, qd);
 
     string out("");
     for (size_t i = 0, L = str.length(); i < L; ++i) {

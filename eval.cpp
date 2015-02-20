@@ -1213,8 +1213,8 @@ str_constant->mynr(771);
       case Binary_Expression::DIV: sep = "/"; break;
       default:                         break;
     }
-    if (ltype == Expression::NULL_VAL) error("invalid null operation: \"null plus "+quote(unquote(rstr, 56), '"')+"\".", lhs->pstate());
-    if (rtype == Expression::NULL_VAL) error("invalid null operation: \""+quote(unquote(lstr, 57), '"')+" plus null\".", lhs->pstate());
+    if (ltype == Expression::NULL_VAL) error("invalid null operation: \"null plus "+quote(unquote(rstr), '"')+"\".", lhs->pstate());
+    if (rtype == Expression::NULL_VAL) error("invalid null operation: \""+quote(unquote(lstr), '"')+" plus null\".", lhs->pstate());
     // char q = '\0';
     // if (lstr[0] == '"' || lstr[0] == '\'') q = lstr[0];
     // else if (rstr[0] == '"' || rstr[0] == '\'') q = rstr[0];

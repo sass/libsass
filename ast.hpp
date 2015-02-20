@@ -1596,7 +1596,7 @@ inline string normalize(const string& str) {
     bool exclude(string str)
     {
       To_String to_string;
-      bool with = feature() && unquote(feature()->perform(&to_string), 50).compare("with") == 0;
+      bool with = feature() && unquote(feature()->perform(&to_string)).compare("with") == 0;
       List* l = static_cast<List*>(value());
       string v;
 
@@ -1605,7 +1605,7 @@ inline string normalize(const string& str) {
         if (!l || !l->length()) return str.compare("rule");
         for (size_t i = 0, L = l->length(); i < L; ++i)
         {
-          v = unquote((*l)[i]->perform(&to_string), 52);
+          v = unquote((*l)[i]->perform(&to_string));
           if (v.compare("all") == 0 || v == str) return false;
         }
         return true;
@@ -1615,7 +1615,7 @@ inline string normalize(const string& str) {
         if (!l || !l->length()) return str.compare("rule") == 0;
         for (size_t i = 0, L = l->length(); i < L; ++i)
         {
-          v = unquote((*l)[i]->perform(&to_string), 51);
+          v = unquote((*l)[i]->perform(&to_string));
           if (v.compare("all") == 0 || v == str) return true;
         }
         return false;

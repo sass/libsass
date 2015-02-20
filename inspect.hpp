@@ -98,9 +98,9 @@ namespace Sass {
     void fallback(U x) { fallback_impl(reinterpret_cast<AST_Node*>(x)); }
   };
 
-  string unquote(const string&, int s = 0);
-  string unquote(const string&,char* q,int s = 0);
-  string quote(const string&, char, int ts = 0);
+  string unquote(const string&);
+  string unquote(const string&,char* q);
+  string quote(const string&, char);
 
 }
 #endif

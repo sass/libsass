@@ -654,7 +654,7 @@ namespace Sass {
   void Inspect::operator()(String_Quoted* s)
   {
     if (s->was_quoted()) {
-      append_to_buffer(quote(s->value(), s->quotemark(), 223));
+      append_to_buffer(quote(s->value(), s->quotemark()));
     } else {
       append_to_buffer((s->value()));
     }
@@ -975,14 +975,14 @@ namespace Sass {
   {
   }
 
-  string unquote(const string& s, int ref)
+  string unquote(const string& s)
   {
     char qq(0);
-    string str2(unquote(s, &qq, ref));
+    string str2(unquote(s, &qq));
     return str2;
   }
 
-  string unquote(const string& s, char* qd, int ref)
+  string unquote(const string& s, char* qd)
   {
 
    //  cerr << "UNQUOTE [" << s << "]" << endl;
@@ -1111,7 +1111,7 @@ if (qd) *qd = q;
   }
 
 
-  string quote(const string& s, char q, int ts)
+  string quote(const string& s, char q)
   {
 
     if (s.empty()) return string(2, q == String_Constant::auto_quote() ?

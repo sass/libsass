@@ -772,7 +772,7 @@ namespace Sass {
     {
       To_String to_string(&ctx);
       AST_Node* arg = env["$string"];
-      string str(quote(arg->perform(&to_string), String_Constant::auto_quote(), 68));
+      string str(quote(arg->perform(&to_string), String_Constant::auto_quote()));
       String_Constant* result = new (ctx.mem) String_Constant(733, pstate, false, str);
       result->is_delayed(true);
       return result;
@@ -853,7 +853,7 @@ namespace Sass {
         }
 
         if (s->was_quoted()) {
-          str = quote(str, String_Constant::auto_quote(), 72);
+          str = quote(str, String_Constant::auto_quote());
         }
       }
       catch (utf8::invalid_code_point) {
@@ -919,7 +919,7 @@ namespace Sass {
         Number* m = ARG("$end-at", Number);
 
         // char quotemark = s->quote_mark();
-        string str = unquote(s->value(), 29);
+        string str = unquote(s->value());
 //        cerr << "unquote for slice " << s->value() << endl;
 //        debug_ast(s, "");
         if (s->value() != str) {
@@ -943,7 +943,7 @@ namespace Sass {
           newstr = str.substr(start, end - start + UTF_8::code_point_size_at_offset(str, end));
         }
         if(s->was_quoted()) {
-          newstr = quote(newstr, String_Constant::auto_quote(), 54);
+          newstr = quote(newstr, String_Constant::auto_quote());
         }
 
         if (s->was_quoted()) {
@@ -1199,7 +1199,7 @@ namespace Sass {
         *l2 << ARG("$list2", Expression);
       }
       size_t len = l1->length() + l2->length();
-      string sep_str = unquote(sep->value(), 30);
+      string sep_str = unquote(sep->value());
       if (sep_str == "space") sep_val = List::SPACE;
       else if (sep_str == "comma") sep_val = List::COMMA;
       else if (sep_str != "auto") error("argument `$separator` of `" + string(sig) + "` must be `space`, `comma`, or `auto`", pstate);
@@ -1220,7 +1220,7 @@ namespace Sass {
         *l << ARG("$list", Expression);
       }
       List* result = new (ctx.mem) List(pstate, l->length() + 1, l->separator());
-      string sep_str(unquote(sep->value(), 31));
+      string sep_str(unquote(sep->value()));
       if (sep_str == "space") result->separator(List::SPACE);
       else if (sep_str == "comma") result->separator(List::COMMA);
       else if (sep_str != "auto") error("argument `$separator` of `" + string(sig) + "` must be `space`, `comma`, or `auto`", pstate);
@@ -1409,7 +1409,7 @@ namespace Sass {
 
     Signature unit_sig = "unit($number)";
     BUILT_IN(unit)
-    { return new (ctx.mem) String_Quoted(pstate, quote(ARG("$number", Number)->unit(), '"', 42), 739, false); }
+    { return new (ctx.mem) String_Quoted(pstate, quote(ARG("$number", Number)->unit(), '"'), 739, false); }
 
     Signature unitless_sig = "unitless($number)";
     BUILT_IN(unitless)
@@ -1483,7 +1483,7 @@ namespace Sass {
     Signature feature_exists_sig = "feature-exists($name)";
     BUILT_IN(feature_exists)
     {
-      string s = unquote(ARG("$name", String_Constant)->value(), 36);
+      string s = unquote(ARG("$name", String_Constant)->value());
 
       if(features.find(s) == features.end()) {
         return new (ctx.mem) Boolean(pstate, false);

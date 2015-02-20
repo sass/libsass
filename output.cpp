@@ -556,7 +556,7 @@ return;
   {
 //    cerr << "OUTPUT [" << s->value() << "]\n";
     if (s->was_quoted()) {
-      append_to_buffer(quote((s->value()), s->quotemark(), 223));
+      append_to_buffer(quote((s->value()), s->quotemark()));
     } else {
       append_to_buffer(string_to_output(s->value()));
     }
@@ -568,21 +568,7 @@ return;
       return Output::operator()(quoted);
     }
 
-    string value = s->value();
-//     cerr << "OUTPUT String_Constant [" << value << "]" <<
-//             endl << "from [" << s->value() << "]" << endl;
-    if (s->was_schema() && s->was_quoted() && !s->needs_unquoting()) {
-exit(323);
-      append_to_buffer(value);
-      append_to_buffer(quote(value, s->quotemark(), 354));
-    } else if (s->needs_unquoting()) {
-exit(424);
-
-      append_to_buffer(unquote(value));
-      // append_to_buffer(value);
-    } else {
-      append_to_buffer(string_to_output(value));
-    }
+    append_to_buffer(string_to_output(s->value()));
 
   }
 

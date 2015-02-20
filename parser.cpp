@@ -597,7 +597,7 @@ run = false;
     }
     if (sawsomething && lex< sequence< negate< functional >, alternatives< identifier_fragment, universal, quoted_string, dimension, percentage, number > > >()) {
       // saw an ampersand, then allow type selectors with arbitrary number of hyphens at the beginning
-      Type_Selector* type_sel = new (ctx.mem) Type_Selector(pstate, unquote(lexed, 103));
+      Type_Selector* type_sel = new (ctx.mem) Type_Selector(pstate, unquote(lexed));
       type_sel->has_line_break(peek_newline());
       (*seq) << type_sel;
     } else if (lex< sequence< negate< functional >, alternatives< type_selector, universal, quoted_string, dimension, percentage, number > > >()) {
@@ -629,10 +629,10 @@ run = false;
   Simple_Selector* Parser::parse_simple_selector()
   {
     if (lex< id_name >() || lex< class_name >()) {
-      return new (ctx.mem) Selector_Qualifier(pstate, unquote(lexed, 105));
+      return new (ctx.mem) Selector_Qualifier(pstate, unquote(lexed));
     }
     else if (lex< quoted_string >() || lex< number >()) {
-      return new (ctx.mem) Type_Selector(pstate, unquote(lexed, 106));
+      return new (ctx.mem) Type_Selector(pstate, unquote(lexed));
     }
     else if (peek< pseudo_not >()) {
       return parse_negated_selector();
@@ -644,7 +644,7 @@ run = false;
       return parse_attribute_selector();
     }
     else if (lex< placeholder >()) {
-      return new (ctx.mem) Selector_Placeholder(pstate, unquote(lexed, 107));
+      return new (ctx.mem) Selector_Placeholder(pstate, unquote(lexed));
     }
     else {
       error("invalid selector after " + lexed.to_string(), pstate);
@@ -722,7 +722,7 @@ run = false;
       return new (ctx.mem) Pseudo_Selector(p, name, expr);
     }
     else if (lex < sequence< pseudo_prefix, identifier > >()) {
-      return new (ctx.mem) Pseudo_Selector(pstate, unquote(lexed, 111));
+      return new (ctx.mem) Pseudo_Selector(pstate, unquote(lexed));
     }
     else {
       error("unrecognized pseudo-class or pseudo-element", pstate);
@@ -1460,7 +1460,7 @@ run = false;
         (*schema) << new (ctx.mem) Textual(pstate, Textual::NUMBER, lexed);
       }
       else if (lex< hex >()) {
-        (*schema) << new (ctx.mem) Textual(pstate, Textual::HEX, unquote(lexed, 129));
+        (*schema) << new (ctx.mem) Textual(pstate, Textual::HEX, unquote(lexed));
       }
       else if (lex< quoted_string >()) {
         // (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, 130, true);
@@ -1580,7 +1580,7 @@ run = false;
     p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
     if (!p) {
 
-      String_Quoted* str_constant = 
+      String_Quoted* str_constant =
         new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), 534, true, dequote);
 
       if (!constant) str_constant->quotemark('*');
