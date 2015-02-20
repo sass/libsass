@@ -768,11 +768,11 @@ str_constant->mynr(771);
       if (str_quoted->was_quoted()) {
         return string_escape(str_quoted->value());
       } else {
-        return (string_evacuate(str_quoted->value()));
+        return (evacuate_escapes(str_quoted->value()));
       }
 
     } else if (String_Constant* str_constant = dynamic_cast<String_Constant*>(s)) {
-      return string_evacuate(str_constant->value());
+      return evacuate_escapes(str_constant->value());
 
     } else if (String_Schema* str_schema = dynamic_cast<String_Schema*>(s)) {
       ++ schema_lvl;
@@ -782,7 +782,7 @@ str_constant->mynr(771);
       }
       -- schema_lvl;
       //ToDo: do this in one step
-      auto esc = string_evacuate(res);
+      auto esc = evacuate_escapes(res);
       auto unq = unquote(esc);
       if (unq == esc) {
         return string_to_output(res);

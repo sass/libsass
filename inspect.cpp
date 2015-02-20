@@ -975,13 +975,6 @@ namespace Sass {
   {
   }
 
-  string unquote(const string& s)
-  {
-    char qq(0);
-    string str2(unquote(s, &qq));
-    return str2;
-  }
-
   string unquote(const string& s, char* qd)
   {
 
@@ -998,8 +991,8 @@ namespace Sass {
     else if (*s.begin() == '\'' && *s.rbegin() == '\'') q = '\'';
     else                                                return s;
 
-    string t;
-    t.reserve(s.length()-2);
+    string unq;
+    unq.reserve(s.length()-2);
 
     for (size_t i = 1, L = s.length() - 1; i < L; ++i) {
 
@@ -1038,7 +1031,7 @@ namespace Sass {
           // convert the whole output from string to a stream!?
           // allocate memory for utf8 char and convert to utf8
           unsigned char u[5] = {0,0,0,0,0}; utf8::append(cp, u);
-          for(size_t m = 0; u[m] && m < 5; m++) t.push_back(u[m]);
+          for(size_t m = 0; u[m] && m < 5; m++) unq.push_back(u[m]);
 
           // skip some more chars?
           i += len - 1; skipped = false;
@@ -1057,13 +1050,13 @@ namespace Sass {
       }
       else {
         skipped = false;
-        t.push_back(s[i]);
+        unq.push_back(s[i]);
       }
 
     }
     if (skipped) { return s; }
     if (qd) *qd = q;
-    return ((t));
+    return unq;
 
   }
 

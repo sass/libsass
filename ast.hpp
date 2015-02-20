@@ -1500,6 +1500,8 @@ inline string normalize(const string& str) {
             quotemark_ = *val.begin();
           }
         }
+      } else {
+        // value_ = string_unescape(value_);
       }
       unquoted_ = value_;
     }

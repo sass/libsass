@@ -1,18 +1,17 @@
 #ifndef SASS_UTIL_H
 #define SASS_UTIL_H
 
-#include <string>
+#include "ast.hpp"
 #include <vector>
-#include "ast_fwd_decl.hpp"
+#include <string>
 
 namespace Sass {
-
   using namespace std;
 
-  string evacuate_quotes(const string& str);
   string string_escape(const string& str);
-  string string_evacuate(const string& str);
   string string_unescape(const string& str);
+  string evacuate_quotes(const string& str);
+  string evacuate_escapes(const string& str);
   string string_to_output(const string& str);
 
   namespace Util {

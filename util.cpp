@@ -4,8 +4,43 @@
 
 namespace Sass {
 
+  // double escape every escape sequences
+  // escape unescaped quotes and backslashes
+  string string_escape(const string& str)
+  {
+    string out("");
+    for (auto i : str) {
+      // escape some characters
+      if (i == '"') out += '\\';
+      if (i == '\'') out += '\\';
+      if (i == '\\') out += '\\';
+      out += i;
+    }
+    return out;
+  }
+
+  // unescape every escape sequence
+  // only removes unescaped backslashes
+  string string_unescape(const string& str)
+  {
+    string out("");
+    bool esc = false;
+    for (auto i : str) {
+      if (esc || i != '\\') {
+        esc = false;
+        out += i;
+      } else {
+        esc = true;
+      }
+    }
+    // open escape sequence at end
+    // maybe it should thow an error
+    if (esc) { out += '\\'; }
+    return out;
+  }
+
   // evacuate unescaped quoted
-  // leaves everything untouched
+  // leave everything else untouched
   string evacuate_quotes(const string& str)
   {
     string out("");
@@ -26,43 +61,9 @@ namespace Sass {
     return out;
   }
 
-  // double escape every escape sequences
-  // escape unescaped quotes and backslashes
-  string string_escape(const string& str)
-  {
-    string out("");
-    for (auto i : str) {
-      // escape some characters
-      if (i == '"') out += '\\';
-      if (i == '\'') out += '\\';
-      if (i == '\\') out += '\\';
-      out += i;
-    }
-    return out;
-  }
-
-
-  string string_unescape(const string& str)
-  {
-    string out("");
-    bool esc = false;
-    for (auto i : str) {
-      if (esc || i != '\\') {
-        esc = false;
-        out += i;
-      } else {
-        esc = true;
-      }
-    }
-    // open escape sequence at end
-    // maybe it should thow an error
-    if (esc) { out += '\\'; }
-    return out;
-  }
-
   // double escape all escape sequences
-  // beside unescaped quotes and backslashes
-  string string_evacuate(const string& str)
+  // keep unescaped quotes and backslashes
+  string evacuate_escapes(const string& str)
   {
     string out("");
     bool esc = false;
@@ -92,6 +93,7 @@ namespace Sass {
     return out;
   }
 
+  // bell character is replaces with space
   string string_to_output(const string& str)
   {
     string out("");
