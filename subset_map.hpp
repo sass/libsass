@@ -80,7 +80,6 @@ namespace Sass {
     void put(const vector<K>& s, const V& value);
     vector<pair<V, vector<K> > > get_kv(const vector<K>& s);
     vector<V> get_v(const vector<K>& s);
-    vector<V> keys() { return values_; };
     bool empty() { return values_.empty(); }
     void clear() { values_.clear(); hash_.clear(); }
   };
