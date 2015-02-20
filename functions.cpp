@@ -1495,6 +1495,7 @@ namespace Sass {
     BUILT_IN(image_url)
     {
       error("`image_url` has been removed from libsass because it's not part of the Sass spec", pstate);
+      return 0; // suppress warning, error will exit anyway
     }
 
     //////////////////////////
