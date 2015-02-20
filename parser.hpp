@@ -139,6 +139,10 @@ namespace Sass {
         }
       }
 
+      else if (mx == spaces_and_comments) {
+        it_before_token = position;
+      }
+
       else if (mx == optional_spaces) {
         // ToDo: what are optiona_spaces ???
         it_before_token = optional_spaces(position);
