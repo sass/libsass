@@ -539,9 +539,7 @@ run = false;
 
   Complex_Selector* Parser::parse_selector_combination()
   {
-    // lex< exactly < ' ' > >();
     // lex< spaces_and_comments >();
-    // cerr << "LEX1 [" << string(wspace) << "]" << endl;
     Position sel_source_position(-1);
     Compound_Selector* lhs;
     if (peek< exactly<'+'> >() ||

@@ -2,6 +2,7 @@
 #define SASS_UTIL_H
 
 #include <string>
+#include <vector>
 #include "ast_fwd_decl.hpp"
 
 namespace Sass {
@@ -12,7 +13,7 @@ namespace Sass {
   string string_escape(const string& str);
   string string_evacuate(const string& str);
   string string_unescape(const string& str);
-  string string_read_escape(const string& str);
+  string string_read_quoted(const string& str, char* qd);
   string string_to_output(const string& str);
 
   namespace Util {

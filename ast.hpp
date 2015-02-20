@@ -1491,21 +1491,11 @@ inline string normalize(const string& str) {
     : String_Constant(nr, pstate, false, (string_evacuate(val)), unq, norm), mynr_(nr)
     {
     	char q = 0;
-    	value_ = unquote(value_, &q, nr);
-    	value_ = string_read_escape(value_);
-    	value_ = string_unescape(value_);
+    	value_ = string_read_quoted(value_, &q);
+    	// value_ = string_unescape(value_);
 
       is_parsed_ = parsed;
       if (q && (was_quoted_ = (value_ != val))) {
-        string out("");
-        for (auto i : value_) {
-          if (i == 10) {
-            out += i;
-          } else {
-            out += i;
-          }
-        }
-        value_ = out;
         if (val.size() > 1 && *val.begin() == *val.rbegin()) {
           if (*val.begin() == '"' || *val.begin() == '\'') {
             quotemark_ = *val.begin();

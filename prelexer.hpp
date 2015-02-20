@@ -33,15 +33,13 @@ namespace Sass {
     template<prelexer mx>
     const char* find_first_in_interval(const char* beg, const char* end) {
       while ((beg < end) && *beg) {
-        if ((mx(beg))) {
-        	return beg;
-        }
+        if (mx(beg)) return beg;
         ++beg;
       }
       return 0;
     }
 
-        // Match a single character that satifies the supplied ctype predicate.
+    // Match a single character that satifies the supplied ctype predicate.
     template <ctype_predicate pred>
     const char* class_char(const char* src) {
       return pred(*src) ? src + 1 : 0;
