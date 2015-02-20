@@ -1014,12 +1014,10 @@ run = false;
     }
 
     Expression* list1 = parse_space_list();
-
     // if it's a singleton, return it directly; don't wrap it
     if (!peek< exactly<','> >(position)) return list1;
 
     List* comma_list = new (ctx.mem) List(pstate, 2, List::COMMA);
-
     (*comma_list) << list1;
 
     while (lex< exactly<','> >())
@@ -1057,7 +1055,6 @@ run = false;
     { return disj1; }
 
     List* space_list = new (ctx.mem) List(pstate, 2, List::SPACE);
-// space_list->is_inspecting(true);
     (*space_list) << disj1;
 
     while (!(//peek< exactly<'!'> >(position) ||
@@ -1282,8 +1279,7 @@ run = false;
 }
 
     if (lex< sequence< true_val, negate< identifier > > >())
-    {
-    	return new (ctx.mem) Boolean(pstate, true); }
+    { return new (ctx.mem) Boolean(pstate, true); }
 
     if (lex< sequence< false_val, negate< identifier > > >())
     { return new (ctx.mem) Boolean(pstate, false); }
@@ -1292,7 +1288,6 @@ run = false;
     { return new (ctx.mem) Null(pstate); }
 
     if (lex< identifier >()) {
-    	// cerr << "Has identifier\n";
       String_Constant* str = new (ctx.mem) String_Quoted(pstate, lexed);
       // Dont' delay this string if it is a name color. Fixes #652.
       str->is_delayed(ctx.names_to_colors.count(unquote(lexed)) == 0);
