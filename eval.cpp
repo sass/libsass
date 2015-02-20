@@ -828,7 +828,7 @@ ll->is_inspecting(l->is_inspecting());
     for (size_t i = 0, L = s->length(); i < L; ++i) {
       acc += interpolation((*s)[i]);
     }
-    String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), (acc), false);
+    String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), acc);
     if (!str->was_quoted()) str->value(string_unescape(str->value()));
     str->quotemark('*');
     return str;
@@ -1179,10 +1179,7 @@ ll->is_inspecting(l->is_inspecting());
     bool r_str_quoted = ((Sass::String_Constant*)rhs) && ((Sass::String_Constant*)rhs)->marker();
     bool l_str_color = ltype == Expression::STRING && ctx.names_to_colors.count(lstr) && !l_str_quoted;
     bool r_str_color = rtype == Expression::STRING && ctx.names_to_colors.count(rstr) && !r_str_quoted;
-// cerr << "op 33 string " << lhs  << " :: " << lstr << " : " << rstr << " - " << ((Sass::String*)lhs)->needs_unquoting() << "\n";
 
-    bool unquoted = false;
-    if (ltype == Expression::STRING && lstr[0] != '"' && lstr[0] != '\'') unquoted = true;
     if (l_str_color && r_str_color) {
       return op_colors(ctx, op, ctx.names_to_colors[lstr], ctx.names_to_colors[rstr]);
     }
@@ -1210,7 +1207,7 @@ ll->is_inspecting(l->is_inspecting());
     if (rtype == Expression::NULL_VAL) error("invalid null operation: \""+quote(unquote(lstr), '"')+" plus null\".", lhs->pstate());
     string result((lstr) + sep + (rstr));
 
-    String_Quoted* str = new (ctx.mem) String_Quoted(lhs->pstate(), unquoted ? result : (result), false);
+    String_Quoted* str = new (ctx.mem) String_Quoted(lhs->pstate(), result);
     str->was_quoted(false);
     return str;
   }

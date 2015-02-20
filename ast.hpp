@@ -1476,7 +1476,7 @@ inline string normalize(const string& str) {
   ////////////////////////////////////////////////////////
   class String_Quoted : public String_Constant {
   public:
-    String_Quoted(ParserState pstate, string val, bool parsed, bool unq = false, bool norm = false)
+    String_Quoted(ParserState pstate, string val, bool unq = false, bool norm = false)
     : String_Constant(pstate, false, val, unq, norm)
     {
     	char q = 0;
@@ -1492,13 +1492,13 @@ inline string normalize(const string& str) {
         // value_ = string_unescape(value_);
       }
     }
-    String_Quoted(ParserState pstate, bool parsed, const char* beg, bool unq = false, bool norm = false)
+    String_Quoted(ParserState pstate, const char* beg, bool unq = false, bool norm = false)
     : String_Constant(pstate, false, beg, unq, norm)
     { }
-    String_Quoted(ParserState pstate, bool parsed, const char* beg, const char* end, bool unq = false, bool norm = false)
+    String_Quoted(ParserState pstate, const char* beg, const char* end, bool unq = false, bool norm = false)
     : String_Constant(pstate, false, beg, end, unq, norm)
     { }
-    String_Quoted(ParserState pstate, bool parsed, const Token& tok, bool unq = false, bool norm = false)
+    String_Quoted(ParserState pstate, const Token& tok, bool unq = false, bool norm = false)
     : String_Constant(pstate, false, tok, unq, norm)
     { }
     string type() { return "string"; }
