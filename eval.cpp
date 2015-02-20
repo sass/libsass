@@ -429,11 +429,10 @@ ll->is_inspecting(l->is_inspecting());
       // Special cases: +/- variables which evaluate to null ouput just +/-,
       // but +/- null itself outputs the string
       if (operand->concrete_type() == Expression::NULL_VAL && typeid(*(u->operand())) == typeid(Variable)) {
-        u->operand(new (ctx.mem) String_Constant(u->pstate(), false, ""));
+        u->operand(new (ctx.mem) String_Constant(u->pstate(), ""));
       }
       else u->operand(operand);
-      String_Constant* result = new (ctx.mem) String_Constant(u->pstate(), false,
-                                                              u->perform(&to_string));
+      String_Constant* result = new (ctx.mem) String_Constant(u->pstate(), u->perform(&to_string));
       return result;
     }
     // unreachable
@@ -462,8 +461,7 @@ ll->is_inspecting(l->is_inspecting());
                                                        args);
       To_String to_string(&ctx);
       to_string.in_decl_list = true;
-      return new (ctx.mem) String_Constant(c->pstate(), false,
-                                           lit->perform(&to_string));
+      return new (ctx.mem) String_Constant(c->pstate(), lit->perform(&to_string));
     }
 
     Expression*     result = c;
@@ -524,7 +522,7 @@ ll->is_inspecting(l->is_inspecting());
     else if (c_func) {
 
       if (full_name == "*[f]") {
-        String_Constant *str = new (ctx.mem) String_Constant(c->pstate(), false, c->name());
+        String_Constant *str = new (ctx.mem) String_Constant(c->pstate(), c->name());
         Arguments* new_args = new (ctx.mem) Arguments(c->pstate());
         *new_args << new (ctx.mem) Argument(c->pstate(), str);
         *new_args += args;
@@ -1049,7 +1047,7 @@ ll->is_inspecting(l->is_inspecting());
     double rv = r->value();
     Binary_Expression::Type op = b->type();
     if (op == Binary_Expression::DIV && !rv) {
-      return new (ctx.mem) String_Constant(l->pstate(), false, "Infinity");
+      return new (ctx.mem) String_Constant(l->pstate(), "Infinity");
     }
     if (op == Binary_Expression::MOD && !rv) {
       error("division by zero", r->pstate());
@@ -1116,7 +1114,7 @@ ll->is_inspecting(l->is_inspecting());
         string color(r->sixtuplet() && (ctx.output_style == NESTED || ctx.output_style == EXPANDED) ?
                      r->perform(&to_string) :
                      Util::normalize_sixtuplet(r->perform(&to_string)));
-        return new (ctx.mem) String_Constant(l->pstate(), false,
+        return new (ctx.mem) String_Constant(l->pstate(),
                                              l->perform(&to_string)
                                              + sep
                                              + color);
@@ -1228,7 +1226,7 @@ ll->is_inspecting(l->is_inspecting());
         e = new (ctx.mem) Color(pstate, sass_color_get_r(v), sass_color_get_g(v), sass_color_get_b(v), sass_color_get_a(v));
       } break;
       case SASS_STRING: {
-        e = new (ctx.mem) String_Constant(pstate, false, sass_string_get_value(v));
+        e = new (ctx.mem) String_Constant(pstate, sass_string_get_value(v));
       } break;
       case SASS_LIST: {
         List* l = new (ctx.mem) List(pstate, sass_list_get_length(v), sass_list_get_separator(v) == SASS_COMMA ? List::COMMA : List::SPACE);

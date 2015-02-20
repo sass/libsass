@@ -49,7 +49,7 @@ namespace Sass {
       Keyframe_Rule* k = new (ctx.mem) Keyframe_Rule(r->pstate(), r->block()->perform(this)->block());
       if (r->selector()) {
         string s(r->selector()->perform(eval->with(env, backtrace))->perform(&to_string));
-        String_Constant* ss = new (ctx.mem) String_Constant(r->selector()->pstate(), false, s);
+        String_Constant* ss = new (ctx.mem) String_Constant(r->selector()->pstate(), s);
         k->rules(ss);
       }
       in_at_root = old_in_at_root;
@@ -122,7 +122,7 @@ namespace Sass {
         String_Schema* combined_prop = new (ctx.mem) String_Schema(p->pstate());
         if (!property_stack.empty()) {
           *combined_prop << property_stack.back()
-                         << new (ctx.mem) String_Constant(p->pstate(), false, "-")
+                         << new (ctx.mem) String_Constant(p->pstate(), "-")
                          << dec->property(); // TODO: eval the prop into a string constant
         }
         else {
@@ -486,7 +486,7 @@ namespace Sass {
   inline Statement* Expand::fallback_impl(AST_Node* n)
   {
     error("unknown internal error; please contact the LibSass maintainers", n->pstate(), backtrace);
-    String_Constant* msg = new (ctx.mem) String_Constant(ParserState("[WARN]"), false, string("`Expand` doesn't handle ") + typeid(*n).name());
+    String_Constant* msg = new (ctx.mem) String_Constant(ParserState("[WARN]"), string("`Expand` doesn't handle ") + typeid(*n).name());
     return new (ctx.mem) Warning(ParserState("[WARN]"), msg);
   }
 

@@ -1429,16 +1429,16 @@ inline string normalize(const string& str) {
   protected:
     size_t hash_;
   public:
-    String_Constant(ParserState pstate, bool wq, string val, bool unq = false, bool norm = false)
+    String_Constant(ParserState pstate, string val, bool unq = false, bool norm = false)
     : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(val), hash_(0)
     { if(norm) value_ = normalize(value_); }
-    String_Constant(ParserState pstate, bool wq, const char* beg, bool unq = false, bool norm = false)
+    String_Constant(ParserState pstate, const char* beg, bool unq = false, bool norm = false)
     : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(beg)), hash_(0)
     { if(norm) value_ = normalize(value_); }
-    String_Constant(ParserState pstate, bool wq, const char* beg, const char* end, bool unq = false, bool norm = false)
+    String_Constant(ParserState pstate, const char* beg, const char* end, bool unq = false, bool norm = false)
     : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(beg, end-beg)), hash_(0)
     { if(norm) value_ = normalize(value_); }
-    String_Constant(ParserState pstate, bool wq, const Token& tok, bool unq = false, bool norm = false)
+    String_Constant(ParserState pstate, const Token& tok, bool unq = false, bool norm = false)
     : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(tok.begin, tok.end)), hash_(0)
     { if(norm) value_ = normalize(value_); }
     string type() { return "string"; }
@@ -1477,7 +1477,7 @@ inline string normalize(const string& str) {
   class String_Quoted : public String_Constant {
   public:
     String_Quoted(ParserState pstate, string val, bool unq = false, bool norm = false)
-    : String_Constant(pstate, false, val, unq, norm)
+    : String_Constant(pstate, val, unq, norm)
     {
     	char q = 0;
     	value_ = unquote(value_, &q);
@@ -1488,18 +1488,16 @@ inline string normalize(const string& str) {
             quotemark_ = *val.begin();
           }
         }
-      } else {
-        // value_ = string_unescape(value_);
       }
     }
     String_Quoted(ParserState pstate, const char* beg, bool unq = false, bool norm = false)
-    : String_Constant(pstate, false, beg, unq, norm)
+    : String_Constant(pstate, beg, unq, norm)
     { }
     String_Quoted(ParserState pstate, const char* beg, const char* end, bool unq = false, bool norm = false)
-    : String_Constant(pstate, false, beg, end, unq, norm)
+    : String_Constant(pstate, beg, end, unq, norm)
     { }
     String_Quoted(ParserState pstate, const Token& tok, bool unq = false, bool norm = false)
-    : String_Constant(pstate, false, tok, unq, norm)
+    : String_Constant(pstate, tok, unq, norm)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }
