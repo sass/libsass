@@ -429,10 +429,10 @@ ll->is_inspecting(l->is_inspecting());
       // Special cases: +/- variables which evaluate to null ouput just +/-,
       // but +/- null itself outputs the string
       if (operand->concrete_type() == Expression::NULL_VAL && typeid(*(u->operand())) == typeid(Variable)) {
-        u->operand(new (ctx.mem) String_Constant(711, u->pstate(), false, ""));
+        u->operand(new (ctx.mem) String_Constant(u->pstate(), false, ""));
       }
       else u->operand(operand);
-      String_Constant* result = new (ctx.mem) String_Constant(712, u->pstate(), false,
+      String_Constant* result = new (ctx.mem) String_Constant(u->pstate(), false,
                                                               u->perform(&to_string));
       return result;
     }
@@ -462,7 +462,7 @@ ll->is_inspecting(l->is_inspecting());
                                                        args);
       To_String to_string(&ctx);
       to_string.in_decl_list = true;
-      return new (ctx.mem) String_Constant(713, c->pstate(), false,
+      return new (ctx.mem) String_Constant(c->pstate(), false,
                                            lit->perform(&to_string));
     }
 
@@ -524,7 +524,7 @@ ll->is_inspecting(l->is_inspecting());
     else if (c_func) {
 
       if (full_name == "*[f]") {
-        String_Constant *str = new (ctx.mem) String_Constant(714, c->pstate(), false, c->name());
+        String_Constant *str = new (ctx.mem) String_Constant(c->pstate(), false, c->name());
         Arguments* new_args = new (ctx.mem) Arguments(c->pstate());
         *new_args << new (ctx.mem) Argument(c->pstate(), str);
         *new_args += args;
@@ -628,9 +628,6 @@ ll->is_inspecting(l->is_inspecting());
     else if (value->concrete_type() == Expression::STRING) {
       String_Quoted* str_quoted = new (ctx.mem) String_Quoted(*static_cast<String_Quoted*>(value));
       String_Constant* str_constant = new (ctx.mem) String_Constant(*static_cast<String_Constant*>(value));
-
-str_quoted->mynr(770);
-str_constant->mynr(771);
       value = str_quoted ? str_quoted : str_constant;
       if (str_quoted) { str_quoted->quotemark('*'); }
       if (str_constant) { str_constant->quotemark('*'); }
@@ -755,9 +752,6 @@ str_constant->mynr(771);
       c->pstate(s->pstate());
       c->disp(s->value());
       return c;
-    }
-    if (s->was_quoted()) {
-     // return new (ctx.mem) String_Constant(716, s->pstate(), false, quote(s->value(), String_Constant::auto_quote(), 72));
     }
     return s;
   }
@@ -1055,7 +1049,7 @@ str_constant->mynr(771);
     double rv = r->value();
     Binary_Expression::Type op = b->type();
     if (op == Binary_Expression::DIV && !rv) {
-      return new (ctx.mem) String_Constant(719, l->pstate(), false, "Infinity");
+      return new (ctx.mem) String_Constant(l->pstate(), false, "Infinity");
     }
     if (op == Binary_Expression::MOD && !rv) {
       error("division by zero", r->pstate());
@@ -1122,7 +1116,7 @@ str_constant->mynr(771);
         string color(r->sixtuplet() && (ctx.output_style == NESTED || ctx.output_style == EXPANDED) ?
                      r->perform(&to_string) :
                      Util::normalize_sixtuplet(r->perform(&to_string)));
-        return new (ctx.mem) String_Constant(720, l->pstate(), false,
+        return new (ctx.mem) String_Constant(l->pstate(), false,
                                              l->perform(&to_string)
                                              + sep
                                              + color);
@@ -1237,7 +1231,7 @@ str_constant->mynr(771);
         e = new (ctx.mem) Color(pstate, sass_color_get_r(v), sass_color_get_g(v), sass_color_get_b(v), sass_color_get_a(v));
       } break;
       case SASS_STRING: {
-        e = new (ctx.mem) String_Constant(723, pstate, false, sass_string_get_value(v));
+        e = new (ctx.mem) String_Constant(pstate, false, sass_string_get_value(v));
       } break;
       case SASS_LIST: {
         List* l = new (ctx.mem) List(pstate, sass_list_get_length(v), sass_list_get_separator(v) == SASS_COMMA ? List::COMMA : List::SPACE);

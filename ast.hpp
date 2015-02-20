@@ -1422,7 +1422,6 @@ inline string normalize(const string& str) {
   // Flat strings -- the lowest level of raw textual data.
   ////////////////////////////////////////////////////////
   class String_Constant : public String {
-    ADD_PROPERTY(int, mynr);
     ADD_PROPERTY(bool, marker);
     ADD_PROPERTY(bool, was_quoted);
     ADD_PROPERTY(bool, was_schema);
@@ -1435,17 +1434,17 @@ inline string normalize(const string& str) {
     string unquoted_;
     size_t hash_;
   public:
-    String_Constant(int mynr, ParserState pstate, bool wq, string val, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(val), hash_(0)
+    String_Constant(ParserState pstate, bool wq, string val, bool unq = false, bool norm = false)
+    : String(pstate, unq, true), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(val), hash_(0)
     { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
-    String_Constant(int mynr, ParserState pstate, bool wq, const char* beg, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg)), hash_(0)
+    String_Constant(ParserState pstate, bool wq, const char* beg, bool unq = false, bool norm = false)
+    : String(pstate, unq, true), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg)), hash_(0)
     { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
-    String_Constant(int mynr, ParserState pstate, bool wq, const char* beg, const char* end, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg, end-beg)), hash_(0)
+    String_Constant(ParserState pstate, bool wq, const char* beg, const char* end, bool unq = false, bool norm = false)
+    : String(pstate, unq, true), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg, end-beg)), hash_(0)
     { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
-    String_Constant(int mynr, ParserState pstate, bool wq, const Token& tok, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(tok.begin, tok.end)), hash_(0)
+    String_Constant(ParserState pstate, bool wq, const Token& tok, bool unq = false, bool norm = false)
+    : String(pstate, unq, true), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(tok.begin, tok.end)), hash_(0)
     { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1485,7 +1484,7 @@ inline string normalize(const string& str) {
   class String_Quoted : public String_Constant {
   public:
     String_Quoted(ParserState pstate, string val, bool parsed, bool unq = false, bool norm = false)
-    : String_Constant(1, pstate, false, val, unq, norm)
+    : String_Constant(pstate, false, val, unq, norm)
     {
     	char q = 0;
     	value_ = unquote(value_, &q);
@@ -1502,14 +1501,14 @@ inline string normalize(const string& str) {
       }
       unquoted_ = value_;
     }
-    String_Quoted(ParserState pstate, int nr, bool parsed, const char* beg, bool unq = false, bool norm = false)
-    : String_Constant(nr, pstate, false, beg, unq, norm)
+    String_Quoted(ParserState pstate, bool parsed, const char* beg, bool unq = false, bool norm = false)
+    : String_Constant(pstate, false, beg, unq, norm)
     { is_parsed_ = parsed; }
-    String_Quoted(ParserState pstate, int nr, bool parsed, const char* beg, const char* end, bool unq = false, bool norm = false)
-    : String_Constant(nr, pstate, false, beg, end, unq, norm)
+    String_Quoted(ParserState pstate, bool parsed, const char* beg, const char* end, bool unq = false, bool norm = false)
+    : String_Constant(pstate, false, beg, end, unq, norm)
     { is_parsed_ = parsed; }
-    String_Quoted(ParserState pstate, int nr, bool parsed, const Token& tok, bool unq = false, bool norm = false)
-    : String_Constant(nr, pstate, false, tok, unq, norm)
+    String_Quoted(ParserState pstate, bool parsed, const Token& tok, bool unq = false, bool norm = false)
+    : String_Constant(pstate, false, tok, unq, norm)
     { is_parsed_ = parsed; }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -2429,7 +2428,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     cerr << ind << "Number " << expression << " [" << expression->value() << expression->unit() << "]" << endl;
   } else if (dynamic_cast<String_Quoted*>(node)) {
     String_Quoted* expression = dynamic_cast<String_Quoted*>(node);
-    cerr << ind << "String_Quoted " << expression->mynr() << " : " << expression << " [" << prettyprint(expression->value()) << "]" <<
+    cerr << ind << "String_Quoted : " << expression << " [" << prettyprint(expression->value()) << "]" <<
       (expression->marker() ? " {marker}" : "") <<
       (expression->is_parsed() ? " {parsed}" : "") <<
       (expression->was_in_string() ? " {was_in_string}" : "") <<
@@ -2443,7 +2442,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
       " <" << prettyprint(expression->pstate().token.ws_before()) << "> X <" << prettyprint(expression->pstate().token.ws_after()) << ">" << endl;
   } else if (dynamic_cast<String_Constant*>(node)) {
     String_Constant* expression = dynamic_cast<String_Constant*>(node);
-    cerr << ind << "String_Constant " << expression->mynr() << " : " << expression << " [" << prettyprint(expression->value()) << "]" <<
+    cerr << ind << "String_Constant : " << expression << " [" << prettyprint(expression->value()) << "]" <<
       (expression->is_parsed() ? " {parsed}" : "") <<
       (expression->was_schema() ? " {schema}" : "") <<
       (expression->is_delayed() ? " {delayed}" : "") <<

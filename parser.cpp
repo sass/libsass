@@ -708,7 +708,7 @@ run = false;
         expr = new (ctx.mem) String_Quoted(p, lexed, true);
       }
       else if (peek< exactly<')'> >()) {
-        expr = new (ctx.mem) String_Constant(701, p, false, "");
+        expr = new (ctx.mem) String_Constant(p, false, "");
       }
       else {
         wrapped = parse_selector_group();
@@ -745,7 +745,7 @@ run = false;
     String* value = 0;
     if (lex< identifier >()) {
 //    	cerr << "=============== " << string(lexed) << endl;
-      value = new (ctx.mem) String_Constant(702, p, false, lexed, false);
+      value = new (ctx.mem) String_Constant(p, false, lexed, false);
     }
     else if (lex< quoted_string >()) {
 //    	cerr << "GOT SOME ATTR -- " << string(lexed) << endl;
@@ -1278,7 +1278,7 @@ run = false;
     }
 
     if (lex< important >())
-    { return new (ctx.mem) String_Constant(703, pstate, false, "!important"); }
+    { return new (ctx.mem) String_Constant(pstate, false, "!important"); }
 
     const char* stop = peek< value_schema >();
 
@@ -1342,7 +1342,7 @@ run = false;
     Token str(lexed);
     --str.end;
     --position;
-    String_Constant* str_node = new (ctx.mem) String_Constant(704, pstate, true, str);
+    String_Constant* str_node = new (ctx.mem) String_Constant(pstate, true, str);
     return str_node;
   }
 
@@ -1361,7 +1361,7 @@ run = false;
     // see if there any interpolants
     const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(str.begin, str.end);
     if (!p) {
-      String_Constant* str_node = new (ctx.mem) String_Constant(122, pstate, false, str);
+      String_Constant* str_node = new (ctx.mem) String_Constant(pstate, false, str);
       str_node->is_delayed(true);
       return str_node;
     }
@@ -1371,7 +1371,7 @@ run = false;
       p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, str.end);
       if (p) {
         if (i < p) {
-          (*schema) << new (ctx.mem) String_Constant(123, pstate, false, string(i, p)); // accumulate the preceding segment if it's nonempty
+          (*schema) << new (ctx.mem) String_Constant(pstate, false, string(i, p)); // accumulate the preceding segment if it's nonempty
         }
         const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p+2, str.end); // find the closing brace
         if (j) {
@@ -1387,7 +1387,7 @@ run = false;
         }
       }
       else { // no interpolants left; add the last segment if nonempty
-        if (i < str.end) (*schema) << new (ctx.mem) String_Constant(124, pstate, false, string(i, str.end));
+        if (i < str.end) (*schema) << new (ctx.mem) String_Constant(pstate, false, string(i, str.end));
         break;
       }
     }
@@ -1427,7 +1427,7 @@ run = false;
         (*schema) << interp_node;
       }
       else if (lex< exactly<'%'> >()) {
-        (*schema) << new (ctx.mem) String_Constant(705, pstate, false, lexed);
+        (*schema) << new (ctx.mem) String_Constant(pstate, false, lexed);
       }
       else if (lex< identifier >()) {
         (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, true);
@@ -1445,7 +1445,7 @@ run = false;
         (*schema) << new (ctx.mem) Textual(pstate, Textual::HEX, unquote(lexed));
       }
       else if (lex< quoted_string >()) {
-        (*schema) << new (ctx.mem) String_Constant(130, pstate, true, lexed);
+        (*schema) << new (ctx.mem) String_Constant(pstate, true, lexed);
         if (!num_items) schema->quote_mark(*lexed.begin);
       }
       else if (lex< variable >()) {
@@ -1503,7 +1503,7 @@ run = false;
 
     if (!p) {
       String_Constant* str_constant = true ?
-        new (ctx.mem) String_Constant(706, pstate, false, string(chunk.begin, chunk.end)) :
+        new (ctx.mem) String_Constant(pstate, false, string(chunk.begin, chunk.end)) :
         new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), true, dequote);
         if (String_Quoted* str_quoted = dynamic_cast<String_Quoted*>(str_constant)) {
           str_quoted->quotemark('*');
@@ -1519,7 +1519,7 @@ run = false;
       if (p) {
         if (i < p) {
           (*schema) << (true ?
-            new (ctx.mem) String_Constant(707, pstate, false, string(i, p)) :
+            new (ctx.mem) String_Constant(pstate, false, string(i, p)) :
             new (ctx.mem) String_Quoted(pstate, string(i, p), true));
         }
         // we need to skip anything inside strings
