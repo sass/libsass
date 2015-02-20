@@ -89,7 +89,7 @@ namespace Sass {
 
   Compound_Selector* Simple_Selector::unify_with(Compound_Selector* rhs, Context& ctx)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     for (size_t i = 0, L = rhs->length(); i < L; ++i)
     { if (perform(&to_string) == (*rhs)[i]->perform(&to_string)) return rhs; }
 
@@ -115,10 +115,12 @@ namespace Sass {
     if (!found)
     {
       Compound_Selector* cpy = new (ctx.mem) Compound_Selector(*rhs);
+      cpy->has_line_feed(rhs->has_line_feed());
       (*cpy) << this;
       return cpy;
     }
     Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
+    cpy->has_line_feed(rhs->has_line_feed());
     for (size_t j = 0; j < i; ++j)
     { (*cpy) << (*rhs)[j]; }
     (*cpy) << this;
@@ -134,13 +136,17 @@ namespace Sass {
     // if the rhs is empty, just return a copy of this
     if (rhs->length() == 0) {
       Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
+      cpy->has_line_feed(rhs->has_line_feed());
       (*cpy) << this;
       return cpy;
     }
 
     // if this is a universal selector and rhs is not empty, just return the rhs
     if (name() == "*")
-    { return new (ctx.mem) Compound_Selector(*rhs); }
+    {
+    	Compound_Selector* sel = new (ctx.mem) Compound_Selector(*rhs);
+    	return sel;
+    }
 
 
     Simple_Selector* rhs_0 = (*rhs)[0];
@@ -151,6 +157,7 @@ namespace Sass {
       if (static_cast<Type_Selector*>(rhs_0)->name() == "*")
       {
         Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
+        cpy->has_line_feed(rhs->has_line_feed());
         (*cpy) << this;
         for (size_t i = 1, L = rhs->length(); i < L; ++i)
         { (*cpy) << (*rhs)[i]; }
@@ -158,13 +165,18 @@ namespace Sass {
       }
       // if rhs is another tag name and it matches this, return rhs
       else if (static_cast<Type_Selector*>(rhs_0)->name() == name())
-      { return new (ctx.mem) Compound_Selector(*rhs); }
+      {
+        Compound_Selector* sel = new (ctx.mem) Compound_Selector(*rhs);
+        sel->has_line_feed(rhs->has_line_feed());
+        return sel;
+      }
       // else the tag names don't match; return nil
       else
       { return 0; }
     }
     // else it's a tag name and a bunch of qualifiers -- just append them
     Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
+    cpy->has_line_feed(rhs->has_line_feed());
     (*cpy) << this;
     (*cpy) += rhs;
     return cpy;
@@ -183,6 +195,10 @@ namespace Sass {
           return 0;
       }
     }
+
+    rhs->has_line_break(has_line_break());
+    rhs->has_line_feed(has_line_feed());
+
     return Simple_Selector::unify_with(rhs, ctx);
   }
 
@@ -199,6 +215,10 @@ namespace Sass {
         { return 0; }
       }
     }
+
+    rhs->has_line_break(has_line_break());
+    rhs->has_line_feed(has_line_feed());
+
     return Simple_Selector::unify_with(rhs, ctx);
   }
 
@@ -443,6 +463,8 @@ namespace Sass {
   Complex_Selector* Complex_Selector::clone(Context& ctx) const
   {
     Complex_Selector* cpy = new (ctx.mem) Complex_Selector(*this);
+//    cpy->has_line_break(this->has_line_break());
+    cpy->has_line_feed(this->has_line_feed());
     if (tail()) cpy->tail(tail()->clone(ctx));
     return cpy;
   }
@@ -450,8 +472,9 @@ namespace Sass {
   Complex_Selector* Complex_Selector::cloneFully(Context& ctx) const
   {
     Complex_Selector* cpy = new (ctx.mem) Complex_Selector(*this);
-
-		if (head()) {
+//    cpy->has_line_break(this->has_line_break());
+    cpy->has_line_feed(this->has_line_feed());
+    if (head()) {
     	cpy->head(head()->clone(ctx));
     }
 
@@ -479,6 +502,7 @@ namespace Sass {
   {
     if (c->has_reference())   has_reference(true);
     if (c->has_placeholder()) has_placeholder(true);
+    // if (c->has_line_break())  has_line_break(true);
 
 #ifdef DEBUG
     To_String to_string;
@@ -533,8 +557,9 @@ namespace Sass {
 
   Compound_Selector* Compound_Selector::minus(Compound_Selector* rhs, Context& ctx)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     Compound_Selector* result = new (ctx.mem) Compound_Selector(pstate());
+    result->has_line_feed(rhs->has_line_feed());
 
     // not very efficient because it needs to preserve order
     for (size_t i = 0, L = length(); i < L; ++i)

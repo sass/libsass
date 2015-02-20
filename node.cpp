@@ -16,16 +16,23 @@ namespace Sass {
     NodeDequePtr null;
 
     Complex_Selector* pStripped = pSelector->clone(ctx);
+//CHANGED
+  //  pStripped->has_line_break(pSelector->has_line_break());
+    pStripped->has_line_feed(pSelector->has_line_feed());
     pStripped->tail(NULL);
     pStripped->combinator(Complex_Selector::ANCESTOR_OF);
 
-    return Node(SELECTOR, Complex_Selector::ANCESTOR_OF, pStripped, null /*pCollection*/);
+    Node node = Node(SELECTOR, Complex_Selector::ANCESTOR_OF, pStripped, null /*pCollection*/);
+//    if (pSelector) node.has_line_break = pSelector->has_line_break();
+    if (pSelector) node.has_line_feed = pSelector->has_line_feed();
+    return node;
   }
 
 
   Node Node::createCollection() {
     NodeDequePtr pEmptyCollection = make_shared<NodeDeque>();
-    return Node(COLLECTION, Complex_Selector::ANCESTOR_OF, NULL /*pSelector*/, pEmptyCollection);
+    Node node = Node(COLLECTION, Complex_Selector::ANCESTOR_OF, NULL /*pSelector*/, pEmptyCollection);
+    return node;
   }
 
 
@@ -42,10 +49,16 @@ namespace Sass {
 
 
   Node::Node(const TYPE& type, Complex_Selector::Combinator combinator, Complex_Selector* pSelector, NodeDequePtr& pCollection) :
-  	mType(type),
+    has_line_break(false),
+    has_line_feed(false),
+    mType(type),
     mCombinator(combinator),
     mpSelector(pSelector),
-    mpCollection(pCollection) {}
+    mpCollection(pCollection)
+  {
+//    if (pSelector) has_line_break = pSelector->has_line_break();
+    if (pSelector) has_line_feed = pSelector->has_line_feed();
+  }
 
 
   Node Node::clone(Context& ctx) const {
@@ -177,7 +190,9 @@ namespace Sass {
       return Node::createNil();
     }
 
-		Node node = Node::createCollection();
+    Node node = Node::createCollection();
+//    if (pToConvert) node.has_line_break = pToConvert->has_line_break();
+//    if (pToConvert) node.has_line_break = pToConvert->has_line_feed();
 
     while (pToConvert) {
 
@@ -221,6 +236,11 @@ namespace Sass {
 
       if (child.isSelector()) {
         pCurrent->tail(child.selector()->clone(ctx));   // JMA - need to clone the selector, because they can end up getting shared across Node collections, and can result in an infinite loop during the call to parentSuperselector()
+//CHANGED
+ // if (child.has_line_break) pCurrent->tail()->has_line_break(child.has_line_break);
+//   if (child.selector()->has_line_feed()) pFirst->has_line_feed(true);
+ // if (child.has_line_feed) pCurrent->tail()->has_line_feed(child.has_line_feed);
+  	// if (child.has_line_feed)
         pCurrent = pCurrent->tail();
       } else if (child.isCombinator()) {
         pCurrent->combinator(child.combinator());
@@ -230,6 +250,11 @@ namespace Sass {
           Node& nextNode = *(childIter+1);
           if (nextNode.isCombinator()) {
             pCurrent->tail(new (ctx.mem) Complex_Selector(ParserState("[NODE]"), Complex_Selector::ANCESTOR_OF, NULL, NULL));
+//CHANGED
+// if (child.has_line_break) pCurrent->tail()->has_line_break(child.has_line_break);
+  if (child.has_line_feed) pCurrent->tail()->has_line_feed(child.has_line_feed);
+//  pCurrent->tail()->has_line_feed(true);
+ // pCurrent->tail()->head()->has_line_feed(true);
             pCurrent = pCurrent->tail();
           }
         }
@@ -243,6 +268,17 @@ namespace Sass {
     Selector_Reference* selectorRef = new (ctx.mem) Selector_Reference(ParserState("[NODE]"), NULL);
     fakeHead->elements().push_back(selectorRef);
     pFirst->head(fakeHead);
+// fakeHead->has_line_break(toConvert.has_line_break);
+// fakeHead->has_line_feed(toConvert.has_line_feed);
+
+//CHANGED pFirst->has_line_break(pFirst->tail()->has_line_break());
+ pFirst->has_line_feed(pFirst->has_line_feed() || pFirst->tail()->has_line_feed() || toConvert.has_line_feed);
+// if (toConvert.selector()) pFirst->has_line_feed(toConvert.selector()->has_line_feed());
+
+// fakeHead->has_line_break(true);
+
+// pFirst->has_line_break(toConvert.has_line_break);
+// pFirst->has_line_feed(toConvert.has_line_feed);
 
     return pFirst;
   }

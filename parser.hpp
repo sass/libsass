@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "ast.hpp"
-#include "token.hpp"
+#include "position.hpp"
 #include "context.hpp"
 #include "position.hpp"
 #include "prelexer.hpp"
@@ -15,6 +15,31 @@ struct Selector_Lookahead {
   const char* found;
   bool has_interpolants;
 };
+
+namespace std {
+  template<class T>
+  T begin(std::pair<T, T> p)
+  {
+      return p.first;
+  }
+  template<class T>
+  T end(std::pair<T, T> p)
+  {
+      return p.second;
+  }
+}
+
+template<class Iterator>
+std::reverse_iterator<Iterator> make_reverse_iterator(Iterator it)
+{
+    return std::reverse_iterator<Iterator>(it);
+}
+
+template<class Range>
+std::pair<std::reverse_iterator<decltype(begin(std::declval<Range>()))>, std::reverse_iterator<decltype(begin(std::declval<Range>()))>> make_reverse_range(Range&& r)
+{
+    return std::make_pair(make_reverse_iterator(begin(r)), make_reverse_iterator(end(r)));
+}
 
 namespace Sass {
   using std::string;
@@ -38,6 +63,7 @@ namespace Sass {
     Position before_token;
     Position after_token;
     ParserState pstate;
+    int indentation;
 
 
     Token lexed;
@@ -46,11 +72,12 @@ namespace Sass {
 
     Parser(Context& ctx, ParserState pstate)
     : ParserState(pstate), ctx(ctx), stack(vector<Syntactic_Context>()),
-      source(0), position(0), end(0), before_token(pstate), after_token(pstate), pstate("[NULL]")
+      source(0), position(0), end(0), before_token(pstate), after_token(pstate), pstate("[NULL]"), indentation(0)
     { dequote = false; in_at_root = false; stack.push_back(nothing); }
 
-    static Parser from_string(string src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
+    static Parser from_string(const string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
     static Parser from_c_str(const char* src, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
+    static Parser from_c_str(const char* beg, const char* end, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
     static Parser from_token(Token t, Context& ctx, ParserState pstate = ParserState("[TOKEN]"));
 
 #ifdef __clang__
@@ -64,6 +91,9 @@ namespace Sass {
 #pragma clang diagnostic ignored "-Wtautological-compare"
 
 #endif
+
+
+    bool peek_newline(const char* start = 0);
 
     template <prelexer mx>
     const char* peek(const char* start = 0)
@@ -110,16 +140,22 @@ namespace Sass {
     template <prelexer mx>
     const char* lex()
     {
+      
+      // remeber interesting position
+      const char* wspace_start = position;
 
       // advance position for next call
       before_token = after_token;
 
+      // string wspace_before(position, spaces_and_comments(position) ? spaces_and_comments(position) : position);
+
       // after optional whitespace
-      const char* it_before_token;
+      const char* it_before_token; // = position;
 
       if (mx == block_comment) {
         // a block comment can be preceded by spaces and/or line comments
         it_before_token = zero_plus< alternatives<spaces, line_comment> >(position);
+        // wspace_before = string(position, it_before_token);
       }
       else if (mx == url || mx == ancestor_of || mx == no_spaces) {
         // parse everything literally
@@ -134,6 +170,10 @@ namespace Sass {
         else {
           return 0;
         }
+      }
+
+      else if (mx == spaces_and_comments) {
+        it_before_token = position;
       }
 
       else if (mx == optional_spaces) {
@@ -180,9 +220,9 @@ namespace Sass {
       after_token = after_token + size;
 
       // create parsed token string (public member)
-      lexed = Token(it_before_token, it_after_token, before_token);
-
-      pstate = ParserState(path, Position(before_token.file, before_token.line, before_token.column), size);
+      lexed = Token(wspace_start, it_before_token, it_after_token, spaces_and_comments(it_after_token) ? spaces_and_comments(it_after_token) : it_after_token, before_token);
+      Position pos(before_token.file, before_token.line, before_token.column);
+      pstate = ParserState(path, lexed, pos, size);
 
       // advance internal char iterator
       return position = it_after_token;
@@ -217,6 +257,7 @@ namespace Sass {
     Wrapped_Selector* parse_negated_selector();
     Simple_Selector* parse_pseudo_selector();
     Attribute_Selector* parse_attribute_selector();
+    Selector_Placeholder* parse_placeholder_selector();
     Block* parse_block();
     Declaration* parse_declaration();
     Expression* parse_map_value();
@@ -234,12 +275,13 @@ namespace Sass {
     Function_Call* parse_calc_function();
     Function_Call* parse_function_call();
     Function_Call_Schema* parse_function_call_schema();
-    String* parse_interpolated_chunk(Token);
+    String* parse_interpolated_chunk(Token, bool constant = false);
     String* parse_string();
+    Textual* parse_static_color();
     String_Constant* parse_static_value();
     String* parse_ie_property();
     String* parse_ie_keyword_arg();
-    String_Schema* parse_value_schema();
+    String_Schema* parse_value_schema(const char* stop);
     String* parse_identifier_schema();
     String_Schema* parse_url_schema();
     If* parse_if_directive(bool else_if = false);

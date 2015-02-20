@@ -24,6 +24,12 @@ namespace Sass {
     virtual ~To_String();
 
     string operator()(Null* n);
+    string operator()(String_Constant*);
+
+    // Output_Style output_style;
+    // bool is_output;
+    // bool disable_quotes;
+    bool in_decl_list;
 
     template <typename U>
     string fallback(U n) { return fallback_impl(n); }

@@ -24,6 +24,7 @@ namespace Sass {
   public:
     Env*       env;
     Backtrace* backtrace;
+    size_t schema_lvl;
     Eval(Context&, Env*, Backtrace*);
     virtual ~Eval();
     Eval* with(Env* e, Backtrace* bt); // for setting the env before eval'ing an expression
@@ -65,6 +66,8 @@ namespace Sass {
 
     template <typename U>
     Expression* fallback(U x) { return fallback_impl(x); }
+  private:
+    string interpolation(Expression* s);
   };
 
   Expression* cval_to_astnode(Sass_Value* v, Context& ctx, Backtrace* backtrace, ParserState pstate = ParserState("[AST]"));

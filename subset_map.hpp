@@ -80,6 +80,7 @@ namespace Sass {
     void put(const vector<K>& s, const V& value);
     vector<pair<V, vector<K> > > get_kv(const vector<K>& s);
     vector<V> get_v(const vector<K>& s);
+    vector<V> keys() { return values_; };
     bool empty() { return values_.empty(); }
     void clear() { values_.clear(); hash_.clear(); }
   };
@@ -107,9 +108,7 @@ namespace Sass {
     sort(sorted.begin(), sorted.end());
     vector<pair<size_t, vector<K> > > indices;
     for (size_t i = 0, S = s.size(); i < S; ++i) {
-      // cerr << "looking for " << s[i] << endl;
       if (!hash_.count(s[i])) {
-        // cerr << "didn't find " << s[i] << endl;
         continue;
       }
       vector<triple<vector<K>, set<K>, size_t> > subsets = hash_[s[i]];

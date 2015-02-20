@@ -1,7 +1,9 @@
 #ifdef _WIN32
 #include <io.h>
+#define LFEED "\r\n"
 #else
 #include <unistd.h>
+#define LFEED "\n"
 #endif
 
 #include <cstring>
@@ -256,6 +258,7 @@ extern "C" {
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
       json_delete(json_err);
+      throw;
     }
     catch (string& e) {
       stringstream msg_stream;
@@ -329,7 +332,7 @@ extern "C" {
              .include_paths_array(include_paths)
              .include_paths(vector<string>())
              .precision(c_ctx->precision ? c_ctx->precision : 5)
-             .linefeed(c_ctx->linefeed ? c_ctx->linefeed : "\n")
+             .linefeed(c_ctx->linefeed ? c_ctx->linefeed : LFEED)
              .indent(c_ctx->indent ? c_ctx->indent : "  ");
 
       // create new c++ Context

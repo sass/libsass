@@ -31,7 +31,7 @@
 #endif
 
 #include "units.hpp"
-#include "token.hpp"
+#include "position.hpp"
 #include "constants.hpp"
 #include "operation.hpp"
 #include "position.hpp"
@@ -40,7 +40,8 @@
 #include "environment.hpp"
 #include "error_handling.hpp"
 #include "ast_def_macros.hpp"
- #include "to_string.hpp"
+#include "to_string.hpp"
+#include "util.hpp"
 
 #include "sass.h"
 #include "sass_values.h"
@@ -58,8 +59,18 @@ namespace Sass {
   class Selector;
   class AST_Node {
     ADD_PROPERTY(ParserState, pstate);
+    ADD_PROPERTY(string, wspace_after);
+    ADD_PROPERTY(string, wspace_before);
+    ADD_PROPERTY(bool, is_inspecting);
+    ADD_PROPERTY(bool, is_inspected);
   public:
-    AST_Node(ParserState pstate) : pstate_(pstate) { }
+    AST_Node(ParserState pstate)
+    : pstate_(pstate),
+      wspace_after_(""),
+      wspace_before_(""),
+      is_inspecting_(false),
+      is_inspected_(false)
+    { }
     virtual ~AST_Node() = 0;
     // virtual Block* block() { return 0; }
   public:
@@ -98,7 +109,10 @@ namespace Sass {
     Expression(ParserState pstate,
                bool d = false, bool e = false, bool i = false, Concrete_Type ct = NONE)
     : AST_Node(pstate),
-      is_delayed_(d), is_expanded_(d), is_interpolant_(i), concrete_type_(ct)
+      is_delayed_(d),
+      is_expanded_(d),
+      is_interpolant_(i),
+      concrete_type_(ct)
     { }
     virtual operator bool() { return true; }
     virtual ~Expression() { };
@@ -184,7 +198,7 @@ namespace Sass {
   inline Vectorized<T>::~Vectorized() { }
 
   /////////////////////////////////////////////////////////////////////////////
-  // Mixin class for AST nodes that should behave like ahash table. Uses an
+  // Mixin class for AST nodes that should behave like a hash table. Uses an
   // extra <vector> internally to maintain insertion order for interation.
   /////////////////////////////////////////////////////////////////////////////
   class Hashed {
@@ -471,7 +485,7 @@ namespace Sass {
   ////////////////////////////////////////////////////////////////////////////
   class Import : public Statement {
     vector<string>         files_;
-    vector<Expression*> urls_;
+    vector<Expression*>    urls_;
   public:
     Import(ParserState pstate)
     : Statement(pstate),
@@ -730,6 +744,7 @@ namespace Sass {
   public:
     enum Separator { SPACE, COMMA };
   private:
+    ADD_PROPERTY(vector<string>, wspace);
     ADD_PROPERTY(Separator, separator);
     ADD_PROPERTY(bool, is_arglist);
   public:
@@ -737,12 +752,13 @@ namespace Sass {
          size_t size = 0, Separator sep = SPACE, bool argl = false)
     : Expression(pstate),
       Vectorized<Expression*>(size),
-      separator_(sep), is_arglist_(argl)
+      wspace_(0), separator_(sep), is_arglist_(argl)
     { concrete_type(LIST); }
     string type() { return is_arglist_ ? "arglist" : "list"; }
     static string type_name() { return "list"; }
     bool is_invisible() { return !length(); }
     Expression* value_at_index(size_t i);
+    string wspace_at_index(size_t i);
 
     virtual bool operator==(Expression& rhs) const
     {
@@ -1344,10 +1360,11 @@ namespace Sass {
   class String_Schema : public String, public Vectorized<Expression*> {
     ADD_PROPERTY(char, quote_mark);
     ADD_PROPERTY(bool, has_interpolants);
+    ADD_PROPERTY(bool, is_in_string);
     size_t hash_;
   public:
     String_Schema(ParserState pstate, size_t size = 0, bool unq = false, char qm = '\0', bool i = false)
-    : String(pstate, unq), Vectorized<Expression*>(size), quote_mark_(qm), has_interpolants_(i), hash_(0)
+    : String(pstate, unq), Vectorized<Expression*>(size), quote_mark_(qm), has_interpolants_(i), is_in_string_(false), hash_(0)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1382,26 +1399,58 @@ namespace Sass {
     ATTACH_OPERATIONS();
   };
 
+inline string normalize(const string& str) {
+
+  string norm("");
+  bool skip = false;
+  for(auto chr : str) {
+    if (chr == '\n') {
+      skip = true;
+    }
+    if (skip) {
+      if (chr != ' ' && chr != '\t'&& chr != '\r'&& chr != '\n') {
+      	norm += ' ';
+      	skip = false;
+      }
+    }
+    if (!skip) norm += chr;
+
+  }
+  return norm;
+
+}
+
   ////////////////////////////////////////////////////////
   // Flat strings -- the lowest level of raw textual data.
   ////////////////////////////////////////////////////////
   class String_Constant : public String {
+    ADD_PROPERTY(int, mynr);
+    ADD_PROPERTY(bool, marker);
+    ADD_PROPERTY(bool, was_quoted);
+    ADD_PROPERTY(bool, was_schema);
+    ADD_PROPERTY(bool, was_in_string);
+    ADD_PROPERTY(bool, is_special);
+    ADD_PROPERTY(bool, is_sticky);
+    ADD_PROPERTY(char, quotemark);
+    ADD_PROPERTY(bool, is_parsed);
+    ADD_PROPERTY(bool, is_static);
     ADD_PROPERTY(string, value);
+  protected:
     string unquoted_;
     size_t hash_;
   public:
-    String_Constant(ParserState pstate, string val, bool unq = false)
-    : String(pstate, unq, true), value_(val), hash_(0)
-    { unquoted_ = unquote(value_); }
-    String_Constant(ParserState pstate, const char* beg, bool unq = false)
-    : String(pstate, unq, true), value_(string(beg)), hash_(0)
-    { unquoted_ = unquote(value_); }
-    String_Constant(ParserState pstate, const char* beg, const char* end, bool unq = false)
-    : String(pstate, unq, true), value_(string(beg, end-beg)), hash_(0)
-    { unquoted_ = unquote(value_); }
-    String_Constant(ParserState pstate, const Token& tok, bool unq = false)
-    : String(pstate, unq, true), value_(string(tok.begin, tok.end)), hash_(0)
-    { unquoted_ = unquote(value_); }
+    String_Constant(int mynr, ParserState pstate, bool wq, string val, bool unq = false, bool norm = false)
+    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), is_special_(false), is_sticky_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(val), hash_(0)
+    { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
+    String_Constant(int mynr, ParserState pstate, bool wq, const char* beg, bool unq = false, bool norm = false)
+    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), is_special_(false), is_sticky_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg)), hash_(0)
+    { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
+    String_Constant(int mynr, ParserState pstate, bool wq, const char* beg, const char* end, bool unq = false, bool norm = false)
+    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), is_special_(false), is_sticky_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg, end-beg)), hash_(0)
+    { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
+    String_Constant(int mynr, ParserState pstate, bool wq, const Token& tok, bool unq = false, bool norm = false)
+    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), is_special_(false), is_sticky_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(tok.begin, tok.end)), hash_(0)
+    { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
     string type() { return "string"; }
     static string type_name() { return "string"; }
 
@@ -1427,9 +1476,57 @@ namespace Sass {
 
     static char single_quote() { return '\''; }
     static char double_quote() { return '"'; }
+    static char auto_quote() { return '*'; }
 
     bool is_quoted() { return value_.length() && (value_[0] == '"' || value_[0] == '\''); }
     char quote_mark() { return is_quoted() ? value_[0] : '\0'; }
+    ATTACH_OPERATIONS();
+  };
+
+  ////////////////////////////////////////////////////////
+  // Flat strings -- the lowest level of raw textual data.
+  ////////////////////////////////////////////////////////
+  class String_Quoted : public String_Constant {
+    ADD_PROPERTY(int, mynr);
+  public:
+    String_Quoted(ParserState pstate, string val, int nr, bool parsed, bool unq = false, bool norm = false)
+    : String_Constant(nr, pstate, false, (string_evacuate(val)), unq, norm), mynr_(nr)
+    {
+    	char q = 0;
+    	value_ = unquote(value_, &q, nr);
+    	value_ = string_read_escape(value_);
+    	value_ = string_unescape(value_);
+
+      is_parsed_ = parsed;
+      if (q && (was_quoted_ = (value_ != val))) {
+        string out("");
+        for (auto i : value_) {
+          if (i == 10) {
+            out += i;
+          } else {
+            out += i;
+          }
+        }
+        value_ = out;
+        if (val.size() > 1 && *val.begin() == *val.rbegin()) {
+          if (*val.begin() == '"' || *val.begin() == '\'') {
+            quotemark_ = *val.begin();
+          }
+        }
+      }
+      unquoted_ = value_;
+    }
+    String_Quoted(ParserState pstate, int nr, bool parsed, const char* beg, bool unq = false, bool norm = false)
+    : String_Constant(nr, pstate, false, beg, unq, norm)
+    { is_parsed_ = parsed; }
+    String_Quoted(ParserState pstate, int nr, bool parsed, const char* beg, const char* end, bool unq = false, bool norm = false)
+    : String_Constant(nr, pstate, false, beg, end, unq, norm)
+    { is_parsed_ = parsed; }
+    String_Quoted(ParserState pstate, int nr, bool parsed, const Token& tok, bool unq = false, bool norm = false)
+    : String_Constant(nr, pstate, false, tok, unq, norm)
+    { is_parsed_ = parsed; }
+    string type() { return "string"; }
+    static string type_name() { return "string"; }
     ATTACH_OPERATIONS();
   };
 
@@ -1511,7 +1608,7 @@ namespace Sass {
     bool exclude(string str)
     {
       To_String to_string;
-      bool with = feature() && unquote(feature()->perform(&to_string)).compare("with") == 0;
+      bool with = feature() && unquote(feature()->perform(&to_string), 50).compare("with") == 0;
       List* l = static_cast<List*>(value());
       string v;
 
@@ -1520,7 +1617,7 @@ namespace Sass {
         if (!l || !l->length()) return str.compare("rule");
         for (size_t i = 0, L = l->length(); i < L; ++i)
         {
-          v = unquote((*l)[i]->perform(&to_string));
+          v = unquote((*l)[i]->perform(&to_string), 52);
           if (v.compare("all") == 0 || v == str) return false;
         }
         return true;
@@ -1530,7 +1627,7 @@ namespace Sass {
         if (!l || !l->length()) return str.compare("rule") == 0;
         for (size_t i = 0, L = l->length(); i < L; ++i)
         {
-          v = unquote((*l)[i]->perform(&to_string));
+          v = unquote((*l)[i]->perform(&to_string), 51);
           if (v.compare("all") == 0 || v == str) return true;
         }
         return false;
@@ -1688,9 +1785,17 @@ namespace Sass {
   class Selector : public AST_Node {
     ADD_PROPERTY(bool, has_reference);
     ADD_PROPERTY(bool, has_placeholder);
+    // line break before list separator
+    ADD_PROPERTY(bool, has_line_feed);
+    // line break after list separator
+    ADD_PROPERTY(bool, has_line_break);
   public:
     Selector(ParserState pstate, bool r = false, bool h = false)
-    : AST_Node(pstate), has_reference_(r), has_placeholder_(h)
+    : AST_Node(pstate),
+      has_reference_(r),
+      has_placeholder_(h),
+      has_line_feed_(false),
+      has_line_break_(false)
     { }
     virtual ~Selector() = 0;
     virtual Selector_Placeholder* find_placeholder();
@@ -2029,16 +2134,20 @@ namespace Sass {
   ///////////////////////////////////
   // Comma-separated selector groups.
   ///////////////////////////////////
-  class Selector_List
-      : public Selector, public Vectorized<Complex_Selector*> {
+  class Selector_List : public Selector, public Vectorized<Complex_Selector*> {
 #ifdef DEBUG
     ADD_PROPERTY(string, mCachedSelector);
 #endif
+    ADD_PROPERTY(vector<string>, wspace);
   protected:
     void adjust_after_pushing(Complex_Selector* c);
   public:
     Selector_List(ParserState pstate, size_t s = 0)
-    : Selector(pstate), Vectorized<Complex_Selector*>(s)
+    : Selector(pstate), Vectorized<Complex_Selector*>(s),
+#ifdef DEBUG
+     mCachedSelector_(""),
+#endif
+     wspace_(s)
     { }
     virtual Selector_Placeholder* find_placeholder();
     virtual int specificity()
@@ -2078,6 +2187,315 @@ namespace Sass {
       return one == two;
     }
   }
+
+inline string str_replace(std::string str, const std::string& oldStr, const std::string& newStr)
+{
+  size_t pos = 0;
+  while((pos = str.find(oldStr, pos)) != std::string::npos)
+  {
+     str.replace(pos, oldStr.length(), newStr);
+     pos += newStr.length();
+  }
+  return str;
+}
+
+inline string prettyprint(const string& str) {
+  string clean = str_replace(str, "\n", "\\n");
+  clean = str_replace(clean, "	", "\\t");
+  clean = str_replace(clean, "\r", "\\r");
+  return clean;
+}
+
+inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
+{
+
+  if (ind == "") cerr << "####################################################################\n";
+  if (dynamic_cast<Bubble*>(node)) {
+    Bubble* bubble = dynamic_cast<Bubble*>(node);
+    cerr << ind << "Bubble " << bubble << " " << bubble->tabs() << endl;
+  } else if (dynamic_cast<At_Root_Block*>(node)) {
+    At_Root_Block* root_block = dynamic_cast<At_Root_Block*>(node);
+    cerr << ind << "At_Root_Block " << root_block << " " << root_block->tabs() << endl;
+    if (root_block->block()) for(auto i : root_block->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Selector_List*>(node)) {
+    Selector_List* selector = dynamic_cast<Selector_List*>(node);
+    cerr << ind << "Selector_List " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+    for(auto i : selector->elements()) { debug_ast(i, ind + " ", env); }
+
+//  } else if (dynamic_cast<Expression*>(node)) {
+//    Expression* expression = dynamic_cast<Expression*>(node);
+//    cerr << ind << "Expression " << expression << " " << expression->concrete_type() << endl;
+
+  } else if (dynamic_cast<Complex_Selector*>(node)) {
+    Complex_Selector* selector = dynamic_cast<Complex_Selector*>(node);
+    cerr << ind << "Complex_Selector " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << " -> ";
+      switch (selector->combinator()) {
+        case Complex_Selector::PARENT_OF:   cerr << "{>}"; break;
+        case Complex_Selector::PRECEDES:    cerr << "{~}"; break;
+        case Complex_Selector::ADJACENT_TO: cerr << "{+}"; break;
+        case Complex_Selector::ANCESTOR_OF: cerr << "{ }"; break;
+      }
+    cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << "> X <" << prettyprint(selector->pstate().token.ws_after()) << ">" << endl;
+    debug_ast(selector->head(), ind + " ", env);
+    debug_ast(selector->tail(), ind + "-", env);
+  } else if (dynamic_cast<Compound_Selector*>(node)) {
+    Compound_Selector* selector = dynamic_cast<Compound_Selector*>(node);
+    cerr << ind << "Compound_Selector " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") <<
+      " <" << prettyprint(selector->pstate().token.ws_before()) << "> X <" << prettyprint(selector->pstate().token.ws_after()) << ">" << endl;
+    for(auto i : selector->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Propset*>(node)) {
+    Propset* selector = dynamic_cast<Propset*>(node);
+    cerr << ind << "Propset " << selector << " " << selector->tabs() << endl;
+    if (selector->block()) for(auto i : selector->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Wrapped_Selector*>(node)) {
+    Wrapped_Selector* selector = dynamic_cast<Wrapped_Selector*>(node);
+    cerr << ind << "Wrapped_Selector " << selector << " <<" << selector->name() << ">>" << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+    debug_ast(selector->selector(), ind + " () ", env);
+  } else if (dynamic_cast<Pseudo_Selector*>(node)) {
+    Pseudo_Selector* selector = dynamic_cast<Pseudo_Selector*>(node);
+    cerr << ind << "Pseudo_Selector " << selector << " <<" << selector->name() << ">>" << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+    debug_ast(selector->expression(), ind + " <= ", env);
+  } else if (dynamic_cast<Attribute_Selector*>(node)) {
+    Attribute_Selector* selector = dynamic_cast<Attribute_Selector*>(node);
+    cerr << ind << "Attribute_Selector " << selector << " <<" << selector->name() << ">>" << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+    debug_ast(selector->value(), ind + "[" + selector->matcher() + "] ", env);
+  } else if (dynamic_cast<Selector_Qualifier*>(node)) {
+    Selector_Qualifier* selector = dynamic_cast<Selector_Qualifier*>(node);
+    cerr << ind << "Selector_Qualifier " << selector << " <<" << selector->name() << ">>" << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+  } else if (dynamic_cast<Type_Selector*>(node)) {
+    Type_Selector* selector = dynamic_cast<Type_Selector*>(node);
+    cerr << ind << "Type_Selector " << selector << " <<" << selector->name() << ">>" << (selector->has_line_break() ? " [line-break]": " -") <<
+      " <" << prettyprint(selector->pstate().token.ws_before()) << "> X <" << prettyprint(selector->pstate().token.ws_after()) << ">" << endl;
+  } else if (dynamic_cast<Selector_Placeholder*>(node)) {
+    Selector_Placeholder* selector = dynamic_cast<Selector_Placeholder*>(node);
+    cerr << ind << "Selector_Placeholder " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+  } else if (dynamic_cast<Selector_Reference*>(node)) {
+    Selector_Reference* selector = dynamic_cast<Selector_Reference*>(node);
+    cerr << ind << "Selector_Reference " << selector << " @ref " << selector->selector() << endl;
+  } else if (dynamic_cast<Simple_Selector*>(node)) {
+    Simple_Selector* selector = dynamic_cast<Simple_Selector*>(node);
+    cerr << ind << "Simple_Selector " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+
+  } else if (dynamic_cast<Selector_Schema*>(node)) {
+    Selector_Schema* selector = dynamic_cast<Selector_Schema*>(node);
+    cerr << ind << "Selector_Schema " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+    debug_ast(selector->contents(), ind + " ");
+    // for(auto i : selector->elements()) { debug_ast(i, ind + " ", env); }
+
+  } else if (dynamic_cast<Selector*>(node)) {
+    Selector* selector = dynamic_cast<Selector*>(node);
+    cerr << ind << "Selector " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+  } else if (dynamic_cast<Media_Block*>(node)) {
+    Media_Block* block = dynamic_cast<Media_Block*>(node);
+    cerr << ind << "Media_Block " << block << " " << block->tabs() << endl;
+    if (block->block()) for(auto i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Feature_Block*>(node)) {
+    Feature_Block* block = dynamic_cast<Feature_Block*>(node);
+    cerr << ind << "Feature_Block " << block << " " << block->tabs() << endl;
+    if (block->block()) for(auto i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Block*>(node)) {
+    Block* root_block = dynamic_cast<Block*>(node);
+    cerr << ind << "Block " << root_block << " " << root_block->tabs() << endl;
+    if (root_block->block()) for(auto i : root_block->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Warning*>(node)) {
+    Warning* block = dynamic_cast<Warning*>(node);
+    cerr << ind << "Warning " << block << " " << block->tabs() << endl;
+  } else if (dynamic_cast<Error*>(node)) {
+    Error* block = dynamic_cast<Error*>(node);
+    cerr << ind << "Error " << block << " " << block->tabs() << endl;
+  } else if (dynamic_cast<Debug*>(node)) {
+    Debug* block = dynamic_cast<Debug*>(node);
+    cerr << ind << "Debug " << block << " " << block->tabs() << endl;
+  } else if (dynamic_cast<Comment*>(node)) {
+    Comment* block = dynamic_cast<Comment*>(node);
+    cerr << ind << "Comment " << block << " " << block->tabs() <<
+      " <" << prettyprint(block->pstate().token.ws_before()) << "> X <" << prettyprint(block->pstate().token.ws_after()) << ">" << endl;
+    debug_ast(block->text(), ind + "// ", env);
+  } else if (dynamic_cast<If*>(node)) {
+    If* block = dynamic_cast<If*>(node);
+    cerr << ind << "If " << block << " " << block->tabs() << endl;
+  } else if (dynamic_cast<Return*>(node)) {
+    Return* block = dynamic_cast<Return*>(node);
+    cerr << ind << "Return " << block << " " << block->tabs() << endl;
+  } else if (dynamic_cast<Extension*>(node)) {
+    Extension* block = dynamic_cast<Extension*>(node);
+    cerr << ind << "Extension " << block << " " << block->tabs() << endl;
+    debug_ast(block->selector(), ind + "-> ", env);
+  } else if (dynamic_cast<Content*>(node)) {
+    Content* block = dynamic_cast<Content*>(node);
+    cerr << ind << "Content " << block << " " << block->tabs() << endl;
+  } else if (dynamic_cast<Import_Stub*>(node)) {
+    Import_Stub* block = dynamic_cast<Import_Stub*>(node);
+    cerr << ind << "Import_Stub " << block << " " << block->tabs() << endl;
+  } else if (dynamic_cast<Import*>(node)) {
+    Import* block = dynamic_cast<Import*>(node);
+    cerr << ind << "Import " << block << " " << block->tabs() << endl;
+    // vector<string>         files_;
+    for (auto imp : block->urls()) debug_ast(imp, "@ ", env);
+  } else if (dynamic_cast<Assignment*>(node)) {
+    Assignment* block = dynamic_cast<Assignment*>(node);
+    cerr << ind << "Assignment " << block << " <<" << block->variable() << ">> " << block->tabs() << endl;
+    debug_ast(block->value(), ind + "=", env);
+  } else if (dynamic_cast<Declaration*>(node)) {
+    Declaration* block = dynamic_cast<Declaration*>(node);
+    cerr << ind << "Declaration " << block << " " << block->tabs() << endl;
+    debug_ast(block->property(), ind + " prop: ", env);
+    debug_ast(block->value(), ind + " value: ", env);
+  } else if (dynamic_cast<At_Rule*>(node)) {
+    At_Rule* block = dynamic_cast<At_Rule*>(node);
+    cerr << ind << "At_Rule " << block << " " << block->tabs() << endl;
+    debug_ast(block->value(), ind + "+", env);
+    debug_ast(block->selector(), ind + "~", env);
+    if (block->block()) for(auto i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Each*>(node)) {
+    Each* block = dynamic_cast<Each*>(node);
+    cerr << ind << "Each " << block << " " << block->tabs() << endl;
+    if (block->block()) for(auto i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<For*>(node)) {
+    For* block = dynamic_cast<For*>(node);
+    cerr << ind << "For " << block << " " << block->tabs() << endl;
+    if (block->block()) for(auto i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<While*>(node)) {
+    While* block = dynamic_cast<While*>(node);
+    cerr << ind << "While " << block << " " << block->tabs() << endl;
+    if (block->block()) for(auto i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Definition*>(node)) {
+    Definition* block = dynamic_cast<Definition*>(node);
+    cerr << ind << "Definition " << block << " " << block->tabs() << endl;
+    if (block->block()) for(auto i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Mixin_Call*>(node)) {
+    Mixin_Call* block = dynamic_cast<Mixin_Call*>(node);
+    cerr << ind << "Mixin_Call " << block << " " << block->tabs() << endl;
+    if (block->block()) for(auto i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Ruleset*>(node)) {
+    Ruleset* ruleset = dynamic_cast<Ruleset*>(node);
+    cerr << ind << "Ruleset " << ruleset << " " << ruleset->tabs() << endl;
+    debug_ast(ruleset->selector(), ind + " ");
+    if (ruleset->block()) for(auto i : ruleset->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Block*>(node)) {
+    Block* block = dynamic_cast<Block*>(node);
+    cerr << ind << "Block " << block << " " << block->tabs() << endl;
+    for(auto i : block->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Textual*>(node)) {
+    Textual* expression = dynamic_cast<Textual*>(node);
+    cerr << ind << "Textual ";
+    if (expression->type() == Textual::NUMBER) cerr << " [NUMBER]";
+    else if (expression->type() == Textual::PERCENTAGE) cerr << " [PERCENTAGE]";
+    else if (expression->type() == Textual::DIMENSION) cerr << " [DIMENSION]";
+    else if (expression->type() == Textual::HEX) cerr << " [HEX]";
+    cerr << expression << " [" << expression->value() << "]" << endl;
+  } else if (dynamic_cast<Variable*>(node)) {
+    Variable* expression = dynamic_cast<Variable*>(node);
+    cerr << ind << "Variable " << expression << " [" << expression->name() << "]" <<
+      // << expression->is_in_string() ? "[in_string] " : " " <<
+      endl;
+    string name(expression->name());
+    if (env && env->has(name)) debug_ast(static_cast<Expression*>((*env)[name]), ind + " -> ", env);
+  } else if (dynamic_cast<Function_Call_Schema*>(node)) {
+    Function_Call_Schema* expression = dynamic_cast<Function_Call_Schema*>(node);
+    cerr << ind << "Function_Call_Schema " << expression << "]" << endl;
+    debug_ast(expression->name(), ind + "name: ", env);
+    debug_ast(expression->arguments(), ind + " args: ", env);
+  } else if (dynamic_cast<Function_Call*>(node)) {
+    Function_Call* expression = dynamic_cast<Function_Call*>(node);
+    cerr << ind << "Function_Call " << expression << " [" << expression->name() << "]" << endl;
+    debug_ast(expression->arguments(), ind + " args: ", env);
+  } else if (dynamic_cast<Arguments*>(node)) {
+    Arguments* expression = dynamic_cast<Arguments*>(node);
+    cerr << ind << "Arguments " << expression << "]" << endl;
+    for(auto i : expression->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Argument*>(node)) {
+    Argument* expression = dynamic_cast<Argument*>(node);
+    cerr << ind << "Argument " << expression << " [" << expression->value() << "]" << endl;
+    debug_ast(expression->value(), ind + " value: ", env);
+  } else if (dynamic_cast<Unary_Expression*>(node)) {
+    Unary_Expression* expression = dynamic_cast<Unary_Expression*>(node);
+    cerr << ind << "Unary_Expression " << expression << " [" << expression->type() << "]" << endl;
+    debug_ast(expression->operand(), ind + " operand: ", env);
+  } else if (dynamic_cast<Binary_Expression*>(node)) {
+    Binary_Expression* expression = dynamic_cast<Binary_Expression*>(node);
+    cerr << ind << "Binary_Expression " << expression << " [" << expression->type() << "]" << endl;
+    debug_ast(expression->left(), ind + " left:  ", env);
+    debug_ast(expression->right(), ind + " right: ", env);
+  } else if (dynamic_cast<Map*>(node)) {
+    Map* expression = dynamic_cast<Map*>(node);
+    cerr << ind << "Map " << expression << " [Hashed]" << endl;
+  } else if (dynamic_cast<List*>(node)) {
+    List* expression = dynamic_cast<List*>(node);
+    cerr << ind << "List " << expression <<
+      (expression->separator() == Sass::List::Separator::COMMA ? "Comma " : "Space ") <<
+      " [delayed: " << expression->is_delayed() << "] " <<
+      " [inspecting: " << expression->is_inspecting() << "] " <<
+      " [interpolant: " << expression->is_interpolant() << "] " <<
+      endl;
+    for(auto i : expression->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Content*>(node)) {
+    Content* expression = dynamic_cast<Content*>(node);
+    cerr << ind << "Content " << expression << " [Statement]" << endl;
+  } else if (dynamic_cast<Boolean*>(node)) {
+    Boolean* expression = dynamic_cast<Boolean*>(node);
+    cerr << ind << "Boolean " << expression << " [" << expression->value() << "]" << endl;
+  } else if (dynamic_cast<Color*>(node)) {
+    Color* expression = dynamic_cast<Color*>(node);
+    cerr << ind << "Color " << expression << " [" << expression->r() << ":"  << expression->g() << ":" << expression->b() << "@" << expression->a() << "]" << endl;
+  } else if (dynamic_cast<Number*>(node)) {
+    Number* expression = dynamic_cast<Number*>(node);
+    cerr << ind << "Number " << expression << " [" << expression->value() << expression->unit() << "]" << endl;
+  } else if (dynamic_cast<String_Quoted*>(node)) {
+    String_Quoted* expression = dynamic_cast<String_Quoted*>(node);
+    cerr << ind << "String_Quoted " << expression->mynr() << " : " << expression << " [" << prettyprint(expression->value()) << "]" <<
+      (expression->marker() ? " {marker}" : "") <<
+      (expression->is_parsed() ? " {parsed}" : "") <<
+      (expression->is_special() ? " {special}" : "") <<
+      (expression->was_in_string() ? " {was_in_string}" : "") <<
+      (expression->needs_unquoting() ? " {needs_unquoting}" : "") <<
+      (expression->is_sticky() ? " {is_sticky}" : "") <<
+      (expression->was_schema() ? " {schema}" : "") <<
+      (expression->is_delayed() ? " {delayed}" : "") <<
+      (expression->needs_unquoting() ? " {unquote}" : "") <<
+      (expression->was_quoted() ? " {quoted}" : "") <<
+      (expression->is_static() ? " {static}" : "") <<
+      (expression->quotemark() != 0 ? " {qm:" + string(1, expression->quotemark()) + "}" : "") <<
+      " <" << prettyprint(expression->pstate().token.ws_before()) << "> X <" << prettyprint(expression->pstate().token.ws_after()) << ">" << endl;
+  } else if (dynamic_cast<String_Constant*>(node)) {
+    String_Constant* expression = dynamic_cast<String_Constant*>(node);
+    cerr << ind << "String_Constant " << expression->mynr() << " : " << expression << " [" << prettyprint(expression->value()) << "]" <<
+      (expression->is_parsed() ? " {parsed}" : "") <<
+      (expression->is_special() ? " {special}" : "") <<
+      (expression->was_schema() ? " {schema}" : "") <<
+      (expression->is_delayed() ? " {delayed}" : "") <<
+      (expression->needs_unquoting() ? " {unquote}" : "") <<
+      (expression->was_quoted() ? " {quoted}" : "") <<
+      (expression->is_static() ? " {static}" : "") <<
+      (expression->quotemark() != 0 ? " {qm:" + string(1, expression->quotemark()) + "}" : "") <<
+      " <" << prettyprint(expression->pstate().token.ws_before()) << "> X <" << prettyprint(expression->pstate().token.ws_after()) << ">" << endl;
+  } else if (dynamic_cast<String_Schema*>(node)) {
+    String_Schema* expression = dynamic_cast<String_Schema*>(node);
+    cerr << ind << "String_Schema " << expression << " " << expression->concrete_type() <<
+      (expression->is_in_string() ? " {is_in_string}" : "") <<
+      (expression->has_interpolants() ? " {has_interpolants}" : "") <<
+      (expression->quote_mark() != 0 ? " {quote_mark:" + string(1, expression->quote_mark()) + "}" : "") <<
+      endl;
+    for(auto i : expression->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<String*>(node)) {
+    String* expression = dynamic_cast<String*>(node);
+    cerr << ind << "String " << expression << expression->concrete_type() <<
+      " " << (expression->needs_unquoting() ? "{unquote}" : "") <<
+      endl;
+  } else if (dynamic_cast<Expression*>(node)) {
+    Expression* expression = dynamic_cast<Expression*>(node);
+    cerr << ind << "Expression " << expression << " " << expression->concrete_type() << endl;
+  } else if (dynamic_cast<Has_Block*>(node)) {
+    Has_Block* has_block = dynamic_cast<Has_Block*>(node);
+    cerr << ind << "Has_Block " << has_block << " " << has_block->tabs() << endl;
+    if (has_block->block()) for(auto i : has_block->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (dynamic_cast<Statement*>(node)) {
+    Statement* statement = dynamic_cast<Statement*>(node);
+    cerr << ind << "Statement " << statement << " " << statement->tabs() << endl;
+  }
+
+  if (ind == "") cerr << "####################################################################\n";
+}
 
 }
 

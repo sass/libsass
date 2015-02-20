@@ -49,7 +49,7 @@ namespace Sass {
       Keyframe_Rule* k = new (ctx.mem) Keyframe_Rule(r->pstate(), r->block()->perform(this)->block());
       if (r->selector()) {
         string s(r->selector()->perform(eval->with(env, backtrace))->perform(&to_string));
-        String_Constant* ss = new (ctx.mem) String_Constant(r->selector()->pstate(), s);
+        String_Constant* ss = new (ctx.mem) String_Constant(744, r->selector()->pstate(), false, s);
         k->rules(ss);
       }
       in_at_root = old_in_at_root;
@@ -62,12 +62,17 @@ namespace Sass {
       contextual = contextualize->with(at_root_selector_stack.back(), env, backtrace);
 
     Selector* sel_ctx = r->selector()->perform(contextual);
+    if (sel_ctx == 0) throw "bad selector";
 
-    Inspect isp(0);
+    OutputBuffer buffer;
+    Emitter emitter(buffer, &ctx);
+    Inspect isp(emitter);
+ // debug_ast(sel_ctx, " -- ");
     sel_ctx->perform(&isp);
+    emitter.append_to_buffer(";");
     string str = isp.get_buffer();
-    str += ";";
 
+//    cerr << "REPARSE [" << str << "]" << endl;
     Parser p(ctx, ParserState("[REPARSE]", 0));
     p.source   = str.c_str();
     p.position = str.c_str();
@@ -91,9 +96,12 @@ namespace Sass {
     sel_ctx = sel_lst;
 
     selector_stack.push_back(sel_ctx);
+    Block* blk = r->block()->perform(this)->block();
+    blk->tabs(r->block()->tabs());
     Ruleset* rr = new (ctx.mem) Ruleset(r->pstate(),
                                         sel_ctx,
-                                        r->block()->perform(this)->block());
+                                        blk);
+    rr->tabs(r->tabs());
     selector_stack.pop_back();
     in_at_root = old_in_at_root;
     old_in_at_root = false;
@@ -110,10 +118,11 @@ namespace Sass {
       Statement* stm = (*expanded_block)[i];
       if (typeid(*stm) == typeid(Declaration)) {
         Declaration* dec = static_cast<Declaration*>(stm);
+        // dec->tabs(p->tabs());
         String_Schema* combined_prop = new (ctx.mem) String_Schema(p->pstate());
         if (!property_stack.empty()) {
           *combined_prop << property_stack.back()
-                         << new (ctx.mem) String_Constant(p->pstate(), "-")
+                         << new (ctx.mem) String_Constant(745, p->pstate(), false, "-")
                          << dec->property(); // TODO: eval the prop into a string constant
         }
         else {
@@ -144,13 +153,14 @@ namespace Sass {
 
   Statement* Expand::operator()(Media_Block* m)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     Expression* mq = m->media_queries()->perform(eval->with(env, backtrace));
     mq = Parser::from_c_str(mq->perform(&to_string).c_str(), ctx, mq->pstate()).parse_media_queries();
     Media_Block* mm = new (ctx.mem) Media_Block(m->pstate(),
                                                 static_cast<List*>(mq),
                                                 m->block()->perform(this)->block(),
                                                 selector_stack.back());
+    mm->tabs(m->tabs());
     return mm;
   }
 
@@ -198,10 +208,12 @@ namespace Sass {
 
     if (value->is_invisible() && !d->is_important()) return 0;
 
-    return new (ctx.mem) Declaration(d->pstate(),
-                                     new_p,
-                                     value,
-                                     d->is_important());
+    Declaration* decl = new (ctx.mem) Declaration(d->pstate(),
+                                                  new_p,
+                                                  value,
+                                                  d->is_important());
+    decl->tabs(d->tabs());
+    return decl;
   }
 
   Statement* Expand::operator()(Assignment* a)
@@ -390,7 +402,7 @@ namespace Sass {
 
   Statement* Expand::operator()(Extension* e)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     Selector_List* extender = static_cast<Selector_List*>(selector_stack.back());
     if (!extender) return 0;
     Selector_List* extendee = static_cast<Selector_List*>(e->selector()->perform(contextualize->with(0, env, backtrace)));
@@ -410,6 +422,7 @@ namespace Sass {
 
     for (size_t i = 0, L = extender->length(); i < L; ++i) {
       // let's test this out
+      // debug_ast(s);
       // cerr << "REGISTERING EXTENSION REQUEST: " << (*extender)[i]->perform(&to_string) << " <- " << s->perform(&to_string) << endl;
       ctx.subset_map.put(s->to_str_vec(), make_pair((*extender)[i], s));
     }
@@ -473,7 +486,7 @@ namespace Sass {
   inline Statement* Expand::fallback_impl(AST_Node* n)
   {
     error("unknown internal error; please contact the LibSass maintainers", n->pstate(), backtrace);
-    String_Constant* msg = new (ctx.mem) String_Constant(ParserState("[WARN]"), string("`Expand` doesn't handle ") + typeid(*n).name());
+    String_Constant* msg = new (ctx.mem) String_Constant(746, ParserState("[WARN]"), false, string("`Expand` doesn't handle ") + typeid(*n).name());
     return new (ctx.mem) Warning(ParserState("[WARN]"), msg);
   }
 

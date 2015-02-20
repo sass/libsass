@@ -2,9 +2,10 @@
 #include <cstddef>
 #include <iostream>
 #include <iomanip>
-#include "constants.hpp"
-#include "prelexer.hpp"
 #include "util.hpp"
+#include "position.hpp"
+#include "prelexer.hpp"
+#include "constants.hpp"
 
 
 namespace Sass {
@@ -71,6 +72,14 @@ namespace Sass {
       return
       alternatives<
         newline,
+        exactly<' '>,
+        exactly<'\t'>
+      >(src);
+    }
+
+    const char* tabspace(const char* src) {
+      return
+      alternatives<
         exactly<' '>,
         exactly<'\t'>
       >(src);
@@ -143,7 +152,7 @@ namespace Sass {
 
     // interpolants can be recursive/nested
     const char* interpolant(const char* src) {
-      return smartdel_by<hash_lbrace, rbrace, false>(src);
+      return recursive_scopes< exactly<hash_lbrace>, exactly<rbrace> >(src);
     }
 
     // $re_squote = /'(?:$re_itplnt|\\.|[^'])*'/

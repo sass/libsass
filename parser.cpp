@@ -25,13 +25,46 @@ namespace Sass {
     return p;
   }
 
+  Parser Parser::from_c_str(const char* beg, const char* end, Context& ctx, ParserState pstate)
+  {
+    Parser p(ctx, pstate);
+    p.source   = beg;
+    p.position = p.source;
+    p.end      = end;
+    return p;
+  }
+
+
+    bool Parser::peek_newline(const char* start)
+    {
+      if (!start) start = position;
+
+      if(*start == '\n' || *start == '\r') return true;;
+
+      const char* linefeed = tabspace(start);
+      if (linefeed == 0) return false;
+      return *linefeed == '\n' || *linefeed == '\r';
+    }
+
   Parser Parser::from_token(Token t, Context& ctx, ParserState pstate)
   {
     Parser p(ctx, pstate);
+//    cerr << "reparse from_token " << string(t.begin, t.end) << endl;
+
     p.source   = t.begin;
     p.position = p.source;
     p.end      = t.end;
-    p.dequote  = true;
+    p.dequote  = false;
+    return p;
+  }
+
+  Parser Parser::from_string(const string& src, Context& ctx, ParserState pstate)
+  {
+    Parser p(ctx, pstate);
+    p.source   = src.c_str();
+    p.position = p.source;
+    p.end      = p.source + src.size();;
+    p.dequote  = false;
     return p;
   }
 
@@ -44,7 +77,7 @@ namespace Sass {
     Selector_Lookahead lookahead_result;
     while (position < end) {
       if (lex< block_comment >()) {
-        String*  contents = parse_interpolated_chunk(lexed);
+        String*  contents = parse_interpolated_chunk(lexed); // egal!
         Comment* comment  = new (ctx.mem) Comment(pstate, contents);
         (*root) << comment;
       }
@@ -142,9 +175,10 @@ namespace Sass {
     }
 
     if (extension == ".css") {
-      String_Constant* loc = new (ctx.mem) String_Constant(pstate, import_path, true);
+      String_Constant* loc = new (ctx.mem) String_Quoted(pstate, import_path, 101, true, true);
       Argument* loc_arg = new (ctx.mem) Argument(pstate, loc);
       Arguments* loc_args = new (ctx.mem) Arguments(pstate);
+      loc->was_quoted(false);
       (*loc_args) << loc_arg;
       Function_Call* new_url = new (ctx.mem) Function_Call(pstate, "url", loc_args);
       imp->urls().push_back(new_url);
@@ -211,9 +245,10 @@ namespace Sass {
             !unquote(import_path).substr(0, 8).compare("https://") ||
             !unquote(import_path).substr(0, 2).compare("//"))
         {
-          imp->urls().push_back(new (ctx.mem) String_Constant(pstate, import_path));
+          imp->urls().push_back(new (ctx.mem) String_Quoted(pstate, import_path, 102, true));
         }
         else {
+          import_path = import_path;
           add_single_file(imp, import_path);
         }
 
@@ -368,7 +403,7 @@ namespace Sass {
     }
     else {
       lex< sequence< optional< exactly<'*'> >, identifier > >();
-      property_segment = new (ctx.mem) String_Constant(pstate, lexed);
+      property_segment = new (ctx.mem) String_Quoted(pstate, lexed, 1, true);
     }
     Propset* propset = new (ctx.mem) Propset(pstate, property_segment);
     lex< exactly<':'> >();
@@ -376,6 +411,8 @@ namespace Sass {
     if (!peek< exactly<'{'> >()) error("expected a '{' after namespaced property", pstate);
 
     propset->block(parse_block());
+
+    propset->tabs(indentation);
 
     return propset;
   }
@@ -404,33 +441,45 @@ namespace Sass {
   {
     lex< optional_spaces >();
     const char* i = position;
-    const char* p;
+    // cerr << "parse parse_selector_schema";
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
-
     while (i < end_of_selector) {
-      p = find_first_in_interval< exactly<hash_lbrace> >(i, end_of_selector);
-      if (p) {
-        // accumulate the preceding segment if there is one
-        if (i < p) (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, Position(0, 0)));
-        // find the end of the interpolant and parse it
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, end_of_selector);
-        Expression* interp_node = Parser::from_token(Token(p+2, j, Position(0, 0)), ctx, pstate).parse_list();
-        interp_node->is_interpolant(true);
-        (*schema) << interp_node;
-        i = j + 1;
+      // try to parse mutliple interpolant
+      if (const char* p = find_first_in_interval< exactly<hash_lbrace> >(i, end_of_selector))
+      {
+
+        // accumulate the preceding segment if the position has advanced
+        if (p > i) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p), 2, true);
+
+        // skip to the delimiter by skipping occurences in quoted strings
+        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, end_of_selector);
+        Expression* interpolant = Parser::from_c_str(p+2, j, ctx, pstate).parse_list();
+        interpolant->is_interpolant(true);
+        // add
+        (*schema) << interpolant;
+        // next char
+        i = j;
       }
-      else { // no interpolants left; add the last segment if there is one
-        if (i < end_of_selector) (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, end_of_selector, Position(0, 0)));
+      // no more interpolants have been found
+      // add the last segment if there is one
+      else
+      {
+       if (i < end_of_selector) {
+         (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, end_of_selector), 3, true);
+       }
         break;
       }
     }
     position = end_of_selector;
+
+// cerr << "parse selector schema\n";
     return new (ctx.mem) Selector_Schema(pstate, schema);
   }
 
   Selector_List* Parser::parse_selector_group()
   {
-    To_String to_string;
+    bool run = true;
+    To_String to_string(&ctx);
     lex< spaces_and_comments >();
     Selector_List* group = new (ctx.mem) Selector_List(pstate);
     do {
@@ -451,19 +500,48 @@ namespace Sass {
         }
         else {
           comb = new (ctx.mem) Complex_Selector(sel_source_position, Complex_Selector::ANCESTOR_OF, ref_wrap, comb);
+       //   comb->has_line_break(has_lf);
+          OutputBuffer buffer;
+          Emitter emitter(buffer, &ctx, ctx.output_style);
+          Inspect isp(emitter);
+          comb->perform(&isp);
+          // debug_ast(comb, "** ");
+          // cerr << "COMPLEX == " << buffer.buffer << endl;
           comb->has_reference(true);
         }
+        if (peek_newline()) ref_wrap->has_line_break(true);
       }
+
+run = false;
+
+
+      while (peek< sequence< spaces_and_comments, exactly<','> > >())
+      {
+        // consume everything up and including the comma speparator
+        run = lex< sequence< spaces_and_comments, exactly<','> > >();
+        // remember line break (also between some commas)
+        // if (peek_newline()) comb->has_line_feed(true);
+        if (peek_newline()) comb->has_line_feed(true);
+        if (comb->tail() && peek_newline()) comb->tail()->has_line_feed(true);
+        if (comb->tail() && comb->tail()->head() && peek_newline()) comb->tail()->head()->has_line_feed(true);
+        // remember line break (also between some commas)
+      }
+
+      // group->wspace().push_back("         ");
+
       (*group) << comb;
+
     }
-    while (lex< one_plus< sequence< spaces_and_comments, exactly<','> > > >());
+    while (run);
     while (lex< optional >());    // JMA - ignore optional flag if it follows the selector group
     return group;
   }
 
   Complex_Selector* Parser::parse_selector_combination()
   {
-    lex< spaces_and_comments >();
+    // lex< exactly < ' ' > >();
+    // lex< spaces_and_comments >();
+    // cerr << "LEX1 [" << string(wspace) << "]" << endl;
     Position sel_source_position(-1);
     Compound_Selector* lhs;
     if (peek< exactly<'+'> >() ||
@@ -475,6 +553,7 @@ namespace Sass {
     else {
       lhs = parse_simple_selector_sequence();
       sel_source_position = before_token;
+      lhs->has_line_break(peek_newline());
     }
 
     Complex_Selector::Combinator cmb;
@@ -482,6 +561,7 @@ namespace Sass {
     else if (lex< exactly<'~'> >()) cmb = Complex_Selector::PRECEDES;
     else if (lex< exactly<'>'> >()) cmb = Complex_Selector::PARENT_OF;
     else                            cmb = Complex_Selector::ANCESTOR_OF;
+    bool cpx_lf = peek_newline();
 
     Complex_Selector* rhs;
     if (peek< exactly<','> >() ||
@@ -498,7 +578,10 @@ namespace Sass {
       sel_source_position = before_token;
     }
     if (!sel_source_position.line) sel_source_position = before_token;
-    return new (ctx.mem) Complex_Selector(ParserState(path, sel_source_position, Offset(0, 0)), cmb, lhs, rhs);
+    Complex_Selector* cpx = new (ctx.mem) Complex_Selector(ParserState(path, sel_source_position, Offset(0, 0)), cmb, lhs, rhs);
+    if (cpx_lf) cpx->has_line_break(cpx_lf);
+//    if (cpx_lf) cerr << "PEEK GOT "<< cpx << endl;
+    return cpx;
   }
 
   Compound_Selector* Parser::parse_simple_selector_sequence()
@@ -510,16 +593,20 @@ namespace Sass {
       (*seq) << new (ctx.mem) Selector_Reference(pstate);
       sawsomething = true;
       // if you see a space after a &, then you're done
-      if(lex< spaces >()) {
+      if(peek< spaces >()) {
         return seq;
       }
     }
     if (sawsomething && lex< sequence< negate< functional >, alternatives< identifier_fragment, universal, quoted_string, dimension, percentage, number > > >()) {
       // saw an ampersand, then allow type selectors with arbitrary number of hyphens at the beginning
-      (*seq) << new (ctx.mem) Type_Selector(pstate, lexed);
+      Type_Selector* type_sel = new (ctx.mem) Type_Selector(pstate, unquote(lexed, 103));
+      type_sel->has_line_break(peek_newline());
+      (*seq) << type_sel;
     } else if (lex< sequence< negate< functional >, alternatives< type_selector, universal, quoted_string, dimension, percentage, number > > >()) {
       // if you see a type selector
-      (*seq) << new (ctx.mem) Type_Selector(pstate, lexed);
+      Type_Selector* type_sel = new (ctx.mem) Type_Selector(pstate, lexed);
+      type_sel->has_line_break(peek_newline());
+      (*seq) << type_sel;
       sawsomething = true;
     }
     if (!sawsomething) {
@@ -544,10 +631,10 @@ namespace Sass {
   Simple_Selector* Parser::parse_simple_selector()
   {
     if (lex< id_name >() || lex< class_name >()) {
-      return new (ctx.mem) Selector_Qualifier(pstate, lexed);
+      return new (ctx.mem) Selector_Qualifier(pstate, unquote(lexed, 105));
     }
     else if (lex< quoted_string >() || lex< number >()) {
-      return new (ctx.mem) Type_Selector(pstate, lexed);
+      return new (ctx.mem) Type_Selector(pstate, unquote(lexed, 106));
     }
     else if (peek< pseudo_not >()) {
       return parse_negated_selector();
@@ -559,7 +646,7 @@ namespace Sass {
       return parse_attribute_selector();
     }
     else if (lex< placeholder >()) {
-      return new (ctx.mem) Selector_Placeholder(pstate, lexed);
+      return new (ctx.mem) Selector_Placeholder(pstate, unquote(lexed, 107));
     }
     else {
       error("invalid selector after " + lexed.to_string(), pstate);
@@ -572,6 +659,7 @@ namespace Sass {
   {
     lex< pseudo_not >();
     string name(lexed);
+    lex < spaces_and_comments >();
     ParserState nsource_position = pstate;
     Selector* negated = parse_selector_group();
     if (!lex< exactly<')'> >()) {
@@ -587,17 +675,18 @@ namespace Sass {
       ParserState p = pstate;
       Selector* wrapped = 0;
       if (lex< alternatives< even, odd > >()) {
-        expr = new (ctx.mem) String_Constant(p, lexed);
+        expr = new (ctx.mem) String_Quoted(p, lexed, 4, true);
       }
       else if (peek< binomial >(position)) {
         lex< sequence< optional< coefficient >, exactly<'n'> > >();
-        String_Constant* var_coef = new (ctx.mem) String_Constant(p, lexed);
+        String_Constant* var_coef = new (ctx.mem) String_Quoted(p, lexed, 5, true);
         lex< sign >();
-        String_Constant* op = new (ctx.mem) String_Constant(p, lexed);
+        String_Constant* op = new (ctx.mem) String_Quoted(p, lexed, 6, true);
         // Binary_Expression::Type op = (lexed == "+" ? Binary_Expression::ADD : Binary_Expression::SUB);
         lex< digits >();
-        String_Constant* constant = new (ctx.mem) String_Constant(p, lexed);
+        String_Constant* constant = new (ctx.mem) String_Quoted(p, lexed, 7, true);
         // expr = new (ctx.mem) Binary_Expression(p, op, var_coef, constant);
+    // cerr << "parse parse_pseudo_selector";
         String_Schema* schema = new (ctx.mem) String_Schema(p, 3);
         *schema << var_coef << op << constant;
         expr = schema;
@@ -610,20 +699,20 @@ namespace Sass {
         lex< sequence< optional<sign>,
                        optional<digits>,
                        exactly<'n'> > >();
-        expr = new (ctx.mem) String_Constant(p, lexed);
+        expr = new (ctx.mem) String_Quoted(p, lexed, 107, true);
       }
       else if (lex< sequence< optional<sign>, digits > >()) {
-        expr = new (ctx.mem) String_Constant(p, lexed);
+        expr = new (ctx.mem) String_Quoted(p, lexed, 108, true);
       }
       else if (peek< sequence< identifier, spaces_and_comments, exactly<')'> > >()) {
         lex< identifier >();
-        expr = new (ctx.mem) String_Constant(p, lexed);
+        expr = new (ctx.mem) String_Quoted(p, lexed, 109, true);
       }
       else if (lex< quoted_string >()) {
-        expr = new (ctx.mem) String_Constant(p, lexed);
+        expr = new (ctx.mem) String_Quoted(p, lexed, 110, true);
       }
       else if (peek< exactly<')'> >()) {
-        expr = new (ctx.mem) String_Constant(p, "");
+        expr = new (ctx.mem) String_Constant(701, p, false, "");
       }
       else {
         wrapped = parse_selector_group();
@@ -635,7 +724,7 @@ namespace Sass {
       return new (ctx.mem) Pseudo_Selector(p, name, expr);
     }
     else if (lex < sequence< pseudo_prefix, identifier > >()) {
-      return new (ctx.mem) Pseudo_Selector(pstate, lexed);
+      return new (ctx.mem) Pseudo_Selector(pstate, unquote(lexed, 111));
     }
     else {
       error("unrecognized pseudo-class or pseudo-element", pstate);
@@ -659,10 +748,12 @@ namespace Sass {
 
     String* value = 0;
     if (lex< identifier >()) {
-      value = new (ctx.mem) String_Constant(p, lexed, true);
+//    	cerr << "=============== " << string(lexed) << endl;
+      value = new (ctx.mem) String_Constant(702, p, false, lexed, false);
     }
     else if (lex< quoted_string >()) {
-      value = parse_interpolated_chunk(lexed);
+//    	cerr << "GOT SOME ATTR -- " << string(lexed) << endl;
+      value = parse_interpolated_chunk(lexed, true); // needed!
     }
     else {
       error("expected a string constant or identifier in attribute selector for " + name, pstate);
@@ -681,7 +772,7 @@ namespace Sass {
 
     // JMA - ensure that a block containing only block_comments is parsed
     while (lex< block_comment >()) {
-      String*  contents = parse_interpolated_chunk(lexed);
+      String*  contents = parse_interpolated_chunk(lexed); // egal!
       Comment* comment  = new (ctx.mem) Comment(pstate, contents);
       (*block) << comment;
     }
@@ -693,14 +784,14 @@ namespace Sass {
         }
         semicolon = false;
         while (lex< block_comment >()) {
-          String*  contents = parse_interpolated_chunk(lexed);
+          String*  contents = parse_interpolated_chunk(lexed); // egal!
           Comment* comment  = new (ctx.mem) Comment(pstate, contents);
           (*block) << comment;
         }
         if (lex< sequence< exactly<'}'>, zero_plus< exactly<';'> > > >()) break;
       }
       if (lex< block_comment >()) {
-        String*  contents = parse_interpolated_chunk(lexed);
+        String*  contents = parse_interpolated_chunk(lexed); // egal!
         Comment* comment  = new (ctx.mem) Comment(pstate, contents);
         (*block) << comment;
       }
@@ -818,10 +909,14 @@ namespace Sass {
         }
         else {
           Declaration* decl = parse_declaration();
+          decl->tabs(indentation);
           (*block) << decl;
           if (peek< exactly<'{'> >()) {
             // parse a propset that rides on the declaration's property
+            indentation++;
             Propset* ps = new (ctx.mem) Propset(pstate, decl->property(), parse_block());
+            indentation--;
+            ps->tabs(indentation);
             (*block) << ps;
           }
           else {
@@ -832,7 +927,7 @@ namespace Sass {
       }
       else lex< one_plus< exactly<';'> > >();
       while (lex< block_comment >()) {
-        String*  contents = parse_interpolated_chunk(lexed);
+        String*  contents = parse_interpolated_chunk(lexed); // egal!
         Comment* comment  = new (ctx.mem) Comment(pstate, contents);
         (*block) << comment;
       }
@@ -846,10 +941,10 @@ namespace Sass {
       prop = parse_identifier_schema();
     }
     else if (lex< sequence< optional< exactly<'*'> >, identifier > >()) {
-      prop = new (ctx.mem) String_Constant(pstate, lexed);
+      prop = new (ctx.mem) String_Quoted(pstate, lexed, 8, true);
     }
     else if (lex< custom_property_name >()) {
-      prop = new (ctx.mem) String_Constant(pstate, lexed);
+      prop = new (ctx.mem) String_Quoted(pstate, lexed, 9, true);
     }
     else {
       error("invalid property name", pstate);
@@ -860,13 +955,15 @@ namespace Sass {
       return new (ctx.mem) Declaration(prop->pstate(), prop, parse_static_value()/*, lex<important>()*/);
     }
     else {
-      return new (ctx.mem) Declaration(prop->pstate(), prop, parse_list()/*, lex<important>()*/);
+      Expression* l = parse_list();
+      l->is_inspecting(false);
+      return new (ctx.mem) Declaration(prop->pstate(), prop, l/*, lex<important>()*/);
     }
   }
 
   Expression* Parser::parse_map()
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     Expression* key = parse_list();
 
     // it's not a map so return the lexed value as a list value
@@ -916,13 +1013,21 @@ namespace Sass {
         peek< exactly<')'> >(position) ||
         //peek< exactly<':'> >(position) ||
         peek< exactly<ellipsis> >(position))
-    { return new (ctx.mem) List(pstate, 0); }
+    {
+    	List* l = new (ctx.mem) List(pstate, 0);
+    	 l->is_inspecting(!l->is_interpolant() && ! l->is_delayed());
+    	return l;
+    }
+
     Expression* list1 = parse_space_list();
+
     // if it's a singleton, return it directly; don't wrap it
     if (!peek< exactly<','> >(position)) return list1;
 
     List* comma_list = new (ctx.mem) List(pstate, 2, List::COMMA);
+
     (*comma_list) << list1;
+    comma_list->wspace().push_back("            ");
 
     while (lex< exactly<','> >())
     {
@@ -936,9 +1041,14 @@ namespace Sass {
         break;
       }
       Expression* list = parse_space_list();
+      if (lex< spaces_and_comments >()) {
+        // list->wspace_after(string(lexed));
+      }
       (*comma_list) << list;
     }
 
+    	 // debug_ast(comma_list, " * ");
+    	 comma_list->is_inspecting(! comma_list->is_delayed());
     return comma_list;
   }
 
@@ -959,6 +1069,7 @@ namespace Sass {
     { return disj1; }
 
     List* space_list = new (ctx.mem) List(pstate, 2, List::SPACE);
+// space_list->is_inspecting(true);
     (*space_list) << disj1;
 
     while (!(//peek< exactly<'!'> >(position) ||
@@ -972,7 +1083,12 @@ namespace Sass {
              peek< default_flag >(position) ||
              peek< global_flag >(position)))
     {
-      (*space_list) << parse_disjunction();
+
+      Expression* disj = parse_disjunction();
+      (*space_list) << disj;
+      if (lex< spaces_and_comments >()) {
+        disj->wspace_after(string(lexed));
+      }
     }
 
     return space_list;
@@ -1080,6 +1196,7 @@ namespace Sass {
 
   Expression* Parser::parse_factor()
   {
+  	// cerr << "PARSE A FACTOR [" << position << "]\n";
     if (lex< exactly<'('> >()) {
       Expression* value = parse_map();
       if (!lex< exactly<')'> >()) error("unclosed parenthesis", pstate);
@@ -1110,6 +1227,7 @@ namespace Sass {
       return parse_function_call_schema();
     }
     else if (peek< sequence< identifier_schema, negate< exactly<'%'> > > >()) {
+      // cerr << "PARSE IDENT SCHEMA\n";
       return parse_identifier_schema();
     }
     else if (peek< functional >() && !peek< uri_prefix >()) {
@@ -1125,6 +1243,7 @@ namespace Sass {
       return new (ctx.mem) Unary_Expression(pstate, Unary_Expression::NOT, parse_factor());
     }
     else {
+      // cerr << "PARSE parse_value\n";
       return parse_value();
     }
   }
@@ -1158,7 +1277,7 @@ namespace Sass {
       catch (...) { throw; }
       lex< spaces >();
       if (lex< url >()) {
-        String* the_url = parse_interpolated_chunk(lexed);
+        String* the_url = parse_interpolated_chunk(lexed); // egal!
         Argument* arg = new (ctx.mem) Argument(the_url->pstate(), the_url);
         *args << arg;
       }
@@ -1169,14 +1288,22 @@ namespace Sass {
       return result;
     }
 
-    if (lex< important >())
-    { return new (ctx.mem) String_Constant(pstate, "!important"); }
 
-    if (lex< value_schema >())
-    { return Parser::from_token(lexed, ctx, pstate).parse_value_schema(); }
+    if (lex< important >())
+    { return new (ctx.mem) String_Constant(703, pstate, false, "!important"); }
+
+    const char* stop = peek< value_schema >();
+
+    if (stop > 0)
+{
+	// cerr << "HAS VALUE_SCHEMA 1 [" << string(lexed) << "]\n";
+	return parse_value_schema(stop); // Parser::from_token(lexed, ctx, pstate).
+
+}
 
     if (lex< sequence< true_val, negate< identifier > > >())
-    { return new (ctx.mem) Boolean(pstate, true); }
+    {
+    	return new (ctx.mem) Boolean(pstate, true); }
 
     if (lex< sequence< false_val, negate< identifier > > >())
     { return new (ctx.mem) Boolean(pstate, false); }
@@ -1185,9 +1312,11 @@ namespace Sass {
     { return new (ctx.mem) Null(pstate); }
 
     if (lex< identifier >()) {
-      String_Constant* str = new (ctx.mem) String_Constant(pstate, lexed);
+    	// cerr << "Has identifier\n";
+      String_Constant* str = new (ctx.mem) String_Quoted(pstate, lexed, 10, true);
       // Dont' delay this string if it is a name color. Fixes #652.
-      str->is_delayed(ctx.names_to_colors.count(lexed) == 0);
+      str->is_delayed(ctx.names_to_colors.count(unquote(lexed)) == 0);
+//      str->is_special(ctx.names_to_colors.count(unquote(lexed)) != 0);
       return str;
     }
 
@@ -1206,59 +1335,22 @@ namespace Sass {
     { return new (ctx.mem) Textual(pstate, Textual::NUMBER, lexed); }
 
     if (peek< quoted_string >())
-    { return parse_string(); }
+    {
+    	// cerr << "saw a string\n";
+    	return parse_string(); }
 
     if (lex< variable >())
-    { return new (ctx.mem) Variable(pstate, Util::normalize_underscores(lexed)); }
+    {
+      return new (ctx.mem) Variable(pstate, Util::normalize_underscores(lexed)); }
 
     // Special case handling for `%` proceeding an interpolant.
     if (lex< sequence< exactly<'%'>, optional< percentage > > >())
-    { return new (ctx.mem) String_Constant(pstate, lexed); }
+    { return new (ctx.mem) String_Quoted(pstate, lexed, 11, true); }
 
     error("error reading values after " + lexed.to_string(), pstate);
 
     // unreachable statement
     return 0;
-  }
-
-  String* Parser::parse_interpolated_chunk(Token chunk)
-  {
-    const char* i = chunk.begin;
-    // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(chunk.begin, chunk.end);
-    if (!p) {
-      String_Constant* str_node = new (ctx.mem) String_Constant(pstate, chunk, dequote);
-      str_node->is_delayed(true);
-      return str_node;
-    }
-
-    String_Schema* schema = new (ctx.mem) String_Schema(pstate);
-    schema->quote_mark(*chunk.begin);
-    while (i < chunk.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
-      if (p) {
-        if (i < p) {
-          (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
-        }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, chunk.end); // find the closing brace
-        if (j) {
-          // parse the interpolant and accumulate it
-          Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
-          interp_node->is_interpolant(true);
-          (*schema) << interp_node;
-          i = j+1;
-        }
-        else {
-          // throw an error if the interpolant is unterminated
-          error("unterminated interpolant inside string constant " + chunk.to_string(), pstate);
-        }
-      }
-      else { // no interpolants left; add the last segment if nonempty
-        if (i < chunk.end) (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, chunk.end, before_token));
-        break;
-      }
-    }
-    return schema;
   }
 
   String_Constant* Parser::parse_static_value()
@@ -1267,63 +1359,28 @@ namespace Sass {
     Token str(lexed);
     --str.end;
     --position;
-    String_Constant* str_node = new (ctx.mem) String_Constant(pstate, str);
-    str_node->is_delayed(true);
+    String_Constant* str_node = new (ctx.mem) String_Constant(704, pstate, true, str);
     return str_node;
   }
 
   String* Parser::parse_string()
   {
     lex< quoted_string >();
-    Token str(lexed);
-    return parse_interpolated_chunk(str);
-    // const char* i = str.begin;
-    // // see if there any interpolants
-    // const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(str.begin, str.end);
-    // if (!p) {
-    //   String_Constant* str_node = new (ctx.mem) String_Constant(pstate, str);
-    //   str_node->is_delayed(true);
-    //   return str_node;
-    // }
-
-    // String_Schema* schema = new (ctx.mem) String_Schema(pstate);
-    // schema->quote_mark(*str.begin);
-    // while (i < str.end) {
-    //   p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, str.end);
-    //   if (p) {
-    //     if (i < p) {
-    //       (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p)); // accumulate the preceding segment if it's nonempty
-    //     }
-    //     const char* j = find_first_in_interval< exactly<rbrace> >(p, str.end); // find the closing brace
-    //     if (j) {
-    //       // parse the interpolant and accumulate it
-    //       Expression* interp_node = Parser::from_token(Token(p+2, j), ctx, pstate).parse_list();
-    //       interp_node->is_interpolant(true);
-    //       (*schema) << interp_node;
-    //       i = j+1;
-    //     }
-    //     else {
-    //       // throw an error if the interpolant is unterminated
-    //       error("unterminated interpolant inside string constant " + str.to_string(), pstate);
-    //     }
-    //   }
-    //   else { // no interpolants left; add the last segment if nonempty
-    //     if (i < str.end) (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, str.end));
-    //     break;
-    //   }
-    // }
-    // return schema;
+    Token token(lexed);
+    return parse_interpolated_chunk(token, false);
   }
 
   String* Parser::parse_ie_property()
   {
     lex< ie_property >();
+//    Color a = lexed;
     Token str(lexed);
+
     const char* i = str.begin;
     // see if there any interpolants
     const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(str.begin, str.end);
     if (!p) {
-      String_Constant* str_node = new (ctx.mem) String_Constant(pstate, str);
+      String_Constant* str_node = new (ctx.mem) String_Constant(122, pstate, false, str);
       str_node->is_delayed(true);
       return str_node;
     }
@@ -1333,15 +1390,15 @@ namespace Sass {
       p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, str.end);
       if (p) {
         if (i < p) {
-          (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
+          (*schema) << new (ctx.mem) String_Constant(123, pstate, false, string(i, p)); // accumulate the preceding segment if it's nonempty
         }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, str.end); // find the closing brace
+        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p+2, str.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
           Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
           interp_node->is_interpolant(true);
           (*schema) << interp_node;
-          i = j+1;
+          i = j;
         }
         else {
           // throw an error if the interpolant is unterminated
@@ -1349,7 +1406,7 @@ namespace Sass {
         }
       }
       else { // no interpolants left; add the last segment if nonempty
-        if (i < str.end) (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, str.end, before_token));
+        if (i < str.end) (*schema) << new (ctx.mem) String_Constant(124, pstate, false, string(i, str.end));
         break;
       }
     }
@@ -1362,35 +1419,39 @@ namespace Sass {
     if (lex< variable >()) *kwd_arg << new (ctx.mem) Variable(pstate, Util::normalize_underscores(lexed));
     else {
       lex< alternatives< identifier_schema, identifier > >();
-      *kwd_arg << new (ctx.mem) String_Constant(pstate, lexed);
+      *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed, 125, true);
     }
     lex< exactly<'='> >();
-    *kwd_arg << new (ctx.mem) String_Constant(pstate, lexed);
+    *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed, 126, true);
     if (peek< variable >()) *kwd_arg << parse_list();
     else if (lex< number >()) *kwd_arg << new (ctx.mem) Textual(pstate, Textual::NUMBER, Util::normalize_decimals(lexed));
-    else {
-      lex< alternatives< identifier_schema, identifier, number, hex > >();
-      *kwd_arg << new (ctx.mem) String_Constant(pstate, lexed);
+//    else if (lex< alternatives < identifier_schema, quoted_string > >()) {
+//      *kwd_arg << parse_interpolated_chunk(Token(lexed));
+//    }
+    else if (lex< alternatives< identifier_schema, identifier, number, hexa, hex > >()) {
+      *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed, 127, true);
     }
     return kwd_arg;
   }
 
-  String_Schema* Parser::parse_value_schema()
+  String_Schema* Parser::parse_value_schema(const char* stop)
   {
+ // cerr << "PARSE_VALUE_SCHEMA [" << string(lexed.begin, lexed.end) << "]" << endl;
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
     size_t num_items = 0;
-    while (position < end) {
+    while (position < stop) {
       if (lex< interpolant >()) {
+      	// cerr << "HAS INTERPOLANTS IN VALUE_SCHEMA [" << string(lexed.begin + 2, lexed.end - 1) << "]\n";
         Token insides(Token(lexed.begin + 2, lexed.end - 1, before_token));
         Expression* interp_node = Parser::from_token(insides, ctx, pstate).parse_list();
         interp_node->is_interpolant(true);
         (*schema) << interp_node;
       }
       else if (lex< exactly<'%'> >()) {
-        (*schema) << new (ctx.mem) String_Constant(pstate, lexed);
+        (*schema) << new (ctx.mem) String_Constant(705, pstate, false, lexed);
       }
       else if (lex< identifier >()) {
-        (*schema) << new (ctx.mem) String_Constant(pstate, lexed);
+        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, 128, true);
       }
       else if (lex< percentage >()) {
         (*schema) << new (ctx.mem) Textual(pstate, Textual::PERCENTAGE, lexed);
@@ -1402,10 +1463,11 @@ namespace Sass {
         (*schema) << new (ctx.mem) Textual(pstate, Textual::NUMBER, lexed);
       }
       else if (lex< hex >()) {
-        (*schema) << new (ctx.mem) Textual(pstate, Textual::HEX, lexed);
+        (*schema) << new (ctx.mem) Textual(pstate, Textual::HEX, unquote(lexed, 129));
       }
       else if (lex< quoted_string >()) {
-        (*schema) << new (ctx.mem) String_Constant(pstate, lexed);
+        // (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, 130, true);
+        (*schema) << new (ctx.mem) String_Constant(130, pstate, true, lexed);
         if (!num_items) schema->quote_mark(*lexed.begin);
       }
       else if (lex< variable >()) {
@@ -1421,12 +1483,13 @@ namespace Sass {
 
   String_Schema* Parser::parse_url_schema()
   {
+ // cerr << "parse_url_schema " << string(lexed.begin, lexed.end) << endl;
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
 
     while (position < end) {
       if (position[0] == '/') {
         lexed = Token(position, position+1, before_token);
-        (*schema) << new (ctx.mem) String_Constant(pstate, lexed);
+        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, 131, true);
         ++position;
       }
       else if (lex< interpolant >()) {
@@ -1436,10 +1499,10 @@ namespace Sass {
         (*schema) << interp_node;
       }
       else if (lex< sequence< identifier, exactly<':'> > >()) {
-        (*schema) << new (ctx.mem) String_Constant(pstate, lexed);
+        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, 132, true);
       }
       else if (lex< filename >()) {
-        (*schema) << new (ctx.mem) String_Constant(pstate, lexed);
+        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, 133, true);
       }
       else {
         error("error parsing interpolated url", pstate);
@@ -1448,28 +1511,49 @@ namespace Sass {
     return schema;
   }
 
+  // this parses interpolation outside other strings
+  // means the result must not be quoted again later
   String* Parser::parse_identifier_schema()
   {
+    // first lex away whatever we have found
     lex< sequence< optional< exactly<'*'> >, identifier_schema > >();
-    Token id(lexed);
-    const char* i = id.begin;
-    // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(id.begin, id.end);
-    if (!p) {
-      return new (ctx.mem) String_Constant(pstate, id);
-    }
+    Token chunk(lexed);
+    const char* end = chunk.end;
+    // cerr << "parse_identifier_schema [" << string(lexed) << "]\n";
 
+    const char* i = chunk.begin;
+    // see if there any interpolants
+    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(chunk.begin, chunk.end);
+
+    if (!p) {
+      String_Constant* str_constant = true ?
+        new (ctx.mem) String_Constant(706, pstate, false, string(chunk.begin, chunk.end)) :
+        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), 532, true, dequote);
+        if (String_Quoted* str_quoted = dynamic_cast<String_Quoted*>(str_constant)) {
+          str_quoted->quotemark('*');
+        }
+
+      str_constant->is_delayed(true);
+      return str_constant;
+    }
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
-    while (i < id.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, id.end);
+    schema->quote_mark(*chunk.begin);
+    while (i < chunk.end) {
+      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
       if (p) {
         if (i < p) {
-          (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
+          (*schema) << (true ?
+            new (ctx.mem) String_Constant(707, pstate, false, string(i, p)) :
+            new (ctx.mem) String_Quoted(pstate, string(i, p), 120, true));
         }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, id.end); // find the closing brace
+        // we need to skip anything inside strings
+        // create a new target in parser/prelexer
+        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p+2, chunk.end); // find the closing brace
         if (j) {
+          -- j;
           // parse the interpolant and accumulate it
           Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
+          // cerr << "RE-PARSE -- [" << string(p+2, j) << "]" << endl;
           interp_node->is_interpolant(true);
           (*schema) << interp_node;
           schema->has_interpolants(true);
@@ -1477,14 +1561,70 @@ namespace Sass {
         }
         else {
           // throw an error if the interpolant is unterminated
-          error("unterminated interpolant inside interpolated identifier " + id.to_string(), pstate);
+          error("unterminated interpolant inside interpolated identifier " + chunk.to_string(), pstate);
         }
       }
       else { // no interpolants left; add the last segment if nonempty
-        if (i < id.end) (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, id.end, before_token));
+        if (i < end) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, end), 136, true);
         break;
       }
     }
+    return schema;
+  }
+
+
+  // this parses interpolation inside other strings
+  // means the result should later be quoted again
+  String* Parser::parse_interpolated_chunk(Token chunk, bool constant)
+  {
+    const char* p = 0;
+    const char* i = chunk.begin;
+
+    p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
+    if (!p) {
+
+      String_Quoted* str_constant = 
+        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), 534, true, dequote);
+
+      if (!constant) str_constant->quotemark('*');
+      str_constant->is_delayed(true);
+      return str_constant;
+    }
+
+    // cerr << "parse parse_interpolated_chunk";
+    String_Schema* schema = new (ctx.mem) String_Schema(pstate);
+
+    while (i < chunk.end) {
+      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
+      if (p) {
+        if (i < p) {
+          // accumulate the preceding segment if it's nonempty
+          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p), 120, true);
+        }
+        // we need to skip anything inside strings
+        // create a new target in parser/prelexer
+        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, chunk.end); // find the closing brace
+        if (j) { --j;
+          Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
+          interp_node->is_interpolant(true);
+          (*schema) << interp_node;
+          i = j;
+        }
+        else {
+          // throw an error if the interpolant is unterminated
+          error("unterminated interpolant inside string constant " + chunk.to_string(), pstate);
+        }
+      }
+      else { // no interpolants left; add the last segment if nonempty
+        // check if we need quotes here (was not sure after merge)
+        if (i < chunk.end)
+          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, chunk.end), 87, true);
+        break;
+      }
+      ++ i;
+    }
+//     debug_ast(schema, "interpolated: ");
+
     return schema;
   }
 
@@ -1500,7 +1640,7 @@ namespace Sass {
     const char* arg_end = position;
     lex< exactly<')'> >();
 
-    Argument* arg = new (ctx.mem) Argument(arg_pos, parse_interpolated_chunk(Token(arg_beg, arg_end, before_token)));
+    Argument* arg = new (ctx.mem) Argument(arg_pos, parse_interpolated_chunk(Token(arg_beg, arg_end, before_token))); // egal
     Arguments* args = new (ctx.mem) Arguments(arg_pos);
     *args << arg;
     return new (ctx.mem) Function_Call(call_pos, name, args);
@@ -1636,7 +1776,7 @@ namespace Sass {
     else if (lex< exactly< only_kwd > >()) media_query->is_restricted(true);
 
     if (peek< identifier_schema >()) media_query->media_type(parse_identifier_schema());
-    else if (lex< identifier >())    media_query->media_type(new (ctx.mem) String_Constant(pstate, lexed));
+    else if (lex< identifier >())    media_query->media_type(new (ctx.mem) String_Quoted(pstate, lexed, 137, true));
     else                             (*media_query) << parse_media_expression();
 
     while (lex< exactly< and_kwd > >()) (*media_query) << parse_media_expression();

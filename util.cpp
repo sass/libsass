@@ -1,6 +1,170 @@
+#include "ast.hpp"
 #include "util.hpp"
+#include "utf8/checked.h"
 
 namespace Sass {
+
+
+string evacuate_quotes(const string& str)
+{
+  string out("");
+  bool esc = false;
+  for (auto i : str) {
+    if (esc) {
+      esc = false;
+    }
+    else if (i == '\\') {
+      esc = true;
+    }
+    else {
+      // evacuate unescaped quotes
+      if (i == '"') out += '\\';
+      if (i == '\'') out += '\\';
+    }
+    // remove nothing
+    out += i;
+  }
+  return out;
+}
+
+string string_to_output(const string& str)
+{
+  string out("");
+  for (auto i : str) {
+    if (i == 10) {
+      out += ' ';
+    } else {
+      out += i;
+    }
+  }
+  return out;
+}
+
+// double escape all escape sequences
+// escape quotes and all backslashes
+string string_escape(const string& str)
+{
+  string out("");
+  for (auto i : str) {
+    // escape some characters
+    if (i == '"') out += '\\';
+    if (i == '\'') out += '\\';
+    if (i == '\\') out += '\\';
+    out += i;
+  }
+  return out;
+}
+
+
+string string_unescape(const string& str)
+{
+  string out("");
+  bool skip = false;
+  for (auto i : str) {
+    if (i == '\\' && !skip) {
+      skip = true;
+    } else {
+      out += i;
+      skip = false;
+    }
+  }
+  if (skip) {
+    cerr << "unclosed escaped sequence\n";
+    out += '\\';
+  }
+  return out;
+}
+
+// double escape all escape sequences
+// escape quotes and single backslashes
+string string_evacuate(const string& str)
+{
+  string out("");
+  bool esc = false;
+  for (auto i : str) {
+    if (i == '\\' && !esc) {
+      out += '\\';
+      out += '\\';
+      esc = true;
+    } else if (esc && i == '"') {
+      out += '\\';
+      out += i;
+      esc = false;
+    } else if (esc && i == '\'') {
+      out += '\\';
+      out += i;
+      esc = false;
+    } else if (esc && i == '\\') {
+      out += '\\';
+      out += i;
+      esc = false;
+    } else {
+      esc = false;
+      out += i;
+    }
+  }
+  if (esc) out += 'Z';
+  return out;
+}
+
+
+
+string string_read_escape(const string& str)
+{
+
+  string out("");
+  for (size_t i = 0, L = str.length(); i < L; ++i) {
+    if (str[i] == '\\') {
+
+      ++ i;
+
+      // escape length
+      size_t len = 0;
+
+      // parse as many sequence chars as possible
+      // ToDo: Check if ruby aborts after possible max
+      while (str[i + len] && isxdigit(str[i + len])) ++ len;
+      // hex string?
+      if (len > 0) {
+        // convert the extracted hex string to code point value
+        // ToDo: Maybe we could do this without creating a substring
+        uint32_t cp = strtol(str.substr (i, len).c_str(), nullptr, 16);
+
+        // assert invalid code points
+        if (cp == 0) cp = 0xFFFD;
+        // replace bell character
+        // if (cp == 10) cp = 32;
+
+        // use a very simple approach to convert via utf8 lib
+        // maybe there is a more elegant way; maybe we shoud
+        // convert the whole output from string to a stream!?
+        // allocate memory for utf8 char and convert to utf8
+        unsigned char u[5] = {0,0,0,0,0}; utf8::append(cp, u);
+        for(size_t m = 0; u[m] && m < 5; m++) out.push_back(u[m]);
+
+        // skip some more chars?
+        if (len > 1) i += len;
+
+      }
+      // EO if hex
+
+      else {
+
+        out += '\\';
+        out += str[i];
+
+      }
+
+    } else {
+      out += str[i];
+    }
+  }
+
+  return out;
+
+}
+
+
   namespace Util {
     using std::string;
 

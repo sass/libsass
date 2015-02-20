@@ -2,9 +2,11 @@
 #define SASS_PRELEXER_H
 
 #include <cstring>
+#include <iostream>
 
 namespace Sass {
   namespace Prelexer {
+    using namespace std;
 
     typedef int (*ctype_predicate)(int);
     typedef const char* (*prelexer)(const char*);
@@ -28,7 +30,18 @@ namespace Sass {
       return *pre ? 0 : src;
     }
 
-    // Match a single character that satifies the supplied ctype predicate.
+    template<prelexer mx>
+    const char* find_first_in_interval(const char* beg, const char* end) {
+      while ((beg < end) && *beg) {
+        if ((mx(beg))) {
+        	return beg;
+        }
+        ++beg;
+      }
+      return 0;
+    }
+
+        // Match a single character that satifies the supplied ctype predicate.
     template <ctype_predicate pred>
     const char* class_char(const char* src) {
       return pred(*src) ? src + 1 : 0;
@@ -88,26 +101,25 @@ namespace Sass {
       }
     }
 
-    // Match a sequence of characters delimited by the supplied chars.
-    template <char beg, char end, bool esc>
-    const char* smartdel_by(const char* src) {
+    // skip to delimiter (mx) inside given range
+    // this will savely skip over all quoted strings
+    // recursive skip stuff delimited by start/stop
+    // first start/opener must be consumed already!
+    template<prelexer start, prelexer stop>
+    const char* skip_over_scopes(const char* src, const char* end = 0) {
 
       size_t level = 0;
       bool in_squote = false;
       bool in_dquote = false;
       // bool in_braces = false;
 
-      src = exactly<beg>(src);
+      while (*src) {
 
-      if (!src) return 0;
-
-      while (1) {
-
-        // end of string?
-        if (!*src) return 0;
+        // check for abort condition
+        if (end && src >= end) break;
 
         // has escaped sequence?
-        if (!esc && *src == '\\') {
+        if (*src == '\\') {
           ++ src; // skip this (and next)
         }
         else if (*src == '"') {
@@ -121,23 +133,35 @@ namespace Sass {
         }
 
         // find another opener inside?
-        else if (exactly<beg>(src)) {
+        else if (start(src)) {
           ++ level; // increase counter
         }
 
         // look for the closer (maybe final, maybe not)
-        else if (const char* stop = exactly<end>(src)) {
+        else if (const char* final = stop(src)) {
           // only close one level?
           if (level > 0) -- level;
           // return position at end of stop
           // delimiter may be multiple chars
-          else return stop;
+          else return final;
         }
 
         // next
         ++ src;
-
       }
+
+      return 0;
+    }
+
+    // Match a sequence of characters delimited by the supplied chars.
+    template <prelexer start, prelexer stop>
+    const char* recursive_scopes(const char* src) {
+      // parse opener
+      src = start(src);
+      // abort if not found
+      if (!src) return 0;
+      // parse the rest until final closer
+      return skip_over_scopes<start, stop>(src);
     }
 
     // Match a sequence of characters delimited by the supplied strings.
@@ -151,58 +175,6 @@ namespace Sass {
         stop = exactly<end>(src);
         if (stop && (!esc || *(src - 1) != '\\')) return stop;
         src = stop ? stop : src + 1;
-      }
-    }
-
-    // Match a sequence of characters delimited by the supplied strings.
-    template <const char* beg, const char* end, bool esc>
-    const char* smartdel_by(const char* src) {
-
-      size_t level = 0;
-      bool in_squote = false;
-      bool in_dquote = false;
-      // bool in_braces = false;
-
-      src = exactly<beg>(src);
-
-      if (!src) return 0;
-
-      while (1) {
-
-        // end of string?
-        if (!*src) return 0;
-
-        // has escaped sequence?
-        if (!esc && *src == '\\') {
-          ++ src; // skip this (and next)
-        }
-        else if (*src == '"') {
-          in_dquote = ! in_dquote;
-        }
-        else if (*src == '\'') {
-          in_squote = ! in_squote;
-        }
-        else if (in_dquote || in_squote) {
-          // take everything literally
-        }
-
-        // find another opener inside?
-        else if (exactly<beg>(src)) {
-          ++ level; // increase counter
-        }
-
-        // look for the closer (maybe final, maybe not)
-        else if (const char* stop = exactly<end>(src)) {
-          // only close one level?
-          if (level > 0) -- level;
-          // return position at end of stop
-          // delimiter may be multiple chars
-          else return stop;
-        }
-
-        // next
-        ++ src;
-
       }
     }
 
@@ -415,6 +387,10 @@ namespace Sass {
     const char* xdigits(const char* src);
     const char* alnums(const char* src);
     const char* puncts(const char* src);
+    // Match certain white-space charactes.
+    const char* newline(const char* src);
+    const char* whitespace(const char* src);
+    const char* tabspace(const char* src);
 
     // Match a line comment.
     const char* line_comment(const char* src);
@@ -600,14 +576,7 @@ namespace Sass {
       while (*src && !mx(src)) ++src;
       return *src ? src : 0;
     }
-    template<prelexer mx>
-    const char* find_first_in_interval(const char* beg, const char* end) {
-      while ((beg < end) && *beg) {
-        if (mx(beg)) return beg;
-        ++beg;
-      }
-      return 0;
-    }
+
     template <char c>
     unsigned int count_interval(const char* beg, const char* end) {
       unsigned int counter = 0;

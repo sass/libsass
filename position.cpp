@@ -58,6 +58,8 @@ namespace Sass {
   ParserState::ParserState(string path, Position position, Offset offset)
   : Position(position), path(path), offset(offset) { }
 
+  ParserState::ParserState(string path, Token token, Position position, Offset offset)
+  : Position(position), path(path), offset(offset), token(token) { }
 
   Position Position::inc(const char* begin, const char* end) const
   {
