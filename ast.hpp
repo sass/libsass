@@ -1430,16 +1430,16 @@ inline string normalize(const string& str) {
     size_t hash_;
   public:
     String_Constant(ParserState pstate, bool wq, string val, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(wq), quotemark_(0), value_(val), hash_(0)
+    : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(val), hash_(0)
     { if(norm) value_ = normalize(value_); }
     String_Constant(ParserState pstate, bool wq, const char* beg, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(wq), quotemark_(0), value_(string(beg)), hash_(0)
+    : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(beg)), hash_(0)
     { if(norm) value_ = normalize(value_); }
     String_Constant(ParserState pstate, bool wq, const char* beg, const char* end, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(wq), quotemark_(0), value_(string(beg, end-beg)), hash_(0)
+    : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(beg, end-beg)), hash_(0)
     { if(norm) value_ = normalize(value_); }
     String_Constant(ParserState pstate, bool wq, const Token& tok, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(wq), quotemark_(0), value_(string(tok.begin, tok.end)), hash_(0)
+    : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(tok.begin, tok.end)), hash_(0)
     { if(norm) value_ = normalize(value_); }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1464,9 +1464,9 @@ inline string normalize(const string& str) {
       return hash_;
     }
 
-    static char single_quote() { return '\''; }
-    static char double_quote() { return '"'; }
     static char auto_quote() { return '*'; }
+    static char double_quote() { return '"'; }
+    static char single_quote() { return '\''; }
 
     ATTACH_OPERATIONS();
   };
