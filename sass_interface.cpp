@@ -1,6 +1,6 @@
 #ifdef _WIN32
 #include <io.h>
-#define LFEED "\r\n"
+#define LFEED "\n"
 #else
 #include <unistd.h>
 #define LFEED "\n"

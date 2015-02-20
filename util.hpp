@@ -2,7 +2,6 @@
 #define SASS_UTIL_H
 
 #include <string>
-#include <vector>
 #include "ast_fwd_decl.hpp"
 
 namespace Sass {

@@ -1,6 +1,6 @@
 #ifdef _WIN32
 #include <io.h>
-#define LFEED "\r\n"
+#define LFEED "\n"
 #else
 #include <unistd.h>
 #define LFEED "\n"
@@ -258,7 +258,6 @@ extern "C" {
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
       json_delete(json_err);
-      throw;
     }
     catch (string& e) {
       stringstream msg_stream;

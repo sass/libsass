@@ -224,7 +224,7 @@ namespace Sass {
 
     }
 
-    string result(unquote(message->perform(&to_string), 20));
+    string result(unquote(message->perform(&to_string)));
     Backtrace top(backtrace, w->pstate(), "");
     cerr << "WARNING: " << result;
     cerr << top.to_string(true);
@@ -255,7 +255,7 @@ namespace Sass {
 
     }
 
-    string result(unquote(message->perform(&to_string), 21));
+    string result(unquote(message->perform(&to_string)));
     Backtrace top(backtrace, e->pstate(), "");
     cerr << "Error: " << result;
     cerr << top.to_string(true);
@@ -287,7 +287,7 @@ namespace Sass {
     }
 
     string cwd(ctx.get_cwd());
-    string result(unquote(message->perform(&to_string), 22));
+    string result(unquote(message->perform(&to_string)));
     string rel_path(Sass::File::resolve_relative_path(d->pstate().path, cwd, cwd));
     cerr << rel_path << ":" << d->pstate().line << ":" << " DEBUG: " << result;
     cerr << endl;
@@ -432,10 +432,8 @@ ll->is_inspecting(l->is_inspecting());
         u->operand(new (ctx.mem) String_Constant(711, u->pstate(), false, ""));
       }
       else u->operand(operand);
-//      debug_ast(operand, " -- ");
       String_Constant* result = new (ctx.mem) String_Constant(712, u->pstate(), false,
                                                               u->perform(&to_string));
-//      debug_ast(result, " ==== ");
       return result;
     }
     // unreachable
@@ -463,7 +461,7 @@ ll->is_inspecting(l->is_inspecting());
                                                        c->name(),
                                                        args);
       To_String to_string(&ctx);
-      to_string.in_decl_list =true;
+      to_string.in_decl_list = true;
       return new (ctx.mem) String_Constant(713, c->pstate(), false,
                                            lit->perform(&to_string));
     }

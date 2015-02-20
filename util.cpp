@@ -1,3 +1,4 @@
+#include <vector>
 #include "ast.hpp"
 #include "util.hpp"
 #include "utf8/checked.h"

@@ -25,10 +25,6 @@ namespace Sass {
 
     string operator()(Null* n);
     string operator()(String_Constant*);
-
-    // Output_Style output_style;
-    // bool is_output;
-    // bool disable_quotes;
     bool in_decl_list;
 
     template <typename U>
