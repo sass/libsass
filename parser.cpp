@@ -1034,14 +1034,9 @@ run = false;
         break;
       }
       Expression* list = parse_space_list();
-      if (lex< spaces_and_comments >()) {
-        // list->wspace_after(string(lexed));
-      }
       (*comma_list) << list;
     }
 
-    	 // debug_ast(comma_list, " * ");
-    	 comma_list->is_inspecting(! comma_list->is_delayed());
     return comma_list;
   }
 
