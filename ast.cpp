@@ -143,10 +143,7 @@ namespace Sass {
 
     // if this is a universal selector and rhs is not empty, just return the rhs
     if (name() == "*")
-    {
-    	Compound_Selector* sel = new (ctx.mem) Compound_Selector(*rhs);
-    	return sel;
-    }
+    { return new (ctx.mem) Compound_Selector(*rhs); }
 
 
     Simple_Selector* rhs_0 = (*rhs)[0];

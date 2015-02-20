@@ -1,6 +1,25 @@
 #ifndef SASS_DEBUGGER_H
 #define SASS_DEBUGGER_H
 
+
+inline string str_replace(std::string str, const std::string& oldStr, const std::string& newStr)
+{
+  size_t pos = 0;
+  while((pos = str.find(oldStr, pos)) != std::string::npos)
+  {
+     str.replace(pos, oldStr.length(), newStr);
+     pos += newStr.length();
+  }
+  return str;
+}
+
+inline string prettyprint(const string& str) {
+  string clean = str_replace(str, "\n", "\\n");
+  clean = str_replace(clean, "	", "\\t");
+  clean = str_replace(clean, "\r", "\\r");
+  return clean;
+}
+
 inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
 {
 
