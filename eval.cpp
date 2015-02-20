@@ -1019,7 +1019,7 @@ namespace Sass {
       case Binary_Expression::SUB:
       case Binary_Expression::DIV: {
         string sep(op == Binary_Expression::SUB ? "-" : "/");
-        To_String to_string;
+        To_String to_string(&ctx);
         string color(r->sixtuplet() ? r->perform(&to_string) :
                      Util::normalize_sixtuplet(r->perform(&to_string)));
         return new (ctx.mem) String_Constant(l->pstate(),
