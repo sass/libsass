@@ -175,7 +175,7 @@ namespace Sass {
     }
 
     if (extension == ".css") {
-      String_Constant* loc = new (ctx.mem) String_Quoted(pstate, import_path, 101, true, true);
+      String_Constant* loc = new (ctx.mem) String_Quoted(pstate, import_path, true, true);
       Argument* loc_arg = new (ctx.mem) Argument(pstate, loc);
       Arguments* loc_args = new (ctx.mem) Arguments(pstate);
       loc->was_quoted(false);
@@ -245,7 +245,7 @@ namespace Sass {
             !unquote(import_path).substr(0, 8).compare("https://") ||
             !unquote(import_path).substr(0, 2).compare("//"))
         {
-          imp->urls().push_back(new (ctx.mem) String_Quoted(pstate, import_path, 102, true));
+          imp->urls().push_back(new (ctx.mem) String_Quoted(pstate, import_path, true));
         }
         else {
           import_path = import_path;
@@ -403,7 +403,7 @@ namespace Sass {
     }
     else {
       lex< sequence< optional< exactly<'*'> >, identifier > >();
-      property_segment = new (ctx.mem) String_Quoted(pstate, lexed, 1, true);
+      property_segment = new (ctx.mem) String_Quoted(pstate, lexed, true);
     }
     Propset* propset = new (ctx.mem) Propset(pstate, property_segment);
     lex< exactly<':'> >();
@@ -449,7 +449,7 @@ namespace Sass {
       {
 
         // accumulate the preceding segment if the position has advanced
-        if (p > i) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p), 2, true);
+        if (p > i) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p), true);
 
         // skip to the delimiter by skipping occurences in quoted strings
         const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, end_of_selector);
@@ -465,7 +465,7 @@ namespace Sass {
       else
       {
        if (i < end_of_selector) {
-         (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, end_of_selector), 3, true);
+         (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, end_of_selector), true);
        }
         break;
       }
@@ -671,16 +671,16 @@ run = false;
       ParserState p = pstate;
       Selector* wrapped = 0;
       if (lex< alternatives< even, odd > >()) {
-        expr = new (ctx.mem) String_Quoted(p, lexed, 4, true);
+        expr = new (ctx.mem) String_Quoted(p, lexed, true);
       }
       else if (peek< binomial >(position)) {
         lex< sequence< optional< coefficient >, exactly<'n'> > >();
-        String_Constant* var_coef = new (ctx.mem) String_Quoted(p, lexed, 5, true);
+        String_Constant* var_coef = new (ctx.mem) String_Quoted(p, lexed, true);
         lex< sign >();
-        String_Constant* op = new (ctx.mem) String_Quoted(p, lexed, 6, true);
+        String_Constant* op = new (ctx.mem) String_Quoted(p, lexed, true);
         // Binary_Expression::Type op = (lexed == "+" ? Binary_Expression::ADD : Binary_Expression::SUB);
         lex< digits >();
-        String_Constant* constant = new (ctx.mem) String_Quoted(p, lexed, 7, true);
+        String_Constant* constant = new (ctx.mem) String_Quoted(p, lexed, true);
         // expr = new (ctx.mem) Binary_Expression(p, op, var_coef, constant);
     // cerr << "parse parse_pseudo_selector";
         String_Schema* schema = new (ctx.mem) String_Schema(p, 3);
@@ -695,17 +695,17 @@ run = false;
         lex< sequence< optional<sign>,
                        optional<digits>,
                        exactly<'n'> > >();
-        expr = new (ctx.mem) String_Quoted(p, lexed, 107, true);
+        expr = new (ctx.mem) String_Quoted(p, lexed, true);
       }
       else if (lex< sequence< optional<sign>, digits > >()) {
-        expr = new (ctx.mem) String_Quoted(p, lexed, 108, true);
+        expr = new (ctx.mem) String_Quoted(p, lexed, true);
       }
       else if (peek< sequence< identifier, spaces_and_comments, exactly<')'> > >()) {
         lex< identifier >();
-        expr = new (ctx.mem) String_Quoted(p, lexed, 109, true);
+        expr = new (ctx.mem) String_Quoted(p, lexed, true);
       }
       else if (lex< quoted_string >()) {
-        expr = new (ctx.mem) String_Quoted(p, lexed, 110, true);
+        expr = new (ctx.mem) String_Quoted(p, lexed, true);
       }
       else if (peek< exactly<')'> >()) {
         expr = new (ctx.mem) String_Constant(701, p, false, "");
@@ -937,10 +937,10 @@ run = false;
       prop = parse_identifier_schema();
     }
     else if (lex< sequence< optional< exactly<'*'> >, identifier > >()) {
-      prop = new (ctx.mem) String_Quoted(pstate, lexed, 8, true);
+      prop = new (ctx.mem) String_Quoted(pstate, lexed, true);
     }
     else if (lex< custom_property_name >()) {
-      prop = new (ctx.mem) String_Quoted(pstate, lexed, 9, true);
+      prop = new (ctx.mem) String_Quoted(pstate, lexed, true);
     }
     else {
       error("invalid property name", pstate);
@@ -1300,7 +1300,7 @@ run = false;
 
     if (lex< identifier >()) {
     	// cerr << "Has identifier\n";
-      String_Constant* str = new (ctx.mem) String_Quoted(pstate, lexed, 10, true);
+      String_Constant* str = new (ctx.mem) String_Quoted(pstate, lexed, true);
       // Dont' delay this string if it is a name color. Fixes #652.
       str->is_delayed(ctx.names_to_colors.count(unquote(lexed)) == 0);
       return str;
@@ -1328,7 +1328,7 @@ run = false;
 
     // Special case handling for `%` proceeding an interpolant.
     if (lex< sequence< exactly<'%'>, optional< percentage > > >())
-    { return new (ctx.mem) String_Quoted(pstate, lexed, 11, true); }
+    { return new (ctx.mem) String_Quoted(pstate, lexed, true); }
 
     error("error reading values after " + lexed.to_string(), pstate);
 
@@ -1400,17 +1400,17 @@ run = false;
     if (lex< variable >()) *kwd_arg << new (ctx.mem) Variable(pstate, Util::normalize_underscores(lexed));
     else {
       lex< alternatives< identifier_schema, identifier > >();
-      *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed, 125, true);
+      *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed, true);
     }
     lex< exactly<'='> >();
-    *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed, 126, true);
+    *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed, true);
     if (peek< variable >()) *kwd_arg << parse_list();
     else if (lex< number >()) *kwd_arg << new (ctx.mem) Textual(pstate, Textual::NUMBER, Util::normalize_decimals(lexed));
 //    else if (lex< alternatives < identifier_schema, quoted_string > >()) {
 //      *kwd_arg << parse_interpolated_chunk(Token(lexed));
 //    }
     else if (lex< alternatives< identifier_schema, identifier, number, hexa, hex > >()) {
-      *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed, 127, true);
+      *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed, true);
     }
     return kwd_arg;
   }
@@ -1430,7 +1430,7 @@ run = false;
         (*schema) << new (ctx.mem) String_Constant(705, pstate, false, lexed);
       }
       else if (lex< identifier >()) {
-        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, 128, true);
+        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, true);
       }
       else if (lex< percentage >()) {
         (*schema) << new (ctx.mem) Textual(pstate, Textual::PERCENTAGE, lexed);
@@ -1466,7 +1466,7 @@ run = false;
     while (position < end) {
       if (position[0] == '/') {
         lexed = Token(position, position+1, before_token);
-        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, 131, true);
+        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, true);
         ++position;
       }
       else if (lex< interpolant >()) {
@@ -1476,10 +1476,10 @@ run = false;
         (*schema) << interp_node;
       }
       else if (lex< sequence< identifier, exactly<':'> > >()) {
-        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, 132, true);
+        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, true);
       }
       else if (lex< filename >()) {
-        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, 133, true);
+        (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, true);
       }
       else {
         error("error parsing interpolated url", pstate);
@@ -1504,7 +1504,7 @@ run = false;
     if (!p) {
       String_Constant* str_constant = true ?
         new (ctx.mem) String_Constant(706, pstate, false, string(chunk.begin, chunk.end)) :
-        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), 532, true, dequote);
+        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), true, dequote);
         if (String_Quoted* str_quoted = dynamic_cast<String_Quoted*>(str_constant)) {
           str_quoted->quotemark('*');
         }
@@ -1520,7 +1520,7 @@ run = false;
         if (i < p) {
           (*schema) << (true ?
             new (ctx.mem) String_Constant(707, pstate, false, string(i, p)) :
-            new (ctx.mem) String_Quoted(pstate, string(i, p), 120, true));
+            new (ctx.mem) String_Quoted(pstate, string(i, p), true));
         }
         // we need to skip anything inside strings
         // create a new target in parser/prelexer
@@ -1540,7 +1540,7 @@ run = false;
         }
       }
       else { // no interpolants left; add the last segment if nonempty
-        if (i < end) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, end), 136, true);
+        if (i < end) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, end), true);
         break;
       }
     }
@@ -1559,7 +1559,7 @@ run = false;
     if (!p) {
 
       String_Quoted* str_constant =
-        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), 534, true, dequote);
+        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), true, dequote);
 
       if (!constant) str_constant->quotemark('*');
       str_constant->is_delayed(true);
@@ -1574,7 +1574,7 @@ run = false;
       if (p) {
         if (i < p) {
           // accumulate the preceding segment if it's nonempty
-          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p), 120, true);
+          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p), true);
         }
         // we need to skip anything inside strings
         // create a new target in parser/prelexer
@@ -1593,7 +1593,7 @@ run = false;
       else { // no interpolants left; add the last segment if nonempty
         // check if we need quotes here (was not sure after merge)
         if (i < chunk.end)
-          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, chunk.end), 87, true);
+          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, chunk.end), true);
         break;
       }
       ++ i;
@@ -1751,7 +1751,7 @@ run = false;
     else if (lex< exactly< only_kwd > >()) media_query->is_restricted(true);
 
     if (peek< identifier_schema >()) media_query->media_type(parse_identifier_schema());
-    else if (lex< identifier >())    media_query->media_type(new (ctx.mem) String_Quoted(pstate, lexed, 137, true));
+    else if (lex< identifier >())    media_query->media_type(new (ctx.mem) String_Quoted(pstate, lexed, true));
     else                             (*media_query) << parse_media_expression();
 
     while (lex< exactly< and_kwd > >()) (*media_query) << parse_media_expression();

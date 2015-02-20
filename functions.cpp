@@ -1409,7 +1409,7 @@ namespace Sass {
 
     Signature unit_sig = "unit($number)";
     BUILT_IN(unit)
-    { return new (ctx.mem) String_Quoted(pstate, quote(ARG("$number", Number)->unit(), '"'), 739, false); }
+    { return new (ctx.mem) String_Quoted(pstate, quote(ARG("$number", Number)->unit(), '"'), false); }
 
     Signature unitless_sig = "unitless($number)";
     BUILT_IN(unitless)

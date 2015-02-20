@@ -1483,10 +1483,9 @@ inline string normalize(const string& str) {
   // Flat strings -- the lowest level of raw textual data.
   ////////////////////////////////////////////////////////
   class String_Quoted : public String_Constant {
-    ADD_PROPERTY(int, mynr);
   public:
-    String_Quoted(ParserState pstate, string val, int nr, bool parsed, bool unq = false, bool norm = false)
-    : String_Constant(nr, pstate, false, val, unq, norm), mynr_(nr)
+    String_Quoted(ParserState pstate, string val, bool parsed, bool unq = false, bool norm = false)
+    : String_Constant(1, pstate, false, val, unq, norm)
     {
     	char q = 0;
     	value_ = unquote(value_, &q);

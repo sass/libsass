@@ -834,7 +834,7 @@ str_constant->mynr(771);
     for (size_t i = 0, L = s->length(); i < L; ++i) {
       acc += interpolation((*s)[i]);
     }
-    String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), (acc), 718, false);
+    String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), (acc), false);
     if (!str->was_quoted()) str->value(string_unescape(str->value()));
     str->quotemark('*');
     return str;
@@ -1216,7 +1216,7 @@ str_constant->mynr(771);
     if (rtype == Expression::NULL_VAL) error("invalid null operation: \""+quote(unquote(lstr), '"')+" plus null\".", lhs->pstate());
     string result((lstr) + sep + (rstr));
 
-    String_Quoted* str = new (ctx.mem) String_Quoted(lhs->pstate(), unquoted ? result : (result), 722, false);
+    String_Quoted* str = new (ctx.mem) String_Quoted(lhs->pstate(), unquoted ? result : (result), false);
     str->was_quoted(false);
     return str;
   }
