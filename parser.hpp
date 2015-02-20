@@ -147,15 +147,12 @@ namespace Sass {
       // advance position for next call
       before_token = after_token;
 
-      // string wspace_before(position, spaces_and_comments(position) ? spaces_and_comments(position) : position);
-
       // after optional whitespace
-      const char* it_before_token; // = position;
+      const char* it_before_token;
 
       if (mx == block_comment) {
         // a block comment can be preceded by spaces and/or line comments
         it_before_token = zero_plus< alternatives<spaces, line_comment> >(position);
-        // wspace_before = string(position, it_before_token);
       }
       else if (mx == url || mx == ancestor_of || mx == no_spaces) {
         // parse everything literally
