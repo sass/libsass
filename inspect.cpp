@@ -1086,19 +1086,13 @@ namespace Sass {
 
     if (s.empty()) return string(2, q == String_Constant::auto_quote() ?
       String_Constant::double_quote() : q);
- // cerr << ts <<" GOING TO QUOTE [" << s << "] " << q << "\n";
-    // very error prone and not usefull at all!
-    // if (!q || s[0] == '"' || s[0] == '\'') return s;
 
-    // auto
-    if (q == String_Constant::auto_quote())
-      q = detect_best_quotemark(s.c_str(), q);
-    else
-      q = detect_best_quotemark(s.c_str(), q);
+    // autodetect with fallback to given quote
+    q = detect_best_quotemark(s.c_str(), q);
 
-    string t;
-    t.reserve(s.length()+2);
-    t.push_back(q);
+    string quoted;
+    quoted.reserve(s.length()+2);
+    quoted.push_back(q);
 
     const char* it = s.c_str();
     const char* end = it + strlen(it) + 1;
@@ -1106,45 +1100,28 @@ namespace Sass {
       const char* now = it;
 
       if (*it == q) {
-        t.push_back('\\');
+        quoted.push_back('\\');
       } else if (*it == '\\') {
-        t.push_back('\\');
+        quoted.push_back('\\');
       }
 
       int cp = utf8::next(it, end);
 
-//      cerr << "got cp " << cp << endl;
       if (cp == 10) {
-        t.push_back('\\');
-        t.push_back('a');
+        quoted.push_back('\\');
+        quoted.push_back('a');
       } else if (cp < 127) {
-        t.push_back((char) cp);
+        quoted.push_back((char) cp);
       } else {
         while (now < it) {
-          t.push_back(*now);
+          quoted.push_back(*now);
           ++ now;
         }
       }
     }
-/*
-char* twochars = "\xe6\x97\xa5\xd1\x88";
-char* w = twochars;
-int cp = next(w, twochars + 6);
-assert (cp == 0x65e5);
-assert (w == twochars + 3);
-*/
-/*
-    for (size_t i = 0, L = s.length(); i < L; ++i) {
-      if (s[i] == q) t.push_back('\\');
-      else if (s[i] == '\\') t.push_back('\\');
-      t.push_back(s[i]);
-    }
-*/
 
-    t.push_back(q);
-
-    // cerr << "returned QUOTED " << t << "\n  with " << q << " from " << s << endl;
-    return t;
+    quoted.push_back(q);
+    return quoted;
   }
 
 }
