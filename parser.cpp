@@ -1275,44 +1275,8 @@ namespace Sass {
   String* Parser::parse_string()
   {
     lex< quoted_string >();
-    Token str(lexed);
-    return parse_interpolated_chunk(str);
-    // const char* i = str.begin;
-    // // see if there any interpolants
-    // const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(str.begin, str.end);
-    // if (!p) {
-    //   String_Constant* str_node = new (ctx.mem) String_Constant(pstate, str);
-    //   str_node->is_delayed(true);
-    //   return str_node;
-    // }
-
-    // String_Schema* schema = new (ctx.mem) String_Schema(pstate);
-    // schema->quote_mark(*str.begin);
-    // while (i < str.end) {
-    //   p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, str.end);
-    //   if (p) {
-    //     if (i < p) {
-    //       (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p)); // accumulate the preceding segment if it's nonempty
-    //     }
-    //     const char* j = find_first_in_interval< exactly<rbrace> >(p, str.end); // find the closing brace
-    //     if (j) {
-    //       // parse the interpolant and accumulate it
-    //       Expression* interp_node = Parser::from_token(Token(p+2, j), ctx, pstate).parse_list();
-    //       interp_node->is_interpolant(true);
-    //       (*schema) << interp_node;
-    //       i = j+1;
-    //     }
-    //     else {
-    //       // throw an error if the interpolant is unterminated
-    //       error("unterminated interpolant inside string constant " + str.to_string(), pstate);
-    //     }
-    //   }
-    //   else { // no interpolants left; add the last segment if nonempty
-    //     if (i < str.end) (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, str.end));
-    //     break;
-    //   }
-    // }
-    // return schema;
+    Token token(lexed);
+    return parse_interpolated_chunk(token);
   }
 
   String* Parser::parse_ie_property()

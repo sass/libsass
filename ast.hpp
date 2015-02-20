@@ -1696,7 +1696,9 @@ namespace Sass {
     ADD_PROPERTY(bool, has_placeholder);
   public:
     Selector(ParserState pstate, bool r = false, bool h = false)
-    : AST_Node(pstate), has_reference_(r), has_placeholder_(h)
+    : AST_Node(pstate),
+      has_reference_(r),
+      has_placeholder_(h)
     { }
     virtual ~Selector() = 0;
     virtual Selector_Placeholder* find_placeholder();
@@ -2035,8 +2037,7 @@ namespace Sass {
   ///////////////////////////////////
   // Comma-separated selector groups.
   ///////////////////////////////////
-  class Selector_List
-      : public Selector, public Vectorized<Complex_Selector*> {
+  class Selector_List : public Selector, public Vectorized<Complex_Selector*> {
 #ifdef DEBUG
     ADD_PROPERTY(string, mCachedSelector);
 #endif
