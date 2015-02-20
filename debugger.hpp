@@ -181,9 +181,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     cerr << expression << " [" << expression->value() << "]" << endl;
   } else if (dynamic_cast<Variable*>(node)) {
     Variable* expression = dynamic_cast<Variable*>(node);
-    cerr << ind << "Variable " << expression << " [" << expression->name() << "]" <<
-      // << expression->is_in_string() ? "[in_string] " : " " <<
-      endl;
+    cerr << ind << "Variable " << expression << " [" << expression->name() << "]" << endl;
     string name(expression->name());
     if (env && env->has(name)) debug_ast(static_cast<Expression*>((*env)[name]), ind + " -> ", env);
   } else if (dynamic_cast<Function_Call_Schema*>(node)) {
@@ -257,7 +255,6 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
   } else if (dynamic_cast<String_Schema*>(node)) {
     String_Schema* expression = dynamic_cast<String_Schema*>(node);
     cerr << ind << "String_Schema " << expression << " " << expression->concrete_type() <<
-      (expression->is_in_string() ? " {is_in_string}" : "") <<
       (expression->has_interpolants() ? " {has_interpolants}" : "") <<
       (expression->quote_mark() != 0 ? " {quote_mark:" + string(1, expression->quote_mark()) + "}" : "") <<
       endl;
