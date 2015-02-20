@@ -42,7 +42,7 @@ namespace Sass {
 
 
   Node::Node(const TYPE& type, Complex_Selector::Combinator combinator, Complex_Selector* pSelector, NodeDequePtr& pCollection) :
-  	mType(type),
+    mType(type),
     mCombinator(combinator),
     mpSelector(pSelector),
     mpCollection(pCollection) {}
@@ -177,7 +177,7 @@ namespace Sass {
       return Node::createNil();
     }
 
-		Node node = Node::createCollection();
+    Node node = Node::createCollection();
 
     while (pToConvert) {
 

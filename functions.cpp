@@ -744,7 +744,7 @@ namespace Sass {
     Signature unquote_sig = "unquote($string)";
     BUILT_IN(sass_unquote)
     {
-      To_String to_string;
+      To_String to_string(&ctx);
       AST_Node* arg = env["$string"];
       string org(arg->perform(&to_string));
       string str(unquote(org));
@@ -758,7 +758,7 @@ namespace Sass {
     Signature quote_sig = "quote($string)";
     BUILT_IN(sass_quote)
     {
-      To_String to_string;
+      To_String to_string(&ctx);
       AST_Node* arg = env["$string"];
       string str(quote(arg->perform(&to_string), String_Constant::double_quote()));
       String_Constant* result = new (ctx.mem) String_Constant(pstate, str);
@@ -1352,7 +1352,7 @@ namespace Sass {
     {
       Expression* v = ARG("$value", Expression);
       if (v->concrete_type() == Expression::STRING) {
-        To_String to_string;
+        To_String to_string(&ctx);
         string str(v->perform(&to_string));
         if (ctx.names_to_colors.count(str)) {
           return new (ctx.mem) String_Constant(pstate, "color");

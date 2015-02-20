@@ -144,7 +144,7 @@ namespace Sass {
 
   Statement* Expand::operator()(Media_Block* m)
   {
-    To_String to_string;
+    To_String to_string; // (&ctx); -> src-map test fails!??
     Expression* mq = m->media_queries()->perform(eval->with(env, backtrace));
     mq = Parser::from_c_str(mq->perform(&to_string).c_str(), ctx, mq->pstate()).parse_media_queries();
     Media_Block* mm = new (ctx.mem) Media_Block(m->pstate(),
@@ -390,7 +390,7 @@ namespace Sass {
 
   Statement* Expand::operator()(Extension* e)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     Selector_List* extender = static_cast<Selector_List*>(selector_stack.back());
     if (!extender) return 0;
     Selector_List* extendee = static_cast<Selector_List*>(e->selector()->perform(contextualize->with(0, env, backtrace)));

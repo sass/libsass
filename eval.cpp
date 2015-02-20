@@ -204,7 +204,7 @@ namespace Sass {
   Expression* Eval::operator()(Warning* w)
   {
     Expression* message = w->message()->perform(this);
-    To_String to_string;
+    To_String to_string(&ctx);
 
     // try to use generic function
     if (env->has("@warn[f]")) {
@@ -235,7 +235,7 @@ namespace Sass {
   Expression* Eval::operator()(Error* e)
   {
     Expression* message = e->message()->perform(this);
-    To_String to_string;
+    To_String to_string(&ctx);
 
     // try to use generic function
     if (env->has("@error[f]")) {
@@ -266,7 +266,7 @@ namespace Sass {
   Expression* Eval::operator()(Debug* d)
   {
     Expression* message = d->value()->perform(this);
-    To_String to_string;
+    To_String to_string(&ctx);
 
     // try to use generic function
     if (env->has("@debug[f]")) {
@@ -403,7 +403,7 @@ namespace Sass {
       return result;
     }
     else {
-      To_String to_string;
+      To_String to_string(&ctx);
       // Special cases: +/- variables which evaluate to null ouput just +/-,
       // but +/- null itself outputs the string
       if (operand->concrete_type() == Expression::NULL_VAL && typeid(*(u->operand())) == typeid(Variable)) {
@@ -438,7 +438,7 @@ namespace Sass {
       Function_Call* lit = new (ctx.mem) Function_Call(c->pstate(),
                                                        c->name(),
                                                        args);
-      To_String to_string;
+      To_String to_string(&ctx);
       return new (ctx.mem) String_Constant(c->pstate(),
                                            lit->perform(&to_string));
     }
@@ -589,7 +589,7 @@ namespace Sass {
 
   Expression* Eval::operator()(Variable* v)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     string name(v->name());
     Expression* value = 0;
     if (env->has(name)) value = static_cast<Expression*>((*env)[name]);
@@ -783,7 +783,7 @@ namespace Sass {
 
   Expression* Eval::operator()(Media_Query* q)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     String* t = q->media_type();
     t = static_cast<String*>(t ? t->perform(this) : 0);
     Media_Query* qq = new (ctx.mem) Media_Query(q->pstate(),
@@ -1069,7 +1069,7 @@ namespace Sass {
 
   Expression* op_strings(Context& ctx, Binary_Expression::Type op, Expression* lhs, Expression*rhs)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     Expression::Concrete_Type ltype = lhs->concrete_type();
     Expression::Concrete_Type rtype = rhs->concrete_type();
 
