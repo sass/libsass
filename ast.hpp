@@ -1396,27 +1396,6 @@ namespace Sass {
     ATTACH_OPERATIONS();
   };
 
-inline string normalize(const string& str) {
-
-  string norm("");
-  bool skip = false;
-  for(auto chr : str) {
-    if (chr == '\n') {
-      skip = true;
-    }
-    if (skip) {
-      if (chr != ' ' && chr != '\t'&& chr != '\r'&& chr != '\n') {
-      	norm += ' ';
-      	skip = false;
-      }
-    }
-    if (!skip) norm += chr;
-
-  }
-  return norm;
-
-}
-
   ////////////////////////////////////////////////////////
   // Flat strings -- the lowest level of raw textual data.
   ////////////////////////////////////////////////////////
@@ -1428,18 +1407,18 @@ inline string normalize(const string& str) {
   protected:
     size_t hash_;
   public:
-    String_Constant(ParserState pstate, string val, bool unq = false, bool norm = false)
+    String_Constant(ParserState pstate, string val, bool unq = false)
     : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(val), hash_(0)
-    { if(norm) value_ = normalize(value_); }
-    String_Constant(ParserState pstate, const char* beg, bool unq = false, bool norm = false)
+    {  }
+    String_Constant(ParserState pstate, const char* beg, bool unq = false)
     : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(beg)), hash_(0)
-    { if(norm) value_ = normalize(value_); }
-    String_Constant(ParserState pstate, const char* beg, const char* end, bool unq = false, bool norm = false)
+    {  }
+    String_Constant(ParserState pstate, const char* beg, const char* end, bool unq = false)
     : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(beg, end-beg)), hash_(0)
-    { if(norm) value_ = normalize(value_); }
-    String_Constant(ParserState pstate, const Token& tok, bool unq = false, bool norm = false)
+    {  }
+    String_Constant(ParserState pstate, const Token& tok, bool unq = false)
     : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(tok.begin, tok.end)), hash_(0)
-    { if(norm) value_ = normalize(value_); }
+    {  }
     string type() { return "string"; }
     static string type_name() { return "string"; }
 
@@ -1475,8 +1454,8 @@ inline string normalize(const string& str) {
   ////////////////////////////////////////////////////////
   class String_Quoted : public String_Constant {
   public:
-    String_Quoted(ParserState pstate, string val, bool unq = false, bool norm = false)
-    : String_Constant(pstate, val, unq, norm)
+    String_Quoted(ParserState pstate, string val, bool unq = false)
+    : String_Constant(pstate, val, unq)
     {
     	char q = 0;
     	value_ = unquote(value_, &q);
@@ -1489,14 +1468,14 @@ inline string normalize(const string& str) {
         }
       }
     }
-    String_Quoted(ParserState pstate, const char* beg, bool unq = false, bool norm = false)
-    : String_Constant(pstate, beg, unq, norm)
+    String_Quoted(ParserState pstate, const char* beg, bool unq = false)
+    : String_Constant(pstate, beg, unq)
     { }
-    String_Quoted(ParserState pstate, const char* beg, const char* end, bool unq = false, bool norm = false)
-    : String_Constant(pstate, beg, end, unq, norm)
+    String_Quoted(ParserState pstate, const char* beg, const char* end, bool unq = false)
+    : String_Constant(pstate, beg, end, unq)
     { }
-    String_Quoted(ParserState pstate, const Token& tok, bool unq = false, bool norm = false)
-    : String_Constant(pstate, tok, unq, norm)
+    String_Quoted(ParserState pstate, const Token& tok, bool unq = false)
+    : String_Constant(pstate, tok, unq)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }

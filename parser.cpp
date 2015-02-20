@@ -54,7 +54,6 @@ namespace Sass {
     p.source   = t.begin;
     p.position = p.source;
     p.end      = t.end;
-    p.dequote  = false;
     return p;
   }
 
@@ -64,7 +63,6 @@ namespace Sass {
     p.source   = src.c_str();
     p.position = p.source;
     p.end      = p.source + src.size();;
-    p.dequote  = false;
     return p;
   }
 
@@ -1504,7 +1502,7 @@ run = false;
     if (!p) {
       String_Constant* str_constant = true ?
         new (ctx.mem) String_Constant(pstate, string(chunk.begin, chunk.end)) :
-        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), true, dequote);
+        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), true);
         if (String_Quoted* str_quoted = dynamic_cast<String_Quoted*>(str_constant)) {
           str_quoted->quotemark('*');
         }
@@ -1559,7 +1557,7 @@ run = false;
     if (!p) {
 
       String_Quoted* str_constant =
-        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), dequote);
+        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end));
 
       if (!constant) str_constant->quotemark('*');
       str_constant->is_delayed(true);
