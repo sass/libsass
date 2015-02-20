@@ -1316,7 +1316,6 @@ run = false;
       String_Constant* str = new (ctx.mem) String_Quoted(pstate, lexed, 10, true);
       // Dont' delay this string if it is a name color. Fixes #652.
       str->is_delayed(ctx.names_to_colors.count(unquote(lexed)) == 0);
-//      str->is_special(ctx.names_to_colors.count(unquote(lexed)) != 0);
       return str;
     }
 

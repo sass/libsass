@@ -636,8 +636,6 @@ str_constant->mynr(771);
       value = str_quoted ? str_quoted : str_constant;
       if (str_quoted) { str_quoted->quotemark('*'); }
       if (str_constant) { str_constant->quotemark('*'); }
-
-      // str->is_special(true);
     }
     else if (value->concrete_type() == Expression::LIST) {
     	List* l = new (ctx.mem) List(*static_cast<List*>(value));

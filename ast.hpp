@@ -1429,7 +1429,6 @@ inline string normalize(const string& str) {
     ADD_PROPERTY(bool, was_quoted);
     ADD_PROPERTY(bool, was_schema);
     ADD_PROPERTY(bool, was_in_string);
-    ADD_PROPERTY(bool, is_special);
     ADD_PROPERTY(char, quotemark);
     ADD_PROPERTY(bool, is_parsed);
     ADD_PROPERTY(bool, is_static);
@@ -1439,16 +1438,16 @@ inline string normalize(const string& str) {
     size_t hash_;
   public:
     String_Constant(int mynr, ParserState pstate, bool wq, string val, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), is_special_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(val), hash_(0)
+    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(val), hash_(0)
     { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
     String_Constant(int mynr, ParserState pstate, bool wq, const char* beg, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), is_special_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg)), hash_(0)
+    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg)), hash_(0)
     { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
     String_Constant(int mynr, ParserState pstate, bool wq, const char* beg, const char* end, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), is_special_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg, end-beg)), hash_(0)
+    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(beg, end-beg)), hash_(0)
     { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
     String_Constant(int mynr, ParserState pstate, bool wq, const Token& tok, bool unq = false, bool norm = false)
-    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), is_special_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(tok.begin, tok.end)), hash_(0)
+    : String(pstate, unq, true), mynr_(mynr), marker_(false), was_quoted_(wq), was_schema_(false), was_in_string_(false), quotemark_(0), is_parsed_(false), is_static_(false), value_(string(tok.begin, tok.end)), hash_(0)
     { /* value_ = unquote(value_); */ if(norm) value_ = normalize(value_); unquoted_ = value_; }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -2445,7 +2444,6 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     cerr << ind << "String_Quoted " << expression->mynr() << " : " << expression << " [" << prettyprint(expression->value()) << "]" <<
       (expression->marker() ? " {marker}" : "") <<
       (expression->is_parsed() ? " {parsed}" : "") <<
-      (expression->is_special() ? " {special}" : "") <<
       (expression->was_in_string() ? " {was_in_string}" : "") <<
       (expression->needs_unquoting() ? " {needs_unquoting}" : "") <<
       (expression->was_schema() ? " {schema}" : "") <<
@@ -2459,7 +2457,6 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     String_Constant* expression = dynamic_cast<String_Constant*>(node);
     cerr << ind << "String_Constant " << expression->mynr() << " : " << expression << " [" << prettyprint(expression->value()) << "]" <<
       (expression->is_parsed() ? " {parsed}" : "") <<
-      (expression->is_special() ? " {special}" : "") <<
       (expression->was_schema() ? " {schema}" : "") <<
       (expression->is_delayed() ? " {delayed}" : "") <<
       (expression->needs_unquoting() ? " {unquote}" : "") <<

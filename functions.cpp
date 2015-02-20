@@ -753,6 +753,7 @@ namespace Sass {
       String_Constant* result = 0;
       String_Quoted* string_quoted = dynamic_cast<String_Quoted*>(arg);
       if (string_quoted) {
+        // result = new (ctx.mem) String_Constant(734, pstate, false, string_quoted->value());
         result = new (ctx.mem) String_Constant(734, pstate, false, str);
         result->marker(string_quoted->was_quoted());
       } else if (String_Constant* string_constant = dynamic_cast<String_Constant*>(arg)) {
@@ -851,7 +852,7 @@ namespace Sass {
           str = ins + str;
         }
 
-        if (quotemark) {
+        if (s->was_quoted()) {
           str = quote(str, String_Constant::auto_quote(), 72);
         }
       }
@@ -868,9 +869,7 @@ namespace Sass {
         error(msg, pstate, backtrace);
       }
       catch (...) { throw; }
-      String_Constant* cpy = new (ctx.mem) String_Quoted(pstate, str, 734, false);
-      cpy->was_quoted(s->was_quoted());
-      return cpy;
+      return new (ctx.mem) String_Constant(734, pstate, false, str);
     }
 
     Signature str_index_sig = "str-index($string, $substring)";
@@ -881,9 +880,9 @@ namespace Sass {
         String_Constant* s = ARG("$string", String_Constant);
         String_Constant* t = ARG("$substring", String_Constant);
         string str = s->value();
-        str = unquote(str, 27);
+        str = unquote(str);
         string substr = t->value();
-        substr = unquote(substr, 28);
+        substr = unquote(substr);
 
         size_t c_index = str.find(substr);
         if(c_index == string::npos) {
