@@ -527,8 +527,6 @@ run = false;
         // remember line break (also between some commas)
       }
 
-      // group->wspace().push_back("         ");
-
       (*group) << comb;
 
     }
@@ -1025,7 +1023,6 @@ run = false;
     List* comma_list = new (ctx.mem) List(pstate, 2, List::COMMA);
 
     (*comma_list) << list1;
-    comma_list->wspace().push_back("            ");
 
     while (lex< exactly<','> >())
     {
@@ -1084,9 +1081,6 @@ run = false;
 
       Expression* disj = parse_disjunction();
       (*space_list) << disj;
-      if (lex< spaces_and_comments >()) {
-        disj->wspace_after(string(lexed));
-      }
     }
 
     return space_list;

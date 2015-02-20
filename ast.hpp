@@ -60,14 +60,12 @@ namespace Sass {
   class AST_Node {
     ADD_PROPERTY(ParserState, pstate);
     ADD_PROPERTY(string, wspace_after);
-    ADD_PROPERTY(string, wspace_before);
     ADD_PROPERTY(bool, is_inspecting);
     ADD_PROPERTY(bool, is_inspected);
   public:
     AST_Node(ParserState pstate)
     : pstate_(pstate),
       wspace_after_(""),
-      wspace_before_(""),
       is_inspecting_(false),
       is_inspected_(false)
     { }
