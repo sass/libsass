@@ -756,7 +756,7 @@ namespace Sass {
         // result = new (ctx.mem) String_Constant(734, pstate, false, string_quoted->value());
         result = new (ctx.mem) String_Constant(734, pstate, false, str);
         result->marker(string_quoted->was_quoted());
-      } else if (String_Constant* string_constant = dynamic_cast<String_Constant*>(arg)) {
+      } else if (/* String_Constant* string_constant = */ dynamic_cast<String_Constant*>(arg)) {
         result = new (ctx.mem) String_Constant(731, pstate, false, str);
         result->was_quoted(false);
       } else {
@@ -822,7 +822,7 @@ namespace Sass {
       try {
         s = ARG("$string", String_Constant);
         str = s->value();
-        char quotemark = s->quote_mark();
+        // char quotemark = s->quote_mark();
         str = unquote(str);
         String_Constant* i = ARG("$insert", String_Constant);
         string ins = i->value();
@@ -911,7 +911,7 @@ namespace Sass {
     BUILT_IN(str_slice)
     {
       string newstr;
-      char quotemark = 0;
+      // char quotemark = 0;
       String_Constant* s = 0;
       try {
         s = ARG("$string", String_Constant);
@@ -946,9 +946,9 @@ namespace Sass {
           newstr = quote(newstr, String_Constant::auto_quote());
         }
 
-        if (s->was_quoted()) {
-        	quotemark = s->quotemark();
-        }
+        // if (s->was_quoted()) {
+        	// quotemark = s->quotemark();
+        // }
       }
       catch (utf8::invalid_code_point) {
         string msg("utf8::invalid_code_point");
@@ -1541,6 +1541,7 @@ namespace Sass {
     BUILT_IN(image_url)
     {
       error("`image_url` has been removed from libsass because it's not part of the Sass spec", pstate);
+      return 0;
     }
 
     //////////////////////////
