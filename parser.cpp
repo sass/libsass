@@ -1188,7 +1188,6 @@ run = false;
 
   Expression* Parser::parse_factor()
   {
-  	// cerr << "PARSE A FACTOR [" << position << "]\n";
     if (lex< exactly<'('> >()) {
       Expression* value = parse_map();
       if (!lex< exactly<')'> >()) error("unclosed parenthesis", pstate);
@@ -1219,7 +1218,6 @@ run = false;
       return parse_function_call_schema();
     }
     else if (peek< sequence< identifier_schema, negate< exactly<'%'> > > >()) {
-      // cerr << "PARSE IDENT SCHEMA\n";
       return parse_identifier_schema();
     }
     else if (peek< functional >() && !peek< uri_prefix >()) {
@@ -1235,7 +1233,6 @@ run = false;
       return new (ctx.mem) Unary_Expression(pstate, Unary_Expression::NOT, parse_factor());
     }
     else {
-      // cerr << "PARSE parse_value\n";
       return parse_value();
     }
   }
@@ -1269,7 +1266,7 @@ run = false;
       catch (...) { throw; }
       lex< spaces >();
       if (lex< url >()) {
-        String* the_url = parse_interpolated_chunk(lexed); // egal!
+        String* the_url = parse_interpolated_chunk(lexed);
         Argument* arg = new (ctx.mem) Argument(the_url->pstate(), the_url);
         *args << arg;
       }
@@ -1280,7 +1277,6 @@ run = false;
       return result;
     }
 
-
     if (lex< important >())
     { return new (ctx.mem) String_Constant(703, pstate, false, "!important"); }
 
@@ -1288,7 +1284,6 @@ run = false;
 
     if (stop > 0)
 {
-	// cerr << "HAS VALUE_SCHEMA 1 [" << string(lexed) << "]\n";
 	return parse_value_schema(stop); // Parser::from_token(lexed, ctx, pstate).
 
 }
@@ -1326,13 +1321,10 @@ run = false;
     { return new (ctx.mem) Textual(pstate, Textual::NUMBER, lexed); }
 
     if (peek< quoted_string >())
-    {
-    	// cerr << "saw a string\n";
-    	return parse_string(); }
+    { return parse_string(); }
 
     if (lex< variable >())
-    {
-      return new (ctx.mem) Variable(pstate, Util::normalize_underscores(lexed)); }
+    { return new (ctx.mem) Variable(pstate, Util::normalize_underscores(lexed)); }
 
     // Special case handling for `%` proceeding an interpolant.
     if (lex< sequence< exactly<'%'>, optional< percentage > > >())
@@ -1364,9 +1356,7 @@ run = false;
   String* Parser::parse_ie_property()
   {
     lex< ie_property >();
-//    Color a = lexed;
     Token str(lexed);
-
     const char* i = str.begin;
     // see if there any interpolants
     const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(str.begin, str.end);
@@ -1427,12 +1417,10 @@ run = false;
 
   String_Schema* Parser::parse_value_schema(const char* stop)
   {
- // cerr << "PARSE_VALUE_SCHEMA [" << string(lexed.begin, lexed.end) << "]" << endl;
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
     size_t num_items = 0;
     while (position < stop) {
       if (lex< interpolant >()) {
-      	// cerr << "HAS INTERPOLANTS IN VALUE_SCHEMA [" << string(lexed.begin + 2, lexed.end - 1) << "]\n";
         Token insides(Token(lexed.begin + 2, lexed.end - 1, before_token));
         Expression* interp_node = Parser::from_token(insides, ctx, pstate).parse_list();
         interp_node->is_interpolant(true);
@@ -1457,7 +1445,6 @@ run = false;
         (*schema) << new (ctx.mem) Textual(pstate, Textual::HEX, unquote(lexed));
       }
       else if (lex< quoted_string >()) {
-        // (*schema) << new (ctx.mem) String_Quoted(pstate, lexed, 130, true);
         (*schema) << new (ctx.mem) String_Constant(130, pstate, true, lexed);
         if (!num_items) schema->quote_mark(*lexed.begin);
       }
@@ -1474,7 +1461,6 @@ run = false;
 
   String_Schema* Parser::parse_url_schema()
   {
- // cerr << "parse_url_schema " << string(lexed.begin, lexed.end) << endl;
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
 
     while (position < end) {
@@ -1510,7 +1496,6 @@ run = false;
     lex< sequence< optional< exactly<'*'> >, identifier_schema > >();
     Token chunk(lexed);
     const char* end = chunk.end;
-    // cerr << "parse_identifier_schema [" << string(lexed) << "]\n";
 
     const char* i = chunk.begin;
     // see if there any interpolants
@@ -1544,7 +1529,6 @@ run = false;
           -- j;
           // parse the interpolant and accumulate it
           Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
-          // cerr << "RE-PARSE -- [" << string(p+2, j) << "]" << endl;
           interp_node->is_interpolant(true);
           (*schema) << interp_node;
           schema->has_interpolants(true);
