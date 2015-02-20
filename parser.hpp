@@ -16,31 +16,6 @@ struct Selector_Lookahead {
   bool has_interpolants;
 };
 
-namespace std {
-  template<class T>
-  T begin(std::pair<T, T> p)
-  {
-      return p.first;
-  }
-  template<class T>
-  T end(std::pair<T, T> p)
-  {
-      return p.second;
-  }
-}
-
-template<class Iterator>
-std::reverse_iterator<Iterator> make_reverse_iterator(Iterator it)
-{
-    return std::reverse_iterator<Iterator>(it);
-}
-
-template<class Range>
-std::pair<std::reverse_iterator<decltype(begin(std::declval<Range>()))>, std::reverse_iterator<decltype(begin(std::declval<Range>()))>> make_reverse_range(Range&& r)
-{
-    return std::make_pair(make_reverse_iterator(begin(r)), make_reverse_iterator(end(r)));
-}
-
 namespace Sass {
   using std::string;
   using std::vector;
