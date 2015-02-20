@@ -868,11 +868,8 @@ namespace Sass {
         error(msg, pstate, backtrace);
       }
       catch (...) { throw; }
-      // String_Quoted* cpy = new (ctx.mem) String_Quoted(pstate, newstr, 101, false, true);
       String_Constant* cpy = new (ctx.mem) String_Quoted(pstate, str, 734, false);
       cpy->was_quoted(s->was_quoted());
-      cpy->quotemark('*');
-      cpy->is_sticky(true);
       return cpy;
     }
 
@@ -968,16 +965,7 @@ namespace Sass {
       }
       catch (...) { throw; }
 
-      String_Quoted* cpy = new (ctx.mem) String_Quoted(pstate, newstr, 101, false, true);
-
- // cerr << "STR-SLICE result " << pstate << " - " << newstr << "\n";
-      cpy->was_quoted(s->was_quoted());
-      cpy->quotemark('"');
-      cpy->is_sticky(true);
-
-
-// debug_ast(cpy, "");
-      return cpy;
+      return new (ctx.mem) String_Constant(101, pstate, true, newstr);
 
     }
 
@@ -993,13 +981,8 @@ namespace Sass {
         }
       }
 
-      String_Quoted* cpy = new (ctx.mem) String_Quoted(pstate, str, 834, false);
-      cpy->was_quoted(s->was_quoted());
-      cpy->quotemark(s->quotemark());
-      cpy->is_sticky(true);
-      // cpy->is_delayed(false);
-      // if (s->was_quoted()) cpy->is_sticky(true);
-      return cpy;
+      str = s->was_quoted() ? quote(str, '"') : str;
+      return new (ctx.mem) String_Constant(834, pstate, true, str);
     }
 
     Signature to_lower_case_sig = "to-lower-case($string)";
@@ -1014,11 +997,8 @@ namespace Sass {
         }
       }
 
-      String_Quoted* cpy = new (ctx.mem) String_Quoted(pstate, str, 873, false);
-      cpy->was_quoted(s->was_quoted());
-      cpy->quotemark(s->quotemark());
-      cpy->is_sticky(true);
-      return cpy;
+      str = s->was_quoted() ? quote(str, '"') : str;
+      return new (ctx.mem) String_Constant(873, pstate, true, str);
     }
 
     ///////////////////

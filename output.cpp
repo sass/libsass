@@ -170,8 +170,10 @@ namespace Sass {
           if (dec->value()->concrete_type() == Expression::STRING) {
             String_Constant* valConst = static_cast<String_Constant*>(dec->value());
             string val(valConst->value());
-            if (val.empty() && !valConst->is_sticky()) {
-              bPrintExpression = false;
+            if (dynamic_cast<String_Quoted*>(valConst)) {
+              if (val.empty()) {
+                bPrintExpression = false;
+              }
             }
           }
           else if (dec->value()->concrete_type() == Expression::LIST) {
