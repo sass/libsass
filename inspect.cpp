@@ -985,15 +985,12 @@ namespace Sass {
   string unquote(const string& s, char* qd)
   {
 
-   //  cerr << "UNQUOTE [" << s << "]" << endl;
-
     // not enough room for quotes
     // no possibility to unquote
     if (s.length() < 2) return s;
 
     char q;
     bool skipped = false;
-
 
     // this is no guarantee that the unquoting will work
     // what about whitespace before/after the quotemark?
@@ -1011,24 +1008,30 @@ namespace Sass {
       if (s[i] == '\\' && !skipped) {
         // remember
         skipped = true;
-        // skip it
-        ++ i;
 
-        if (i == L) break;
+        // skip it
+        // ++ i;
+
+        // if (i == L) break;
 
         // escape length
-        size_t len = 0;
+        size_t len = 1;
 
         // parse as many sequence chars as possible
         // ToDo: Check if ruby aborts after possible max
         while (i + len < L && s[i + len] && isxdigit(s[i + len])) ++ len;
 
         // hex string?
-        if (len > 0) {
+        if (len > 1) {
 
           // convert the extracted hex string to code point value
           // ToDo: Maybe we could do this without creating a substring
-          uint32_t cp = strtol(s.substr (i, len).c_str(), nullptr, 16);
+          uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), nullptr, 16);
+
+          // assert invalid code points
+          if (cp == 0) cp = 0xFFFD;
+          // replace bell character
+          // if (cp == 10) cp = 32;
 
           // use a very simple approach to convert via utf8 lib
           // maybe there is a more elegant way; maybe we shoud
@@ -1038,56 +1041,30 @@ namespace Sass {
           for(size_t m = 0; u[m] && m < 5; m++) t.push_back(u[m]);
 
           // skip some more chars?
-          if (len > 1) i += len - 1;
+          i += len - 1; skipped = false;
 
         }
-        // EO if hex
 
-        else if (
-          s[i] == '"' ||
-          s[i] == '\'' ||
-          s[i] == '\\'
-        )
-        {
-          // cerr << "GOT [" << s[i] << "]\n";
-          // valid escape
-          t.push_back(s[i]);
-          // reset status
-          skipped = false;
-        }
-        else {
-          // add escaped char
-          t.push_back('\\');
-          t.push_back(s[i]);
-          // reset status
-          skipped = false;
-        }
+
       }
       // check for unexpected delimiter
       // be strict and throw error back
-      else if (q == s[i]) {
-      	return s;
+      else if (!skipped && q == s[i]) {
+        // don't be that strict
+        return s;
         // this basically always means an internal error and not users fault
-        ParserState pstate("[UNQUOTE]", -1);
-//        cerr << "DEBUG BEFORE ERROR [" << s << "] @ " << i << endl;
-        error("Unescaped delimiter in string to unquote found. [" + s + "]", pstate); // , n->pstate()
+        error("Unescaped delimiter in string to unquote found. [" + s + "]", ParserState("[UNQUOTE]", -1));
       }
       else {
-//cerr << "else [" << s[i] << "\n";
-        // add single char
-        t.push_back(s[i]);
-        // reset status
         skipped = false;
+        t.push_back(s[i]);
       }
 
     }
-if (skipped) {
-	// cerr << "still skipping\n";
- // cerr << "NOT UNQUOTE [" << s << "]" << endl;
-	return s; }
-if (qd) *qd = q;
- // cerr << "AFTER UNQUOTE [" << t << "]" << endl;
-    return t;
+    if (skipped) { return s; }
+    if (qd) *qd = q;
+    return ((t));
+
   }
 
   // find best quotemark by detecting if the string contains any single

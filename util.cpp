@@ -61,7 +61,7 @@ namespace Sass {
   }
 
   // double escape all escape sequences
-  // escape quotes and single backslashes
+  // beside unescaped quotes and backslashes
   string string_evacuate(const string& str)
   {
     string out("");
@@ -90,64 +90,6 @@ namespace Sass {
     }
     if (esc) out += 'Z';
     return out;
-  }
-
-
-
-  string string_read_quoted(const string& str2, char* qd)
-  {
-    string str = unquote(str2, qd);
-
-    string out("");
-    for (size_t i = 0, L = str.length(); i < L; ++i) {
-      if (str[i] == '\\') {
-
-        ++ i;
-
-        // escape length
-        size_t len = 0;
-
-        // parse as many sequence chars as possible
-        // ToDo: Check if ruby aborts after possible max
-        while (str[i + len] && isxdigit(str[i + len])) ++ len;
-        // hex string?
-        if (len > 0) {
-          // convert the extracted hex string to code point value
-          // ToDo: Maybe we could do this without creating a substring
-          uint32_t cp = strtol(str.substr (i, len).c_str(), nullptr, 16);
-
-          // assert invalid code points
-          if (cp == 0) cp = 0xFFFD;
-          // replace bell character
-          // if (cp == 10) cp = 32;
-
-          // use a very simple approach to convert via utf8 lib
-          // maybe there is a more elegant way; maybe we shoud
-          // convert the whole output from string to a stream!?
-          // allocate memory for utf8 char and convert to utf8
-          unsigned char u[5] = {0,0,0,0,0}; utf8::append(cp, u);
-          for(size_t m = 0; u[m] && m < 5; m++) out.push_back(u[m]);
-
-          // skip some more chars?
-          if (len > 1) i += len;
-
-        }
-        // EO if hex
-
-        else {
-
-          out += '\\';
-          out += str[i];
-
-        }
-
-      } else {
-        out += str[i];
-      }
-    }
-
-    return string_unescape(out);
-
   }
 
   string string_to_output(const string& str)

@@ -1488,11 +1488,10 @@ inline string normalize(const string& str) {
     ADD_PROPERTY(int, mynr);
   public:
     String_Quoted(ParserState pstate, string val, int nr, bool parsed, bool unq = false, bool norm = false)
-    : String_Constant(nr, pstate, false, (string_evacuate(val)), unq, norm), mynr_(nr)
+    : String_Constant(nr, pstate, false, val, unq, norm), mynr_(nr)
     {
     	char q = 0;
-    	value_ = string_read_quoted(value_, &q);
-    	// value_ = string_unescape(value_);
+    	value_ = unquote(value_, &q);
 
       is_parsed_ = parsed;
       if (q && (was_quoted_ = (value_ != val))) {
