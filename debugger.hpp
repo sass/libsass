@@ -240,7 +240,6 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     String_Quoted* expression = dynamic_cast<String_Quoted*>(node);
     cerr << ind << "String_Quoted : " << expression << " [" << prettyprint(expression->value()) << "]" <<
       (expression->marker() ? " {marker}" : "") <<
-      (expression->is_parsed() ? " {parsed}" : "") <<
       (expression->needs_unquoting() ? " {needs_unquoting}" : "") <<
       (expression->is_delayed() ? " {delayed}" : "") <<
       (expression->needs_unquoting() ? " {unquote}" : "") <<
@@ -250,7 +249,6 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
   } else if (dynamic_cast<String_Constant*>(node)) {
     String_Constant* expression = dynamic_cast<String_Constant*>(node);
     cerr << ind << "String_Constant : " << expression << " [" << prettyprint(expression->value()) << "]" <<
-      (expression->is_parsed() ? " {parsed}" : "") <<
       (expression->is_delayed() ? " {delayed}" : "") <<
       (expression->needs_unquoting() ? " {unquote}" : "") <<
       (expression->was_quoted() ? " {quoted}" : "") <<
