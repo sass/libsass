@@ -785,16 +785,7 @@ namespace Sass {
       size_t len = string::npos;
       try {
         String_Constant* s = ARG("$string", String_Constant);
-        string str = s->value();
-        size_t length_of_s = str.size();
-        size_t i = 0;
-
-        if (s->is_quoted()) {
-          ++i;
-          --length_of_s;
-        }
-
-        len = UTF_8::code_point_count(str, i, length_of_s);
+        len = UTF_8::code_point_count(s->value(), 0, s->value().size());
 
       }
       catch (utf8::invalid_code_point) {
