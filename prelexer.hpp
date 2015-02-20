@@ -2,11 +2,9 @@
 #define SASS_PRELEXER_H
 
 #include <cstring>
-#include <iostream>
 
 namespace Sass {
   namespace Prelexer {
-    using namespace std;
 
     typedef int (*ctype_predicate)(int);
     typedef const char* (*prelexer)(const char*);
