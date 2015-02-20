@@ -745,7 +745,6 @@ ll->is_inspecting(l->is_inspecting());
   Expression* Eval::operator()(String_Constant* s)
   {
     if (!s->was_quoted() && !s->is_delayed() && ctx.names_to_colors.count(s->value())) {
- // cerr << "go myself a color " << s << " - " << s->value() << "\n";
       Color* c = new (ctx.mem) Color(*ctx.names_to_colors[s->value()]);
       c->pstate(s->pstate());
       c->disp(s->value());
@@ -1164,14 +1163,9 @@ ll->is_inspecting(l->is_inspecting());
     To_String to_string(&ctx);
     Expression::Concrete_Type ltype = lhs->concrete_type();
     Expression::Concrete_Type rtype = rhs->concrete_type();
-// cerr << "=============================================\n";
-// debug_ast(lhs, "op_str l: ");
-// debug_ast(rhs, "op_str r: ");
+
     string lstr(lhs->perform(&to_string));
     string rstr(rhs->perform(&to_string));
-// debug_ast(lhs, "lhs: ");
-// debug_ast(rhs, "rhs: ");
-// cerr << "op string " << lhs  << " :: " << lstr << " : " << rstr << " - " << ((Sass::String*)lhs)->needs_unquoting() << "\n";
 
     bool l_str_quoted = ((Sass::String_Constant*)lhs) && ((Sass::String_Constant*)lhs)->marker();
     bool r_str_quoted = ((Sass::String_Constant*)rhs) && ((Sass::String_Constant*)rhs)->marker();

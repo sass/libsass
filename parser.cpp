@@ -1331,6 +1331,7 @@ run = false;
     --str.end;
     --position;
     String_Constant* str_node = new (ctx.mem) String_Constant(pstate, str);
+    // str_node->is_delayed(true);
     return str_node;
   }
 
