@@ -168,9 +168,6 @@ namespace Sass {
       append_mandatory_space();
 
       if (String_Quoted* strq = dynamic_cast<String_Quoted*>(import->urls().front())) {
-        // should make a copy or sometrhing
-        // strq->value(quote(strq->value(), '"'));
-        // strq->was_quoted(false);
         strq->is_delayed(false);
       }
 
@@ -184,9 +181,6 @@ namespace Sass {
         append_mandatory_space();
         // force quotes for inspect
         if (String_Quoted* strq = dynamic_cast<String_Quoted*>(import->urls()[i])) {
-          // should make a copy or sometrhing
-          // strq->value(quote(strq->value(), '"'));
-          // strq->was_quoted(false);
           strq->is_delayed(false);
         }
 
@@ -793,8 +787,6 @@ namespace Sass {
     }
     if (a->value()->concrete_type() == Expression::STRING) {
       String_Constant* s = static_cast<String_Constant*>(a->value());
-      // interpolated argument needs auto detection
-      // if (s->was_quoted()) s->value(quote(s->value(), '*', 41));
       s->perform(this);
     } else a->value()->perform(this);
     if (a->is_rest_argument()) {
