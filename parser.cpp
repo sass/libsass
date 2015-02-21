@@ -565,14 +565,10 @@ run = false;
     }
     if (sawsomething && lex< sequence< negate< functional >, alternatives< identifier_fragment, universal, quoted_string, dimension, percentage, number > > >()) {
       // saw an ampersand, then allow type selectors with arbitrary number of hyphens at the beginning
-      Type_Selector* type_sel = new (ctx.mem) Type_Selector(pstate, unquote(lexed));
-      type_sel->has_line_break(peek_newline());
-      (*seq) << type_sel;
+      (*seq) << new (ctx.mem) Type_Selector(pstate, unquote(lexed));
     } else if (lex< sequence< negate< functional >, alternatives< type_selector, universal, quoted_string, dimension, percentage, number > > >()) {
       // if you see a type selector
-      Type_Selector* type_sel = new (ctx.mem) Type_Selector(pstate, lexed);
-      type_sel->has_line_break(peek_newline());
-      (*seq) << type_sel;
+      (*seq) << new (ctx.mem) Type_Selector(pstate, lexed);
       sawsomething = true;
     }
     if (!sawsomething) {
@@ -1305,6 +1301,7 @@ run = false;
         // create a new target in parser/prelexer
         const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, chunk.end); // find the closing brace
         if (j) { --j;
+          // parse the interpolant and accumulate it
           Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
           interp_node->is_interpolant(true);
           (*schema) << interp_node;
