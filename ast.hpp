@@ -1359,8 +1359,8 @@ namespace Sass {
     ADD_PROPERTY(bool, has_interpolants);
     size_t hash_;
   public:
-    String_Schema(ParserState pstate, size_t size = 0, bool sass_fix_1291 = false, char qm = '\0', bool i = false)
-    : String(pstate, sass_fix_1291), Vectorized<Expression*>(size), has_interpolants_(i), hash_(0)
+    String_Schema(ParserState pstate, size_t size = 0, char qm = '\0', bool i = false)
+    : String(pstate), Vectorized<Expression*>(size), has_interpolants_(i), hash_(0)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }
