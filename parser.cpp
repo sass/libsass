@@ -463,7 +463,7 @@ namespace Sass {
 
   Complex_Selector* Parser::parse_selector_combination()
   {
-    lex< spaces_and_comments >();
+    // lex< spaces_and_comments >();
     Position sel_source_position(-1);
     Compound_Selector* lhs;
     if (peek< exactly<'+'> >() ||
@@ -544,10 +544,10 @@ namespace Sass {
   Simple_Selector* Parser::parse_simple_selector()
   {
     if (lex< id_name >() || lex< class_name >()) {
-      return new (ctx.mem) Selector_Qualifier(pstate, lexed);
+      return new (ctx.mem) Selector_Qualifier(pstate, unquote(lexed));
     }
     else if (lex< quoted_string >() || lex< number >()) {
-      return new (ctx.mem) Type_Selector(pstate, lexed);
+      return new (ctx.mem) Type_Selector(pstate, unquote(lexed));
     }
     else if (peek< pseudo_not >()) {
       return parse_negated_selector();
@@ -559,7 +559,7 @@ namespace Sass {
       return parse_attribute_selector();
     }
     else if (lex< placeholder >()) {
-      return new (ctx.mem) Selector_Placeholder(pstate, lexed);
+      return new (ctx.mem) Selector_Placeholder(pstate, unquote(lexed));
     }
     else {
       error("invalid selector after " + lexed.to_string(), pstate);
@@ -635,7 +635,7 @@ namespace Sass {
       return new (ctx.mem) Pseudo_Selector(p, name, expr);
     }
     else if (lex < sequence< pseudo_prefix, identifier > >()) {
-      return new (ctx.mem) Pseudo_Selector(pstate, lexed);
+      return new (ctx.mem) Pseudo_Selector(pstate, unquote(lexed));
     }
     else {
       error("unrecognized pseudo-class or pseudo-element", pstate);
