@@ -398,7 +398,7 @@ ll->is_inspecting(l->is_inspecting());
       String_Constant* rstr = dynamic_cast<String_Constant*>(rhs);
       if (String_Constant* org = lstr ? lstr : rstr)
       {
-        str->quote_mark('*');
+        // str->quote_mark('*');
         // very strange side effect on colors!
         str->was_quoted(org->was_quoted());
         // always use auto quote_mark
@@ -1167,8 +1167,8 @@ ll->is_inspecting(l->is_inspecting());
     string lstr(lhs->perform(&to_string));
     string rstr(rhs->perform(&to_string));
 
-    bool l_str_quoted = ((Sass::String_Constant*)lhs) && ((Sass::String_Constant*)lhs)->marker();
-    bool r_str_quoted = ((Sass::String_Constant*)rhs) && ((Sass::String_Constant*)rhs)->marker();
+    bool l_str_quoted = ((Sass::String*)lhs) && ((Sass::String*)lhs)->sass_fix_1291();
+    bool r_str_quoted = ((Sass::String*)rhs) && ((Sass::String*)rhs)->sass_fix_1291();
     bool l_str_color = ltype == Expression::STRING && ctx.names_to_colors.count(lstr) && !l_str_quoted;
     bool r_str_color = rtype == Expression::STRING && ctx.names_to_colors.count(rstr) && !r_str_quoted;
 

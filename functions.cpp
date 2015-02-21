@@ -753,7 +753,7 @@ namespace Sass {
       if (string_quoted) {
         // result = new (ctx.mem) String_Constant(pstate, string_quoted->value());
         result = new (ctx.mem) String_Constant(pstate, str);
-        result->marker(string_quoted->was_quoted());
+        result->sass_fix_1291(string_quoted->was_quoted());
       } else {
         result = new (ctx.mem) String_Constant(pstate, str);
         result->was_quoted(false);
@@ -767,7 +767,7 @@ namespace Sass {
     {
       To_String to_string(&ctx);
       AST_Node* arg = env["$string"];
-      string str(quote(arg->perform(&to_string), String_Constant::auto_quote()));
+      string str(quote(arg->perform(&to_string), String_Constant::double_quote()));
       String_Constant* result = new (ctx.mem) String_Constant(pstate, str);
       result->is_delayed(true);
       return result;
@@ -902,15 +902,9 @@ namespace Sass {
         Number* n = ARG("$start-at", Number);
         Number* m = ARG("$end-at", Number);
 
-        // char quote_mark = s->quote_mark();
         string str = unquote(s->value());
-//        cerr << "unquote for slice " << s->value() << endl;
-//        debug_ast(s, "");
         if (s->value() != str) {
-//          s->was_quoted(true);
-//          s->quote_mark('"');
         }
-        //  quote_mark = '"';
 
         // normalize into 0-based indices
         size_t start = UTF_8::offset_at_position(str, UTF_8::normalize_index(n->value(), UTF_8::code_point_count(str)));
@@ -929,10 +923,6 @@ namespace Sass {
         if(s->was_quoted()) {
           newstr = quote(newstr, String_Constant::auto_quote());
         }
-
-        // if (s->was_quoted()) {
-        	// quote_mark = s->quote_mark();
-        // }
       }
       catch (utf8::invalid_code_point) {
         string msg("utf8::invalid_code_point");
@@ -947,9 +937,7 @@ namespace Sass {
         error(msg, pstate, backtrace);
       }
       catch (...) { throw; }
-
       return new (ctx.mem) String_Constant(pstate, newstr);
-
     }
 
     Signature to_upper_case_sig = "to-upper-case($string)";
@@ -1525,7 +1513,7 @@ namespace Sass {
     BUILT_IN(image_url)
     {
       error("`image_url` has been removed from libsass because it's not part of the Sass spec", pstate);
-      return 0;
+      return 0; // suppress warning, error will exit anyway
     }
 
     //////////////////////////

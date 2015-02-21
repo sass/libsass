@@ -436,17 +436,7 @@ namespace Sass {
   {
     if (expr->type() == Unary_Expression::PLUS) append_to_buffer("+");
     else                                        append_to_buffer("-");
-    // debug_ast(expr, "");
-    if (String_Constant* str = dynamic_cast<String_Constant*>(expr->operand())) {
-      if (str->was_quoted()) {
-//        append_to_buffer(quote(str->value(), str->quote_mark()));
-        expr->operand()->perform(this);
-      } else {
-        expr->operand()->perform(this);
-      }
-    } else {
-      expr->operand()->perform(this);
-    }
+    expr->operand()->perform(this);
   }
 
   void Inspect::operator()(Function_Call* call)
