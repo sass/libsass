@@ -373,40 +373,30 @@ ll->is_inspecting(l->is_inspecting());
     Expression::Concrete_Type l_type = lhs->concrete_type();
     Expression::Concrete_Type r_type = rhs->concrete_type();
 
-    Expression* ex = 0;
-
     if (l_type == Expression::NUMBER && r_type == Expression::NUMBER) {
-      ex = op_numbers(ctx, b, lhs, rhs);
+      return op_numbers(ctx, b, lhs, rhs);
     }
-    else if (l_type == Expression::NUMBER && r_type == Expression::COLOR) {
-      ex = op_number_color(ctx, op_type, lhs, rhs);
+    if (l_type == Expression::NUMBER && r_type == Expression::COLOR) {
+      return op_number_color(ctx, op_type, lhs, rhs);
     }
-    else if (l_type == Expression::COLOR && r_type == Expression::NUMBER) {
-      ex = op_color_number(ctx, op_type, lhs, rhs);
+    if (l_type == Expression::COLOR && r_type == Expression::NUMBER) {
+      return op_color_number(ctx, op_type, lhs, rhs);
     }
-    else if (l_type == Expression::COLOR && r_type == Expression::COLOR) {
-      ex = op_colors(ctx, op_type, lhs, rhs);
-    }
-    else {
-      ex = op_strings(ctx, op_type, lhs, rhs);
+    if (l_type == Expression::COLOR && r_type == Expression::COLOR) {
+      return op_colors(ctx, op_type, lhs, rhs);
     }
 
+    Expression* ex = op_strings(ctx, op_type, lhs, rhs);
     if (String_Constant* str = (String_Constant*) ex)
     {
-      if (str->concrete_type() == Expression::STRING) {
+      if (str->concrete_type() != Expression::STRING) return ex;
       String_Constant* lstr = dynamic_cast<String_Constant*>(lhs);
       String_Constant* rstr = dynamic_cast<String_Constant*>(rhs);
       if (String_Constant* org = lstr ? lstr : rstr)
-      {
-        // str->quote_mark('*');
-        // very strange side effect on colors!
-        str->was_quoted(org->was_quoted());
-        // always use auto quote_mark
-        // str->quote_mark('*');
-      }
-    }}
-
+      { str->was_quoted(org->was_quoted()); }
+    }
     return ex;
+
   }
 
   Expression* Eval::operator()(Unary_Expression* u)
@@ -432,7 +422,8 @@ ll->is_inspecting(l->is_inspecting());
         u->operand(new (ctx.mem) String_Constant(u->pstate(), ""));
       }
       else u->operand(operand);
-      String_Constant* result = new (ctx.mem) String_Constant(u->pstate(), u->perform(&to_string));
+      String_Constant* result = new (ctx.mem) String_Constant(u->pstate(),
+                                                              u->perform(&to_string));
       return result;
     }
     // unreachable
@@ -461,7 +452,8 @@ ll->is_inspecting(l->is_inspecting());
                                                        args);
       To_String to_string(&ctx);
       to_string.in_decl_list = true;
-      return new (ctx.mem) String_Constant(c->pstate(), lit->perform(&to_string));
+      return new (ctx.mem) String_Constant(c->pstate(),
+                                           lit->perform(&to_string));
     }
 
     Expression*     result = c;
