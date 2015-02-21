@@ -1429,7 +1429,7 @@ namespace Sass {
       return hash_;
     }
 
-    static char auto_quote() { return '*'; }
+    // static char auto_quote() { return '*'; }
     static char double_quote() { return '"'; }
     static char single_quote() { return '\''; }
 

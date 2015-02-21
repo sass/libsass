@@ -62,6 +62,7 @@ namespace Sass {
       contextual = contextualize->with(at_root_selector_stack.back(), env, backtrace);
 
     Selector* sel_ctx = r->selector()->perform(contextual);
+    if (sel_ctx == 0) throw "Cannot expand null selector";
 
     Inspect isp(0);
     sel_ctx->perform(&isp);
@@ -91,9 +92,10 @@ namespace Sass {
     sel_ctx = sel_lst;
 
     selector_stack.push_back(sel_ctx);
+    Block* blk = r->block()->perform(this)->block();
     Ruleset* rr = new (ctx.mem) Ruleset(r->pstate(),
                                         sel_ctx,
-                                        r->block()->perform(this)->block());
+                                        blk);
     selector_stack.pop_back();
     in_at_root = old_in_at_root;
     old_in_at_root = false;
@@ -198,10 +200,11 @@ namespace Sass {
 
     if (value->is_invisible() && !d->is_important()) return 0;
 
-    return new (ctx.mem) Declaration(d->pstate(),
-                                     new_p,
-                                     value,
-                                     d->is_important());
+    Declaration* decl = new (ctx.mem) Declaration(d->pstate(),
+                                                  new_p,
+                                                  value,
+                                                  d->is_important());
+    return decl;
   }
 
   Statement* Expand::operator()(Assignment* a)
