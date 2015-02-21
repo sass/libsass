@@ -41,13 +41,11 @@ namespace Sass {
     Selector_List* ss = 0;
     if (p) {
       ss = new (ctx.mem) Selector_List(s->pstate(), p->length() * s->length());
-//      ss->has_line_break(s->has_line_break());
       ss->has_line_feed(s->has_line_feed());
       for (size_t i = 0, L = p->length(); i < L; ++i) {
         for (size_t j = 0, L = s->length(); j < L; ++j) {
           parent = (*p)[i];
           Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
-//          if (parent->has_line_break()) comb->has_line_break(parent->has_line_break());
           if (parent->has_line_feed()) comb->has_line_feed(parent->has_line_feed() ||true);
           if (comb) *ss << comb;
         }
@@ -55,11 +53,9 @@ namespace Sass {
     }
     else {
       ss = new (ctx.mem) Selector_List(s->pstate(), s->length());
-//      ss->has_line_break(s->has_line_break());
       ss->has_line_feed(s->has_line_feed());
       for (size_t j = 0, L = s->length(); j < L; ++j) {
         Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
-        // comb->has_line_break(((*s)[j]->has_line_break()));
         if (comb) *ss << comb;
       }
     }
@@ -70,7 +66,6 @@ namespace Sass {
   {
     To_String to_string(&ctx);
     Complex_Selector* ss = new (ctx.mem) Complex_Selector(*s);
-//    ss->has_line_break(s->has_line_break());
     ss->has_line_feed(s->has_line_feed());
     Compound_Selector* new_head = 0;
     Complex_Selector* new_tail = 0;
@@ -90,8 +85,6 @@ namespace Sass {
       ss->has_placeholder(false);
     }
     if (!ss->head() && ss->combinator() == Complex_Selector::ANCESTOR_OF) {
-     // this on seems to be a tricky one
-//     if (ss->has_line_break()) ss->tail()->has_line_break(true);
      if (ss->has_line_feed()) ss->tail()->has_line_feed(true);
       return ss->tail();
     }
@@ -107,10 +100,6 @@ namespace Sass {
       return extender;
     }
     Compound_Selector* ss = new (ctx.mem) Compound_Selector(s->pstate(), s->length());
-//cerr << "                                                    created 1 " << ss << endl;
-//cerr << "CONTEXTUALIZE " << s << endl;
-//debug_ast(s, "");
-// this would fix it, but we need this!!?
     ss->has_line_break(s->has_line_break());
     ss->has_line_feed(s->has_line_feed());
     for (size_t i = 0, L = s->length(); i < L; ++i) {
@@ -147,11 +136,7 @@ namespace Sass {
   }
 
   Selector* Contextualize::operator()(Selector_Qualifier* s)
-  {
-  	    Selector_Qualifier* ss = new (ctx.mem) Selector_Qualifier(*s);
-ss->has_line_break(false);
-  	return ss;
-  }
+  { return s; }
 
   Selector* Contextualize::operator()(Type_Selector* s)
   { return s; }
@@ -171,7 +156,6 @@ ss->has_line_break(false);
   {
     if (!parent) return 0;
     Selector_Reference* ss = new (ctx.mem) Selector_Reference(*s);
-//    ss->has_line_break(s->has_line_break());
     ss->has_line_feed(s->has_line_feed());
     ss->selector(parent);
     return ss;
