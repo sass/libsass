@@ -1462,9 +1462,7 @@ run = false;
     const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(chunk.begin, chunk.end);
 
     if (!p) {
-      String_Constant* str_constant = true ?
-        new (ctx.mem) String_Constant(pstate, string(chunk.begin, chunk.end)) :
-        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), true);
+      String_Constant* str_constant = new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), true);
         if (String_Quoted* str_quoted = dynamic_cast<String_Quoted*>(str_constant)) {
           str_quoted->quote_mark('*');
         }
@@ -1557,8 +1555,6 @@ run = false;
       }
       ++ i;
     }
-//     debug_ast(schema, "interpolated: ");
-
     return schema;
   }
 
