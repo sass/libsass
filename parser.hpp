@@ -48,8 +48,9 @@ namespace Sass {
       source(0), position(0), end(0), before_token(pstate), after_token(pstate), pstate("[NULL]")
     { in_at_root = false; stack.push_back(nothing); }
 
-    static Parser from_string(string src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
+    static Parser from_string(const string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
     static Parser from_c_str(const char* src, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
+    static Parser from_c_str(const char* beg, const char* end, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
     static Parser from_token(Token t, Context& ctx, ParserState pstate = ParserState("[TOKEN]"));
 
 #ifdef __clang__
@@ -240,7 +241,7 @@ namespace Sass {
     Function_Call* parse_calc_function();
     Function_Call* parse_function_call();
     Function_Call_Schema* parse_function_call_schema();
-    String* parse_interpolated_chunk(Token);
+    String* parse_interpolated_chunk(Token, bool const = false);
     String* parse_string();
     String_Constant* parse_static_value();
     String* parse_ie_property();

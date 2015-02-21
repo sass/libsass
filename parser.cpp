@@ -25,6 +25,15 @@ namespace Sass {
     return p;
   }
 
+  Parser Parser::from_c_str(const char* beg, const char* end, Context& ctx, ParserState pstate)
+  {
+    Parser p(ctx, pstate);
+    p.source   = beg;
+    p.position = p.source;
+    p.end      = end;
+    return p;
+  }
+
   Parser Parser::from_token(Token t, Context& ctx, ParserState pstate)
   {
     Parser p(ctx, pstate);
@@ -1223,11 +1232,11 @@ namespace Sass {
 
   // this parses interpolation inside other strings
   // means the result should later be quoted again
-  String* Parser::parse_interpolated_chunk(Token chunk)
+  String* Parser::parse_interpolated_chunk(Token chunk, bool constant)
   {
     const char* i = chunk.begin;
     // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(chunk.begin, chunk.end);
+    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
     if (!p) {
       String_Constant* str_node = new (ctx.mem) String_Constant(pstate, chunk);
       str_node->is_delayed(true);
@@ -1256,7 +1265,8 @@ namespace Sass {
         }
       }
       else { // no interpolants left; add the last segment if nonempty
-        if (i < chunk.end) (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, chunk.end, before_token));
+        // check if we need quotes here (was not sure after merge)
+        if (i < chunk.end) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, chunk.end));
         break;
       }
     }
