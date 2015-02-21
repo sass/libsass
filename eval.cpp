@@ -813,7 +813,7 @@ namespace Sass {
     }
     String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), acc);
     if (!str->was_quoted()) str->value(string_unescape(str->value()));
-    str->quote_mark('*');
+    if (str->was_quoted()) str->quote_mark('*');
     return str;
   }
 
