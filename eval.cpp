@@ -451,7 +451,6 @@ ll->is_inspecting(l->is_inspecting());
                                                        c->name(),
                                                        args);
       To_String to_string(&ctx);
-      to_string.in_decl_list = true;
       return new (ctx.mem) String_Constant(c->pstate(),
                                            lit->perform(&to_string));
     }
@@ -619,13 +618,9 @@ ll->is_inspecting(l->is_inspecting());
       String_Quoted* str_quoted = new (ctx.mem) String_Quoted(*static_cast<String_Quoted*>(value));
       String_Constant* str_constant = new (ctx.mem) String_Constant(*static_cast<String_Constant*>(value));
       value = str_quoted ? str_quoted : str_constant;
-      if (str_quoted) { str_quoted->quote_mark('*'); }
-      if (str_constant) { str_constant->quote_mark('*'); }
     }
     else if (value->concrete_type() == Expression::LIST) {
-    	List* l = new (ctx.mem) List(*static_cast<List*>(value));
-    	l->is_inspecting(false);
-      value = l;
+      value = new (ctx.mem) List(*static_cast<List*>(value));
     }
     else if (value->concrete_type() == Expression::MAP) {
       value = new (ctx.mem) Map(*static_cast<Map*>(value));
