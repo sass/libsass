@@ -895,16 +895,12 @@ namespace Sass {
     BUILT_IN(str_slice)
     {
       string newstr;
-      // char quote_mark = 0;
-      String_Constant* s = 0;
       try {
-        s = ARG("$string", String_Constant);
+        String_Constant* s = ARG("$string", String_Constant);
         Number* n = ARG("$start-at", Number);
         Number* m = ARG("$end-at", Number);
 
         string str = unquote(s->value());
-        if (s->value() != str) {
-        }
 
         // normalize into 0-based indices
         size_t start = UTF_8::offset_at_position(str, UTF_8::normalize_index(n->value(), UTF_8::code_point_count(str)));
@@ -913,15 +909,15 @@ namespace Sass {
         // `str-slice` should always return an empty string when $end-at == 0
         // `normalize_index` normalizes 1 -> 0 so we need to check the original value
         if(m->value() == 0) {
-          if(!s->was_quoted()) return new (ctx.mem) Null(pstate);
+          if(!s->quote_mark()) return new (ctx.mem) Null(pstate);
           newstr = "";
         } else if(start == end && m->value() != 0) {
           newstr = str.substr(start, 1);
         } else if(end > start) {
           newstr = str.substr(start, end - start + UTF_8::code_point_size_at_offset(str, end));
         }
-        if(s->was_quoted()) {
-          newstr = quote(newstr, String_Constant::auto_quote());
+        if(s->quote_mark()) {
+          newstr = quote(newstr, String_Constant::double_quote());
         }
       }
       catch (utf8::invalid_code_point) {
@@ -952,7 +948,7 @@ namespace Sass {
         }
       }
 
-      str = s->was_quoted() ? quote(str, '"') : str;
+      str = s->quote_mark() ? quote(str, '"') : str;
       return new (ctx.mem) String_Constant(pstate, str);
     }
 
@@ -968,7 +964,7 @@ namespace Sass {
         }
       }
 
-      str = s->was_quoted() ? quote(str, '"') : str;
+      str = s->quote_mark() ? quote(str, '"') : str;
       return new (ctx.mem) String_Constant(pstate, str);
     }
 
@@ -1234,25 +1230,8 @@ namespace Sass {
     Signature compact_sig = "compact($values...)";
     BUILT_IN(compact)
     {
-      List* arglist = ARG("$values", List);
-      List::Separator sep = List::COMMA;
-      if (arglist->length() == 1) {
-        Expression* the_arg = arglist->value_at_index(0);
-        arglist = dynamic_cast<List*>(the_arg);
-        if (!arglist) {
-          List* result = new (ctx.mem) List(pstate, 1, List::COMMA);
-          *result << the_arg;
-          return result;
-        }
-        sep = arglist->separator();
-      }
-      List* result = new (ctx.mem) List(pstate, 0, sep);
-      for (size_t i = 0, L = arglist->length(); i < L; ++i) {
-        Boolean* ith = dynamic_cast<Boolean*>(arglist->value_at_index(i));
-        if (ith && ith->value() == false) continue;
-        *result << arglist->value_at_index(i);
-      }
-      return result;
+      error("`compact` has been removed from libsass because it's not part of the Sass spec", pstate);
+      return 0; // suppress warning, error will exit anyway
     }
 
     Signature list_separator_sig = "list_separator($list)";
@@ -1529,8 +1508,6 @@ namespace Sass {
       } else if (v->concrete_type() == Expression::BOOLEAN && *v == 0) {
         return new (ctx.mem) String_Constant(pstate, "false");
       }
-    	v->is_inspecting(true);
-    	v->is_inspected(true);
       return v;
     }
 
