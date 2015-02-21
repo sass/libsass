@@ -754,9 +754,6 @@ namespace Sass {
         // result = new (ctx.mem) String_Constant(pstate, string_quoted->value());
         result = new (ctx.mem) String_Constant(pstate, str);
         result->marker(string_quoted->was_quoted());
-      } else if (/* String_Constant* string_constant = */ dynamic_cast<String_Constant*>(arg)) {
-        result = new (ctx.mem) String_Constant(pstate, str);
-        result->was_quoted(false);
       } else {
         result = new (ctx.mem) String_Constant(pstate, str);
         result->was_quoted(false);
