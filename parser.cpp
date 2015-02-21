@@ -437,7 +437,7 @@ namespace Sass {
     const char* i = position;
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
     while (i < end_of_selector) {
-      // try to parse mutliple interpolant
+      // try to parse mutliple interpolants
       if (const char* p = find_first_in_interval< exactly<hash_lbrace> >(i, end_of_selector)) {
         // accumulate the preceding segment if the position has advanced
         if (i < p) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p));
@@ -456,8 +456,6 @@ namespace Sass {
       }
     }
     position = end_of_selector;
-
-// cerr << "parse selector schema\n";
     return new (ctx.mem) Selector_Schema(pstate, schema);
   }
 
@@ -724,7 +722,7 @@ run = false;
 
     String* value = 0;
     if (lex< identifier >()) {
-      value = new (ctx.mem) String_Constant(p, lexed, false);
+      value = new (ctx.mem) String_Constant(p, lexed, true);
     }
     else if (lex< quoted_string >()) {
       value = parse_interpolated_chunk(lexed, true); // needed!
@@ -1306,7 +1304,7 @@ run = false;
   {
     lex< quoted_string >();
     Token token(lexed);
-    return parse_interpolated_chunk(token, false);
+    return parse_interpolated_chunk(token);
   }
 
   String* Parser::parse_ie_property()
