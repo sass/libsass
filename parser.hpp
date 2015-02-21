@@ -42,13 +42,12 @@ namespace Sass {
 
 
     Token lexed;
-    bool dequote;
     bool in_at_root;
 
     Parser(Context& ctx, ParserState pstate)
     : ParserState(pstate), ctx(ctx), stack(vector<Syntactic_Context>()),
       source(0), position(0), end(0), before_token(pstate), after_token(pstate), pstate("[NULL]"), indentation(0)
-    { dequote = false; in_at_root = false; stack.push_back(nothing); }
+    { in_at_root = false; stack.push_back(nothing); }
 
     static Parser from_string(const string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
     static Parser from_c_str(const char* src, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
@@ -115,7 +114,7 @@ namespace Sass {
     template <prelexer mx>
     const char* lex()
     {
-      
+
       // remeber interesting position
       const char* wspace_start = position;
 
@@ -229,7 +228,6 @@ namespace Sass {
     Wrapped_Selector* parse_negated_selector();
     Simple_Selector* parse_pseudo_selector();
     Attribute_Selector* parse_attribute_selector();
-    Selector_Placeholder* parse_placeholder_selector();
     Block* parse_block();
     Declaration* parse_declaration();
     Expression* parse_map_value();
@@ -249,7 +247,6 @@ namespace Sass {
     Function_Call_Schema* parse_function_call_schema();
     String* parse_interpolated_chunk(Token, bool constant = false);
     String* parse_string();
-    Textual* parse_static_color();
     String_Constant* parse_static_value();
     String* parse_ie_property();
     String* parse_ie_keyword_arg();
