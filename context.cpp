@@ -237,7 +237,6 @@ namespace Sass {
 
   Block* Context::parse_file()
   {
-
     Block* root = 0;
     for (size_t i = 0; i < queue.size(); ++i) {
       struct Sass_Import* import = sass_make_import(
@@ -260,26 +259,19 @@ namespace Sass {
     for (size_t i = 0, S = c_functions.size(); i < S; ++i) {
       register_c_function(*this, &tge, c_functions[i]);
     }
-//  if (output_style == NESTED) debug_ast(root, "0 ", &tge);
     Eval eval(*this, &tge, &backtrace);
     Contextualize contextualize(*this, &eval, &tge, &backtrace);
     Expand expand(*this, &eval, &contextualize, &tge, &backtrace);
     Cssize cssize(*this, &tge, &backtrace);
-
-//  if (output_style == NESTED) debug_ast(root, "1 ", &tge);
     root = root->perform(&expand)->block();
-// if (output_style == NESTED) debug_ast(root, "2 ");
     root = root->perform(&cssize)->block();
-// if (output_style == NESTED) debug_ast(root, "3 ");
     if (!subset_map.empty()) {
       Extend extend(*this, subset_map);
       root->perform(&extend);
     }
-// if (output_style == NESTED) debug_ast(root, "4 ");
 
     Remove_Placeholders remove_placeholders(*this);
     root->perform(&remove_placeholders);
-//   if (output_style == NESTED) debug_ast(root, "5 ");
 
     return root;
   }
