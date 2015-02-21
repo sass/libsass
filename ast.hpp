@@ -1449,26 +1449,16 @@ namespace Sass {
   };
 
   ////////////////////////////////////////////////////////
-  // Flat strings -- the lowest level of raw textual data.
+  // Possibly quoted string (unqote on instantiation)
   ////////////////////////////////////////////////////////
   class String_Quoted : public String_Constant {
   public:
     String_Quoted(ParserState pstate, string val)
     : String_Constant(pstate, val)
     {
-    	char q = 0;
-    	value_ = unquote(value_, &q);
-
-      if (q && (was_quoted_ = (value_ != val))) {
-        if (val.size() > 1 && *val.begin() == *val.rbegin()) {
-          if (*val.begin() == '"' || *val.begin() == '\'') {
-            quote_mark_ = *val.begin();
-          }
-        }
-      }
+    	value_ = unquote(value_, &quote_mark_);
+        was_quoted_ = quote_mark_ != 0;
     }
-    // string type() { return "string"; }
-    // static string type_name() { return "string"; }
     ATTACH_OPERATIONS();
   };
 
