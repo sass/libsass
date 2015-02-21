@@ -311,7 +311,6 @@ namespace Sass {
 
   string Context::format_source_mapping_url(const string& file)
   {
-/*
     string url = resolve_relative_path(file, output_path, cwd);
     if (source_map_embed) {
       string map = source_map.generate_source_map(*this);
@@ -322,9 +321,7 @@ namespace Sass {
       url = "data:application/json;base64," + buffer.str();
       url.erase(url.size() - 1);
     }
-*/
-    // return "/*# sourceMappingURL=" + url + " */";
-    return "/*# sourceMappingURL=nope */";
+    return "/*# sourceMappingURL=" + url + " */";
   }
 
   char* Context::generate_source_map()
