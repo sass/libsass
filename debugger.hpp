@@ -258,7 +258,6 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     cerr << ind << "String_Quoted : " << expression << " [" << prettyprint(expression->value()) << "]" <<
       (expression->is_delayed() ? " {delayed}" : "") <<
       (expression->sass_fix_1291() ? " {sass_fix_1291}" : "") <<
-      (expression->was_quoted() ? " {quoted}" : "") <<
       (expression->quote_mark() != 0 ? " {qm:" + string(1, expression->quote_mark()) + "}" : "") <<
       " <" << prettyprint(expression->pstate().token.ws_before()) << "> X <" << prettyprint(expression->pstate().token.ws_after()) << ">" << endl;
   } else if (dynamic_cast<String_Constant*>(node)) {
