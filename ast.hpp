@@ -1456,8 +1456,8 @@ namespace Sass {
     String_Quoted(ParserState pstate, string val)
     : String_Constant(pstate, val)
     {
-    	value_ = unquote(value_, &quote_mark_);
-        was_quoted_ = quote_mark_ != 0;
+      value_ = unquote(value_, &quote_mark_);
+      was_quoted_ = quote_mark_ != 0;
     }
     ATTACH_OPERATIONS();
   };
