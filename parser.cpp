@@ -438,28 +438,20 @@ namespace Sass {
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
     while (i < end_of_selector) {
       // try to parse mutliple interpolant
-      if (const char* p = find_first_in_interval< exactly<hash_lbrace> >(i, end_of_selector))
-      {
-
+      if (const char* p = find_first_in_interval< exactly<hash_lbrace> >(i, end_of_selector)) {
         // accumulate the preceding segment if the position has advanced
-        if (p > i) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p));
-
+        if (i < p) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p));
         // skip to the delimiter by skipping occurences in quoted strings
         const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, end_of_selector);
         Expression* interpolant = Parser::from_c_str(p+2, j, ctx, pstate).parse_list();
         interpolant->is_interpolant(true);
-        // add
         (*schema) << interpolant;
-        // next char
         i = j;
       }
       // no more interpolants have been found
       // add the last segment if there is one
-      else
-      {
-       if (i < end_of_selector) {
-         (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, end_of_selector));
-       }
+      else {
+        if (i < end_of_selector) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, end_of_selector));
         break;
       }
     }
