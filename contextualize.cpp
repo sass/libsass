@@ -41,7 +41,7 @@ namespace Sass {
     Selector_List* ss = 0;
     if (p) {
       ss = new (ctx.mem) Selector_List(s->pstate(), p->length() * s->length());
-      ss->has_line_feed(s->has_line_feed());
+      // ss->has_line_feed(s->has_line_feed());
       for (size_t i = 0, L = p->length(); i < L; ++i) {
         for (size_t j = 0, L = s->length(); j < L; ++j) {
           parent = (*p)[i];
@@ -53,7 +53,7 @@ namespace Sass {
     }
     else {
       ss = new (ctx.mem) Selector_List(s->pstate(), s->length());
-      ss->has_line_feed(s->has_line_feed());
+      // ss->has_line_feed(s->has_line_feed());
       for (size_t j = 0, L = s->length(); j < L; ++j) {
         Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
         if (comb) *ss << comb;
@@ -66,7 +66,7 @@ namespace Sass {
   {
     To_String to_string(&ctx);
     Complex_Selector* ss = new (ctx.mem) Complex_Selector(*s);
-    ss->has_line_feed(s->has_line_feed());
+    // ss->has_line_feed(s->has_line_feed());
     Compound_Selector* new_head = 0;
     Complex_Selector* new_tail = 0;
     if (ss->head()) {
@@ -85,7 +85,7 @@ namespace Sass {
       ss->has_placeholder(false);
     }
     if (!ss->head() && ss->combinator() == Complex_Selector::ANCESTOR_OF) {
-     if (ss->has_line_feed()) ss->tail()->has_line_feed(true);
+     // if (ss->has_line_feed()) ss->tail()->has_line_feed(true);
       return ss->tail();
     }
     else {
@@ -101,7 +101,7 @@ namespace Sass {
     }
     Compound_Selector* ss = new (ctx.mem) Compound_Selector(s->pstate(), s->length());
     ss->has_line_break(s->has_line_break());
-    ss->has_line_feed(s->has_line_feed());
+    // ss->has_line_feed(s->has_line_feed());
     for (size_t i = 0, L = s->length(); i < L; ++i) {
       Simple_Selector* simp = static_cast<Simple_Selector*>((*s)[i]->perform(this));
       if (simp) *ss << simp;
@@ -156,7 +156,7 @@ namespace Sass {
   {
     if (!parent) return 0;
     Selector_Reference* ss = new (ctx.mem) Selector_Reference(*s);
-    ss->has_line_feed(s->has_line_feed());
+    // ss->has_line_feed(s->has_line_feed());
     ss->selector(parent);
     return ss;
   }
