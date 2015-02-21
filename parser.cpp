@@ -1501,7 +1501,9 @@ run = false;
       String_Quoted* str_constant =
         new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end));
 
-      if (!constant) str_constant->quote_mark('*');
+      if (!constant && str_constant->quote_mark()) {
+        str_constant->quote_mark('*');
+      }
       str_constant->is_delayed(true);
       return str_constant;
     }

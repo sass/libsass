@@ -816,7 +816,7 @@ namespace Sass {
     String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), acc);
     if (!str->quote_mark()) {
       str->value(string_unescape(str->value()));
-    } else {
+    } else if (str->quote_mark()) {
       str->quote_mark('*');
     }
     return str;
@@ -1192,6 +1192,7 @@ namespace Sass {
 
     String_Quoted* str = new (ctx.mem) String_Quoted(lhs->pstate(), result);
     str->quote_mark(0);
+    str->was_quoted(0);
     return str;
   }
 
