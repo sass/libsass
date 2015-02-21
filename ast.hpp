@@ -41,7 +41,7 @@
 #include "error_handling.hpp"
 #include "ast_def_macros.hpp"
 #include "to_string.hpp"
-#include "util.hpp"
+// #include "util.hpp"
 
 #include "sass.h"
 #include "sass_values.h"
@@ -1399,23 +1399,22 @@ namespace Sass {
   // Flat strings -- the lowest level of raw textual data.
   ////////////////////////////////////////////////////////
   class String_Constant : public String {
-    ADD_PROPERTY(bool, marker);
     ADD_PROPERTY(char, quote_mark);
     ADD_PROPERTY(string, value);
   protected:
     size_t hash_;
   public:
     String_Constant(ParserState pstate, string val, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), marker_(false), quote_mark_(0), value_(val), hash_(0)
+    : String(pstate, sass_fix_1291, true), quote_mark_(0), value_(val), hash_(0)
     {  }
     String_Constant(ParserState pstate, const char* beg, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), marker_(false), quote_mark_(0), value_(string(beg)), hash_(0)
+    : String(pstate, sass_fix_1291, true), quote_mark_(0), value_(string(beg)), hash_(0)
     {  }
     String_Constant(ParserState pstate, const char* beg, const char* end, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), marker_(false), quote_mark_(0), value_(string(beg, end-beg)), hash_(0)
+    : String(pstate, sass_fix_1291, true), quote_mark_(0), value_(string(beg, end-beg)), hash_(0)
     {  }
     String_Constant(ParserState pstate, const Token& tok, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), marker_(false), quote_mark_(0), value_(string(tok.begin, tok.end)), hash_(0)
+    : String(pstate, sass_fix_1291, true), quote_mark_(0), value_(string(tok.begin, tok.end)), hash_(0)
     {  }
     string type() { return "string"; }
     static string type_name() { return "string"; }
