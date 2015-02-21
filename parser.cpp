@@ -438,7 +438,7 @@ namespace Sass {
 
   Selector_List* Parser::parse_selector_group()
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     lex< spaces_and_comments >();
     Selector_List* group = new (ctx.mem) Selector_List(pstate);
     do {
