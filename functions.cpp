@@ -829,8 +829,10 @@ namespace Sass {
           str = ins + str;
         }
 
-        if (s->quote_mark()) {
-          str = quote(str, String_Constant::double_quote());
+        if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+          if (ss->quote_mark()) {
+            str = quote(str, String_Constant::double_quote());
+          }
         }
       }
       catch (utf8::invalid_code_point) {
@@ -902,15 +904,21 @@ namespace Sass {
         // `str-slice` should always return an empty string when $end-at == 0
         // `normalize_index` normalizes 1 -> 0 so we need to check the original value
         if(m->value() == 0) {
-          if(!s->quote_mark()) return new (ctx.mem) Null(pstate);
+          if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+            if(!ss->quote_mark()) return new (ctx.mem) Null(pstate);
+          } else {
+            return new (ctx.mem) Null(pstate);
+          }
           newstr = "";
         } else if(start == end && m->value() != 0) {
           newstr = str.substr(start, 1);
         } else if(end > start) {
           newstr = str.substr(start, end - start + UTF_8::code_point_size_at_offset(str, end));
         }
-        if(s->quote_mark()) {
-          newstr = quote(newstr, String_Constant::double_quote());
+        if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+          if(ss->quote_mark()) {
+            newstr = quote(newstr, String_Constant::double_quote());
+          }
         }
       }
       catch (utf8::invalid_code_point) {
@@ -941,7 +949,9 @@ namespace Sass {
         }
       }
 
-      str = s->quote_mark() ? quote(str, '"') : str;
+      if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+        str = ss->quote_mark() ? quote(str, '"') : str;
+      }
       return new (ctx.mem) String_Constant(pstate, str);
     }
 
@@ -957,7 +967,9 @@ namespace Sass {
         }
       }
 
-      str = s->quote_mark() ? quote(str, '"') : str;
+      if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+        str = ss->quote_mark() ? quote(str, '"') : str;
+      }
       return new (ctx.mem) String_Constant(pstate, str);
     }
 
