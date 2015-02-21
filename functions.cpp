@@ -749,7 +749,7 @@ namespace Sass {
       if (String_Quoted* string_quoted = dynamic_cast<String_Quoted*>(arg)) {
         String_Constant* result = new (ctx.mem) String_Constant(pstate, string_quoted->value());
         // remember if the string was quoted (color tokens)
-        result->sass_fix_1291(string_quoted->was_quoted());
+        result->sass_fix_1291(string_quoted->quote_mark());
         return result;
       }
       return new (ctx.mem) String_Constant(pstate, string(arg->perform(&to_string)));

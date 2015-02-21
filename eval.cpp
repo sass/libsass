@@ -393,6 +393,8 @@ namespace Sass {
       String_Constant* rstr = dynamic_cast<String_Constant*>(rhs);
       if (String_Constant* org = lstr ? lstr : rstr)
       { str->was_quoted(org->was_quoted()); }
+      if (String_Constant* org = lstr ? lstr : rstr)
+      { str->quote_mark(org->quote_mark()); }
     }
     return ex;
 
@@ -732,7 +734,7 @@ namespace Sass {
 
   Expression* Eval::operator()(String_Constant* s)
   {
-    if (!s->was_quoted() && !s->is_delayed() && ctx.names_to_colors.count(s->value())) {
+    if (!s->quote_mark() && !s->is_delayed() && ctx.names_to_colors.count(s->value())) {
       Color* c = new (ctx.mem) Color(*ctx.names_to_colors[s->value()]);
       c->pstate(s->pstate());
       c->disp(s->value());
@@ -812,8 +814,11 @@ namespace Sass {
       acc += interpolation((*s)[i]);
     }
     String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), acc);
-    if (!str->was_quoted()) str->value(string_unescape(str->value()));
-    if (str->was_quoted()) str->quote_mark('*');
+    if (!str->quote_mark()) {
+      str->value(string_unescape(str->value()));
+    } else {
+      str->quote_mark('*');
+    }
     return str;
   }
 
@@ -1186,7 +1191,7 @@ namespace Sass {
     string result((lstr) + sep + (rstr));
 
     String_Quoted* str = new (ctx.mem) String_Quoted(lhs->pstate(), result);
-    str->was_quoted(false);
+    str->quote_mark(0);
     return str;
   }
 
