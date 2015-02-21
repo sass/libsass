@@ -830,9 +830,7 @@ namespace Sass {
         }
 
         if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
-          if (ss->quote_mark()) {
-            str = quote(str, String_Constant::double_quote());
-          }
+          if (ss->quote_mark()) str = quote(str);
         }
       }
       catch (utf8::invalid_code_point) {
@@ -916,9 +914,7 @@ namespace Sass {
           newstr = str.substr(start, end - start + UTF_8::code_point_size_at_offset(str, end));
         }
         if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
-          if(ss->quote_mark()) {
-            newstr = quote(newstr, String_Constant::double_quote());
-          }
+          if(ss->quote_mark()) newstr = quote(newstr);
         }
       }
       catch (utf8::invalid_code_point) {
@@ -950,7 +946,7 @@ namespace Sass {
       }
 
       if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
-        str = ss->quote_mark() ? quote(str, '"') : str;
+        str = ss->quote_mark() ? quote(str) : str;
       }
       return new (ctx.mem) String_Constant(pstate, str);
     }

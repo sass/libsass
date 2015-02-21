@@ -98,8 +98,8 @@ namespace Sass {
     void fallback(U x) { fallback_impl(reinterpret_cast<AST_Node*>(x)); }
   };
 
+  string quote(const string&, char q = 0);
   string unquote(const string&, char* q = 0);
-  string quote(const string&, char);
 
 }
 #endif
