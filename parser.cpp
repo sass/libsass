@@ -1283,15 +1283,11 @@ run = false;
   // means the result should later be quoted again
   String* Parser::parse_interpolated_chunk(Token chunk, bool constant)
   {
-    const char* p = 0;
     const char* i = chunk.begin;
-
-    p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
+    // see if there any interpolants
+    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
     if (!p) {
-
-      String_Quoted* str_constant =
-        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end));
-
+      String_Quoted* str_constant = new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end));
       if (!constant && str_constant->quote_mark()) {
         str_constant->quote_mark('*');
       }
@@ -1325,8 +1321,7 @@ run = false;
       }
       else { // no interpolants left; add the last segment if nonempty
         // check if we need quotes here (was not sure after merge)
-        if (i < chunk.end)
-          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, chunk.end));
+        if (i < chunk.end) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, chunk.end));
         break;
       }
       ++ i;
