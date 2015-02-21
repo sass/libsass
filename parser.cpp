@@ -1435,7 +1435,6 @@ run = false;
       }
       else if (lex< quoted_string >()) {
         (*schema) << new (ctx.mem) String_Constant(pstate, lexed);
-        if (!num_items) schema->quote_mark(*lexed.begin);
       }
       else if (lex< variable >()) {
         (*schema) << new (ctx.mem) Variable(pstate, Util::normalize_underscores(lexed));
@@ -1502,7 +1501,6 @@ run = false;
       return str_constant;
     }
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
-    schema->quote_mark(*chunk.begin);
     while (i < chunk.end) {
       p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
       if (p) {

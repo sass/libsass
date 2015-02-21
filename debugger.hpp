@@ -271,7 +271,6 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     String_Schema* expression = dynamic_cast<String_Schema*>(node);
     cerr << ind << "String_Schema " << expression << " " << expression->concrete_type() <<
       (expression->has_interpolants() ? " {has_interpolants}" : "") <<
-      (expression->quote_mark() != 0 ? " {quote_mark:" + string(1, expression->quote_mark()) + "}" : "") <<
       endl;
     for(auto i : expression->elements()) { debug_ast(i, ind + " ", env); }
   } else if (dynamic_cast<String*>(node)) {

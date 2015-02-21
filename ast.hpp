@@ -1356,12 +1356,11 @@ namespace Sass {
   // evaluation phase.
   ///////////////////////////////////////////////////////////////////////
   class String_Schema : public String, public Vectorized<Expression*> {
-    ADD_PROPERTY(char, quote_mark);
     ADD_PROPERTY(bool, has_interpolants);
     size_t hash_;
   public:
     String_Schema(ParserState pstate, size_t size = 0, bool unq = false, char qm = '\0', bool i = false)
-    : String(pstate, unq), Vectorized<Expression*>(size), quote_mark_(qm), has_interpolants_(i), hash_(0)
+    : String(pstate, unq), Vectorized<Expression*>(size), has_interpolants_(i), hash_(0)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }
