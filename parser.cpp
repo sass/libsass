@@ -141,7 +141,7 @@ namespace Sass {
     }
 
     if (extension == ".css") {
-      String_Constant* loc = new (ctx.mem) String_Constant(pstate, import_path, true);
+      String_Constant* loc = new (ctx.mem) String_Constant(pstate, unquote(import_path));
       Argument* loc_arg = new (ctx.mem) Argument(pstate, loc);
       Arguments* loc_args = new (ctx.mem) Arguments(pstate);
       (*loc_args) << loc_arg;
@@ -403,22 +403,22 @@ namespace Sass {
   {
     lex< optional_spaces >();
     const char* i = position;
-    const char* p;
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
-
     while (i < end_of_selector) {
-      p = find_first_in_interval< exactly<hash_lbrace> >(i, end_of_selector);
-      if (p) {
-        // accumulate the preceding segment if there is one
+      // try to parse mutliple interpolants
+      if (const char* p = find_first_in_interval< exactly<hash_lbrace> >(i, end_of_selector)) {
+        // accumulate the preceding segment if the position has advanced
         if (i < p) (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, Position(0, 0)));
-        // find the end of the interpolant and parse it
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, end_of_selector);
-        Expression* interp_node = Parser::from_token(Token(p+2, j, Position(0, 0)), ctx, pstate).parse_list();
-        interp_node->is_interpolant(true);
-        (*schema) << interp_node;
-        i = j + 1;
+        // skip to the delimiter by skipping occurences in quoted strings
+        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, end_of_selector);
+        Expression* interpolant = Parser::from_token(Token(p+2, j, Position(0, 0)), ctx, pstate).parse_list();
+        interpolant->is_interpolant(true);
+        (*schema) << interpolant;
+        i = j;
       }
-      else { // no interpolants left; add the last segment if there is one
+      // no more interpolants have been found
+      // add the last segment if there is one
+      else {
         if (i < end_of_selector) (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, end_of_selector, Position(0, 0)));
         break;
       }
@@ -1187,7 +1187,7 @@ namespace Sass {
     if (lex< identifier >()) {
       String_Constant* str = new (ctx.mem) String_Constant(pstate, lexed);
       // Dont' delay this string if it is a name color. Fixes #652.
-      str->is_delayed(ctx.names_to_colors.count(lexed) == 0);
+      str->is_delayed(ctx.names_to_colors.count(unquote(lexed)) == 0);
       return str;
     }
 
@@ -1268,7 +1268,7 @@ namespace Sass {
     --str.end;
     --position;
     String_Constant* str_node = new (ctx.mem) String_Constant(pstate, str);
-    str_node->is_delayed(true);
+    // str_node->is_delayed(true);
     return str_node;
   }
 
@@ -1299,13 +1299,13 @@ namespace Sass {
         if (i < p) {
           (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
         }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, str.end); // find the closing brace
+        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p+2, str.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
           Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
           interp_node->is_interpolant(true);
           (*schema) << interp_node;
-          i = j+1;
+          i = j;
         }
         else {
           // throw an error if the interpolant is unterminated
@@ -1332,8 +1332,7 @@ namespace Sass {
     *kwd_arg << new (ctx.mem) String_Constant(pstate, lexed);
     if (peek< variable >()) *kwd_arg << parse_list();
     else if (lex< number >()) *kwd_arg << new (ctx.mem) Textual(pstate, Textual::NUMBER, Util::normalize_decimals(lexed));
-    else {
-      lex< alternatives< identifier_schema, identifier, number, hex > >();
+    else if (lex< alternatives< identifier_schema, identifier, number, hex > >()) {
       *kwd_arg << new (ctx.mem) String_Constant(pstate, lexed);
     }
     return kwd_arg;
@@ -1366,11 +1365,10 @@ namespace Sass {
         (*schema) << new (ctx.mem) Textual(pstate, Textual::NUMBER, lexed);
       }
       else if (lex< hex >()) {
-        (*schema) << new (ctx.mem) Textual(pstate, Textual::HEX, lexed);
+        (*schema) << new (ctx.mem) Textual(pstate, Textual::HEX, unquote(lexed));
       }
       else if (lex< quoted_string >()) {
         (*schema) << new (ctx.mem) String_Constant(pstate, lexed);
-        if (!num_items) schema->quote_mark(*lexed.begin);
       }
       else if (lex< variable >()) {
         (*schema) << new (ctx.mem) Variable(pstate, Util::normalize_underscores(lexed));
@@ -1431,16 +1429,19 @@ namespace Sass {
       p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, id.end);
       if (p) {
         if (i < p) {
-          (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
+          // accumulate the preceding segment if it's nonempty
+          (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, before_token));
         }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, id.end); // find the closing brace
+        // we need to skip anything inside strings
+        // create a new target in parser/prelexer
+        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p+2, id.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
           Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
           interp_node->is_interpolant(true);
           (*schema) << interp_node;
           schema->has_interpolants(true);
-          i = j+1;
+          i = j;
         }
         else {
           // throw an error if the interpolant is unterminated
