@@ -746,20 +746,12 @@ namespace Sass {
     {
       To_String to_string(&ctx);
       AST_Node* arg = env["$string"];
-      string org(arg->perform(&to_string));
-      string str((org));
-      String_Constant* result = 0;
-      String_Quoted* string_quoted = dynamic_cast<String_Quoted*>(arg);
-      if (string_quoted) {
-        // result = new (ctx.mem) String_Constant(pstate, string_quoted->value());
-        result = new (ctx.mem) String_Constant(pstate, str);
+      if (String_Quoted* string_quoted = dynamic_cast<String_Quoted*>(arg)) {
+        String_Constant* result = new (ctx.mem) String_Constant(pstate, string_quoted->value());
         result->sass_fix_1291(string_quoted->was_quoted());
-      } else {
-        result = new (ctx.mem) String_Constant(pstate, str);
-        result->was_quoted(false);
+        return result;
       }
-
-      return result;
+      return new (ctx.mem) String_Constant(pstate, string(arg->perform(&to_string)));
     }
 
     Signature quote_sig = "quote($string)";
