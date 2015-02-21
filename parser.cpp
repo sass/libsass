@@ -1444,27 +1444,27 @@ run = false;
   {
     // first lex away whatever we have found
     lex< sequence< optional< exactly<'*'> >, identifier_schema > >();
-    Token chunk(lexed);
-    const char* end = chunk.end;
+    Token id(lexed);
+    const char* end = id.end;
 
-    const char* i = chunk.begin;
+    const char* i = id.begin;
     // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(chunk.begin, chunk.end);
+    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(id.begin, id.end);
 
     if (!p) {
-      return new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), true);
+      return new (ctx.mem) String_Quoted(pstate, string(id.begin, id.end), true);
     }
 
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
-    while (i < chunk.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
+    while (i < id.end) {
+      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, id.end);
       if (p) {
         if (i < p) {
           (*schema) << new (ctx.mem) String_Constant(pstate, string(i, p));
         }
         // we need to skip anything inside strings
         // create a new target in parser/prelexer
-        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p+2, chunk.end); // find the closing brace
+        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p+2, id.end); // find the closing brace
         if (j) {
           -- j;
           // parse the interpolant and accumulate it
@@ -1476,7 +1476,7 @@ run = false;
         }
         else {
           // throw an error if the interpolant is unterminated
-          error("unterminated interpolant inside interpolated identifier " + chunk.to_string(), pstate);
+          error("unterminated interpolant inside interpolated identifier " + id.to_string(), pstate);
         }
       }
       else { // no interpolants left; add the last segment if nonempty
