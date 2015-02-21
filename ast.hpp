@@ -1359,8 +1359,8 @@ namespace Sass {
     ADD_PROPERTY(bool, has_interpolants);
     size_t hash_;
   public:
-    String_Schema(ParserState pstate, size_t size = 0, bool unq = false, char qm = '\0', bool i = false)
-    : String(pstate, unq), Vectorized<Expression*>(size), has_interpolants_(i), hash_(0)
+    String_Schema(ParserState pstate, size_t size = 0, bool sass_fix_1291 = false, char qm = '\0', bool i = false)
+    : String(pstate, sass_fix_1291), Vectorized<Expression*>(size), has_interpolants_(i), hash_(0)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1406,17 +1406,17 @@ namespace Sass {
   protected:
     size_t hash_;
   public:
-    String_Constant(ParserState pstate, string val, bool unq = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(val), hash_(0)
+    String_Constant(ParserState pstate, string val, bool sass_fix_1291 = false)
+    : String(pstate, sass_fix_1291, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(val), hash_(0)
     {  }
-    String_Constant(ParserState pstate, const char* beg, bool unq = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(beg)), hash_(0)
+    String_Constant(ParserState pstate, const char* beg, bool sass_fix_1291 = false)
+    : String(pstate, sass_fix_1291, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(beg)), hash_(0)
     {  }
-    String_Constant(ParserState pstate, const char* beg, const char* end, bool unq = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(beg, end-beg)), hash_(0)
+    String_Constant(ParserState pstate, const char* beg, const char* end, bool sass_fix_1291 = false)
+    : String(pstate, sass_fix_1291, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(beg, end-beg)), hash_(0)
     {  }
-    String_Constant(ParserState pstate, const Token& tok, bool unq = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(tok.begin, tok.end)), hash_(0)
+    String_Constant(ParserState pstate, const Token& tok, bool sass_fix_1291 = false)
+    : String(pstate, sass_fix_1291, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(tok.begin, tok.end)), hash_(0)
     {  }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1453,8 +1453,8 @@ namespace Sass {
   ////////////////////////////////////////////////////////
   class String_Quoted : public String_Constant {
   public:
-    String_Quoted(ParserState pstate, string val, bool unq = false)
-    : String_Constant(pstate, val, unq)
+    String_Quoted(ParserState pstate, string val, bool sass_fix_1291 = false)
+    : String_Constant(pstate, val, sass_fix_1291)
     {
     	char q = 0;
     	value_ = unquote(value_, &q);
@@ -1467,14 +1467,14 @@ namespace Sass {
         }
       }
     }
-    String_Quoted(ParserState pstate, const char* beg, bool unq = false)
-    : String_Constant(pstate, beg, unq)
+    String_Quoted(ParserState pstate, const char* beg, bool sass_fix_1291 = false)
+    : String_Constant(pstate, beg, sass_fix_1291)
     { }
-    String_Quoted(ParserState pstate, const char* beg, const char* end, bool unq = false)
-    : String_Constant(pstate, beg, end, unq)
+    String_Quoted(ParserState pstate, const char* beg, const char* end, bool sass_fix_1291 = false)
+    : String_Constant(pstate, beg, end, sass_fix_1291)
     { }
-    String_Quoted(ParserState pstate, const Token& tok, bool unq = false)
-    : String_Constant(pstate, tok, unq)
+    String_Quoted(ParserState pstate, const Token& tok, bool sass_fix_1291 = false)
+    : String_Constant(pstate, tok, sass_fix_1291)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }
