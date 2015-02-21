@@ -59,14 +59,10 @@ namespace Sass {
   class AST_Node {
     ADD_PROPERTY(ParserState, pstate);
     ADD_PROPERTY(string, wspace_bugfix);
-    ADD_PROPERTY(bool, is_inspecting);
-    ADD_PROPERTY(bool, is_inspected);
   public:
     AST_Node(ParserState pstate)
     : pstate_(pstate),
-      wspace_bugfix_(""),
-      is_inspecting_(false),
-      is_inspected_(false)
+      wspace_bugfix_("")
     { }
     virtual ~AST_Node() = 0;
     // virtual Block* block() { return 0; }

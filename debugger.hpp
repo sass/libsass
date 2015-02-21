@@ -237,7 +237,6 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     cerr << ind << "List " << expression <<
       (expression->separator() == Sass::List::Separator::COMMA ? "Comma " : "Space ") <<
       " [delayed: " << expression->is_delayed() << "] " <<
-      " [inspecting: " << expression->is_inspecting() << "] " <<
       " [interpolant: " << expression->is_interpolant() << "] " <<
       endl;
     for(auto i : expression->elements()) { debug_ast(i, ind + " ", env); }

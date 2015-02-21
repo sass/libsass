@@ -362,13 +362,9 @@ namespace Sass {
 
   void Inspect::operator()(List* list)
   {
-  	// cerr << "INSPECT LIST ==\n";
   	bool add = false;
     string sep(list->separator() == List::SPACE ? " " : ",");
     if (in_media && sep == "," && !in_declaration_list) sep = ", ";
-    else if (list->is_inspected() && list->separator() == List::COMMA) sep = ", ";
-    else if (list->is_inspecting() && list->separator() == List::COMMA && !in_declaration_list) sep = ",";
-    	if (list->is_inspecting() && list->separator() == List::COMMA && !in_declaration_list) add = true;
     if (list->empty()) return;
     bool items_output = false;
     in_declaration_list = in_declaration;
@@ -377,23 +373,13 @@ namespace Sass {
       if (list_item->is_invisible()) {
         continue;
       }
-      // debug_ast(list_item, "LI: ");
       if (items_output) {
       	if (!list_item->pstate().token.ws_before().empty()) {
       		append_to_buffer(sep);
           append_to_buffer2(list_item->pstate().token.ws_before());
         } else {
-        	// if (sep != " ") {
           append_to_buffer(sep + (add ? "" : ""));
-          // }
         }
-/*
-      	if (list_item->pstate().wspace_before.size() == 0) {
- // append_optional_space();
-      	} else {
-      	  append_to_buffer2(list_item->pstate().wspace_before);
-      	}
-*/
       }
       if (items_output && sep != " ") append_optional_space();
       // if (items_output && sep != " ") append_optional_linefeed();
