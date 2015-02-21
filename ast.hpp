@@ -1331,10 +1331,10 @@ namespace Sass {
   // "flat" strings.
   ////////////////////////////////////////////////////////////////////////
   class String : public Expression {
-    ADD_PROPERTY(bool, needs_unquoting);
+    ADD_PROPERTY(bool, sass_fix_1291);
   public:
-    String(ParserState pstate, bool unq = false, bool delayed = false)
-    : Expression(pstate, delayed), needs_unquoting_(unq)
+    String(ParserState pstate, bool sass_fix_1291 = false, bool delayed = false)
+    : Expression(pstate, delayed), sass_fix_1291_(sass_fix_1291)
     { concrete_type(STRING); }
     static string type_name() { return "string"; }
     virtual ~String() = 0;

@@ -1076,8 +1076,8 @@ namespace Sass {
     string lstr(lhs->perform(&to_string));
     string rstr(rhs->perform(&to_string));
 
-    bool l_str_quoted = ((Sass::String*)lhs) && ((Sass::String*)lhs)->needs_unquoting();
-    bool r_str_quoted = ((Sass::String*)rhs) && ((Sass::String*)rhs)->needs_unquoting();
+    bool l_str_quoted = ((Sass::String*)lhs) && ((Sass::String*)lhs)->sass_fix_1291();
+    bool r_str_quoted = ((Sass::String*)rhs) && ((Sass::String*)rhs)->sass_fix_1291();
     bool l_str_color = ltype == Expression::STRING && ctx.names_to_colors.count(lstr) && !l_str_quoted;
     bool r_str_color = rtype == Expression::STRING && ctx.names_to_colors.count(rstr) && !r_str_quoted;
 

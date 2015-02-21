@@ -487,7 +487,7 @@ namespace Sass {
 
   void Inspect::operator()(String_Constant* s)
   {
-    append_to_buffer(s->needs_unquoting() ? unquote(s->value()) : s->value(), s);
+    append_to_buffer(s->sass_fix_1291() ? unquote(s->value()) : s->value(), s);
   }
 
   void Inspect::operator()(Feature_Query* fq)

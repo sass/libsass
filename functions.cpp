@@ -750,7 +750,7 @@ namespace Sass {
       string str(unquote(org));
       String_Constant* result = new (ctx.mem) String_Constant(pstate, str);
       // remember if the string was quoted (color tokens)
-      if (org[0] != str[0]) result->needs_unquoting(true);
+      if (org[0] != str[0]) result->sass_fix_1291(true);
       result->is_delayed(true);
       return result;
     }
