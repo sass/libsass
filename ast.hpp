@@ -41,7 +41,6 @@
 #include "error_handling.hpp"
 #include "ast_def_macros.hpp"
 #include "to_string.hpp"
-// #include "util.hpp"
 
 #include "sass.h"
 #include "sass_values.h"
@@ -1439,7 +1438,7 @@ namespace Sass {
       return hash_;
     }
 
-    static char auto_quote() { return '*'; }
+    // static char auto_quote() { return '*'; }
     static char double_quote() { return '"'; }
     static char single_quote() { return '\''; }
 
@@ -1447,7 +1446,7 @@ namespace Sass {
   };
 
   ////////////////////////////////////////////////////////
-  // Possibly quoted string (unqote on instantiation)
+  // Possibly quoted string (unquote on instantiation)
   ////////////////////////////////////////////////////////
   class String_Quoted : public String_Constant {
   public:
@@ -2072,7 +2071,7 @@ namespace Sass {
     void adjust_after_pushing(Complex_Selector* c);
   public:
     Selector_List(ParserState pstate, size_t s = 0)
-    : Selector(pstate), Vectorized<Complex_Selector*>(s)
+    : Selector(pstate), Vectorized<Complex_Selector*>(s), wspace_(0)
     { }
     virtual Selector_Placeholder* find_placeholder();
     virtual int specificity()

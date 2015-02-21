@@ -1066,8 +1066,8 @@ namespace Sass {
   string quote(const string& s, char q)
   {
 
-    if (s.empty()) return string(2, q == String_Constant::auto_quote() ?
-      String_Constant::double_quote() : q);
+    // return an empty quoted string
+    if (s.empty()) return string(2, q ? q : '"');
 
     // autodetect with fallback to given quote
     q = detect_best_quotemark(s.c_str(), q);
