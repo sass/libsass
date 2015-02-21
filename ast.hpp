@@ -1467,17 +1467,8 @@ namespace Sass {
         }
       }
     }
-    String_Quoted(ParserState pstate, const char* beg)
-    : String_Constant(pstate, beg)
-    { }
-    String_Quoted(ParserState pstate, const char* beg, const char* end)
-    : String_Constant(pstate, beg, end)
-    { }
-    String_Quoted(ParserState pstate, const Token& tok)
-    : String_Constant(pstate, tok)
-    { }
-    string type() { return "string"; }
-    static string type_name() { return "string"; }
+    // string type() { return "string"; }
+    // static string type_name() { return "string"; }
     ATTACH_OPERATIONS();
   };
 
