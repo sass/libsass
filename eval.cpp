@@ -603,7 +603,9 @@ namespace Sass {
       static_cast<Number*>(value)->zero(true);
     }
     else if (value->concrete_type() == Expression::STRING) {
-      value = new (ctx.mem) String_Constant(*static_cast<String_Constant*>(value));
+      if (auto str = dynamic_cast<String_Constant*>(value)) {
+        value = new (ctx.mem) String_Constant(*str);
+      }
     }
     else if (value->concrete_type() == Expression::LIST) {
       value = new (ctx.mem) List(*static_cast<List*>(value));
