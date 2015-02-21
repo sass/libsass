@@ -301,7 +301,6 @@ namespace Sass {
                                   l->length(),
                                   l->separator(),
                                   l->is_arglist());
-ll->is_inspecting(l->is_inspecting());
     for (size_t i = 0, L = l->length(); i < L; ++i) {
       *ll << (*l)[i]->perform(this);
     }
