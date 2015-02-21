@@ -748,6 +748,7 @@ namespace Sass {
       AST_Node* arg = env["$string"];
       if (String_Quoted* string_quoted = dynamic_cast<String_Quoted*>(arg)) {
         String_Constant* result = new (ctx.mem) String_Constant(pstate, string_quoted->value());
+        // remember if the string was quoted (color tokens)
         result->sass_fix_1291(string_quoted->was_quoted());
         return result;
       }
