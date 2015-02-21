@@ -1453,8 +1453,8 @@ namespace Sass {
   ////////////////////////////////////////////////////////
   class String_Quoted : public String_Constant {
   public:
-    String_Quoted(ParserState pstate, string val, bool sass_fix_1291 = false)
-    : String_Constant(pstate, val, sass_fix_1291)
+    String_Quoted(ParserState pstate, string val)
+    : String_Constant(pstate, val)
     {
     	char q = 0;
     	value_ = unquote(value_, &q);
@@ -1467,14 +1467,14 @@ namespace Sass {
         }
       }
     }
-    String_Quoted(ParserState pstate, const char* beg, bool sass_fix_1291 = false)
-    : String_Constant(pstate, beg, sass_fix_1291)
+    String_Quoted(ParserState pstate, const char* beg)
+    : String_Constant(pstate, beg)
     { }
-    String_Quoted(ParserState pstate, const char* beg, const char* end, bool sass_fix_1291 = false)
-    : String_Constant(pstate, beg, end, sass_fix_1291)
+    String_Quoted(ParserState pstate, const char* beg, const char* end)
+    : String_Constant(pstate, beg, end)
     { }
-    String_Quoted(ParserState pstate, const Token& tok, bool sass_fix_1291 = false)
-    : String_Constant(pstate, tok, sass_fix_1291)
+    String_Quoted(ParserState pstate, const Token& tok)
+    : String_Constant(pstate, tok)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }

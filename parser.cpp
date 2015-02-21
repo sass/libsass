@@ -1452,7 +1452,7 @@ run = false;
     const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(id.begin, id.end);
 
     if (!p) {
-      return new (ctx.mem) String_Quoted(pstate, string(id.begin, id.end), true);
+      return new (ctx.mem) String_Quoted(pstate, string(id.begin, id.end));
     }
 
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
