@@ -734,9 +734,7 @@ namespace Sass {
       for (size_t i = 0, L = result.length(); i < L; ++i) {
         result[i] = std::toupper(result[i]);
       }
-
       return new (ctx.mem) String_Constant(pstate, result);
-
     }
 
     ///////////////////
@@ -809,11 +807,9 @@ namespace Sass {
     BUILT_IN(str_insert)
     {
       string str;
-      String_Constant* s = 0;
       try {
-        s = ARG("$string", String_Constant);
+        String_Constant* s = ARG("$string", String_Constant);
         str = s->value();
-        // char quotemark = s->quote_mark();
         str = unquote(str);
         String_Constant* i = ARG("$insert", String_Constant);
         string ins = i->value();
@@ -843,8 +839,8 @@ namespace Sass {
           str = ins + str;
         }
 
-        if (s->was_quoted()) {
-          str = quote(str, String_Constant::auto_quote());
+        if (s->quotemark()) {
+          str = quote(str, String_Constant::double_quote());
         }
       }
       catch (utf8::invalid_code_point) {
