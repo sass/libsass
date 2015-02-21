@@ -1443,6 +1443,12 @@ namespace Sass {
   // Possibly quoted string (unquote on instantiation)
   ////////////////////////////////////////////////////////
   class String_Quoted : public String_Constant {
+  public:
+    String_Quoted(ParserState pstate, string val)
+    : String_Constant(pstate, val)
+    {
+      // value_ = unquote(value_, &quote_mark_);
+    }
     ATTACH_OPERATIONS();
   };
 
