@@ -763,15 +763,18 @@ namespace Sass {
     append_to_buffer(indent);
   }
 
-  string unquote(const string& s)
+  string unquote(const string& s, char* qd)
   {
     if (s.empty()) return "";
     if (s.length() == 1) {
       if (s[0] == '"' || s[0] == '\'') return "";
     }
-    // char q;
-    if      (*s.begin() == '"'  && *s.rbegin() == '"')  {} // q = '"';
-    else if (*s.begin() == '\'' && *s.rbegin() == '\'') {} // q = '\'';
+    char q;
+
+    // this is no guarantee that the unquoting will work
+    // what about whitespace before/after the quote_mark?
+    if      (*s.begin() == '"'  && *s.rbegin() == '"')  q = '"';
+    else if (*s.begin() == '\'' && *s.rbegin() == '\'') q = '\'';
     else                                                return s;
     string t;
     t.reserve(s.length()-2);
@@ -823,6 +826,7 @@ namespace Sass {
       }
     }
 
+    if (qd) *qd = q;
     return t;
   }
 
