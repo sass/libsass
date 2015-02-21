@@ -1333,7 +1333,7 @@ namespace Sass {
   class String : public Expression {
     ADD_PROPERTY(bool, sass_fix_1291);
   public:
-    String(ParserState pstate, bool sass_fix_1291 = false, bool delayed = false)
+    String(ParserState pstate, bool delayed = false, bool sass_fix_1291 = false)
     : Expression(pstate, delayed), sass_fix_1291_(sass_fix_1291)
     { concrete_type(STRING); }
     static string type_name() { return "string"; }
@@ -1350,8 +1350,8 @@ namespace Sass {
     ADD_PROPERTY(bool, has_interpolants);
     size_t hash_;
   public:
-    String_Schema(ParserState pstate, size_t size = 0, char qm = '\0', bool i = false)
-    : String(pstate), Vectorized<Expression*>(size), has_interpolants_(i), hash_(0)
+    String_Schema(ParserState pstate, size_t size = 0, bool has_interpolants = false)
+    : String(pstate), Vectorized<Expression*>(size), has_interpolants_(has_interpolants), hash_(0)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1394,17 +1394,17 @@ namespace Sass {
     string unquoted_;
     size_t hash_;
   public:
-    String_Constant(ParserState pstate, string val, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), value_(val), hash_(0)
+    String_Constant(ParserState pstate, string val)
+    : String(pstate), value_(val), hash_(0)
     { unquoted_ = unquote(value_); }
-    String_Constant(ParserState pstate, const char* beg, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), value_(string(beg)), hash_(0)
+    String_Constant(ParserState pstate, const char* beg)
+    : String(pstate), value_(string(beg)), hash_(0)
     { unquoted_ = unquote(value_); }
-    String_Constant(ParserState pstate, const char* beg, const char* end, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), value_(string(beg, end-beg)), hash_(0)
+    String_Constant(ParserState pstate, const char* beg, const char* end)
+    : String(pstate), value_(string(beg, end-beg)), hash_(0)
     { unquoted_ = unquote(value_); }
-    String_Constant(ParserState pstate, const Token& tok, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), value_(string(tok.begin, tok.end)), hash_(0)
+    String_Constant(ParserState pstate, const Token& tok)
+    : String(pstate), value_(string(tok.begin, tok.end)), hash_(0)
     { unquoted_ = unquote(value_); }
     string type() { return "string"; }
     static string type_name() { return "string"; }

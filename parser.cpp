@@ -667,7 +667,7 @@ namespace Sass {
 
     String* value = 0;
     if (lex< identifier >()) {
-      value = new (ctx.mem) String_Constant(p, lexed, true);
+      value = new (ctx.mem) String_Constant(p, lexed);
     }
     else if (lex< quoted_string >()) {
       value = parse_interpolated_chunk(lexed, true); // needed!
