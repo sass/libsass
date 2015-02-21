@@ -1172,8 +1172,9 @@ namespace Sass {
     if (lex< important >())
     { return new (ctx.mem) String_Constant(pstate, "!important"); }
 
-    if (lex< value_schema >())
-    { return Parser::from_token(lexed, ctx, pstate).parse_value_schema(); }
+    const char* stop;
+    if ((stop = peek< value_schema >()))
+    { return parse_value_schema(stop); }
 
     if (lex< sequence< true_val, negate< identifier > > >())
     { return new (ctx.mem) Boolean(pstate, true); }
@@ -1339,11 +1340,11 @@ namespace Sass {
     return kwd_arg;
   }
 
-  String_Schema* Parser::parse_value_schema()
+  String_Schema* Parser::parse_value_schema(const char* stop)
   {
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
     size_t num_items = 0;
-    while (position < end) {
+    while (position < stop) {
       if (lex< interpolant >()) {
         Token insides(Token(lexed.begin + 2, lexed.end - 1, before_token));
         Expression* interp_node = Parser::from_token(insides, ctx, pstate).parse_list();
