@@ -24,7 +24,6 @@ namespace Sass {
   public:
     Env*       env;
     Backtrace* backtrace;
-    size_t schema_lvl;
     Eval(Context&, Env*, Backtrace*);
     virtual ~Eval();
     Eval* with(Env* e, Backtrace* bt); // for setting the env before eval'ing an expression

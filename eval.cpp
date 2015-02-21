@@ -32,7 +32,7 @@ namespace Sass {
   };
 
   Eval::Eval(Context& ctx, Env* env, Backtrace* bt)
-  : ctx(ctx), env(env), backtrace(bt), schema_lvl(0) { }
+  : ctx(ctx), env(env), backtrace(bt) { }
   Eval::~Eval() { }
 
   Eval* Eval::with(Env* e, Backtrace* bt) // for setting the env before eval'ing an expression
@@ -758,12 +758,10 @@ ll->is_inspecting(l->is_inspecting());
       return evacuate_escapes(str_constant->value());
 
     } else if (String_Schema* str_schema = dynamic_cast<String_Schema*>(s)) {
-      ++ schema_lvl;
       string res = "";
       for(auto i : str_schema->elements()) {
         res += (interpolation(i));
       }
-      -- schema_lvl;
       //ToDo: do this in one step
       auto esc = evacuate_escapes(res);
       auto unq = unquote(esc);
