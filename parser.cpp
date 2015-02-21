@@ -420,7 +420,7 @@ namespace Sass {
         if (i < p) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p));
         // skip to the delimiter by skipping occurences in quoted strings
         const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, end_of_selector);
-        Expression* interpolant = Parser::from_token(Token(p+2, j, Position(0, 0)), ctx, pstate).parse_list();
+        Expression* interpolant = Parser::from_c_str(p+2, j, ctx, pstate).parse_list();
         interpolant->is_interpolant(true);
         (*schema) << interpolant;
         i = j;
@@ -518,13 +518,13 @@ namespace Sass {
       (*seq) << new (ctx.mem) Selector_Reference(pstate);
       sawsomething = true;
       // if you see a space after a &, then you're done
-      if(lex< spaces >()) {
+      if(peek< spaces >()) {
         return seq;
       }
     }
     if (sawsomething && lex< sequence< negate< functional >, alternatives< identifier_fragment, universal, quoted_string, dimension, percentage, number > > >()) {
       // saw an ampersand, then allow type selectors with arbitrary number of hyphens at the beginning
-      (*seq) << new (ctx.mem) Type_Selector(pstate, lexed);
+      (*seq) << new (ctx.mem) Type_Selector(pstate, unquote(lexed));
     } else if (lex< sequence< negate< functional >, alternatives< type_selector, universal, quoted_string, dimension, percentage, number > > >()) {
       // if you see a type selector
       (*seq) << new (ctx.mem) Type_Selector(pstate, lexed);
@@ -670,7 +670,7 @@ namespace Sass {
       value = new (ctx.mem) String_Constant(p, lexed, true);
     }
     else if (lex< quoted_string >()) {
-      value = parse_interpolated_chunk(lexed);
+      value = parse_interpolated_chunk(lexed, true); // needed!
     }
     else {
       error("expected a string constant or identifier in attribute selector for " + name, pstate);
@@ -1238,9 +1238,9 @@ namespace Sass {
     // see if there any interpolants
     const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
     if (!p) {
-      String_Constant* str_node = new (ctx.mem) String_Constant(pstate, chunk);
-      str_node->is_delayed(true);
-      return str_node;
+      String_Quoted* str_quoted = new (ctx.mem) String_Quoted(pstate, string(i, chunk.end));
+      str_quoted->is_delayed(true);
+      return str_quoted;
     }
 
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
@@ -1249,15 +1249,18 @@ namespace Sass {
       p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
       if (p) {
         if (i < p) {
-          (*schema) << new (ctx.mem) String_Constant(pstate, Token(i, p, before_token)); // accumulate the preceding segment if it's nonempty
+          // accumulate the preceding segment if it's nonempty
+          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p));
         }
-        const char* j = find_first_in_interval< exactly<rbrace> >(p, chunk.end); // find the closing brace
-        if (j) {
+        // we need to skip anything inside strings
+        // create a new target in parser/prelexer
+        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, chunk.end); // find the closing brace
+        if (j) { --j;
           // parse the interpolant and accumulate it
           Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
           interp_node->is_interpolant(true);
           (*schema) << interp_node;
-          i = j+1;
+          i = j;
         }
         else {
           // throw an error if the interpolant is unterminated
@@ -1269,6 +1272,7 @@ namespace Sass {
         if (i < chunk.end) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, chunk.end));
         break;
       }
+      ++ i;
     }
     return schema;
   }
@@ -1344,7 +1348,7 @@ namespace Sass {
     *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed);
     if (peek< variable >()) *kwd_arg << parse_list();
     else if (lex< number >()) *kwd_arg << new (ctx.mem) Textual(pstate, Textual::NUMBER, Util::normalize_decimals(lexed));
-    else if (lex< alternatives< identifier_schema, identifier, number, hex > >()) {
+    else if (lex< alternatives< identifier_schema, identifier, number, hexa, hex > >()) {
       *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed);
     }
     return kwd_arg;
