@@ -49,8 +49,6 @@ namespace Sass {
   Parser Parser::from_token(Token t, Context& ctx, ParserState pstate)
   {
     Parser p(ctx, pstate);
-//    cerr << "reparse from_token " << string(t.begin, t.end) << endl;
-
     p.source   = t.begin;
     p.position = p.source;
     p.end      = t.end;
@@ -75,7 +73,7 @@ namespace Sass {
     Selector_Lookahead lookahead_result;
     while (position < end) {
       if (lex< block_comment >()) {
-        String*  contents = parse_interpolated_chunk(lexed); // egal!
+        String*  contents = parse_interpolated_chunk(lexed);
         Comment* comment  = new (ctx.mem) Comment(pstate, contents);
         (*root) << comment;
       }
@@ -763,7 +761,7 @@ run = false;
 
     // JMA - ensure that a block containing only block_comments is parsed
     while (lex< block_comment >()) {
-      String*  contents = parse_interpolated_chunk(lexed); // egal!
+      String*  contents = parse_interpolated_chunk(lexed);
       Comment* comment  = new (ctx.mem) Comment(pstate, contents);
       (*block) << comment;
     }
@@ -775,14 +773,14 @@ run = false;
         }
         semicolon = false;
         while (lex< block_comment >()) {
-          String*  contents = parse_interpolated_chunk(lexed); // egal!
+          String*  contents = parse_interpolated_chunk(lexed);
           Comment* comment  = new (ctx.mem) Comment(pstate, contents);
           (*block) << comment;
         }
         if (lex< sequence< exactly<'}'>, zero_plus< exactly<';'> > > >()) break;
       }
       if (lex< block_comment >()) {
-        String*  contents = parse_interpolated_chunk(lexed); // egal!
+        String*  contents = parse_interpolated_chunk(lexed);
         Comment* comment  = new (ctx.mem) Comment(pstate, contents);
         (*block) << comment;
       }
@@ -918,7 +916,7 @@ run = false;
       }
       else lex< one_plus< exactly<';'> > >();
       while (lex< block_comment >()) {
-        String*  contents = parse_interpolated_chunk(lexed); // egal!
+        String*  contents = parse_interpolated_chunk(lexed);
         Comment* comment  = new (ctx.mem) Comment(pstate, contents);
         (*block) << comment;
       }
@@ -1065,9 +1063,7 @@ run = false;
              peek< default_flag >(position) ||
              peek< global_flag >(position)))
     {
-
-      Expression* disj = parse_disjunction();
-      (*space_list) << disj;
+      (*space_list) << parse_disjunction();
     }
 
     return space_list;
@@ -1392,9 +1388,6 @@ run = false;
     *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed);
     if (peek< variable >()) *kwd_arg << parse_list();
     else if (lex< number >()) *kwd_arg << new (ctx.mem) Textual(pstate, Textual::NUMBER, Util::normalize_decimals(lexed));
-//    else if (lex< alternatives < identifier_schema, quoted_string > >()) {
-//      *kwd_arg << parse_interpolated_chunk(Token(lexed));
-//    }
     else if (lex< alternatives< identifier_schema, identifier, number, hexa, hex > >()) {
       *kwd_arg << new (ctx.mem) String_Quoted(pstate, lexed);
     }
