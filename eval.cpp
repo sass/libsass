@@ -614,9 +614,11 @@ namespace Sass {
       static_cast<Number*>(value)->zero(true);
     }
     else if (value->concrete_type() == Expression::STRING) {
-      String_Quoted* str_quoted = new (ctx.mem) String_Quoted(*static_cast<String_Quoted*>(value));
-      String_Constant* str_constant = new (ctx.mem) String_Constant(*static_cast<String_Constant*>(value));
-      value = str_quoted ? str_quoted : str_constant;
+      if (auto str = dynamic_cast<String_Quoted*>(value)) {
+        value = new (ctx.mem) String_Quoted(*str);
+      } else if (auto str = dynamic_cast<String_Constant*>(value)) {
+        value = new (ctx.mem) String_Constant(*str);
+      }
     }
     else if (value->concrete_type() == Expression::LIST) {
       value = new (ctx.mem) List(*static_cast<List*>(value));
