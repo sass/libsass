@@ -1452,22 +1452,15 @@ run = false;
     const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(chunk.begin, chunk.end);
 
     if (!p) {
-      String_Constant* str_constant = new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), true);
-        if (String_Quoted* str_quoted = dynamic_cast<String_Quoted*>(str_constant)) {
-          str_quoted->quote_mark('*');
-        }
-
-      str_constant->is_delayed(true);
-      return str_constant;
+      return new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), true);
     }
+
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
     while (i < chunk.end) {
       p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
       if (p) {
         if (i < p) {
-          (*schema) << (true ?
-            new (ctx.mem) String_Constant(pstate, string(i, p)) :
-            new (ctx.mem) String_Quoted(pstate, string(i, p)));
+          (*schema) << new (ctx.mem) String_Constant(pstate, string(i, p));
         }
         // we need to skip anything inside strings
         // create a new target in parser/prelexer
