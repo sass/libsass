@@ -574,7 +574,6 @@ run = false;
     if (!sel_source_position.line) sel_source_position = before_token;
     Complex_Selector* cpx = new (ctx.mem) Complex_Selector(ParserState(path, sel_source_position, Offset(0, 0)), cmb, lhs, rhs);
     if (cpx_lf) cpx->has_line_break(cpx_lf);
-//    if (cpx_lf) cerr << "PEEK GOT "<< cpx << endl;
     return cpx;
   }
 
@@ -742,11 +741,9 @@ run = false;
 
     String* value = 0;
     if (lex< identifier >()) {
-//    	cerr << "=============== " << string(lexed) << endl;
       value = new (ctx.mem) String_Constant(p, lexed, false);
     }
     else if (lex< quoted_string >()) {
-//    	cerr << "GOT SOME ATTR -- " << string(lexed) << endl;
       value = parse_interpolated_chunk(lexed, true); // needed!
     }
     else {
