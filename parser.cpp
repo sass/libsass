@@ -31,7 +31,6 @@ namespace Sass {
     p.source   = t.begin;
     p.position = p.source;
     p.end      = t.end;
-    p.dequote  = true;
     return p;
   }
 
@@ -1228,7 +1227,7 @@ namespace Sass {
     // see if there any interpolants
     const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(chunk.begin, chunk.end);
     if (!p) {
-      String_Constant* str_node = new (ctx.mem) String_Constant(pstate, chunk, dequote);
+      String_Constant* str_node = new (ctx.mem) String_Constant(pstate, chunk);
       str_node->is_delayed(true);
       return str_node;
     }
