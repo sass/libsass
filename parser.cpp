@@ -1287,17 +1287,13 @@ run = false;
     // see if there any interpolants
     const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
     if (!p) {
-      String_Quoted* str_constant = new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end));
-      if (!constant && str_constant->quote_mark()) {
-        str_constant->quote_mark('*');
-      }
-      str_constant->is_delayed(true);
-      return str_constant;
+      String_Quoted* str_quoted = new (ctx.mem) String_Quoted(pstate, string(i, chunk.end));
+      if (!constant && str_quoted->quote_mark()) str_quoted->quote_mark('*');
+      str_quoted->is_delayed(true);
+      return str_quoted;
     }
 
-    // cerr << "parse parse_interpolated_chunk";
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
-
     while (i < chunk.end) {
       p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
       if (p) {
