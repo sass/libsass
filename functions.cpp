@@ -773,16 +773,7 @@ namespace Sass {
       size_t len = string::npos;
       try {
         String_Constant* s = ARG("$string", String_Constant);
-        string str = s->value();
-        size_t length_of_s = str.size();
-        size_t i = 0;
-
-        if (s->is_quoted()) {
-          ++i;
-          --length_of_s;
-        }
-
-        len = UTF_8::code_point_count(str, i, length_of_s);
+        len = UTF_8::code_point_count(s->value(), 0, s->value().size());
 
       }
       catch (utf8::invalid_code_point) {
@@ -809,7 +800,6 @@ namespace Sass {
       try {
         String_Constant* s = ARG("$string", String_Constant);
         str = s->value();
-        char quotemark = s->quote_mark();
         str = unquote(str);
         String_Constant* i = ARG("$insert", String_Constant);
         string ins = i->value();
@@ -839,7 +829,7 @@ namespace Sass {
           str = ins + str;
         }
 
-        if (quotemark) {
+        if (s->quote_mark()) {
           str = quote(str, String_Constant::double_quote());
         }
       }
