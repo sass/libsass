@@ -328,9 +328,8 @@ namespace Sass {
   {
     if (source_map_file == "") return 0;
     char* result = 0;
-    return copy_c_str("");
-    //string map = source_map.generate_source_map(*this);
-    // result = copy_c_str(map.c_str());
+    string map = source_map.generate_source_map(*this);
+    result = copy_c_str(map.c_str());
     return result;
   }
 
