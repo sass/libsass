@@ -61,7 +61,7 @@ namespace Sass {
 
   Selector* Contextualize::operator()(Complex_Selector* s)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     Complex_Selector* ss = new (ctx.mem) Complex_Selector(*s);
     Compound_Selector* new_head = 0;
     Complex_Selector* new_tail = 0;
@@ -89,7 +89,7 @@ namespace Sass {
 
   Selector* Contextualize::operator()(Compound_Selector* s)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     if (placeholder && extender && s->perform(&to_string) == placeholder->perform(&to_string)) {
       return extender;
     }
