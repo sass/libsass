@@ -50,6 +50,7 @@ namespace Sass {
     bool isSelector() const { return mType == SELECTOR; }
     bool isCollection() const { return mType == COLLECTION; }
     bool isNil() const { return mType == NIL; }
+    bool has_line_feed;
 
     Complex_Selector::Combinator combinator() const { return mCombinator; }
 

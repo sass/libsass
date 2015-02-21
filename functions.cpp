@@ -744,21 +744,21 @@ namespace Sass {
     Signature unquote_sig = "unquote($string)";
     BUILT_IN(sass_unquote)
     {
-      To_String to_string;
+      To_String to_string(&ctx);
       AST_Node* arg = env["$string"];
-      string org(arg->perform(&to_string));
-      string str(unquote(org));
-      String_Constant* result = new (ctx.mem) String_Constant(pstate, str);
-      // remember if the string was quoted (color tokens)
-      if (org[0] != str[0]) result->needs_unquoting(true);
-      result->is_delayed(true);
-      return result;
+      if (String_Quoted* string_quoted = dynamic_cast<String_Quoted*>(arg)) {
+        String_Constant* result = new (ctx.mem) String_Constant(pstate, string_quoted->value());
+        // remember if the string was quoted (color tokens)
+        result->sass_fix_1291(string_quoted->quote_mark());
+        return result;
+      }
+      return new (ctx.mem) String_Constant(pstate, string(arg->perform(&to_string)));
     }
 
     Signature quote_sig = "quote($string)";
     BUILT_IN(sass_quote)
     {
-      To_String to_string;
+      To_String to_string(&ctx);
       AST_Node* arg = env["$string"];
       string str(quote(arg->perform(&to_string), String_Constant::double_quote()));
       String_Constant* result = new (ctx.mem) String_Constant(pstate, str);
@@ -773,16 +773,7 @@ namespace Sass {
       size_t len = string::npos;
       try {
         String_Constant* s = ARG("$string", String_Constant);
-        string str = s->value();
-        size_t length_of_s = str.size();
-        size_t i = 0;
-
-        if (s->is_quoted()) {
-          ++i;
-          --length_of_s;
-        }
-
-        len = UTF_8::code_point_count(str, i, length_of_s);
+        len = UTF_8::code_point_count(s->value(), 0, s->value().size());
 
       }
       catch (utf8::invalid_code_point) {
@@ -809,7 +800,6 @@ namespace Sass {
       try {
         String_Constant* s = ARG("$string", String_Constant);
         str = s->value();
-        char quotemark = s->quote_mark();
         str = unquote(str);
         String_Constant* i = ARG("$insert", String_Constant);
         string ins = i->value();
@@ -839,8 +829,8 @@ namespace Sass {
           str = ins + str;
         }
 
-        if (quotemark) {
-          str = quote(str, String_Constant::double_quote());
+        if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+          if (ss->quote_mark()) str = quote(str);
         }
       }
       catch (utf8::invalid_code_point) {
@@ -903,9 +893,7 @@ namespace Sass {
         Number* n = ARG("$start-at", Number);
         Number* m = ARG("$end-at", Number);
 
-        string str = s->value();
-        char quotemark = s->quote_mark();
-        str = unquote(str);
+        string str = unquote(s->value());
 
         // normalize into 0-based indices
         size_t start = UTF_8::offset_at_position(str, UTF_8::normalize_index(n->value(), UTF_8::code_point_count(str)));
@@ -914,15 +902,19 @@ namespace Sass {
         // `str-slice` should always return an empty string when $end-at == 0
         // `normalize_index` normalizes 1 -> 0 so we need to check the original value
         if(m->value() == 0) {
-          if(!quotemark) return new (ctx.mem) Null(pstate);
+          if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+            if(!ss->quote_mark()) return new (ctx.mem) Null(pstate);
+          } else {
+            return new (ctx.mem) Null(pstate);
+          }
           newstr = "";
         } else if(start == end && m->value() != 0) {
           newstr = str.substr(start, 1);
         } else if(end > start) {
           newstr = str.substr(start, end - start + UTF_8::code_point_size_at_offset(str, end));
         }
-        if(quotemark) {
-          newstr = quote(newstr, String_Constant::double_quote());
+        if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+          if(ss->quote_mark()) newstr = quote(newstr);
         }
       }
       catch (utf8::invalid_code_point) {
@@ -953,6 +945,9 @@ namespace Sass {
         }
       }
 
+      if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+        str = ss->quote_mark() ? quote(str) : str;
+      }
       return new (ctx.mem) String_Constant(pstate, str);
     }
 
@@ -968,6 +963,9 @@ namespace Sass {
         }
       }
 
+      if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+        str = ss->quote_mark() ? quote(str, '"') : str;
+      }
       return new (ctx.mem) String_Constant(pstate, str);
     }
 
@@ -1234,7 +1232,7 @@ namespace Sass {
     BUILT_IN(compact)
     {
       error("`compact` has been removed from libsass because it's not part of the Sass spec", pstate);
-      return 0;
+      return 0; // suppress warning, error will exit anyway
     }
 
     Signature list_separator_sig = "list_separator($list)";
@@ -1352,7 +1350,7 @@ namespace Sass {
     {
       Expression* v = ARG("$value", Expression);
       if (v->concrete_type() == Expression::STRING) {
-        To_String to_string;
+        To_String to_string(&ctx);
         string str(v->perform(&to_string));
         if (ctx.names_to_colors.count(str)) {
           return new (ctx.mem) String_Constant(pstate, "color");
@@ -1363,7 +1361,7 @@ namespace Sass {
 
     Signature unit_sig = "unit($number)";
     BUILT_IN(unit)
-    { return new (ctx.mem) String_Constant(pstate, quote(ARG("$number", Number)->unit(), '"')); }
+    { return new (ctx.mem) String_Quoted(pstate, quote(ARG("$number", Number)->unit(), '"')); }
 
     Signature unitless_sig = "unitless($number)";
     BUILT_IN(unitless)
@@ -1495,6 +1493,7 @@ namespace Sass {
     BUILT_IN(image_url)
     {
       error("`image_url` has been removed from libsass because it's not part of the Sass spec", pstate);
+      return 0; // suppress warning, error will exit anyway
     }
 
     //////////////////////////

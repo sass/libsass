@@ -10,8 +10,7 @@
 #include "parser.hpp"
 #include "file.hpp"
 #include "inspect.hpp"
-#include "output_nested.hpp"
-#include "output_compressed.hpp"
+#include "output.hpp"
 #include "expand.hpp"
 #include "eval.hpp"
 #include "contextualize.hpp"
@@ -24,6 +23,7 @@
 #include "backtrace.hpp"
 #include "sass2scss.h"
 #include "prelexer.hpp"
+#include "emitter.hpp"
 
 #include <iomanip>
 #include <iostream>
@@ -68,7 +68,6 @@ namespace Sass {
     names_to_colors         (map<string, Color*>()),
     colors_to_names         (map<int, string>()),
     precision               (initializers.precision()),
-    _skip_source_map_update (initializers._skip_source_map_update()),
     subset_map              (Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> >())
   {
     cwd = get_cwd();
@@ -222,31 +221,17 @@ namespace Sass {
 
   char* Context::compile_block(Block* root)
   {
-    char* result = 0;
     if (!root) return 0;
-    switch (output_style) {
-      case COMPRESSED: {
-        Output_Compressed output_compressed(this);
-        root->perform(&output_compressed);
-        string output = output_compressed.get_buffer();
-        if (source_map_file != "" && !omit_source_map_url) {
-          output += format_source_mapping_url(source_map_file);
-        }
-        result = copy_c_str(output.c_str());
-      } break;
-
-      default: {
-        Output_Nested output_nested(source_comments, this);
-        root->perform(&output_nested);
-        string output = output_nested.get_buffer();
-        if (source_map_file != "" && !omit_source_map_url) {
-          output += linefeed + format_source_mapping_url(source_map_file);
-        }
-        result = copy_c_str(output.c_str());
-
-      } break;
+    OutputBuffer buffer;
+    Output emitter(buffer, this);
+    // emmitter.source_comments(source_comments);
+    root->perform(&emitter);
+    emitter.append_to_buffer("");
+    string output = emitter.get_buffer();
+    if (source_map_file != "" && !omit_source_map_url) {
+      output += linefeed + format_source_mapping_url(source_map_file);
     }
-    return result;
+    return copy_c_str(output.c_str());
   }
 
   Block* Context::parse_file()
@@ -277,9 +262,6 @@ namespace Sass {
     Contextualize contextualize(*this, &eval, &tge, &backtrace);
     Expand expand(*this, &eval, &contextualize, &tge, &backtrace);
     Cssize cssize(*this, &tge, &backtrace);
-    // Inspect inspect(this);
-    // Output_Nested output_nested(*this);
-
     root = root->perform(&expand)->block();
     root = root->perform(&cssize)->block();
     if (!subset_map.empty()) {

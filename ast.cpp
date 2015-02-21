@@ -89,7 +89,7 @@ namespace Sass {
 
   Compound_Selector* Simple_Selector::unify_with(Compound_Selector* rhs, Context& ctx)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     for (size_t i = 0, L = rhs->length(); i < L; ++i)
     { if (perform(&to_string) == (*rhs)[i]->perform(&to_string)) return rhs; }
 
@@ -183,6 +183,7 @@ namespace Sass {
           return 0;
       }
     }
+    rhs->has_line_break(has_line_break());
     return Simple_Selector::unify_with(rhs, ctx);
   }
 
@@ -451,7 +452,7 @@ namespace Sass {
   {
     Complex_Selector* cpy = new (ctx.mem) Complex_Selector(*this);
 
-		if (head()) {
+    if (head()) {
     	cpy->head(head()->clone(ctx));
     }
 
@@ -533,7 +534,7 @@ namespace Sass {
 
   Compound_Selector* Compound_Selector::minus(Compound_Selector* rhs, Context& ctx)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     Compound_Selector* result = new (ctx.mem) Compound_Selector(pstate());
 
     // not very efficient because it needs to preserve order

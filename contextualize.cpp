@@ -28,7 +28,7 @@ namespace Sass {
 
   Selector* Contextualize::operator()(Selector_Schema* s)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     string result_str(s->contents()->perform(eval->with(env, backtrace))->perform(&to_string));
     result_str += '{'; // the parser looks for a brace to end the selector
     Selector* result_sel = Parser::from_c_str(result_str.c_str(), ctx, s->pstate()).parse_selector_group();
@@ -41,16 +41,19 @@ namespace Sass {
     Selector_List* ss = 0;
     if (p) {
       ss = new (ctx.mem) Selector_List(s->pstate(), p->length() * s->length());
+      // ss->has_line_feed(s->has_line_feed());
       for (size_t i = 0, L = p->length(); i < L; ++i) {
         for (size_t j = 0, L = s->length(); j < L; ++j) {
           parent = (*p)[i];
           Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
+          if (parent->has_line_feed()) comb->has_line_feed(parent->has_line_feed() ||true);
           if (comb) *ss << comb;
         }
       }
     }
     else {
       ss = new (ctx.mem) Selector_List(s->pstate(), s->length());
+      // ss->has_line_feed(s->has_line_feed());
       for (size_t j = 0, L = s->length(); j < L; ++j) {
         Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
         if (comb) *ss << comb;
@@ -61,8 +64,9 @@ namespace Sass {
 
   Selector* Contextualize::operator()(Complex_Selector* s)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     Complex_Selector* ss = new (ctx.mem) Complex_Selector(*s);
+    // ss->has_line_feed(s->has_line_feed());
     Compound_Selector* new_head = 0;
     Complex_Selector* new_tail = 0;
     if (ss->head()) {
@@ -71,6 +75,7 @@ namespace Sass {
     }
     if (ss->tail()) {
       new_tail = static_cast<Complex_Selector*>(s->tail()->perform(this));
+      // new_tail->has_line_break(s->has_line_break());
       ss->tail(new_tail);
     }
     if ((new_head && new_head->has_placeholder()) || (new_tail && new_tail->has_placeholder())) {
@@ -80,6 +85,7 @@ namespace Sass {
       ss->has_placeholder(false);
     }
     if (!ss->head() && ss->combinator() == Complex_Selector::ANCESTOR_OF) {
+     // if (ss->has_line_feed()) ss->tail()->has_line_feed(true);
       return ss->tail();
     }
     else {
@@ -89,11 +95,13 @@ namespace Sass {
 
   Selector* Contextualize::operator()(Compound_Selector* s)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     if (placeholder && extender && s->perform(&to_string) == placeholder->perform(&to_string)) {
       return extender;
     }
     Compound_Selector* ss = new (ctx.mem) Compound_Selector(s->pstate(), s->length());
+    ss->has_line_break(s->has_line_break());
+    // ss->has_line_feed(s->has_line_feed());
     for (size_t i = 0, L = s->length(); i < L; ++i) {
       Simple_Selector* simp = static_cast<Simple_Selector*>((*s)[i]->perform(this));
       if (simp) *ss << simp;
@@ -135,7 +143,7 @@ namespace Sass {
 
   Selector* Contextualize::operator()(Selector_Placeholder* p)
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     if (placeholder && extender && p->perform(&to_string) == placeholder->perform(&to_string)) {
       return extender;
     }
@@ -148,6 +156,7 @@ namespace Sass {
   {
     if (!parent) return 0;
     Selector_Reference* ss = new (ctx.mem) Selector_Reference(*s);
+    // ss->has_line_feed(s->has_line_feed());
     ss->selector(parent);
     return ss;
   }
