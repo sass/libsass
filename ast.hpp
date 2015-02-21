@@ -1400,23 +1400,22 @@ namespace Sass {
   ////////////////////////////////////////////////////////
   class String_Constant : public String {
     ADD_PROPERTY(bool, marker);
-    ADD_PROPERTY(bool, was_quoted);
     ADD_PROPERTY(char, quote_mark);
     ADD_PROPERTY(string, value);
   protected:
     size_t hash_;
   public:
     String_Constant(ParserState pstate, string val, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(val), hash_(0)
+    : String(pstate, sass_fix_1291, true), marker_(false), quote_mark_(0), value_(val), hash_(0)
     {  }
     String_Constant(ParserState pstate, const char* beg, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(beg)), hash_(0)
+    : String(pstate, sass_fix_1291, true), marker_(false), quote_mark_(0), value_(string(beg)), hash_(0)
     {  }
     String_Constant(ParserState pstate, const char* beg, const char* end, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(beg, end-beg)), hash_(0)
+    : String(pstate, sass_fix_1291, true), marker_(false), quote_mark_(0), value_(string(beg, end-beg)), hash_(0)
     {  }
     String_Constant(ParserState pstate, const Token& tok, bool sass_fix_1291 = false)
-    : String(pstate, sass_fix_1291, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(tok.begin, tok.end)), hash_(0)
+    : String(pstate, sass_fix_1291, true), marker_(false), quote_mark_(0), value_(string(tok.begin, tok.end)), hash_(0)
     {  }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1457,7 +1456,6 @@ namespace Sass {
     : String_Constant(pstate, val)
     {
       value_ = unquote(value_, &quote_mark_);
-      was_quoted_ = quote_mark_ != 0;
     }
     ATTACH_OPERATIONS();
   };

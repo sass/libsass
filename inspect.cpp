@@ -637,7 +637,7 @@ namespace Sass {
 
   void Inspect::operator()(String_Quoted* s)
   {
-    if (s->was_quoted()) {
+    if (s->quote_mark()) {
       append_to_buffer(quote(s->value(), s->quote_mark()));
     } else {
       append_to_buffer((s->value()));

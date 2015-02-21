@@ -392,8 +392,6 @@ namespace Sass {
       String_Constant* lstr = dynamic_cast<String_Constant*>(lhs);
       String_Constant* rstr = dynamic_cast<String_Constant*>(rhs);
       if (String_Constant* org = lstr ? lstr : rstr)
-      { str->was_quoted(org->was_quoted()); }
-      if (String_Constant* org = lstr ? lstr : rstr)
       { str->quote_mark(org->quote_mark()); }
     }
     return ex;
@@ -746,7 +744,7 @@ namespace Sass {
   string Eval::interpolation(Expression* s) {
 
     if (String_Quoted* str_quoted = dynamic_cast<String_Quoted*>(s)) {
-      if (str_quoted->was_quoted()) {
+      if (str_quoted->quote_mark()) {
         return string_escape(str_quoted->value());
       } else {
         return (evacuate_escapes(str_quoted->value()));
@@ -1192,7 +1190,6 @@ namespace Sass {
 
     String_Quoted* str = new (ctx.mem) String_Quoted(lhs->pstate(), result);
     str->quote_mark(0);
-    str->was_quoted(0);
     return str;
   }
 
