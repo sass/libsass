@@ -893,9 +893,7 @@ namespace Sass {
         Number* n = ARG("$start-at", Number);
         Number* m = ARG("$end-at", Number);
 
-        string str = s->value();
-        char quotemark = s->quote_mark();
-        str = unquote(str);
+        string str = unquote(s->value());
 
         // normalize into 0-based indices
         size_t start = UTF_8::offset_at_position(str, UTF_8::normalize_index(n->value(), UTF_8::code_point_count(str)));
@@ -904,14 +902,14 @@ namespace Sass {
         // `str-slice` should always return an empty string when $end-at == 0
         // `normalize_index` normalizes 1 -> 0 so we need to check the original value
         if(m->value() == 0) {
-          if(!quotemark) return new (ctx.mem) Null(pstate);
+          if(!s->quote_mark()) return new (ctx.mem) Null(pstate);
           newstr = "";
         } else if(start == end && m->value() != 0) {
           newstr = str.substr(start, 1);
         } else if(end > start) {
           newstr = str.substr(start, end - start + UTF_8::code_point_size_at_offset(str, end));
         }
-        if(quotemark) {
+        if(s->quote_mark()) {
           newstr = quote(newstr, String_Constant::double_quote());
         }
       }
@@ -943,6 +941,7 @@ namespace Sass {
         }
       }
 
+      str = s->quote_mark() ? quote(str, '"') : str;
       return new (ctx.mem) String_Constant(pstate, str);
     }
 
@@ -958,6 +957,7 @@ namespace Sass {
         }
       }
 
+      str = s->quote_mark() ? quote(str, '"') : str;
       return new (ctx.mem) String_Constant(pstate, str);
     }
 
@@ -1224,7 +1224,7 @@ namespace Sass {
     BUILT_IN(compact)
     {
       error("`compact` has been removed from libsass because it's not part of the Sass spec", pstate);
-      return 0;
+      return 0; // suppress warning, error will exit anyway
     }
 
     Signature list_separator_sig = "list_separator($list)";
