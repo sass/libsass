@@ -49,7 +49,7 @@ namespace Sass {
 
 
   Node::Node(const TYPE& type, Complex_Selector::Combinator combinator, Complex_Selector* pSelector, NodeDequePtr& pCollection) :
-    has_line_break(false),
+    // has_line_break(false),
     has_line_feed(false),
     mType(type),
     mCombinator(combinator),

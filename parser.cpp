@@ -1249,13 +1249,9 @@ run = false;
     if (lex< important >())
     { return new (ctx.mem) String_Constant(pstate, "!important"); }
 
-    const char* stop = peek< value_schema >();
-
-    if (stop > 0)
-{
-	return parse_value_schema(stop); // Parser::from_token(lexed, ctx, pstate).
-
-}
+    const char* stop;
+    if ((stop = peek< value_schema >()))
+    { return parse_value_schema(stop); }
 
     if (lex< sequence< true_val, negate< identifier > > >())
     { return new (ctx.mem) Boolean(pstate, true); }
