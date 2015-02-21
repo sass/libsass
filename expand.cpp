@@ -62,17 +62,15 @@ namespace Sass {
       contextual = contextualize->with(at_root_selector_stack.back(), env, backtrace);
 
     Selector* sel_ctx = r->selector()->perform(contextual);
-    if (sel_ctx == 0) throw "bad selector";
+    if (sel_ctx == 0) throw "Cannot expand null selector";
 
     OutputBuffer buffer;
     Emitter emitter(buffer, &ctx);
     Inspect isp(emitter);
- // debug_ast(sel_ctx, " -- ");
     sel_ctx->perform(&isp);
     emitter.append_to_buffer(";");
     string str = isp.get_buffer();
 
-//    cerr << "REPARSE [" << str << "]" << endl;
     Parser p(ctx, ParserState("[REPARSE]", 0));
     p.source   = str.c_str();
     p.position = str.c_str();
@@ -97,7 +95,7 @@ namespace Sass {
 
     selector_stack.push_back(sel_ctx);
     Block* blk = r->block()->perform(this)->block();
-    blk->tabs(r->block()->tabs());
+    // blk->tabs(r->block()->tabs());
     Ruleset* rr = new (ctx.mem) Ruleset(r->pstate(),
                                         sel_ctx,
                                         blk);
@@ -422,7 +420,6 @@ namespace Sass {
 
     for (size_t i = 0, L = extender->length(); i < L; ++i) {
       // let's test this out
-      // debug_ast(s);
       // cerr << "REGISTERING EXTENSION REQUEST: " << (*extender)[i]->perform(&to_string) << " <- " << s->perform(&to_string) << endl;
       ctx.subset_map.put(s->to_str_vec(), make_pair((*extender)[i], s));
     }
