@@ -55,15 +55,6 @@ namespace Sass {
     return p;
   }
 
-  Parser Parser::from_string(const string& src, Context& ctx, ParserState pstate)
-  {
-    Parser p(ctx, pstate);
-    p.source   = src.c_str();
-    p.position = p.source;
-    p.end      = p.source + src.size();;
-    return p;
-  }
-
   Block* Parser::parse()
   {
     Block* root = new (ctx.mem) Block(pstate);
