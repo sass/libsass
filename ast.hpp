@@ -1351,8 +1351,8 @@ namespace Sass {
     ADD_PROPERTY(bool, has_interpolants);
     size_t hash_;
   public:
-    String_Schema(ParserState pstate, size_t size = 0, bool unq = false, char qm = '\0', bool i = false)
-    : String(pstate, unq), Vectorized<Expression*>(size), quote_mark_(qm), has_interpolants_(i), hash_(0)
+    String_Schema(ParserState pstate, size_t size = 0, bool sass_fix_1291 = false, char qm = '\0', bool i = false)
+    : String(pstate, sass_fix_1291), Vectorized<Expression*>(size), quote_mark_(qm), has_interpolants_(i), hash_(0)
     { }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1395,17 +1395,17 @@ namespace Sass {
     string unquoted_;
     size_t hash_;
   public:
-    String_Constant(ParserState pstate, string val, bool unq = false)
-    : String(pstate, unq, true), value_(val), hash_(0)
+    String_Constant(ParserState pstate, string val, bool sass_fix_1291 = false)
+    : String(pstate, sass_fix_1291, true), value_(val), hash_(0)
     { unquoted_ = unquote(value_); }
-    String_Constant(ParserState pstate, const char* beg, bool unq = false)
-    : String(pstate, unq, true), value_(string(beg)), hash_(0)
+    String_Constant(ParserState pstate, const char* beg, bool sass_fix_1291 = false)
+    : String(pstate, sass_fix_1291, true), value_(string(beg)), hash_(0)
     { unquoted_ = unquote(value_); }
-    String_Constant(ParserState pstate, const char* beg, const char* end, bool unq = false)
-    : String(pstate, unq, true), value_(string(beg, end-beg)), hash_(0)
+    String_Constant(ParserState pstate, const char* beg, const char* end, bool sass_fix_1291 = false)
+    : String(pstate, sass_fix_1291, true), value_(string(beg, end-beg)), hash_(0)
     { unquoted_ = unquote(value_); }
-    String_Constant(ParserState pstate, const Token& tok, bool unq = false)
-    : String(pstate, unq, true), value_(string(tok.begin, tok.end)), hash_(0)
+    String_Constant(ParserState pstate, const Token& tok, bool sass_fix_1291 = false)
+    : String(pstate, sass_fix_1291, true), value_(string(tok.begin, tok.end)), hash_(0)
     { unquoted_ = unquote(value_); }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1436,6 +1436,13 @@ namespace Sass {
 
     bool is_quoted() { return value_.length() && (value_[0] == '"' || value_[0] == '\''); }
     char quote_mark() { return is_quoted() ? value_[0] : '\0'; }
+    ATTACH_OPERATIONS();
+  };
+
+  ////////////////////////////////////////////////////////
+  // Possibly quoted string (unquote on instantiation)
+  ////////////////////////////////////////////////////////
+  class String_Quoted : public String_Constant {
     ATTACH_OPERATIONS();
   };
 
