@@ -626,7 +626,7 @@ namespace Sass {
     }
     if (a->value()->concrete_type() == Expression::STRING) {
       String_Constant* s = static_cast<String_Constant*>(a->value());
-      if (s->is_quoted()) s->value(quote(unquote(s->value()), String_Constant::double_quote()));
+      if (s->quote_mark()) s->value(quote(unquote(s->value()), String_Constant::double_quote()));
       s->perform(this);
     } else a->value()->perform(this);
     if (a->is_rest_argument()) {

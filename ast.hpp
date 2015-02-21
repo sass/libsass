@@ -1390,22 +1390,23 @@ namespace Sass {
   // Flat strings -- the lowest level of raw textual data.
   ////////////////////////////////////////////////////////
   class String_Constant : public String {
+    ADD_PROPERTY(char, quote_mark);
     ADD_PROPERTY(string, value);
     string unquoted_;
     size_t hash_;
   public:
     String_Constant(ParserState pstate, string val)
-    : String(pstate), value_(val), hash_(0)
-    { unquoted_ = unquote(value_); }
+    : String(pstate), quote_mark_(0), value_(val), hash_(0)
+    { unquoted_ = unquote(value_, &quote_mark_); }
     String_Constant(ParserState pstate, const char* beg)
-    : String(pstate), value_(string(beg)), hash_(0)
-    { unquoted_ = unquote(value_); }
+    : String(pstate), quote_mark_(0), value_(string(beg)), hash_(0)
+    { unquoted_ = unquote(value_, &quote_mark_); }
     String_Constant(ParserState pstate, const char* beg, const char* end)
-    : String(pstate), value_(string(beg, end-beg)), hash_(0)
-    { unquoted_ = unquote(value_); }
+    : String(pstate), quote_mark_(0), value_(string(beg, end-beg)), hash_(0)
+    { unquoted_ = unquote(value_, &quote_mark_); }
     String_Constant(ParserState pstate, const Token& tok)
-    : String(pstate), value_(string(tok.begin, tok.end)), hash_(0)
-    { unquoted_ = unquote(value_); }
+    : String(pstate), quote_mark_(0), value_(string(tok.begin, tok.end)), hash_(0)
+    { unquoted_ = unquote(value_, &quote_mark_); }
     string type() { return "string"; }
     static string type_name() { return "string"; }
 
@@ -1433,8 +1434,6 @@ namespace Sass {
     static char double_quote() { return '"'; }
     static char single_quote() { return '\''; }
 
-    bool is_quoted() { return value_.length() && (value_[0] == '"' || value_[0] == '\''); }
-    char quote_mark() { return is_quoted() ? value_[0] : '\0'; }
     ATTACH_OPERATIONS();
   };
 
