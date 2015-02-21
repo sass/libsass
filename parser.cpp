@@ -866,7 +866,7 @@ namespace Sass {
 
   Expression* Parser::parse_map()
   {
-    To_String to_string;
+    To_String to_string(&ctx);
     Expression* key = parse_list();
 
     // it's not a map so return the lexed value as a list value
@@ -1412,8 +1412,11 @@ namespace Sass {
     return schema;
   }
 
+  // this parses interpolation outside other strings
+  // means the result must not be quoted again later
   String* Parser::parse_identifier_schema()
   {
+    // first lex away whatever we have found
     lex< sequence< optional< exactly<'*'> >, identifier_schema > >();
     Token id(lexed);
     const char* i = id.begin;
