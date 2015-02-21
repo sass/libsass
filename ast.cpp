@@ -115,12 +115,10 @@ namespace Sass {
     if (!found)
     {
       Compound_Selector* cpy = new (ctx.mem) Compound_Selector(*rhs);
-      // cpy->has_line_feed(rhs->has_line_feed());
       (*cpy) << this;
       return cpy;
     }
     Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
-    // cpy->has_line_feed(rhs->has_line_feed());
     for (size_t j = 0; j < i; ++j)
     { (*cpy) << (*rhs)[j]; }
     (*cpy) << this;
@@ -136,7 +134,6 @@ namespace Sass {
     // if the rhs is empty, just return a copy of this
     if (rhs->length() == 0) {
       Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
-      // cpy->has_line_feed(rhs->has_line_feed());
       (*cpy) << this;
       return cpy;
     }
@@ -154,7 +151,6 @@ namespace Sass {
       if (static_cast<Type_Selector*>(rhs_0)->name() == "*")
       {
         Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
-        // cpy->has_line_feed(rhs->has_line_feed());
         (*cpy) << this;
         for (size_t i = 1, L = rhs->length(); i < L; ++i)
         { (*cpy) << (*rhs)[i]; }
@@ -162,11 +158,7 @@ namespace Sass {
       }
       // if rhs is another tag name and it matches this, return rhs
       else if (static_cast<Type_Selector*>(rhs_0)->name() == name())
-      {
-        Compound_Selector* sel = new (ctx.mem) Compound_Selector(*rhs);
-        // sel->has_line_feed(rhs->has_line_feed());
-        return sel;
-      }
+      { return new (ctx.mem) Compound_Selector(*rhs); }
       // else the tag names don't match; return nil
       else
       { return 0; }
