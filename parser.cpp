@@ -634,7 +634,6 @@ run = false;
   {
     lex< pseudo_not >();
     string name(lexed);
-    // lex < spaces_and_comments >();
     ParserState nsource_position = pstate;
     Selector* negated = parse_selector_group();
     if (!lex< exactly<')'> >()) {
@@ -1289,6 +1288,61 @@ run = false;
     return 0;
   }
 
+  // this parses interpolation inside other strings
+  // means the result should later be quoted again
+  String* Parser::parse_interpolated_chunk(Token chunk, bool constant)
+  {
+    const char* p = 0;
+    const char* i = chunk.begin;
+
+    p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
+    if (!p) {
+
+      String_Quoted* str_constant =
+        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end));
+
+      if (!constant && str_constant->quote_mark()) {
+        str_constant->quote_mark('*');
+      }
+      str_constant->is_delayed(true);
+      return str_constant;
+    }
+
+    // cerr << "parse parse_interpolated_chunk";
+    String_Schema* schema = new (ctx.mem) String_Schema(pstate);
+
+    while (i < chunk.end) {
+      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
+      if (p) {
+        if (i < p) {
+          // accumulate the preceding segment if it's nonempty
+          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p));
+        }
+        // we need to skip anything inside strings
+        // create a new target in parser/prelexer
+        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, chunk.end); // find the closing brace
+        if (j) { --j;
+          Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
+          interp_node->is_interpolant(true);
+          (*schema) << interp_node;
+          i = j;
+        }
+        else {
+          // throw an error if the interpolant is unterminated
+          error("unterminated interpolant inside string constant " + chunk.to_string(), pstate);
+        }
+      }
+      else { // no interpolants left; add the last segment if nonempty
+        // check if we need quotes here (was not sure after merge)
+        if (i < chunk.end)
+          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, chunk.end));
+        break;
+      }
+      ++ i;
+    }
+    return schema;
+  }
+
   String_Constant* Parser::parse_static_value()
   {
     lex< static_value >();
@@ -1445,12 +1499,9 @@ run = false;
     // first lex away whatever we have found
     lex< sequence< optional< exactly<'*'> >, identifier_schema > >();
     Token id(lexed);
-    const char* end = id.end;
-
     const char* i = id.begin;
     // see if there any interpolants
     const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(id.begin, id.end);
-
     if (!p) {
       return new (ctx.mem) String_Quoted(pstate, string(id.begin, id.end));
     }
@@ -1480,65 +1531,9 @@ run = false;
         }
       }
       else { // no interpolants left; add the last segment if nonempty
-        if (i < end) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, end));
+        if (i < end) (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, id.end));
         break;
       }
-    }
-    return schema;
-  }
-
-
-  // this parses interpolation inside other strings
-  // means the result should later be quoted again
-  String* Parser::parse_interpolated_chunk(Token chunk, bool constant)
-  {
-    const char* p = 0;
-    const char* i = chunk.begin;
-
-    p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
-    if (!p) {
-
-      String_Quoted* str_constant =
-        new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end));
-
-      if (!constant && str_constant->quote_mark()) {
-        str_constant->quote_mark('*');
-      }
-      str_constant->is_delayed(true);
-      return str_constant;
-    }
-
-    // cerr << "parse parse_interpolated_chunk";
-    String_Schema* schema = new (ctx.mem) String_Schema(pstate);
-
-    while (i < chunk.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
-      if (p) {
-        if (i < p) {
-          // accumulate the preceding segment if it's nonempty
-          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, p));
-        }
-        // we need to skip anything inside strings
-        // create a new target in parser/prelexer
-        const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, chunk.end); // find the closing brace
-        if (j) { --j;
-          Expression* interp_node = Parser::from_token(Token(p+2, j, before_token), ctx, pstate).parse_list();
-          interp_node->is_interpolant(true);
-          (*schema) << interp_node;
-          i = j;
-        }
-        else {
-          // throw an error if the interpolant is unterminated
-          error("unterminated interpolant inside string constant " + chunk.to_string(), pstate);
-        }
-      }
-      else { // no interpolants left; add the last segment if nonempty
-        // check if we need quotes here (was not sure after merge)
-        if (i < chunk.end)
-          (*schema) << new (ctx.mem) String_Quoted(pstate, string(i, chunk.end));
-        break;
-      }
-      ++ i;
     }
     return schema;
   }
@@ -1555,7 +1550,7 @@ run = false;
     const char* arg_end = position;
     lex< exactly<')'> >();
 
-    Argument* arg = new (ctx.mem) Argument(arg_pos, parse_interpolated_chunk(Token(arg_beg, arg_end, before_token))); // egal
+    Argument* arg = new (ctx.mem) Argument(arg_pos, parse_interpolated_chunk(Token(arg_beg, arg_end, before_token)));
     Arguments* args = new (ctx.mem) Arguments(arg_pos);
     *args << arg;
     return new (ctx.mem) Function_Call(call_pos, name, args);
