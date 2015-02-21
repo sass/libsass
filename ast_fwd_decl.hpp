@@ -53,6 +53,7 @@ namespace Sass {
   class String_Schema;
   class String;
   class String_Constant;
+  class String_Quoted;
   class Media_Query;
   class Media_Query_Expression;
   class Feature_Query;

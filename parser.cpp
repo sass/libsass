@@ -1244,7 +1244,6 @@ namespace Sass {
     }
 
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
-    schema->quote_mark(*chunk.begin);
     while (i < chunk.end) {
       p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
       if (p) {
