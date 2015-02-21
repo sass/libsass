@@ -1495,7 +1495,7 @@ run = false;
         new (ctx.mem) String_Constant(pstate, string(chunk.begin, chunk.end)) :
         new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end), true);
         if (String_Quoted* str_quoted = dynamic_cast<String_Quoted*>(str_constant)) {
-          str_quoted->quotemark('*');
+          str_quoted->quote_mark('*');
         }
 
       str_constant->is_delayed(true);
@@ -1550,7 +1550,7 @@ run = false;
       String_Quoted* str_constant =
         new (ctx.mem) String_Quoted(pstate, string(chunk.begin, chunk.end));
 
-      if (!constant) str_constant->quotemark('*');
+      if (!constant) str_constant->quote_mark('*');
       str_constant->is_delayed(true);
       return str_constant;
     }

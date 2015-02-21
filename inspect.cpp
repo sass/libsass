@@ -439,7 +439,7 @@ namespace Sass {
     // debug_ast(expr, "");
     if (String_Constant* str = dynamic_cast<String_Constant*>(expr->operand())) {
       if (str->was_quoted()) {
-//        append_to_buffer(quote(str->value(), str->quotemark()));
+//        append_to_buffer(quote(str->value(), str->quote_mark()));
         expr->operand()->perform(this);
       } else {
         expr->operand()->perform(this);
@@ -654,7 +654,7 @@ namespace Sass {
   void Inspect::operator()(String_Quoted* s)
   {
     if (s->was_quoted()) {
-      append_to_buffer(quote(s->value(), s->quotemark()));
+      append_to_buffer(quote(s->value(), s->quote_mark()));
     } else {
       append_to_buffer((s->value()));
     }
@@ -986,7 +986,7 @@ namespace Sass {
     bool skipped = false;
 
     // this is no guarantee that the unquoting will work
-    // what about whitespace before/after the quotemark?
+    // what about whitespace before/after the quote_mark?
     if      (*s.begin() == '"'  && *s.rbegin() == '"')  q = '"';
     else if (*s.begin() == '\'' && *s.rbegin() == '\'') q = '\'';
     else                                                return s;
@@ -1060,24 +1060,24 @@ namespace Sass {
 
   }
 
-  // find best quotemark by detecting if the string contains any single
+  // find best quote_mark by detecting if the string contains any single
   // or double quotes. When a single quote is found, we not we want a double
-  // quote as quotemark. Otherwise we check if the string cotains any double
-  // quotes, which will trigger the use of single quotes as best quotemark.
+  // quote as quote_mark. Otherwise we check if the string cotains any double
+  // quotes, which will trigger the use of single quotes as best quote_mark.
   static char detect_best_quotemark(const char* s, char qm = '"')
   {
-    // ensure valid fallback quotemark
-    char quotemark = qm && qm != '*' ? qm : '"';
+    // ensure valid fallback quote_mark
+    char quote_mark = qm && qm != '*' ? qm : '"';
     while (*s) {
       // force double quotes as soon
       // as one single quote is found
       if (*s == '\'') { return '"'; }
-      // a single does not force quotemark
+      // a single does not force quote_mark
       // maybe we see a double quote later
-      else if (*s == '"') { quotemark = '\''; }
+      else if (*s == '"') { quote_mark = '\''; }
       ++ s;
     }
-    return quotemark;
+    return quote_mark;
   }
 
 

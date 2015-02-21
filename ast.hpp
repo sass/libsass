@@ -1402,22 +1402,22 @@ namespace Sass {
   class String_Constant : public String {
     ADD_PROPERTY(bool, marker);
     ADD_PROPERTY(bool, was_quoted);
-    ADD_PROPERTY(char, quotemark);
+    ADD_PROPERTY(char, quote_mark);
     ADD_PROPERTY(string, value);
   protected:
     size_t hash_;
   public:
     String_Constant(ParserState pstate, string val, bool unq = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(val), hash_(0)
+    : String(pstate, unq, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(val), hash_(0)
     {  }
     String_Constant(ParserState pstate, const char* beg, bool unq = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(beg)), hash_(0)
+    : String(pstate, unq, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(beg)), hash_(0)
     {  }
     String_Constant(ParserState pstate, const char* beg, const char* end, bool unq = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(beg, end-beg)), hash_(0)
+    : String(pstate, unq, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(beg, end-beg)), hash_(0)
     {  }
     String_Constant(ParserState pstate, const Token& tok, bool unq = false)
-    : String(pstate, unq, true), marker_(false), was_quoted_(false), quotemark_(0), value_(string(tok.begin, tok.end)), hash_(0)
+    : String(pstate, unq, true), marker_(false), was_quoted_(false), quote_mark_(0), value_(string(tok.begin, tok.end)), hash_(0)
     {  }
     string type() { return "string"; }
     static string type_name() { return "string"; }
@@ -1463,7 +1463,7 @@ namespace Sass {
       if (q && (was_quoted_ = (value_ != val))) {
         if (val.size() > 1 && *val.begin() == *val.rbegin()) {
           if (*val.begin() == '"' || *val.begin() == '\'') {
-            quotemark_ = *val.begin();
+            quote_mark_ = *val.begin();
           }
         }
       }

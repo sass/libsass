@@ -261,7 +261,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
       (expression->is_delayed() ? " {delayed}" : "") <<
       (expression->needs_unquoting() ? " {unquote}" : "") <<
       (expression->was_quoted() ? " {quoted}" : "") <<
-      (expression->quotemark() != 0 ? " {qm:" + string(1, expression->quotemark()) + "}" : "") <<
+      (expression->quote_mark() != 0 ? " {qm:" + string(1, expression->quote_mark()) + "}" : "") <<
       " <" << prettyprint(expression->pstate().token.ws_before()) << "> X <" << prettyprint(expression->pstate().token.ws_after()) << ">" << endl;
   } else if (dynamic_cast<String_Constant*>(node)) {
     String_Constant* expression = dynamic_cast<String_Constant*>(node);
@@ -269,7 +269,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
       (expression->is_delayed() ? " {delayed}" : "") <<
       (expression->needs_unquoting() ? " {unquote}" : "") <<
       (expression->was_quoted() ? " {quoted}" : "") <<
-      (expression->quotemark() != 0 ? " {qm:" + string(1, expression->quotemark()) + "}" : "") <<
+      (expression->quote_mark() != 0 ? " {qm:" + string(1, expression->quote_mark()) + "}" : "") <<
       " <" << prettyprint(expression->pstate().token.ws_before()) << "> X <" << prettyprint(expression->pstate().token.ws_after()) << ">" << endl;
   } else if (dynamic_cast<String_Schema*>(node)) {
     String_Schema* expression = dynamic_cast<String_Schema*>(node);

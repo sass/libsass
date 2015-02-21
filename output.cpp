@@ -556,7 +556,7 @@ return;
   {
 //    cerr << "OUTPUT [" << s->value() << "]\n";
     if (s->was_quoted()) {
-      append_to_buffer(quote((s->value()), s->quotemark()));
+      append_to_buffer(quote((s->value()), s->quote_mark()));
     } else {
       append_to_buffer(string_to_output(s->value()));
     }

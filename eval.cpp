@@ -398,11 +398,11 @@ ll->is_inspecting(l->is_inspecting());
       String_Constant* rstr = dynamic_cast<String_Constant*>(rhs);
       if (String_Constant* org = lstr ? lstr : rstr)
       {
-        str->quotemark('*');
+        str->quote_mark('*');
         // very strange side effect on colors!
         str->was_quoted(org->was_quoted());
-        // always use auto quotemark
-        // str->quotemark('*');
+        // always use auto quote_mark
+        // str->quote_mark('*');
       }
     }}
 
@@ -627,8 +627,8 @@ ll->is_inspecting(l->is_inspecting());
       String_Quoted* str_quoted = new (ctx.mem) String_Quoted(*static_cast<String_Quoted*>(value));
       String_Constant* str_constant = new (ctx.mem) String_Constant(*static_cast<String_Constant*>(value));
       value = str_quoted ? str_quoted : str_constant;
-      if (str_quoted) { str_quoted->quotemark('*'); }
-      if (str_constant) { str_constant->quotemark('*'); }
+      if (str_quoted) { str_quoted->quote_mark('*'); }
+      if (str_constant) { str_constant->quote_mark('*'); }
     }
     else if (value->concrete_type() == Expression::LIST) {
     	List* l = new (ctx.mem) List(*static_cast<List*>(value));
@@ -827,7 +827,7 @@ ll->is_inspecting(l->is_inspecting());
     }
     String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), acc);
     if (!str->was_quoted()) str->value(string_unescape(str->value()));
-    str->quotemark('*');
+    str->quote_mark('*');
     return str;
   }
 

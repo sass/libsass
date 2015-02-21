@@ -839,7 +839,7 @@ namespace Sass {
           str = ins + str;
         }
 
-        if (s->quotemark()) {
+        if (s->quote_mark()) {
           str = quote(str, String_Constant::double_quote());
         }
       }
@@ -898,22 +898,22 @@ namespace Sass {
     BUILT_IN(str_slice)
     {
       string newstr;
-      // char quotemark = 0;
+      // char quote_mark = 0;
       String_Constant* s = 0;
       try {
         s = ARG("$string", String_Constant);
         Number* n = ARG("$start-at", Number);
         Number* m = ARG("$end-at", Number);
 
-        // char quotemark = s->quote_mark();
+        // char quote_mark = s->quote_mark();
         string str = unquote(s->value());
 //        cerr << "unquote for slice " << s->value() << endl;
 //        debug_ast(s, "");
         if (s->value() != str) {
 //          s->was_quoted(true);
-//          s->quotemark('"');
+//          s->quote_mark('"');
         }
-        //  quotemark = '"';
+        //  quote_mark = '"';
 
         // normalize into 0-based indices
         size_t start = UTF_8::offset_at_position(str, UTF_8::normalize_index(n->value(), UTF_8::code_point_count(str)));
@@ -934,7 +934,7 @@ namespace Sass {
         }
 
         // if (s->was_quoted()) {
-        	// quotemark = s->quotemark();
+        	// quote_mark = s->quote_mark();
         // }
       }
       catch (utf8::invalid_code_point) {
