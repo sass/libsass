@@ -171,10 +171,9 @@ namespace Sass {
     }
 
     if (extension == ".css") {
-      String_Constant* loc = new (ctx.mem) String_Quoted(pstate, import_path, true);
+      String_Constant* loc = new (ctx.mem) String_Constant(pstate, unquote(import_path));
       Argument* loc_arg = new (ctx.mem) Argument(pstate, loc);
       Arguments* loc_args = new (ctx.mem) Arguments(pstate);
-      loc->was_quoted(false);
       (*loc_args) << loc_arg;
       Function_Call* new_url = new (ctx.mem) Function_Call(pstate, "url", loc_args);
       imp->urls().push_back(new_url);
@@ -244,7 +243,6 @@ namespace Sass {
           imp->urls().push_back(new (ctx.mem) String_Quoted(pstate, import_path));
         }
         else {
-          import_path = import_path;
           add_single_file(imp, import_path);
         }
 
@@ -437,7 +435,6 @@ namespace Sass {
   {
     lex< optional_spaces >();
     const char* i = position;
-    // cerr << "parse parse_selector_schema";
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
     while (i < end_of_selector) {
       // try to parse mutliple interpolant
@@ -496,13 +493,10 @@ namespace Sass {
         }
         else {
           comb = new (ctx.mem) Complex_Selector(sel_source_position, Complex_Selector::ANCESTOR_OF, ref_wrap, comb);
-       //   comb->has_line_break(has_lf);
           OutputBuffer buffer;
           Emitter emitter(buffer, &ctx, ctx.output_style);
           Inspect isp(emitter);
           comb->perform(&isp);
-          // debug_ast(comb, "** ");
-          // cerr << "COMPLEX == " << buffer.buffer << endl;
           comb->has_reference(true);
         }
         if (peek_newline()) ref_wrap->has_line_break(true);
@@ -650,7 +644,7 @@ run = false;
   {
     lex< pseudo_not >();
     string name(lexed);
-    lex < spaces_and_comments >();
+    // lex < spaces_and_comments >();
     ParserState nsource_position = pstate;
     Selector* negated = parse_selector_group();
     if (!lex< exactly<')'> >()) {
