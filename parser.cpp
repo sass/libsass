@@ -671,7 +671,6 @@ run = false;
         lex< digits >();
         String_Constant* constant = new (ctx.mem) String_Quoted(p, lexed);
         // expr = new (ctx.mem) Binary_Expression(p, op, var_coef, constant);
-    // cerr << "parse parse_pseudo_selector";
         String_Schema* schema = new (ctx.mem) String_Schema(p, 3);
         *schema << var_coef << op << constant;
         expr = schema;
@@ -938,9 +937,7 @@ run = false;
       return new (ctx.mem) Declaration(prop->pstate(), prop, parse_static_value()/*, lex<important>()*/);
     }
     else {
-      Expression* l = parse_list();
-      l->is_inspecting(false);
-      return new (ctx.mem) Declaration(prop->pstate(), prop, l/*, lex<important>()*/);
+      return new (ctx.mem) Declaration(prop->pstate(), prop, parse_list()/*, lex<important>()*/);
     }
   }
 
@@ -996,12 +993,7 @@ run = false;
         peek< exactly<')'> >(position) ||
         //peek< exactly<':'> >(position) ||
         peek< exactly<ellipsis> >(position))
-    {
-    	List* l = new (ctx.mem) List(pstate, 0);
-    	 l->is_inspecting(!l->is_interpolant() && ! l->is_delayed());
-    	return l;
-    }
-
+    { return new (ctx.mem) List(pstate, 0); }
     Expression* list1 = parse_space_list();
     // if it's a singleton, return it directly; don't wrap it
     if (!peek< exactly<','> >(position)) return list1;
