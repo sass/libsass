@@ -2,9 +2,10 @@
 #include <cstddef>
 #include <iostream>
 #include <iomanip>
-#include "constants.hpp"
-#include "prelexer.hpp"
 #include "util.hpp"
+#include "position.hpp"
+#include "prelexer.hpp"
+#include "constants.hpp"
 
 
 namespace Sass {
@@ -13,13 +14,15 @@ namespace Sass {
   namespace Prelexer {
     using std::ptrdiff_t;
     // Matches zero characters (always succeeds without consuming input).
+    /* not used anymore - remove?
     const char* epsilon(char *src) {
       return src;
-    }
+    }*/
     // Matches the empty string.
+    /* not used anymore - remove?
     const char* empty(char *src) {
       return *src ? 0 : src;
-    }
+    }*/
 
     // Match any single character.
     const char* any_char(const char* src) { return *src ? src+1 : src; }
@@ -57,6 +60,15 @@ namespace Sass {
       return alternatives<block_comment, line_comment>(src);
     }
 
+    const char* wspaces(const char* src) {
+      return
+      alternatives<
+        exactly<' '>,
+        exactly<'\t'>
+      >(src);
+    }
+
+    /* not used anymore - remove?
     const char* newline(const char* src) {
       return
       alternatives<
@@ -65,79 +77,31 @@ namespace Sass {
         exactly<'\r'>,
         exactly<'\f'>
       >(src);
-    }
+    }*/
 
+    /* not used anymore - remove?
     const char* whitespace(const char* src) {
-      return
-      alternatives<
-        newline,
-        exactly<' '>,
-        exactly<'\t'>
-      >(src);
-    }
+      return spaces(src);
+    }*/
 
+    /* not used anymore - remove?
     const char* escape(const char* src) {
       return
       sequence<
         exactly<'\\'>,
         any_char
       >(src);
-    }
+    }*/
 
-    // Match double- and single-quoted strings.
-    const char* double_quoted_string(const char* src) {
-      src = exactly<'"'>(src);
-      if (!src) return 0;
-      const char* p;
-      while (1) {
-        if (!*src) return 0;
-        if((p = escape(src))) {
-          src = p;
-          continue;
-        }
-        else if((p = exactly<'"'>(src))) {
-          return p;
-        }
-        else {
-          ++src;
-        }
-      }
-      return 0;
-    }
-    const char* single_quoted_string(const char* src) {
-      src = exactly<'\''>(src);
-      if (!src) return 0;
-      const char* p;
-      while (1) {
-        if (!*src) return 0;
-        if((p = escape(src))) {
-          src = p;
-          continue;
-        }
-        else if((p = exactly<'\''>(src))) {
-          return p;
-        }
-        else {
-          ++src;
-        }
-      }
-      return 0;
-    }
-    const char* string_constant(const char* src) {
-      return alternatives<double_quoted_string, single_quoted_string>(src);
-    }
-    // Match interpolants.
-
-
-    const char* interpolant(const char* src) {
-      return delimited_by<hash_lbrace, rbrace, false>(src);
-    }
 
     // Whitespace handling.
     const char* optional_spaces(const char* src) { return optional<spaces>(src); }
-    const char* optional_comment(const char* src) { return optional<comment>(src); }
-    const char* spaces_and_comments(const char* src) {
+    // const char* optional_comment(const char* src) { return optional<comment>(src); }
+    const char* optional_spaces_and_comments(const char* src) {
       return zero_plus< alternatives<spaces, comment> >(src);
+    }
+    const char* spaces_and_comments(const char* src) {
+      return one_plus< alternatives<spaces, comment> >(src);
     }
     const char* no_spaces(const char* src) {
       return negate< spaces >(src);
@@ -165,6 +129,7 @@ namespace Sass {
     }
 
     // Match CSS selectors.
+    /* not used anymore - remove?
     const char* sel_ident(const char* src) {
       return sequence< optional< alternatives< exactly<'-'>, exactly<'|'> > >,
                        alternatives< alpha, exactly<'_'>, backslash_something, exactly<'|'> >,
@@ -173,7 +138,7 @@ namespace Sass {
                                                 exactly<'_'>,
                                                 exactly<'|'>,
                                                 backslash_something > > >(src);
-    }
+    }*/
 
     // Match CSS css variables.
     const char* custom_property_name(const char* src) {
@@ -188,17 +153,71 @@ namespace Sass {
                                  zero_plus< alternatives< identifier, number, exactly<'-'> > > > >,
                        negate< exactly<'%'> > >(src);
     }
+
+    // interpolants can be recursive/nested
+    const char* interpolant(const char* src) {
+      return recursive_scopes< exactly<hash_lbrace>, exactly<rbrace> >(src);
+    }
+
+    // $re_squote = /'(?:$re_itplnt|\\.|[^'])*'/
+    const char* single_quoted_string(const char* src) {
+      // match a single quoted string, while skipping interpolants
+      return sequence <
+        exactly <'\''>,
+        zero_plus <
+          alternatives <
+            // skip all escaped chars first
+            sequence < exactly < '\\' >, any_char >,
+            // skip interpolants
+            interpolant,
+            // skip non delimiters
+            any_char_except < '\'' >
+          >
+        >,
+        exactly <'\''>
+      >(src);
+    }
+
+    // $re_dquote = /"(?:$re_itp|\\.|[^"])*"/
+    const char* double_quoted_string(const char* src) {
+      // match a single quoted string, while skipping interpolants
+      return sequence <
+        exactly <'"'>,
+        zero_plus <
+          alternatives <
+            // skip all escaped chars first
+            sequence < exactly < '\\' >, any_char >,
+            // skip interpolants
+            interpolant,
+            // skip non delimiters
+            any_char_except < '"' >
+          >
+        >,
+        exactly <'"'>
+      >(src);
+    }
+
+    // $re_quoted = /(?:$re_squote|$re_dquote)/
+    const char* quoted_string(const char* src) {
+      // match a quoted string, while skipping interpolants
+      return alternatives<
+        single_quoted_string,
+        double_quoted_string
+      >(src);
+    }
+
     const char* value_schema(const char* src) {
       // follows this pattern: ([xyz]*i[xyz]*)+
-      return one_plus< sequence< zero_plus< alternatives< identifier, percentage, dimension, hex, number, string_constant > >,
+      return one_plus< sequence< zero_plus< alternatives< identifier, percentage, dimension, hex, number, quoted_string > >,
                                  interpolant,
-                                 zero_plus< alternatives< identifier, percentage, dimension, hex, number, string_constant, exactly<'%'> > > > >(src);
+                                 zero_plus< alternatives< identifier, percentage, dimension, hex, number, quoted_string, exactly<'%'> > > > >(src);
     }
+    /* not used anymore - remove?
     const char* filename_schema(const char* src) {
       return one_plus< sequence< zero_plus< alternatives< identifier, number, exactly<'.'>, exactly<'/'> > >,
                                  interpolant,
                                  zero_plus< alternatives< identifier, number, exactly<'.'>, exactly<'/'> > > > >(src);
-    }
+    }*/
 
     const char* filename(const char* src) {
       return one_plus< alternatives< identifier, number, exactly<'.'> > >(src);
@@ -225,10 +244,6 @@ namespace Sass {
       return exactly<without_kwd>(src);
     }
 
-    const char* until_closing_paren(const char* src) {
-      return until<')'>(src);
-    }
-
     const char* media(const char* src) {
       return exactly<media_kwd>(src);
     }
@@ -237,17 +252,20 @@ namespace Sass {
       return exactly<supports_kwd>(src);
     }
 
+    /* not used anymore - remove?
     const char* keyframes(const char* src) {
       return sequence< exactly<'@'>, optional< vendor_prefix >, exactly< keyframes_kwd > >(src);
-    }
+    } */
 
+    /* not used anymore - remove?
     const char* vendor_prefix(const char* src) {
       return alternatives< exactly< vendor_opera_kwd >, exactly< vendor_webkit_kwd >, exactly< vendor_mozilla_kwd >, exactly< vendor_ms_kwd >, exactly< vendor_khtml_kwd > >(src);
-    }
+    } */
 
+    /* not used anymore - remove?
     const char* keyf(const char* src) {
       return one_plus< alternatives< to, from, percentage > >(src);
-    }
+    } */
 
     const char* mixin(const char* src) {
       return exactly<mixin_kwd>(src);
@@ -283,7 +301,7 @@ namespace Sass {
     }
     const char* elseif_directive(const char* src) {
       return sequence< else_directive,
-                       spaces_and_comments,
+                       optional_spaces_and_comments,
                        exactly< if_after_else_kwd > >(src);
     }
 
@@ -334,9 +352,10 @@ namespace Sass {
       return exactly<debug_kwd>(src);
     }
 
+    /* not used anymore - remove?
     const char* directive(const char* src) {
       return sequence< exactly<'@'>, identifier >(src);
-    }
+    } */
 
     const char* null(const char* src) {
       return exactly<null_kwd>(src);
@@ -408,9 +427,10 @@ namespace Sass {
       return exactly<'&'>(src);
     }
 
+    /* not used anymore - remove?
     const char* em(const char* src) {
       return sequence< number, exactly<em_kwd> >(src);
-    }
+    } */
     const char* dimension(const char* src) {
       return sequence<number, one_plus< alpha > >(src);
     }
@@ -430,53 +450,57 @@ namespace Sass {
       return (len != 5 && len != 8) ? 0 : p;
     }
 
+    /* no longer used - remove?
     const char* rgb_prefix(const char* src) {
       return exactly<rgb_kwd>(src);
-    }
+    }*/
     // Match CSS uri specifiers.
 
     const char* uri_prefix(const char* src) {
       return exactly<url_kwd>(src);
     }
     // TODO: rename the following two functions
+    /* no longer used - remove?
     const char* uri(const char* src) {
       return sequence< exactly<url_kwd>,
                        optional<spaces>,
-                       string_constant,
+                       quoted_string,
                        optional<spaces>,
                        exactly<')'> >(src);
-    }
+    }*/
+    /* no longer used - remove?
     const char* url_value(const char* src) {
       return sequence< optional< sequence< identifier, exactly<':'> > >, // optional protocol
                        one_plus< sequence< zero_plus< exactly<'/'> >, filename > >, // one or more folders and/or trailing filename
                        optional< exactly<'/'> > >(src);
-    }
+    }*/
+    /* no longer used - remove?
     const char* url_schema(const char* src) {
       return sequence< optional< sequence< identifier, exactly<':'> > >, // optional protocol
                        filename_schema >(src); // optional trailing slash
-    }
+    }*/
     // Match CSS "!important" keyword.
     const char* important(const char* src) {
       return sequence< exactly<'!'>,
-                       spaces_and_comments,
+                       optional_spaces_and_comments,
                        exactly<important_kwd> >(src);
     }
     // Match CSS "!optional" keyword.
     const char* optional(const char* src) {
       return sequence< exactly<'!'>,
-      spaces_and_comments,
+      optional_spaces_and_comments,
       exactly<optional_kwd> >(src);
     }
     // Match Sass "!default" keyword.
     const char* default_flag(const char* src) {
       return sequence< exactly<'!'>,
-                       spaces_and_comments,
+                       optional_spaces_and_comments,
                        exactly<default_kwd> >(src);
     }
     // Match Sass "!global" keyword.
     const char* global_flag(const char* src) {
       return sequence< exactly<'!'>,
-                       spaces_and_comments,
+                       optional_spaces_and_comments,
                        exactly<global_kwd> >(src);
     }
     // Match CSS pseudo-class/element prefixes.
@@ -509,6 +533,7 @@ namespace Sass {
     const char* suffix_match(const char* src) { return exactly<dollar_equal>(src); }
     const char* substring_match(const char* src) { return exactly<star_equal>(src); }
     // Match CSS combinators.
+    /* not used anymore - remove?
     const char* adjacent_to(const char* src) {
       return sequence< optional_spaces, exactly<'+'> >(src);
     }
@@ -520,7 +545,7 @@ namespace Sass {
     }
     const char* ancestor_of(const char* src) {
       return sequence< spaces, negate< exactly<'{'> > >(src);
-    }
+    }*/
 
     // Match SCSS variable names.
     const char* variable(const char* src) {
@@ -574,29 +599,28 @@ namespace Sass {
         > >,
         zero_plus < sequence<
           exactly<'('>,
-          spaces_and_comments,
+          optional_spaces_and_comments,
           optional < sequence<
             alternatives< variable, identifier_schema, identifier >,
-            spaces_and_comments,
+            optional_spaces_and_comments,
             exactly<'='>,
-            spaces_and_comments,
-            alternatives< variable, identifier_schema, identifier, string_constant, number, hexa >,
+            optional_spaces_and_comments,
+            alternatives< variable, identifier_schema, identifier, quoted_string, number, hexa >,
             zero_plus< sequence<
-              spaces_and_comments,
+              optional_spaces_and_comments,
               exactly<','>,
-              spaces_and_comments,
+              optional_spaces_and_comments,
               sequence<
                 alternatives< variable, identifier_schema, identifier >,
-                spaces_and_comments,
+                optional_spaces_and_comments,
                 exactly<'='>,
-                spaces_and_comments,
-                alternatives< variable, identifier_schema, identifier, string_constant, number, hexa >
+                optional_spaces_and_comments,
+                alternatives< variable, identifier_schema, identifier, quoted_string, number, hexa >
               >
             > >
           > >,
-          spaces_and_comments,
-          exactly<')'>,
-          spaces_and_comments
+          optional_spaces_and_comments,
+          exactly<')'>
         > >
       >(src);
     }
@@ -608,22 +632,29 @@ namespace Sass {
     }
 
     // const char* ie_args(const char* src) {
-    //   return sequence< alternatives< ie_keyword_arg, value_schema, string_constant, interpolant, number, identifier, delimited_by< '(', ')', true> >,
-    //                    zero_plus< sequence< spaces_and_comments, exactly<','>, spaces_and_comments, alternatives< ie_keyword_arg, value_schema, string_constant, interpolant, number, identifier, delimited_by<'(', ')', true> > > > >(src);
+    //   return sequence< alternatives< ie_keyword_arg, value_schema, quoted_string, interpolant, number, identifier, delimited_by< '(', ')', true> >,
+    //                    zero_plus< sequence< optional_spaces_and_comments, exactly<','>, optional_spaces_and_comments, alternatives< ie_keyword_arg, value_schema, quoted_string, interpolant, number, identifier, delimited_by<'(', ')', true> > > > >(src);
     // }
 
     const char* ie_keyword_arg(const char* src) {
-      return sequence< alternatives< variable, identifier_schema, identifier >, spaces_and_comments, exactly<'='>, spaces_and_comments, alternatives< variable, identifier_schema, identifier, string_constant, number, hexa > >(src);
+      return sequence<
+        alternatives< variable, identifier_schema, identifier >,
+        optional_spaces_and_comments,
+        exactly<'='>,
+        optional_spaces_and_comments,
+        alternatives< variable, identifier_schema, identifier, quoted_string, number, hexa >
+      >(src);
     }
 
     // Path matching functions.
+    /* not used anymore - remove?
     const char* folder(const char* src) {
       return sequence< zero_plus< any_char_except<'/'> >,
                        exactly<'/'> >(src);
     }
     const char* folders(const char* src) {
       return zero_plus< folder >(src);
-    }
+    }*/
 
     const char* chunk(const char* src) {
       char inside_str = 0;
@@ -653,26 +684,30 @@ namespace Sass {
     }
 
     // follow the CSS spec more closely and see if this helps us scan URLs correctly
+    /* not used anymore - remove?
     const char* NL(const char* src) {
       return alternatives< exactly<'\n'>,
                            sequence< exactly<'\r'>, exactly<'\n'> >,
                            exactly<'\r'>,
                            exactly<'\f'> >(src);
-    }
+    }*/
 
+    /* not used anymore - remove?
     const char* H(const char* src) {
       return std::isxdigit(*src) ? src+1 : 0;
-    }
+    }*/
 
+    /* not used anymore - remove?
     const char* unicode(const char* src) {
       return sequence< exactly<'\\'>,
                        between<H, 1, 6>,
                        optional< class_char<url_space_chars> > >(src);
-    }
+    }*/
 
+    /* not used anymore - remove?
     const char* ESCAPE(const char* src) {
       return alternatives< unicode, class_char<escape_chars> >(src);
-    }
+    }*/
 
     const char* url(const char* src) {
       return chunk(src);
@@ -680,7 +715,7 @@ namespace Sass {
 
     const char* static_string(const char* src) {
       const char* pos = src;
-      const char * s = string_constant(pos);
+      const char * s = quoted_string(pos);
       Token t(pos, s, Position(0, 0));
       const unsigned int p = count_interval< interpolant >(t.begin, t.end);
       return (p == 0) ? t.end : 0;
@@ -689,6 +724,7 @@ namespace Sass {
     const char* static_component(const char* src) {
       return alternatives< identifier,
                            static_string,
+                           percentage,
                            hex,
                            number,
                            sequence< exactly<'!'>, exactly<important_kwd> >
@@ -699,8 +735,11 @@ namespace Sass {
       return sequence< static_component,
                        zero_plus < sequence<
                                    alternatives<
-                                     sequence< optional_spaces, exactly<'/'>, optional_spaces >,
-                                     sequence< optional_spaces, exactly<','>, optional_spaces >,
+                                     sequence< optional_spaces, alternatives<
+                                       exactly < '/' >,
+                                       exactly < ',' >,
+                                       exactly < ' ' >
+                                     >, optional_spaces >,
                                      spaces
                                    >,
                                    static_component

@@ -142,7 +142,7 @@ namespace Sass {
     // random_device degrades sharply once the entropy pool
     // is exhausted. For practical use, random_device is
     // generally only used to seed a PRNG such as mt19937.
-    static mt19937 rand(GetSeed());
+    static mt19937 rand(static_cast<unsigned int>(GetSeed()));
 
     // features
     static set<string> features;
@@ -151,22 +151,30 @@ namespace Sass {
     // RGB FUNCTIONS
     ////////////////
 
+    inline double color_num(Number* n) {
+      if (n->unit() == "%") {
+        return std::min(std::max(n->value(), 0.0), 1.0) * 255;
+      } else {
+        return std::min(std::max(n->value(), 0.0), 255.0);
+      }
+    }
+
     Signature rgb_sig = "rgb($red, $green, $blue)";
     BUILT_IN(rgb)
     {
       return new (ctx.mem) Color(pstate,
-                                 ARGR("$red",   Number, 0, 255)->value(),
-                                 ARGR("$green", Number, 0, 255)->value(),
-                                 ARGR("$blue",  Number, 0, 255)->value());
+                                 color_num(ARGR("$red",   Number, 0, 255)),
+                                 color_num(ARGR("$green", Number, 0, 255)),
+                                 color_num(ARGR("$blue",  Number, 0, 255)));
     }
 
     Signature rgba_4_sig = "rgba($red, $green, $blue, $alpha)";
     BUILT_IN(rgba_4)
     {
       return new (ctx.mem) Color(pstate,
-                                 ARGR("$red",   Number, 0, 255)->value(),
-                                 ARGR("$green", Number, 0, 255)->value(),
-                                 ARGR("$blue",  Number, 0, 255)->value(),
+                                 color_num(ARGR("$red",   Number, 0, 255)),
+                                 color_num(ARGR("$green", Number, 0, 255)),
+                                 color_num(ARGR("$blue",  Number, 0, 255)),
                                  ARGR("$alpha", Number, 0, 1)->value());
     }
 
@@ -408,15 +416,19 @@ namespace Sass {
       HSL hsl_color = rgb_to_hsl(rgb_color->r(),
                                  rgb_color->g(),
                                  rgb_color->b());
-      //Check saturation is not negative before saturate it
-      double hslcolorS = hsl_color.s;
+
+      double hslcolorS = hsl_color.s + amount->value();
+
+      // Saturation cannot be below 0 or above 100
       if (hslcolorS < 0) {
         hslcolorS = 0;
       }
-
+      if (hslcolorS > 100) {
+        hslcolorS = 100;
+      }
 
       return hsla_impl(hsl_color.h,
-                       hslcolorS + amount->value(),
+                       hslcolorS,
                        hsl_color.l,
                        rgb_color->a(),
                        ctx,
@@ -431,14 +443,19 @@ namespace Sass {
       HSL hsl_color = rgb_to_hsl(rgb_color->r(),
                                  rgb_color->g(),
                                  rgb_color->b());
-      //Check saturation is not over 100 before desaturate it
-      double hslcolorS = hsl_color.s;
+
+      double hslcolorS = hsl_color.s - amount->value();
+
+      // Saturation cannot be below 0 or above 100
+      if (hslcolorS <= 0) {
+        hslcolorS = 0;
+      }
       if (hslcolorS > 100) {
         hslcolorS = 100;
       }
 
       return hsla_impl(hsl_color.h,
-                       hslcolorS - amount->value(),
+                       hslcolorS,
                        hsl_color.l,
                        rgb_color->a(),
                        ctx,
@@ -527,12 +544,13 @@ namespace Sass {
     BUILT_IN(opacify)
     {
       Color* color = ARG("$color", Color);
-      double alpha = color->a() + ARGR("$amount", Number, 0, 1)->value();
+      double amount = ARGR("$amount", Number, 0, 1)->value();
+      double alpha = std::min(color->a() + amount, 1.0);
       return new (ctx.mem) Color(pstate,
                                  color->r(),
                                  color->g(),
                                  color->b(),
-                                 alpha > 1.0 ? 1.0 : alpha);
+                                 alpha);
     }
 
     Signature transparentize_sig = "transparentize($color, $amount)";
@@ -540,12 +558,13 @@ namespace Sass {
     BUILT_IN(transparentize)
     {
       Color* color = ARG("$color", Color);
-      double alpha = color->a() - ARGR("$amount", Number, 0, 1)->value();
+      double amount = ARGR("$amount", Number, 0, 1)->value();
+      double alpha = std::max(color->a() - amount, 0.0);
       return new (ctx.mem) Color(pstate,
                                  color->r(),
                                  color->g(),
                                  color->b(),
-                                 alpha < 0.0 ? 0.0 : alpha);
+                                 alpha);
     }
 
     ////////////////////////
@@ -636,7 +655,7 @@ namespace Sass {
         hsl_struct.h += hscale * (hscale > 0.0 ? 360.0 - hsl_struct.h : hsl_struct.h);
         hsl_struct.s += sscale * (sscale > 0.0 ? 100.0 - hsl_struct.s : hsl_struct.s);
         hsl_struct.l += lscale * (lscale > 0.0 ? 100.0 - hsl_struct.l : hsl_struct.l);
-        double alpha = color->a() + ascale * (ascale > 0.0 ? 1.0 - color->a() : color->r());
+        double alpha = color->a() + ascale * (ascale > 0.0 ? 1.0 - color->a() : color->a());
         return hsla_impl(hsl_struct.h, hsl_struct.s, hsl_struct.l, alpha, ctx, pstate);
       }
       if (a) {
@@ -735,21 +754,21 @@ namespace Sass {
     Signature unquote_sig = "unquote($string)";
     BUILT_IN(sass_unquote)
     {
-      To_String to_string;
+      To_String to_string(&ctx);
       AST_Node* arg = env["$string"];
-      string org(arg->perform(&to_string));
-      string str(unquote(org));
-      String_Constant* result = new (ctx.mem) String_Constant(pstate, str);
-      // remember if the string was quoted (color tokens)
-      if (org[0] != str[0]) result->needs_unquoting(true);
-      result->is_delayed(true);
-      return result;
+      if (String_Quoted* string_quoted = dynamic_cast<String_Quoted*>(arg)) {
+        String_Constant* result = new (ctx.mem) String_Constant(pstate, string_quoted->value());
+        // remember if the string was quoted (color tokens)
+        result->sass_fix_1291(string_quoted->quote_mark() != 0);
+        return result;
+      }
+      return new (ctx.mem) String_Constant(pstate, string(arg->perform(&to_string)));
     }
 
     Signature quote_sig = "quote($string)";
     BUILT_IN(sass_quote)
     {
-      To_String to_string;
+      To_String to_string(&ctx);
       AST_Node* arg = env["$string"];
       string str(quote(arg->perform(&to_string), String_Constant::double_quote()));
       String_Constant* result = new (ctx.mem) String_Constant(pstate, str);
@@ -764,16 +783,7 @@ namespace Sass {
       size_t len = string::npos;
       try {
         String_Constant* s = ARG("$string", String_Constant);
-        string str = s->value();
-        size_t length_of_s = str.size();
-        size_t i = 0;
-
-        if (s->is_quoted()) {
-          ++i;
-          --length_of_s;
-        }
-
-        len = UTF_8::code_point_count(str, i, length_of_s);
+        len = UTF_8::code_point_count(s->value(), 0, s->value().size());
 
       }
       catch (utf8::invalid_code_point) {
@@ -800,7 +810,6 @@ namespace Sass {
       try {
         String_Constant* s = ARG("$string", String_Constant);
         str = s->value();
-        char quotemark = s->quote_mark();
         str = unquote(str);
         String_Constant* i = ARG("$insert", String_Constant);
         string ins = i->value();
@@ -811,7 +820,7 @@ namespace Sass {
 
         if (index > 0 && index <= len) {
           // positive and within string length
-          str.insert(UTF_8::offset_at_position(str, index - 1), ins);
+          str.insert(UTF_8::offset_at_position(str, static_cast<size_t>(index) - 1), ins);
         }
         else if (index > len) {
           // positive and past string length
@@ -823,15 +832,15 @@ namespace Sass {
         else if (std::abs(index) <= len) {
           // negative and within string length
           index += len + 1;
-          str.insert(UTF_8::offset_at_position(str, index), ins);
+          str.insert(UTF_8::offset_at_position(str, static_cast<size_t>(index)), ins);
         }
         else {
           // negative and past string length
           str = ins + str;
         }
 
-        if (quotemark) {
-          str = quote(str, String_Constant::double_quote());
+        if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+          if (ss->quote_mark()) str = quote(str);
         }
       }
       catch (utf8::invalid_code_point) {
@@ -894,26 +903,28 @@ namespace Sass {
         Number* n = ARG("$start-at", Number);
         Number* m = ARG("$end-at", Number);
 
-        string str = s->value();
-        char quotemark = s->quote_mark();
-        str = unquote(str);
+        string str = unquote(s->value());
 
         // normalize into 0-based indices
-        size_t start = UTF_8::offset_at_position(str, UTF_8::normalize_index(n->value(), UTF_8::code_point_count(str)));
-        size_t end = UTF_8::offset_at_position(str, UTF_8::normalize_index(m->value(), UTF_8::code_point_count(str)));
+        size_t start = UTF_8::offset_at_position(str, UTF_8::normalize_index(static_cast<int>(n->value()), UTF_8::code_point_count(str)));
+        size_t end = UTF_8::offset_at_position(str, UTF_8::normalize_index(static_cast<int>(m->value()), UTF_8::code_point_count(str)));
 
         // `str-slice` should always return an empty string when $end-at == 0
         // `normalize_index` normalizes 1 -> 0 so we need to check the original value
         if(m->value() == 0) {
-          if(!quotemark) return new (ctx.mem) Null(pstate);
+          if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+            if(!ss->quote_mark()) return new (ctx.mem) Null(pstate);
+          } else {
+            return new (ctx.mem) Null(pstate);
+          }
           newstr = "";
         } else if(start == end && m->value() != 0) {
           newstr = str.substr(start, 1);
         } else if(end > start) {
           newstr = str.substr(start, end - start + UTF_8::code_point_size_at_offset(str, end));
         }
-        if(quotemark) {
-          newstr = quote(newstr, String_Constant::double_quote());
+        if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+          if(ss->quote_mark()) newstr = quote(newstr);
         }
       }
       catch (utf8::invalid_code_point) {
@@ -944,6 +955,9 @@ namespace Sass {
         }
       }
 
+      if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+        str = ss->quote_mark() ? quote(str) : str;
+      }
       return new (ctx.mem) String_Constant(pstate, str);
     }
 
@@ -959,6 +973,9 @@ namespace Sass {
         }
       }
 
+      if (String_Quoted* ss = dynamic_cast<String_Quoted*>(s)) {
+        str = ss->quote_mark() ? quote(str, '"') : str;
+      }
       return new (ctx.mem) String_Constant(pstate, str);
     }
 
@@ -1051,12 +1068,12 @@ namespace Sass {
       if (l && trunc(l->value()) != l->value()) error("argument $limit of `" + string(sig) + "` must be an integer", pstate);
       if (l) {
         uniform_real_distribution<> distributor(1, l->value() + 1);
-        uint_fast32_t distributed = distributor(rand);
+        uint_fast32_t distributed = static_cast<uint_fast32_t>(distributor(rand));
         return new (ctx.mem) Number(pstate, (double)distributed);
       }
       else {
         uniform_real_distribution<> distributor(0, 1);
-        uint_fast32_t distributed = distributor(rand);
+        uint_fast32_t distributed = static_cast<uint_fast32_t>(distributor(rand));
         return new (ctx.mem) Number(pstate, trunc(distributed));
      }
     }
@@ -1100,12 +1117,12 @@ namespace Sass {
 
       if (m) {
         l = new (ctx.mem) List(pstate, 1);
-        *l << m->keys()[index];
-        *l << m->at(m->keys()[index]);
+        *l << m->keys()[static_cast<unsigned int>(index)];
+        *l << m->at(m->keys()[static_cast<unsigned int>(index)]);
         return l;
       }
       else {
-        return l->value_at_index(index);
+        return l->value_at_index(static_cast<int>(index));
       }
     }
 
@@ -1224,25 +1241,8 @@ namespace Sass {
     Signature compact_sig = "compact($values...)";
     BUILT_IN(compact)
     {
-      List* arglist = ARG("$values", List);
-      List::Separator sep = List::COMMA;
-      if (arglist->length() == 1) {
-        Expression* the_arg = arglist->value_at_index(0);
-        arglist = dynamic_cast<List*>(the_arg);
-        if (!arglist) {
-          List* result = new (ctx.mem) List(pstate, 1, List::COMMA);
-          *result << the_arg;
-          return result;
-        }
-        sep = arglist->separator();
-      }
-      List* result = new (ctx.mem) List(pstate, 0, sep);
-      for (size_t i = 0, L = arglist->length(); i < L; ++i) {
-        Boolean* ith = dynamic_cast<Boolean*>(arglist->value_at_index(i));
-        if (ith && ith->value() == false) continue;
-        *result << arglist->value_at_index(i);
-      }
-      return result;
+      error("`compact` has been removed from libsass because it's not part of the Sass spec", pstate);
+      return 0; // suppress warning, error will exit anyway
     }
 
     Signature list_separator_sig = "list_separator($list)";
@@ -1360,7 +1360,7 @@ namespace Sass {
     {
       Expression* v = ARG("$value", Expression);
       if (v->concrete_type() == Expression::STRING) {
-        To_String to_string;
+        To_String to_string(&ctx);
         string str(v->perform(&to_string));
         if (ctx.names_to_colors.count(str)) {
           return new (ctx.mem) String_Constant(pstate, "color");
@@ -1371,7 +1371,7 @@ namespace Sass {
 
     Signature unit_sig = "unit($number)";
     BUILT_IN(unit)
-    { return new (ctx.mem) String_Constant(pstate, quote(ARG("$number", Number)->unit(), '"')); }
+    { return new (ctx.mem) String_Quoted(pstate, quote(ARG("$number", Number)->unit(), '"')); }
 
     Signature unitless_sig = "unitless($number)";
     BUILT_IN(unitless)
@@ -1393,7 +1393,7 @@ namespace Sass {
     Signature variable_exists_sig = "variable-exists($name)";
     BUILT_IN(variable_exists)
     {
-      string s = unquote(ARG("$name", String_Constant)->value());
+      string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
 
       if(d_env.has("$"+s)) {
         return new (ctx.mem) Boolean(pstate, true);
@@ -1406,7 +1406,7 @@ namespace Sass {
     Signature global_variable_exists_sig = "global-variable-exists($name)";
     BUILT_IN(global_variable_exists)
     {
-      string s = unquote(ARG("$name", String_Constant)->value());
+      string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
 
       if(d_env.global_frame_has("$"+s)) {
         return new (ctx.mem) Boolean(pstate, true);
@@ -1419,7 +1419,7 @@ namespace Sass {
     Signature function_exists_sig = "function-exists($name)";
     BUILT_IN(function_exists)
     {
-      string s = unquote(ARG("$name", String_Constant)->value());
+      string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
 
       if(d_env.global_frame_has(s+"[f]")) {
         return new (ctx.mem) Boolean(pstate, true);
@@ -1432,7 +1432,7 @@ namespace Sass {
     Signature mixin_exists_sig = "mixin-exists($name)";
     BUILT_IN(mixin_exists)
     {
-      string s = unquote(ARG("$name", String_Constant)->value());
+      string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
 
       if(d_env.global_frame_has(s+"[m]")) {
         return new (ctx.mem) Boolean(pstate, true);
@@ -1458,7 +1458,7 @@ namespace Sass {
     Signature call_sig = "call($name, $args...)";
     BUILT_IN(call)
     {
-      string name = unquote(ARG("$name", String_Constant)->value());
+      string name = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
       List* arglist = new (ctx.mem) List(*ARG("$args", List));
 
       Arguments* args = new (ctx.mem) Arguments(pstate);
@@ -1502,11 +1502,8 @@ namespace Sass {
     Signature image_url_sig = "image-url($path, $only-path: false, $cache-buster: false)";
     BUILT_IN(image_url)
     {
-      String_Constant* ipath = ARG("$path", String_Constant);
-      bool only_path = !ARG("$only-path", Expression)->is_false();
-      string full_path(quote(ctx.image_path + "/" + unquote(ipath->value()), '"'));
-      if (!only_path) full_path = "url(" + full_path + ")";
-      return new (ctx.mem) String_Constant(pstate, full_path);
+      error("`image_url` has been removed from libsass because it's not part of the Sass spec", pstate);
+      return 0; // suppress warning, error will exit anyway
     }
 
     //////////////////////////
@@ -1521,8 +1518,20 @@ namespace Sass {
         return new (ctx.mem) String_Constant(pstate, "null");
       } else if (v->concrete_type() == Expression::BOOLEAN && *v == 0) {
         return new (ctx.mem) String_Constant(pstate, "false");
+      } else if (v->concrete_type() == Expression::STRING) {
+        return v;
+      } else {
+        Output_Style old_style;
+        old_style = ctx.output_style;
+        ctx.output_style = NESTED;
+        To_String to_string(&ctx);
+        string inspect = v->perform(&to_string);
+        ctx.output_style = old_style;
+        return new (ctx.mem) String_Constant(pstate, inspect);
+
+
       }
-      return v;
+      // return v;
     }
 
     Signature unique_id_sig = "unique-id()";
@@ -1530,7 +1539,7 @@ namespace Sass {
     {
       std::stringstream ss;
       uniform_real_distribution<> distributor(0, 4294967296); // 16^8
-      uint_fast32_t distributed = distributor(rand);
+      uint_fast32_t distributed = static_cast<uint_fast32_t>(distributor(rand));
       ss << "u" << setfill('0') << setw(8) << std::hex << distributed;
       return new (ctx.mem) String_Constant(pstate, ss.str());
     }

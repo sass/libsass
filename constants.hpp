@@ -5,9 +5,6 @@ namespace Sass {
   namespace Constants {
     extern const int SPECIFICITY_BASE;
 
-    // hidden variable name for the image path (for the image-url built-in)
-    extern const char image_path_var[];
-
     // sass keywords
     extern const char at_root_kwd[];
     extern const char import_kwd[];
@@ -81,6 +78,7 @@ namespace Sass {
     extern const char calc_kwd[];
     extern const char moz_calc_kwd[];
     extern const char webkit_calc_kwd[];
+    extern const char ms_calc_kwd[];
 
     // css attribute-matching operators
     extern const char tilde_equal[];

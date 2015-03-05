@@ -8,7 +8,7 @@
 namespace Sass {
   using namespace std;
 
-  struct Context;
+  class Context;
   class Null;
 
   class To_String : public Operation_CRTP<string, To_String> {
@@ -24,6 +24,7 @@ namespace Sass {
     virtual ~To_String();
 
     string operator()(Null* n);
+    string operator()(String_Constant*);
 
     template <typename U>
     string fallback(U n) { return fallback_impl(n); }

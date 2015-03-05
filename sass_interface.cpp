@@ -1,7 +1,9 @@
 #ifdef _WIN32
 #include <io.h>
+#define LFEED "\n"
 #else
 #include <unistd.h>
+#define LFEED "\n"
 #endif
 
 #include <string>
@@ -10,6 +12,7 @@
 #include <sstream>
 #include <iostream>
 
+#include "copy_c_str.hpp"
 #include "context.hpp"
 #include "inspect.hpp"
 #include "error_handling.hpp"
@@ -115,13 +118,12 @@ extern "C" {
                        .source_map_embed(c_ctx->options.source_map_embed)
                        .source_map_contents(c_ctx->options.source_map_contents)
                        .omit_source_map_url(c_ctx->options.omit_source_map_url)
-                       .image_path(safe_str(c_ctx->options.image_path))
                        .include_paths_c_str(c_ctx->options.include_paths)
                        .include_paths_array(0)
                        .include_paths(vector<string>())
                        .precision(c_ctx->options.precision ? c_ctx->options.precision : 5)
                        .indent(c_ctx->options.indent ? c_ctx->options.indent : "  ")
-                       .linefeed(c_ctx->options.linefeed ? c_ctx->options.linefeed : "\n")
+                       .linefeed(c_ctx->options.linefeed ? c_ctx->options.linefeed : LFEED)
                        .importer(0)
       );
       if (c_ctx->c_functions) {
@@ -141,7 +143,7 @@ extern "C" {
     catch (Sass_Error& e) {
       stringstream msg_stream;
       msg_stream << e.pstate.path << ":" << e.pstate.line << ": " << e.message << endl;
-      c_ctx->error_message = strdup(msg_stream.str().c_str());
+      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -149,7 +151,7 @@ extern "C" {
     catch(bad_alloc& ba) {
       stringstream msg_stream;
       msg_stream << "Unable to allocate memory: " << ba.what() << endl;
-      c_ctx->error_message = strdup(msg_stream.str().c_str());
+      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -157,7 +159,7 @@ extern "C" {
     catch (std::exception& e) {
       stringstream msg_stream;
       msg_stream << "Error: " << e.what() << endl;
-      c_ctx->error_message = strdup(msg_stream.str().c_str());
+      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -165,7 +167,7 @@ extern "C" {
     catch (string& e) {
       stringstream msg_stream;
       msg_stream << "Error: " << e << endl;
-      c_ctx->error_message = strdup(msg_stream.str().c_str());
+      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -174,7 +176,7 @@ extern "C" {
       // couldn't find the specified file in the include paths; report an error
       stringstream msg_stream;
       msg_stream << "Unknown error occurred" << endl;
-      c_ctx->error_message = strdup(msg_stream.str().c_str());
+      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -205,7 +207,6 @@ extern "C" {
                        .source_map_embed(c_ctx->options.source_map_embed)
                        .source_map_contents(c_ctx->options.source_map_contents)
                        .omit_source_map_url(c_ctx->options.omit_source_map_url)
-                       .image_path(safe_str(c_ctx->options.image_path))
                        .include_paths_c_str(c_ctx->options.include_paths)
                        .include_paths_array(0)
                        .include_paths(vector<string>())
@@ -228,7 +229,7 @@ extern "C" {
     catch (Sass_Error& e) {
       stringstream msg_stream;
       msg_stream << e.path << ":" << e.pstate.line << ": " << e.message << endl;
-      c_ctx->error_message = strdup(msg_stream.str().c_str());
+      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -236,7 +237,7 @@ extern "C" {
     catch(bad_alloc& ba) {
       stringstream msg_stream;
       msg_stream << "Unable to allocate memory: " << ba.what() << endl;
-      c_ctx->error_message = strdup(msg_stream.str().c_str());
+      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -244,7 +245,7 @@ extern "C" {
     catch (std::exception& e) {
       stringstream msg_stream;
       msg_stream << "Error: " << e.what() << endl;
-      c_ctx->error_message = strdup(msg_stream.str().c_str());
+      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -252,7 +253,7 @@ extern "C" {
     catch (string& e) {
       stringstream msg_stream;
       msg_stream << "Error: " << e << endl;
-      c_ctx->error_message = strdup(msg_stream.str().c_str());
+      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -261,7 +262,7 @@ extern "C" {
       // couldn't find the specified file in the include paths; report an error
       stringstream msg_stream;
       msg_stream << "Unknown error occurred" << endl;
-      c_ctx->error_message = strdup(msg_stream.str().c_str());
+      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;

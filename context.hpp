@@ -8,29 +8,19 @@
 #define BUFFERSIZE 255
 #include "b64/encode.h"
 
+#include "ast_fwd_decl.hpp"
 #include "kwd_arg_macros.hpp"
 #include "memory_manager.hpp"
 #include "environment.hpp"
 #include "source_map.hpp"
 #include "subset_map.hpp"
+#include "output.hpp"
 #include "sass_functions.h"
 
 struct Sass_C_Function_Descriptor;
 
 namespace Sass {
   using namespace std;
-  class AST_Node;
-  class Block;
-  class Expression;
-  class Color;
-  struct Backtrace;
-  // typedef const char* Signature;
-  // struct Context;
-  // typedef Environment<AST_Node*> Env;
-  // typedef Expression* (*Native_Function)(Env&, Context&, Signature, string, size_t);
-
-  enum Output_Style { NESTED, EXPANDED, COMPACT, COMPRESSED, FORMATTED };
-
   struct Sass_Queued {
     string abs_path;
     string load_path;
@@ -39,7 +29,8 @@ namespace Sass {
     Sass_Queued(const string& load_path, const string& abs_path, const char* source);
   };
 
-  struct Context {
+  class Context {
+  public:
     Memory_Manager<AST_Node> mem;
 
     const char* source_c_str;
@@ -56,12 +47,12 @@ namespace Sass {
     vector<string> include_paths; // lookup paths for includes
     vector<Sass_Queued> queue; // queue of files to be parsed
     map<string, Block*> style_sheets; // map of paths to ASTs
-    SourceMap source_map;
+    // SourceMap source_map;
+    Output emitter;
     vector<Sass_C_Function_Callback> c_functions;
 
     string       indent; // String to be used for indentation
     string       linefeed; // String to be used for line feeds
-    string       image_path; // for the image-url Sass function
     string       input_path; // for relative paths in src-map
     string       output_path; // for relative paths to the output
     bool         source_comments; // for inline debug comments in css output
@@ -80,14 +71,12 @@ namespace Sass {
     map<int, string>    colors_to_names;
 
     size_t precision; // precision for outputting fractional numbers
-    bool _skip_source_map_update; // status flag to skip source map updates
 
     KWD_ARG_SET(Data) {
       KWD_ARG(Data, const char*,     source_c_str);
       KWD_ARG(Data, string,          entry_point);
       KWD_ARG(Data, string,          input_path);
       KWD_ARG(Data, string,          output_path);
-      KWD_ARG(Data, string,          image_path);
       KWD_ARG(Data, string,          indent);
       KWD_ARG(Data, string,          linefeed);
       KWD_ARG(Data, const char*,     include_paths_c_str);
@@ -99,7 +88,6 @@ namespace Sass {
       KWD_ARG(Data, bool,            omit_source_map_url);
       KWD_ARG(Data, bool,            is_indented_syntax_src);
       KWD_ARG(Data, size_t,          precision);
-      KWD_ARG(Data, bool,            _skip_source_map_update);
       KWD_ARG(Data, bool,            source_map_embed);
       KWD_ARG(Data, bool,            source_map_contents);
       KWD_ARG(Data, Sass_C_Import_Callback, importer);

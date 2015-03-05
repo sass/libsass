@@ -10,8 +10,7 @@
 #include "parser.hpp"
 #include "file.hpp"
 #include "inspect.hpp"
-#include "output_nested.hpp"
-#include "output_compressed.hpp"
+#include "output.hpp"
 #include "expand.hpp"
 #include "eval.hpp"
 #include "contextualize.hpp"
@@ -24,11 +23,14 @@
 #include "backtrace.hpp"
 #include "sass2scss.h"
 #include "prelexer.hpp"
+#include "emitter.hpp"
 
-#include <iomanip>
-#include <iostream>
+#include <string>
+#include <cstdlib>
 #include <cstring>
+#include <iomanip>
 #include <sstream>
+#include <iostream>
 
 namespace Sass {
   using namespace Constants;
@@ -45,17 +47,17 @@ namespace Sass {
 
 
   Context::Context(Context::Data initializers)
-  : mem(Memory_Manager<AST_Node>()),
+  : // Output(this),
+    mem(Memory_Manager<AST_Node>()),
     source_c_str            (initializers.source_c_str()),
     sources                 (vector<const char*>()),
     include_paths           (initializers.include_paths()),
     queue                   (vector<Sass_Queued>()),
     style_sheets            (map<string, Block*>()),
-    source_map              (resolve_relative_path(initializers.output_path(), initializers.source_map_file(), get_cwd())),
+    emitter (this),
     c_functions             (vector<Sass_C_Function_Callback>()),
     indent                  (initializers.indent()),
     linefeed                (initializers.linefeed()),
-    image_path              (initializers.image_path()),
     input_path              (make_canonical_path(initializers.input_path())),
     output_path             (make_canonical_path(initializers.output_path())),
     source_comments         (initializers.source_comments()),
@@ -69,7 +71,6 @@ namespace Sass {
     names_to_colors         (map<string, Color*>()),
     colors_to_names         (map<int, string>()),
     precision               (initializers.precision()),
-    _skip_source_map_update (initializers._skip_source_map_update()),
     subset_map              (Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> >())
   {
     cwd = get_cwd();
@@ -92,6 +93,9 @@ namespace Sass {
         throw "File to read not found or unreadable: " + entry_point;
       }
     }
+
+    emitter.set_filename(output_path);
+
   }
 
   Context::~Context()
@@ -115,9 +119,9 @@ namespace Sass {
       names_to_colors[name] = value;
       // only map fully opaque colors
       if (color_values[i*4+3] >= 1) {
-        int numval = color_values[i*4]*0x10000;
-        numval += color_values[i*4+1]*0x100;
-        numval += color_values[i*4+2];
+        int numval = static_cast<int>(color_values[i*4])*0x10000;
+        numval += static_cast<int>(color_values[i*4+1])*0x100;
+        numval += static_cast<int>(color_values[i*4+2]);
         colors_to_names[numval] = name;
       }
       ++i;
@@ -164,7 +168,7 @@ namespace Sass {
     sources.push_back(contents);
     included_files.push_back(abs_path);
     queue.push_back(Sass_Queued(load_path, abs_path, contents));
-    source_map.source_index.push_back(sources.size() - 1);
+    emitter.add_source_index(sources.size() - 1);
     include_links.push_back(resolve_relative_path(abs_path, source_map_file, cwd));
   }
 
@@ -223,31 +227,14 @@ namespace Sass {
 
   char* Context::compile_block(Block* root)
   {
-    char* result = 0;
     if (!root) return 0;
-    switch (output_style) {
-      case COMPRESSED: {
-        Output_Compressed output_compressed(this);
-        root->perform(&output_compressed);
-        string output = output_compressed.get_buffer();
-        if (source_map_file != "" && !omit_source_map_url) {
-          output += format_source_mapping_url(source_map_file);
-        }
-        result = copy_c_str(output.c_str());
-      } break;
-
-      default: {
-        Output_Nested output_nested(source_comments, this);
-        root->perform(&output_nested);
-        string output = output_nested.get_buffer();
-        if (source_map_file != "" && !omit_source_map_url) {
-          output += linefeed + format_source_mapping_url(source_map_file);
-        }
-        result = copy_c_str(output.c_str());
-
-      } break;
+    root->perform(&emitter);
+    emitter.finalize();
+    string output = emitter.get_buffer();
+    if (source_map_file != "" && !omit_source_map_url) {
+      output += linefeed + format_source_mapping_url(source_map_file);
     }
-    return result;
+    return copy_c_str(output.c_str());
   }
 
   Block* Context::parse_file()
@@ -278,9 +265,6 @@ namespace Sass {
     Contextualize contextualize(*this, &eval, &tge, &backtrace);
     Expand expand(*this, &eval, &contextualize, &tge, &backtrace);
     Cssize cssize(*this, &tge, &backtrace);
-    // Inspect inspect(this);
-    // Output_Nested output_nested(*this);
-
     root = root->perform(&expand)->block();
     root = root->perform(&cssize)->block();
     if (!subset_map.empty()) {
@@ -303,7 +287,7 @@ namespace Sass {
       add_source(input_path, input_path, contents);
       return parse_file();
     }
-    add_source(input_path, input_path, strdup(source_c_str));
+    add_source(input_path, input_path, copy_c_str(source_c_str));
     return parse_file();
   }
 
@@ -323,7 +307,7 @@ namespace Sass {
   {
     string url = resolve_relative_path(file, output_path, cwd);
     if (source_map_embed) {
-      string map = source_map.generate_source_map(*this);
+      string map = emitter.generate_source_map(*this);
       istringstream is( map );
       ostringstream buffer;
       base64::encoder E;
@@ -338,7 +322,7 @@ namespace Sass {
   {
     if (source_map_file == "") return 0;
     char* result = 0;
-    string map = source_map.generate_source_map(*this);
+    string map = emitter.generate_source_map(*this);
     result = copy_c_str(map.c_str());
     return result;
   }
@@ -475,8 +459,6 @@ namespace Sass {
     // Boolean Functions
     register_function(ctx, not_sig, sass_not, env);
     register_function(ctx, if_sig, sass_if, env);
-    // Path Functions
-    register_function(ctx, image_url_sig, image_url, env);
     // Misc Functions
     register_function(ctx, inspect_sig, inspect, env);
     register_function(ctx, unique_id_sig, unique_id, env);

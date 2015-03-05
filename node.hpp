@@ -14,7 +14,7 @@ namespace Sass {
   using namespace std;
 
 
-  struct Context;
+  class Context;
 
   /*
    There are a lot of stumbling blocks when trying to port the ruby extend code to C++. The biggest is the choice of
@@ -50,6 +50,7 @@ namespace Sass {
     bool isSelector() const { return mType == SELECTOR; }
     bool isCollection() const { return mType == COLLECTION; }
     bool isNil() const { return mType == NIL; }
+    bool got_line_feed;
 
     Complex_Selector::Combinator combinator() const { return mCombinator; }
 
@@ -107,13 +108,11 @@ namespace Sass {
     NodeDequePtr mpCollection;
   };
 
-
+#ifdef DEBUG
   ostream& operator<<(ostream& os, const Node& node);
-
-
+#endif
   Node complexSelectorToNode(Complex_Selector* pToConvert, Context& ctx);
   Complex_Selector* nodeToComplexSelector(const Node& toConvert, Context& ctx);
-
 
   bool nodesEqual(const Node& one, const Node& two, bool simpleSelectorOrderDependent);
 

@@ -41,11 +41,9 @@ namespace Sass {
   }
 
 
-  Node::Node(const TYPE& type, Complex_Selector::Combinator combinator, Complex_Selector* pSelector, NodeDequePtr& pCollection) :
-  	mType(type),
-    mCombinator(combinator),
-    mpSelector(pSelector),
-    mpCollection(pCollection) {}
+  Node::Node(const TYPE& type, Complex_Selector::Combinator combinator, Complex_Selector* pSelector, NodeDequePtr& pCollection)
+  : got_line_feed(false), mType(type), mCombinator(combinator), mpSelector(pSelector), mpCollection(pCollection)
+  { /* if (pSelector) got_line_feed = pSelector->has_line_feed(); */ }
 
 
   Node Node::clone(Context& ctx) const {
@@ -130,7 +128,7 @@ namespace Sass {
   	this->collection()->insert(this->collection()->end(), rhs.collection()->begin(), rhs.collection()->end());
   }
 
-
+#ifdef DEBUG
   ostream& operator<<(ostream& os, const Node& node) {
 
     if (node.isCombinator()) {
@@ -170,6 +168,7 @@ namespace Sass {
     return os;
 
   }
+#endif
 
 
   Node complexSelectorToNode(Complex_Selector* pToConvert, Context& ctx) {
@@ -177,7 +176,7 @@ namespace Sass {
       return Node::createNil();
     }
 
-		Node node = Node::createCollection();
+    Node node = Node::createCollection();
 
     while (pToConvert) {
 
@@ -243,6 +242,7 @@ namespace Sass {
     Selector_Reference* selectorRef = new (ctx.mem) Selector_Reference(ParserState("[NODE]"), NULL);
     fakeHead->elements().push_back(selectorRef);
     pFirst->head(fakeHead);
+    pFirst->has_line_feed(pFirst->has_line_feed() || pFirst->tail()->has_line_feed() || toConvert.got_line_feed);
 
     return pFirst;
   }

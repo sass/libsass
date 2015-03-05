@@ -19,7 +19,12 @@ namespace Sass {
     template <const char* prefix>
     const char* exactly(const char* src) {
       const char* pre = prefix;
-      while (*pre && *src == *pre) ++src, ++pre;
+      if (*src == 0) return 0;
+      // there is a small chance that the search prefix
+      // is longer than the rest of the string to look at
+      while (*pre && *src == *pre) {
+      	++src, ++pre;
+      }
       return *pre ? 0 : src;
     }
 
@@ -83,6 +88,69 @@ namespace Sass {
       }
     }
 
+    // skip to delimiter (mx) inside given range
+    // this will savely skip over all quoted strings
+    // recursive skip stuff delimited by start/stop
+    // first start/opener must be consumed already!
+    template<prelexer start, prelexer stop>
+    const char* skip_over_scopes(const char* src, const char* end = 0) {
+
+      size_t level = 0;
+      bool in_squote = false;
+      bool in_dquote = false;
+      // bool in_braces = false;
+
+      while (*src) {
+
+        // check for abort condition
+        if (end && src >= end) break;
+
+        // has escaped sequence?
+        if (*src == '\\') {
+          ++ src; // skip this (and next)
+        }
+        else if (*src == '"') {
+          in_dquote = ! in_dquote;
+        }
+        else if (*src == '\'') {
+          in_squote = ! in_squote;
+        }
+        else if (in_dquote || in_squote) {
+          // take everything literally
+        }
+
+        // find another opener inside?
+        else if (start(src)) {
+          ++ level; // increase counter
+        }
+
+        // look for the closer (maybe final, maybe not)
+        else if (const char* final = stop(src)) {
+          // only close one level?
+          if (level > 0) -- level;
+          // return position at end of stop
+          // delimiter may be multiple chars
+          else return final;
+        }
+
+        // next
+        ++ src;
+      }
+
+      return 0;
+    }
+
+    // Match a sequence of characters delimited by the supplied chars.
+    template <prelexer start, prelexer stop>
+    const char* recursive_scopes(const char* src) {
+      // parse opener
+      src = start(src);
+      // abort if not found
+      if (!src) return 0;
+      // parse the rest until final closer
+      return skip_over_scopes<start, stop>(src);
+    }
+
     // Match a sequence of characters delimited by the supplied strings.
     template <const char* beg, const char* end, bool esc>
     const char* delimited_by(const char* src) {
@@ -106,10 +174,10 @@ namespace Sass {
     }
 
     // Matches zero characters (always succeeds without consuming input).
-    const char* epsilon(const char*);
+    // const char* epsilon(const char*);
 
     // Matches the empty string.
-    const char* empty(const char*);
+    // const char* empty(const char*);
 
     // Succeeds of the supplied matcher fails, and vice versa.
     template <prelexer mx>
@@ -306,6 +374,10 @@ namespace Sass {
     const char* xdigits(const char* src);
     const char* alnums(const char* src);
     const char* puncts(const char* src);
+    // Match certain white-space charactes.
+    const char* wspaces(const char* src);
+    // const char* newline(const char* src);
+    // const char* whitespace(const char* src);
 
     // Match a line comment.
     const char* line_comment(const char* src);
@@ -319,13 +391,14 @@ namespace Sass {
     // Match double- and single-quoted strings.
     const char* double_quoted_string(const char* src);
     const char* single_quoted_string(const char* src);
-    const char* string_constant(const char* src);
+    const char* quoted_string(const char* src);
     // Match interpolants.
     const char* interpolant(const char* src);
 
     // Whitespace handling.
     const char* optional_spaces(const char* src);
-    const char* optional_comment(const char* src);
+    // const char* optional_comment(const char* src);
+    const char* optional_spaces_and_comments(const char* src);
     const char* spaces_and_comments(const char* src);
     const char* no_spaces(const char* src);
 
@@ -337,15 +410,14 @@ namespace Sass {
     const char* identifier(const char* src);
     const char* identifier_fragment(const char* src);
     // Match selector names.
-    const char* sel_ident(const char* src);
-    const char* until_closing_paren(const char* src);
+    // const char* sel_ident(const char* src);
     // Match interpolant schemas
     const char* identifier_schema(const char* src);
     const char* value_schema(const char* src);
     const char* filename(const char* src);
-    const char* filename_schema(const char* src);
-    const char* url_schema(const char* src);
-    const char* url_value(const char* src);
+    // const char* filename_schema(const char* src);
+    // const char* url_schema(const char* src);
+    // const char* url_value(const char* src);
     const char* vendor_prefix(const char* src);
     // Match CSS '@' keywords.
     const char* at_keyword(const char* src);
@@ -355,8 +427,8 @@ namespace Sass {
     const char* without_directive(const char* src);
     const char* media(const char* src);
     const char* supports(const char* src);
-    const char* keyframes(const char* src);
-    const char* keyf(const char* src);
+    // const char* keyframes(const char* src);
+    // const char* keyf(const char* src);
     const char* mixin(const char* src);
     const char* function(const char* src);
     const char* return_directive(const char* src);
@@ -382,7 +454,7 @@ namespace Sass {
     const char* err(const char* src);
     const char* dbg(const char* src);
 
-    const char* directive(const char* src);
+    // const char* directive(const char* src);
     const char* at_keyword(const char* src);
 
     const char* null(const char* src);
@@ -413,10 +485,10 @@ namespace Sass {
     const char* hex(const char* src);
     const char* hexa(const char* src);
     const char* hex0(const char* src);
-    const char* rgb_prefix(const char* src);
+    // const char* rgb_prefix(const char* src);
     // Match CSS uri specifiers.
     const char* uri_prefix(const char* src);
-    const char* uri(const char* src);
+    // const char* uri(const char* src);
     const char* url(const char* src);
     // Match CSS "!important" keyword.
     const char* important(const char* src);
@@ -442,10 +514,10 @@ namespace Sass {
     const char* suffix_match(const char* src);
     const char* substring_match(const char* src);
     // Match CSS combinators.
-    const char* adjacent_to(const char* src);
-    const char* precedes(const char* src);
-    const char* parent_of(const char* src);
-    const char* ancestor_of(const char* src);
+    // const char* adjacent_to(const char* src);
+    // const char* precedes(const char* src);
+    // const char* parent_of(const char* src);
+    // const char* ancestor_of(const char* src);
 
     // Match SCSS variable names.
     const char* variable(const char* src);
@@ -473,8 +545,8 @@ namespace Sass {
     const char* url(const char* src);
 
     // Path matching functions.
-    const char* folder(const char* src);
-    const char* folders(const char* src);
+    // const char* folder(const char* src);
+    // const char* folders(const char* src);
 
 
     const char* static_string(const char* src);
