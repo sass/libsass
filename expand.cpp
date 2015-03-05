@@ -254,7 +254,7 @@ namespace Sass {
 	    if (pHead) {
 	      pHead->pstate (isp.remap (pHead->pstate ()));
 	      (*pHead)[0]->pstate (
-		  isp.source_map.remap ((*pHead)[0]->pstate ()));
+		  isp.remap ((*pHead)[0]->pstate ()));
 	    }
 	    pIter = pIter->tail ();
 	  }
