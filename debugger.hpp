@@ -282,7 +282,10 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     for(auto i : expression->elements()) { debug_ast(i, ind + " ", env); }
   } else if (dynamic_cast<Argument*>(node)) {
     Argument* expression = dynamic_cast<Argument*>(node);
-    cerr << ind << "Argument " << expression << " [" << expression->value() << "]" << endl;
+    cerr << ind << "Argument " << expression
+      << " {" << expression->sign() << "}"
+      << " [" << expression->value() << "]"
+    << endl;
     debug_ast(expression->value(), ind + " value: ", env);
   } else if (dynamic_cast<Unary_Expression*>(node)) {
     Unary_Expression* expression = dynamic_cast<Unary_Expression*>(node);
