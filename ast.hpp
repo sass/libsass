@@ -873,12 +873,13 @@ namespace Sass {
   class Argument : public Expression {
     ADD_PROPERTY(Expression*, value);
     ADD_PROPERTY(string, name);
+    ADD_PROPERTY(char, sign);
     ADD_PROPERTY(bool, is_rest_argument);
     ADD_PROPERTY(bool, is_keyword_argument);
     size_t hash_;
   public:
-    Argument(ParserState pstate, Expression* val, string n = "", bool rest = false, bool keyword = false)
-    : Expression(pstate), value_(val), name_(n), is_rest_argument_(rest), is_keyword_argument_(keyword), hash_(0)
+    Argument(ParserState pstate, Expression* val, string n = "", bool rest = false, bool keyword = false, char sign = ':')
+    : Expression(pstate), value_(val), name_(n), sign_(sign), is_rest_argument_(rest), is_keyword_argument_(keyword), hash_(0)
     {
       if (!name_.empty() && is_rest_argument_) {
         error("variable-length argument may not be passed by name", pstate);

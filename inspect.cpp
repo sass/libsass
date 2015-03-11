@@ -695,7 +695,11 @@ namespace Sass {
   {
     if (!a->name().empty()) {
       append_token(a->name(), a);
-      append_colon_separator();
+      if (a->sign() == ':') {
+        append_colon_separator();
+      } else {
+        append_string(string(1, a->sign()));
+      }
     }
     // Special case: argument nulls can be ignored
     if (a->value()->concrete_type() == Expression::NULL_VAL) {

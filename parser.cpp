@@ -367,6 +367,16 @@ namespace Sass {
       val->is_delayed(false);
       arg = new (ctx.mem) Argument(p, val, name);
     }
+    else if (peek< sequence < identifier, zero_plus < alternatives < spaces, line_comment, block_comment > >, exactly<'='> > >()) {
+      lex< identifier >();
+      string name(lexed);
+      ParserState p = pstate;
+      while (lex< alternatives < spaces, block_comment > >()) {};
+      lex< exactly<'='> >();
+      Expression* val = parse_space_list();
+      val->is_delayed(false);
+      arg = new (ctx.mem) Argument(p, val, name, false, false, '=');
+    }
     else {
       bool is_arglist = false;
       bool is_keyword = false;
