@@ -3,7 +3,7 @@
 script/branding
 
 if [ ! -d "sass-spec" ]; then
-  git clone https://github.com/sass/sass-spec.git
+  git clone --branch feature/output-styles https://github.com/mgreter/sass-spec.git
 fi
 if [ ! -d "sassc" ]; then
   git clone https://github.com/sass/sassc.git
