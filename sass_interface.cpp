@@ -12,7 +12,7 @@
 #include <sstream>
 #include <iostream>
 
-#include "copy_c_str.hpp"
+#include "util.hpp"
 #include "context.hpp"
 #include "inspect.hpp"
 #include "error_handling.hpp"
@@ -115,12 +115,16 @@ extern "C" {
                        .is_indented_syntax_src(c_ctx->options.is_indented_syntax_src)
                        .source_comments(c_ctx->options.source_comments)
                        .source_map_file(safe_str(c_ctx->options.source_map_file))
+                       .source_map_root(safe_str(c_ctx->options.source_map_root))
                        .source_map_embed(c_ctx->options.source_map_embed)
                        .source_map_contents(c_ctx->options.source_map_contents)
                        .omit_source_map_url(c_ctx->options.omit_source_map_url)
                        .include_paths_c_str(c_ctx->options.include_paths)
+                       .plugin_paths_c_str(c_ctx->options.plugin_paths)
                        .include_paths_array(0)
+                       .plugin_paths_array(0)
                        .include_paths(vector<string>())
+                       .plugin_paths(vector<string>())
                        .precision(c_ctx->options.precision ? c_ctx->options.precision : 5)
                        .indent(c_ctx->options.indent ? c_ctx->options.indent : "  ")
                        .linefeed(c_ctx->options.linefeed ? c_ctx->options.linefeed : LFEED)
@@ -143,7 +147,7 @@ extern "C" {
     catch (Sass_Error& e) {
       stringstream msg_stream;
       msg_stream << e.pstate.path << ":" << e.pstate.line << ": " << e.message << endl;
-      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
+      c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -151,7 +155,7 @@ extern "C" {
     catch(bad_alloc& ba) {
       stringstream msg_stream;
       msg_stream << "Unable to allocate memory: " << ba.what() << endl;
-      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
+      c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -159,7 +163,7 @@ extern "C" {
     catch (std::exception& e) {
       stringstream msg_stream;
       msg_stream << "Error: " << e.what() << endl;
-      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
+      c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -167,7 +171,7 @@ extern "C" {
     catch (string& e) {
       stringstream msg_stream;
       msg_stream << "Error: " << e << endl;
-      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
+      c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -176,7 +180,7 @@ extern "C" {
       // couldn't find the specified file in the include paths; report an error
       stringstream msg_stream;
       msg_stream << "Unknown error occurred" << endl;
-      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
+      c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -204,12 +208,16 @@ extern "C" {
                        .is_indented_syntax_src(c_ctx->options.is_indented_syntax_src)
                        .source_comments(c_ctx->options.source_comments)
                        .source_map_file(safe_str(c_ctx->options.source_map_file))
+                       .source_map_root(safe_str(c_ctx->options.source_map_root))
                        .source_map_embed(c_ctx->options.source_map_embed)
                        .source_map_contents(c_ctx->options.source_map_contents)
                        .omit_source_map_url(c_ctx->options.omit_source_map_url)
                        .include_paths_c_str(c_ctx->options.include_paths)
+                       .plugin_paths_c_str(c_ctx->options.plugin_paths)
                        .include_paths_array(0)
+                       .plugin_paths_array(0)
                        .include_paths(vector<string>())
+                       .plugin_paths(vector<string>())
                        .precision(c_ctx->options.precision ? c_ctx->options.precision : 5)
       );
       if (c_ctx->c_functions) {
@@ -229,7 +237,7 @@ extern "C" {
     catch (Sass_Error& e) {
       stringstream msg_stream;
       msg_stream << e.path << ":" << e.pstate.line << ": " << e.message << endl;
-      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
+      c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -237,7 +245,7 @@ extern "C" {
     catch(bad_alloc& ba) {
       stringstream msg_stream;
       msg_stream << "Unable to allocate memory: " << ba.what() << endl;
-      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
+      c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -245,7 +253,7 @@ extern "C" {
     catch (std::exception& e) {
       stringstream msg_stream;
       msg_stream << "Error: " << e.what() << endl;
-      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
+      c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -253,7 +261,7 @@ extern "C" {
     catch (string& e) {
       stringstream msg_stream;
       msg_stream << "Error: " << e << endl;
-      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
+      c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -262,7 +270,7 @@ extern "C" {
       // couldn't find the specified file in the include paths; report an error
       stringstream msg_stream;
       msg_stream << "Unknown error occurred" << endl;
-      c_ctx->error_message = copy_c_str(msg_stream.str().c_str());
+      c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
       c_ctx->error_status = 1;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;

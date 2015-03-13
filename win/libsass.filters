@@ -39,9 +39,6 @@
     <ClCompile Include="..\contextualize.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\copy_c_str.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\error_handling.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -76,6 +73,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\plugins.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\position.cpp">
@@ -176,9 +176,6 @@
     <ClInclude Include="..\contextualize.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\copy_c_str.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\debug.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -231,6 +228,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\parser.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\plugins.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\paths.hpp">

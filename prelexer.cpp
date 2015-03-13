@@ -26,6 +26,8 @@ namespace Sass {
 
     // Match any single character.
     const char* any_char(const char* src) { return *src ? src+1 : src; }
+    // Match word boundary (look ahead)
+    const char* word_boundary(const char* src) { return !*src || isspace(*src) || ispunct(*src) || !Sass::Util::isAscii(*src) ? src : 0 ; }
 
     // Match a single character satisfying the ctype predicates.
     const char* space(const char* src) { return std::isspace(*src) ? src+1 : 0; }
@@ -57,7 +59,7 @@ namespace Sass {
     }
     // Match either comment.
     const char* comment(const char* src) {
-      return alternatives<block_comment, line_comment>(src);
+      return line_comment(src);
     }
 
     const char* wspaces(const char* src) {
@@ -98,10 +100,10 @@ namespace Sass {
     const char* optional_spaces(const char* src) { return optional<spaces>(src); }
     // const char* optional_comment(const char* src) { return optional<comment>(src); }
     const char* optional_spaces_and_comments(const char* src) {
-      return zero_plus< alternatives<spaces, comment> >(src);
+      return zero_plus< alternatives<spaces, line_comment> >(src);
     }
     const char* spaces_and_comments(const char* src) {
-      return one_plus< alternatives<spaces, comment> >(src);
+      return one_plus< alternatives<spaces, line_comment> >(src);
     }
     const char* no_spaces(const char* src) {
       return negate< spaces >(src);
@@ -145,6 +147,18 @@ namespace Sass {
       return sequence< exactly<'-'>, exactly<'-'>, identifier >(src);
     }
 
+    // Match number prefix ([\+\-]+)
+    const char* number_prefix(const char* src) {
+      return alternatives <
+        exactly < '+' >,
+        sequence <
+          exactly < '-' >,
+          optional_spaces_and_comments,
+          exactly< '-' >
+        >
+      >(src);
+    }
+
     // Match interpolant schemas
     const char* identifier_schema(const char* src) {
       // follows this pattern: (x*ix*)+ ... well, not quite
@@ -167,7 +181,7 @@ namespace Sass {
         zero_plus <
           alternatives <
             // skip all escaped chars first
-            sequence < exactly < '\\' >, any_char >,
+            backslash_something,
             // skip interpolants
             interpolant,
             // skip non delimiters
@@ -186,7 +200,7 @@ namespace Sass {
         zero_plus <
           alternatives <
             // skip all escaped chars first
-            sequence < exactly < '\\' >, any_char >,
+            backslash_something,
             // skip interpolants
             interpolant,
             // skip non delimiters
@@ -288,7 +302,7 @@ namespace Sass {
     }
 
     const char* extend(const char* src) {
-      return exactly<extend_kwd>(src);
+      return sequence < exactly<extend_kwd>, word_boundary >(src);
     }
 
 

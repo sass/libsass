@@ -172,6 +172,8 @@ namespace Sass {
     const char* any_char_except(const char* src) {
       return (*src && *src != c) ? src+1 : 0;
     }
+    // Match word boundary (look ahead)
+    const char* word_boundary(const char* src);
 
     // Matches zero characters (always succeeds without consuming input).
     // const char* epsilon(const char*);
@@ -394,6 +396,8 @@ namespace Sass {
     const char* quoted_string(const char* src);
     // Match interpolants.
     const char* interpolant(const char* src);
+    // Match number prefix ([\+\-]+)
+    const char* number_prefix(const char* src);
 
     // Whitespace handling.
     const char* optional_spaces(const char* src);
@@ -566,8 +570,11 @@ namespace Sass {
     }
     template<prelexer mx>
     const char* find_first_in_interval(const char* beg, const char* end) {
+      bool esc = false;
       while ((beg < end) && *beg) {
-        if (mx(beg)) return beg;
+        if (esc) esc = false;
+        else if (*beg == '\\') esc = true;
+        else if (mx(beg)) return beg;
         ++beg;
       }
       return 0;
@@ -575,8 +582,11 @@ namespace Sass {
     template <char c>
     unsigned int count_interval(const char* beg, const char* end) {
       unsigned int counter = 0;
+      bool esc = false;
       while (beg < end && *beg) {
-        if (*beg == c) ++counter;
+        if (esc) esc = false;
+        else if (*beg == '\\') esc = true;
+        else if (*beg == c) ++counter;
         ++beg;
       }
       return counter;
@@ -584,9 +594,16 @@ namespace Sass {
     template <prelexer mx>
     unsigned int count_interval(const char* beg, const char* end) {
       unsigned int counter = 0;
+      bool esc = false;
       while (beg < end && *beg) {
         const char* p;
-        if ((p = mx(beg))) {
+        if (esc) {
+          esc = false;
+          ++beg;
+        } else if (*beg == '\\') {
+          esc = true;
+          ++beg;
+        } else if ((p = mx(beg))) {
           ++counter;
           beg = p;
         }

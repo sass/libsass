@@ -164,7 +164,6 @@
     <ClCompile Include="..\constants.cpp" />
     <ClCompile Include="..\context.cpp" />
     <ClCompile Include="..\contextualize.cpp" />
-    <ClCompile Include="..\copy_c_str.cpp" />
     <ClCompile Include="..\error_handling.cpp" />
     <ClCompile Include="..\eval.cpp" />
     <ClCompile Include="..\expand.cpp" />
@@ -178,6 +177,7 @@
     <ClCompile Include="..\emitter.cpp" />
     <ClCompile Include="..\output.cpp" />
     <ClCompile Include="..\parser.cpp" />
+    <ClCompile Include="..\plugins.cpp" />
     <ClCompile Include="..\position.cpp" />
     <ClCompile Include="..\prelexer.cpp" />
     <ClCompile Include="..\remove_placeholders.cpp" />
@@ -208,7 +208,6 @@
     <ClInclude Include="..\constants.hpp" />
     <ClInclude Include="..\context.hpp" />
     <ClInclude Include="..\contextualize.hpp" />
-    <ClInclude Include="..\copy_c_str.hpp" />
     <ClInclude Include="..\debug.hpp" />
     <ClInclude Include="..\environment.hpp" />
     <ClInclude Include="..\error_handling.hpp" />
@@ -228,6 +227,7 @@
     <ClInclude Include="..\emitter.hpp" />
     <ClInclude Include="..\output.hpp" />
     <ClInclude Include="..\parser.hpp" />
+    <ClInclude Include="..\plugins.hpp" />
     <ClInclude Include="..\paths.hpp" />
     <ClInclude Include="..\position.hpp" />
     <ClInclude Include="..\prelexer.hpp" />

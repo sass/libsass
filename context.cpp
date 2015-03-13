@@ -5,7 +5,10 @@
 #endif
 
 #include "ast.hpp"
+#include "util.hpp"
+#include "sass.h"
 #include "context.hpp"
+#include "plugins.hpp"
 #include "constants.hpp"
 #include "parser.hpp"
 #include "file.hpp"
@@ -17,7 +20,6 @@
 #include "cssize.hpp"
 #include "extend.hpp"
 #include "remove_placeholders.hpp"
-#include "copy_c_str.hpp"
 #include "color_names.hpp"
 #include "functions.hpp"
 #include "backtrace.hpp"
@@ -35,6 +37,7 @@
 namespace Sass {
   using namespace Constants;
   using namespace File;
+  using namespace Sass;
   using std::cerr;
   using std::endl;
 
@@ -51,6 +54,7 @@ namespace Sass {
     mem(Memory_Manager<AST_Node>()),
     source_c_str            (initializers.source_c_str()),
     sources                 (vector<const char*>()),
+    plugin_paths            (initializers.plugin_paths()),
     include_paths           (initializers.include_paths()),
     queue                   (vector<Sass_Queued>()),
     style_sheets            (map<string, Block*>()),
@@ -63,6 +67,7 @@ namespace Sass {
     source_comments         (initializers.source_comments()),
     output_style            (initializers.output_style()),
     source_map_file         (make_canonical_path(initializers.source_map_file())),
+    source_map_root         (initializers.source_map_root()), // pass-through
     source_map_embed        (initializers.source_map_embed()),
     source_map_contents     (initializers.source_map_contents()),
     omit_source_map_url     (initializers.omit_source_map_url()),
@@ -71,8 +76,10 @@ namespace Sass {
     names_to_colors         (map<string, Color*>()),
     colors_to_names         (map<int, string>()),
     precision               (initializers.precision()),
+    plugins(),
     subset_map              (Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> >())
   {
+
     cwd = get_cwd();
 
     // enforce some safe defaults
@@ -83,8 +90,18 @@ namespace Sass {
     include_paths.push_back(cwd);
     collect_include_paths(initializers.include_paths_c_str());
     collect_include_paths(initializers.include_paths_array());
+    collect_plugin_paths(initializers.plugin_paths_c_str());
+    collect_plugin_paths(initializers.plugin_paths_array());
 
     setup_color_map();
+
+    for (size_t i = 0, S = plugin_paths.size(); i < S; ++i) {
+      plugins.load_plugins(plugin_paths[i]);
+    }
+
+    for(auto fn : plugins.get_functions()) {
+      c_functions.push_back(fn);
+    }
 
     string entry_point = initializers.entry_point();
     if (!entry_point.empty()) {
@@ -155,7 +172,6 @@ namespace Sass {
 
   void Context::collect_include_paths(const char** paths_array)
   {
-    if (*include_paths.back().rbegin() != '/') include_paths.back() += '/';
     if (paths_array) {
       for (size_t i = 0; paths_array[i]; i++) {
         collect_include_paths(paths_array[i]);
@@ -163,6 +179,39 @@ namespace Sass {
     }
   }
 
+  void Context::collect_plugin_paths(const char* paths_str)
+  {
+
+    if (paths_str) {
+      const char* beg = paths_str;
+      const char* end = Prelexer::find_first<PATH_SEP>(beg);
+
+      while (end) {
+        string path(beg, end - beg);
+        if (!path.empty()) {
+          if (*path.rbegin() != '/') path += '/';
+          plugin_paths.push_back(path);
+        }
+        beg = end + 1;
+        end = Prelexer::find_first<PATH_SEP>(beg);
+      }
+
+      string path(beg);
+      if (!path.empty()) {
+        if (*path.rbegin() != '/') path += '/';
+        plugin_paths.push_back(path);
+      }
+    }
+  }
+
+  void Context::collect_plugin_paths(const char** paths_array)
+  {
+    if (paths_array) {
+      for (size_t i = 0; paths_array[i]; i++) {
+        collect_plugin_paths(paths_array[i]);
+      }
+    }
+  }
   void Context::add_source(string load_path, string abs_path, const char* contents)
   {
     sources.push_back(contents);
@@ -230,11 +279,12 @@ namespace Sass {
     if (!root) return 0;
     root->perform(&emitter);
     emitter.finalize();
-    string output = emitter.get_buffer();
+    OutputBuffer emitted = emitter.get_buffer();
+    string output = emitted.buffer;
     if (source_map_file != "" && !omit_source_map_url) {
       output += linefeed + format_source_mapping_url(source_map_file);
     }
-    return copy_c_str(output.c_str());
+    return sass_strdup(output.c_str());
   }
 
   Block* Context::parse_file()
@@ -283,11 +333,12 @@ namespace Sass {
     if (!source_c_str) return 0;
     queue.clear();
     if(is_indented_syntax_src) {
-      char * contents = sass2scss(source_c_str, SASS2SCSS_PRETTIFY_1);
+      char * contents = sass2scss(source_c_str, SASS2SCSS_PRETTIFY_1 | SASS2SCSS_KEEP_COMMENT);
       add_source(input_path, input_path, contents);
+      delete [] source_c_str;
       return parse_file();
     }
-    add_source(input_path, input_path, copy_c_str(source_c_str));
+    add_source(input_path, input_path, source_c_str);
     return parse_file();
   }
 
@@ -323,7 +374,7 @@ namespace Sass {
     if (source_map_file == "") return 0;
     char* result = 0;
     string map = emitter.generate_source_map(*this);
-    result = copy_c_str(map.c_str());
+    result = sass_strdup(map.c_str());
     return result;
   }
 

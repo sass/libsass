@@ -6,6 +6,44 @@
 
 namespace Sass {
 
+  #define out_of_memory() do {                    \
+      fprintf(stderr, "Out of memory.\n");    \
+      exit(EXIT_FAILURE);                     \
+    } while (0)
+
+  /* Sadly, sass_strdup is not portable. */
+  char *sass_strdup(const char *str)
+  {
+    char *ret = (char*) malloc(strlen(str) + 1);
+    if (ret == NULL)
+      out_of_memory();
+    strcpy(ret, str);
+    return ret;
+  }
+
+  /* Locale unspecific atof function. */
+  double sass_atof(const char *str)
+  {
+    char separator = *(localeconv()->decimal_point);
+    if(separator != '.'){
+      // The current locale specifies another
+      // separator. convert the separator to the 
+      // one understood by the locale if needed
+      const char *found = strchr(str, '.');
+      if(found != NULL){
+        // substitution is required. perform the substitution on a copy
+        // of the string. This is slower but it is thread safe.
+        char *copy = sass_strdup(str);
+        *(copy + (found - str)) = separator;
+        double res = atof(copy);
+        free(copy);
+        return res;
+      }
+    }
+
+    return atof(str);
+  }
+
   // double escape every escape sequences
   // escape unescaped quotes and backslashes
   string string_escape(const string& str)
@@ -91,7 +129,10 @@ namespace Sass {
         out += i;
       }
     }
-    if (esc) out += 'Z';
+    // happens when parsing does not correctly skip
+    // over escaped sequences for ie. interpolations
+    // one example: foo\#{interpolate}
+    // if (esc) out += '\\';
     return out;
   }
 
@@ -138,7 +179,8 @@ namespace Sass {
     else return text;
   }
 
-  string normalize_wspace(const string& str) {
+   string normalize_wspace(const string& str)
+  {
     bool ws = false;
     bool esc = false;
     char inside_str = 0;

@@ -14,15 +14,18 @@ namespace Sass {
   class Offset {
 
     public: // c-tor
+      Offset(const char* string);
+      Offset(const string& text);
       Offset(const size_t line, const size_t column);
 
       // return new position, incremented by the given string
       Offset inc(const char* begin, const char* end) const;
 
     public: // overload operators for position
+      void operator+= (const Offset &pos);
       bool operator== (const Offset &pos) const;
       bool operator!= (const Offset &pos) const;
-      const Offset operator+ (const Offset &off) const;
+      Offset operator+ (const Offset &off) const;
 
     public: // overload output stream operator
       // friend ostream& operator<<(ostream& strm, const Offset& off);
@@ -45,6 +48,7 @@ namespace Sass {
       Position(const size_t file, const size_t line, const size_t column);
 
     public: // overload operators for position
+      void operator+= (const Offset &off);
       bool operator== (const Position &pos) const;
       bool operator!= (const Position &pos) const;
       const Position operator+ (const Offset &off) const;
@@ -96,8 +100,8 @@ namespace Sass {
     public: // c-tor
       ParserState(string path);
       ParserState(string path, const size_t file);
-      ParserState(string path, Position position, Offset offset);
-      ParserState(string path, Token token, Position position, Offset offset);
+      ParserState(string path, Position position, Offset offset = Offset(0, 0));
+      ParserState(string path, Token token, Position position, Offset offset = Offset(0, 0));
 
     public: // down casts
       Offset off() { return *this; };

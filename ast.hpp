@@ -44,6 +44,7 @@
 #include "ast_def_macros.hpp"
 #include "ast_fwd_decl.hpp"
 #include "to_string.hpp"
+#include "source_map.hpp"
 
 #include "sass.h"
 #include "sass_values.h"
@@ -86,7 +87,6 @@ namespace Sass {
       STRING,
       LIST,
       MAP,
-	  SELECTOR,
       NULL_VAL,
       NUM_TYPES
     };
@@ -410,7 +410,13 @@ namespace Sass {
     At_Rule(ParserState pstate, string kwd, Selector* sel = 0, Block* b = 0)
     : Has_Block(pstate, b), keyword_(kwd), selector_(sel), value_(0) // set value manually if needed
     { statement_type(DIRECTIVE); }
-    bool bubbles() { return true; }
+    bool bubbles() { return is_keyframes() || is_media(); }
+    bool is_media() {
+      return keyword_.compare("@-webkit-media") == 0 ||
+             keyword_.compare("@-moz-media") == 0 ||
+             keyword_.compare("@-o-media") == 0 ||
+             keyword_.compare("@media") == 0;
+    }
     bool is_keyframes() {
       return keyword_.compare("@-webkit-keyframes") == 0 ||
              keyword_.compare("@-moz-keyframes") == 0 ||
@@ -1692,21 +1698,28 @@ namespace Sass {
   /////////////////////////////////////////
   // Abstract base class for CSS selectors.
   /////////////////////////////////////////
-  class Selector : public Expression {
+  class Selector : public AST_Node {
     ADD_PROPERTY(bool, has_reference);
     ADD_PROPERTY(bool, has_placeholder);
     // line break before list separator
     ADD_PROPERTY(bool, has_line_feed);
     // line break after list separator
     ADD_PROPERTY(bool, has_line_break);
+    // maybe we have optional flag
+    ADD_PROPERTY(bool, is_optional);
+    // parent block pointers
+    ADD_PROPERTY(Block*, last_block);
+    ADD_PROPERTY(Media_Block*, media_block);
   public:
     Selector(ParserState pstate, bool r = false, bool h = false)
-    : Expression(pstate),
+    : AST_Node(pstate),
       has_reference_(r),
       has_placeholder_(h),
       has_line_feed_(false),
-      has_line_break_(false)
-    { concrete_type(SELECTOR); }
+      has_line_break_(false),
+      is_optional_(false),
+      media_block_(0)
+    { }
     virtual ~Selector() = 0;
     // virtual Selector_Placeholder* find_placeholder();
     virtual int specificity() { return Constants::SPECIFICITY_BASE; }
@@ -1957,9 +1970,9 @@ namespace Sass {
     ADD_PROPERTY(Complex_Selector*, tail);
   public:
     Complex_Selector(ParserState pstate,
-                         Combinator c,
-                         Compound_Selector* h,
-                         Complex_Selector* t)
+                     Combinator c,
+                     Compound_Selector* h,
+                     Complex_Selector* t)
     : Selector(pstate), combinator_(c), head_(h), tail_(t)
     {
       if ((h && h->has_reference())   || (t && t->has_reference()))   has_reference(true);

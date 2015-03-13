@@ -10,6 +10,7 @@ else
   AM_CFLAGS += -fPIC
   AM_CXXFLAGS += -fPIC
   AM_CXXFLAGS += -std=c++0x
+  AM_LDFLAGS += -ldl
 endif
 
 AM_CFLAGS += -DLIBSASS_VERSION="\"$(VERSION)\""
@@ -54,7 +55,6 @@ libsass_la_SOURCES = \
 	constants.cpp constants.hpp \
 	context.cpp context.hpp \
 	contextualize.cpp contextualize.hpp \
-	copy_c_str.cpp copy_c_str.hpp \
 	error_handling.cpp error_handling.hpp \
 	eval.cpp eval.hpp \
 	expand.cpp expand.hpp \
@@ -68,6 +68,7 @@ libsass_la_SOURCES = \
 	emitter.cpp emitter.hpp \
 	output.cpp output.hpp \
 	parser.cpp parser.hpp \
+	plugins.cpp plugins.hpp \
 	prelexer.cpp prelexer.hpp \
 	remove_placeholders.cpp remove_placeholders.hpp \
 	sass.cpp sass.h \

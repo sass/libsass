@@ -70,22 +70,24 @@ namespace Sass {
     string str = isp.get_buffer();
     str += ";";
 
-    Parser p(ctx, ParserState("[REPARSE]", 0));
+    Parser p(ctx, r->pstate());
+    p.block_stack.push_back(r->selector() ? r->selector()->last_block() : 0);
+    p.last_media_block = r->selector() ? r->selector()->media_block() : 0;
     p.source   = str.c_str();
     p.position = str.c_str();
     p.end      = str.c_str() + strlen(str.c_str());
     Selector_List* sel_lst = p.parse_selector_group();
-    sel_lst->pstate(isp.remap(sel_lst->pstate()));
+    // sel_lst->pstate(isp.remap(sel_lst->pstate()));
 
     for(size_t i = 0; i < sel_lst->length(); i++) {
 
       Complex_Selector* pIter = (*sel_lst)[i];
       while (pIter) {
         Compound_Selector* pHead = pIter->head();
-        pIter->pstate(isp.remap(pIter->pstate()));
+        // pIter->pstate(isp.remap(pIter->pstate()));
         if (pHead) {
-          pHead->pstate(isp.remap(pHead->pstate()));
-          (*pHead)[0]->pstate(isp.remap((*pHead)[0]->pstate()));
+          // pHead->pstate(isp.remap(pHead->pstate()));
+          // (*pHead)[0]->pstate(isp.remap((*pHead)[0]->pstate()));
         }
         pIter = pIter->tail();
       }
@@ -450,7 +452,8 @@ namespace Sass {
     To_String to_string(&ctx);
     Selector_List* extender = static_cast<Selector_List*>(selector_stack.back());
     if (!extender) return 0;
-    Selector_List* extendee = static_cast<Selector_List*>(e->selector()->perform(contextualize->with(0, env, backtrace)));
+    Selector_List* org_extendee = static_cast<Selector_List*>(e->selector());
+    Selector_List* extendee = static_cast<Selector_List*>(org_extendee->perform(contextualize->with(0, env, backtrace)));
     if (extendee->length() != 1) {
       error("selector groups may not be extended", extendee->pstate(), backtrace);
     }
@@ -459,7 +462,7 @@ namespace Sass {
       error("nested selectors may not be extended", c->pstate(), backtrace);
     }
     Compound_Selector* s = c->head();
-
+    s->is_optional(org_extendee->is_optional());
     // // need to convert the compound selector into a by-value data structure
     // vector<string> target_vec;
     // for (size_t i = 0, L = s->length(); i < L; ++i)

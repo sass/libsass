@@ -1,6 +1,7 @@
 #ifndef SASS_DEBUGGER_H
 #define SASS_DEBUGGER_H
 
+#include <string>
 #include "ast_fwd_decl.hpp"
 
 using namespace std;
@@ -37,7 +38,16 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     if (root_block->block()) for(auto i : root_block->block()->elements()) { debug_ast(i, ind + " ", env); }
   } else if (dynamic_cast<Selector_List*>(node)) {
     Selector_List* selector = dynamic_cast<Selector_List*>(node);
-    cerr << ind << "Selector_List " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+
+    cerr << ind << "Selector_List " << selector
+      << " [block:" << selector->last_block() << "]"
+      << (selector->last_block() && selector->last_block()->is_root() ? " [root]" : "")
+      << " [@media:" << selector->media_block() << "]"
+      << (selector->is_optional() ? " [is_optional]": " -")
+      << (selector->has_line_break() ? " [line-break]": " -")
+      << (selector->has_line_feed() ? " [line-feed]": " -")
+    << endl;
+
     for(auto i : selector->elements()) { debug_ast(i, ind + " ", env); }
 
 //  } else if (dynamic_cast<Expression*>(node)) {
@@ -46,7 +56,13 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
 
   } else if (dynamic_cast<Complex_Selector*>(node)) {
     Complex_Selector* selector = dynamic_cast<Complex_Selector*>(node);
-    cerr << ind << "Complex_Selector " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << " -> ";
+    cerr << ind << "Complex_Selector " << selector
+      << " [block:" << selector->last_block() << "]"
+      << (selector->last_block() && selector->last_block()->is_root() ? " [root]" : "")
+      << " [@media:" << selector->media_block() << "]"
+      << (selector->is_optional() ? " [is_optional]": " -")
+      << (selector->has_line_break() ? " [line-break]": " -")
+      << (selector->has_line_feed() ? " [line-feed]": " -") << " -> ";
       switch (selector->combinator()) {
         case Complex_Selector::PARENT_OF:   cerr << "{>}"; break;
         case Complex_Selector::PRECEDES:    cerr << "{~}"; break;
@@ -58,7 +74,13 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     debug_ast(selector->tail(), ind + "-", env);
   } else if (dynamic_cast<Compound_Selector*>(node)) {
     Compound_Selector* selector = dynamic_cast<Compound_Selector*>(node);
-    cerr << ind << "Compound_Selector " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") <<
+    cerr << ind << "Compound_Selector " << selector
+      << " [block:" << selector->last_block() << "]"
+      << (selector->last_block() && selector->last_block()->is_root() ? " [root]" : "")
+      << " [@media:" << selector->media_block() << "]"
+      << (selector->is_optional() ? " [is_optional]": " -")
+      << (selector->has_line_break() ? " [line-break]": " -")
+      << (selector->has_line_feed() ? " [line-feed]": " -") <<
       " <" << prettyprint(selector->pstate().token.ws_before()) << "> X <" << prettyprint(selector->pstate().token.ws_after()) << ">" << endl;
     for(auto i : selector->elements()) { debug_ast(i, ind + " ", env); }
   } else if (dynamic_cast<Propset*>(node)) {
@@ -85,8 +107,16 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     cerr << ind << "Type_Selector " << selector << " <<" << selector->name() << ">>" << (selector->has_line_break() ? " [line-break]": " -") <<
       " <" << prettyprint(selector->pstate().token.ws_before()) << "> X <" << prettyprint(selector->pstate().token.ws_after()) << ">" << endl;
   } else if (dynamic_cast<Selector_Placeholder*>(node)) {
+
     Selector_Placeholder* selector = dynamic_cast<Selector_Placeholder*>(node);
-    cerr << ind << "Selector_Placeholder " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+    cerr << ind << "Selector_Placeholder [" << selector->name() << "] " << selector
+      << " [block:" << selector->last_block() << "]"
+      << " [@media:" << selector->media_block() << "]"
+      << (selector->is_optional() ? " [is_optional]": " -")
+      << (selector->has_line_break() ? " [line-break]": " -")
+      << (selector->has_line_feed() ? " [line-feed]": " -")
+    << endl;
+
   } else if (dynamic_cast<Selector_Reference*>(node)) {
     Selector_Reference* selector = dynamic_cast<Selector_Reference*>(node);
     cerr << ind << "Selector_Reference " << selector << " @ref " << selector->selector() << endl;
@@ -96,16 +126,46 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
 
   } else if (dynamic_cast<Selector_Schema*>(node)) {
     Selector_Schema* selector = dynamic_cast<Selector_Schema*>(node);
-    cerr << ind << "Selector_Schema " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+    cerr << ind << "Selector_Schema " << selector
+      << " [block:" << selector->last_block() << "]"
+      << (selector->last_block() && selector->last_block()->is_root() ? " [root]" : "")
+      << " [@media:" << selector->media_block() << "]"
+      << (selector->has_line_break() ? " [line-break]": " -")
+      << (selector->has_line_feed() ? " [line-feed]": " -")
+    << endl;
+
     debug_ast(selector->contents(), ind + " ");
     // for(auto i : selector->elements()) { debug_ast(i, ind + " ", env); }
 
   } else if (dynamic_cast<Selector*>(node)) {
     Selector* selector = dynamic_cast<Selector*>(node);
-    cerr << ind << "Selector " << selector << (selector->has_line_break() ? " [line-break]": " -") << (selector->has_line_feed() ? " [line-feed]": " -") << endl;
+    cerr << ind << "Selector " << selector
+      << (selector->has_line_break() ? " [line-break]": " -")
+      << (selector->has_line_feed() ? " [line-feed]": " -")
+    << endl;
+
+  } else if (dynamic_cast<Media_Query_Expression*>(node)) {
+    Media_Query_Expression* block = dynamic_cast<Media_Query_Expression*>(node);
+    cerr << ind << "Media_Query_Expression " << block
+      << (block->is_interpolated() ? " [is_interpolated]": " -")
+    << endl;
+    debug_ast(block->feature(), ind + " f) ");
+    debug_ast(block->value(), ind + " v) ");
+
+  } else if (dynamic_cast<Media_Query*>(node)) {
+    Media_Query* block = dynamic_cast<Media_Query*>(node);
+    cerr << ind << "Media_Query " << block
+      << (block->is_negated() ? " [is_negated]": " -")
+      << (block->is_restricted() ? " [is_restricted]": " -")
+    << endl;
+    debug_ast(block->media_type(), ind + " ");
+    for(auto i : block->elements()) { debug_ast(i, ind + " ", env); }
+
   } else if (dynamic_cast<Media_Block*>(node)) {
     Media_Block* block = dynamic_cast<Media_Block*>(node);
     cerr << ind << "Media_Block " << block << " " << block->tabs() << endl;
+    debug_ast(block->media_queries(), ind + " =@ ");
+    debug_ast(block->selector(), ind + " -@ ");
     if (block->block()) for(auto i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
   } else if (dynamic_cast<Feature_Block*>(node)) {
     Feature_Block* block = dynamic_cast<Feature_Block*>(node);
@@ -161,7 +221,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     debug_ast(block->value(), ind + " value: ", env);
   } else if (dynamic_cast<At_Rule*>(node)) {
     At_Rule* block = dynamic_cast<At_Rule*>(node);
-    cerr << ind << "At_Rule " << block << " " << block->tabs() << endl;
+    cerr << ind << "At_Rule " << block << " [" << block->keyword() << "] " << block->tabs() << endl;
     debug_ast(block->value(), ind + "+", env);
     debug_ast(block->selector(), ind + "~", env);
     if (block->block()) for(auto i : block->block()->elements()) { debug_ast(i, ind + " ", env); }

@@ -28,11 +28,14 @@ struct sass_options {
   bool source_map_embed;
   // embed include contents in maps
   bool source_map_contents;
+  // Pass-through as sourceRoot property
+  const char* source_map_root;
   // Treat source_string as sass (as opposed to scss)
   bool is_indented_syntax_src;
   // Colon-separated list of paths
   // Semicolon-separated on Windows
   const char* include_paths;
+  const char* plugin_paths;
   // String to be used for indentation
   const char* indent;
   // String to be used to for line feeds

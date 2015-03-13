@@ -31,7 +31,9 @@ namespace Sass {
     enum Syntactic_Context { nothing, mixin_def, function_def };
 
     Context& ctx;
+    vector<Block*> block_stack;
     vector<Syntactic_Context> stack;
+    Media_Block* last_media_block;
     const char* source;
     const char* position;
     const char* end;
@@ -44,12 +46,12 @@ namespace Sass {
     Token lexed;
     bool in_at_root;
 
-    Parser(Context& ctx, ParserState pstate)
-    : ParserState(pstate), ctx(ctx), stack(vector<Syntactic_Context>()),
+    Parser(Context& ctx, const ParserState& pstate)
+    : ParserState(pstate), ctx(ctx), block_stack(0), stack(0), last_media_block(0),
       source(0), position(0), end(0), before_token(pstate), after_token(pstate), pstate("[NULL]"), indentation(0)
     { in_at_root = false; stack.push_back(nothing); }
 
-    static Parser from_string(const string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
+    // static Parser from_string(const string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
     static Parser from_c_str(const char* src, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
     static Parser from_c_str(const char* beg, const char* end, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
     static Parser from_token(Token t, Context& ctx, ParserState pstate = ParserState("[TOKEN]"));
@@ -146,6 +148,9 @@ namespace Sass {
       else if (mx == optional_spaces_and_comments) {
         it_before_token = position;
       }
+      else if (mx == spaces_and_comments) {
+        it_before_token = position;
+      }
 
       else if (mx == optional_spaces) {
         // ToDo: what are optiona_spaces ???
@@ -229,6 +234,7 @@ namespace Sass {
     Simple_Selector* parse_pseudo_selector();
     Attribute_Selector* parse_attribute_selector();
     Block* parse_block();
+    bool parse_number_prefix();
     Declaration* parse_declaration();
     Expression* parse_map_value();
     Expression* parse_map();

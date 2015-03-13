@@ -22,6 +22,9 @@ namespace Sass {
     p.source   = str;
     p.position = p.source;
     p.end      = str + strlen(str);
+    Block* root = new (ctx.mem) Block(pstate);
+    p.block_stack.push_back(root);
+    root->is_root(true);
     return p;
   }
 
@@ -31,6 +34,9 @@ namespace Sass {
     p.source   = beg;
     p.position = p.source;
     p.end      = end;
+    Block* root = new (ctx.mem) Block(pstate);
+    p.block_stack.push_back(root);
+    root->is_root(true);
     return p;
   }
 
@@ -45,12 +51,16 @@ namespace Sass {
     p.source   = t.begin;
     p.position = p.source;
     p.end      = t.end;
+    Block* root = new (ctx.mem) Block(pstate);
+    p.block_stack.push_back(root);
+    root->is_root(true);
     return p;
   }
 
   Block* Parser::parse()
   {
     Block* root = new (ctx.mem) Block(pstate);
+    block_stack.push_back(root);
     root->is_root(true);
     read_bom();
     lex< optional_spaces >();
@@ -143,6 +153,7 @@ namespace Sass {
       }
       lex< optional_spaces >();
     }
+    block_stack.pop_back();
     return root;
   }
 
@@ -178,6 +189,7 @@ namespace Sass {
     Import* imp = new (ctx.mem) Import(pstate);
     bool first = true;
     do {
+      while (lex< block_comment >());
       if (lex< quoted_string >()) {
         string import_path(lexed);
 
@@ -199,9 +211,15 @@ namespace Sass {
             while (*includes) {
               struct Sass_Import* include = *includes;
               const char *file = sass_import_get_path(include);
-              char *source = sass_import_take_source(include);
+              char* source = sass_import_take_source(include);
+              size_t line = sass_import_get_error_line(include);
+              size_t column = sass_import_get_error_column(include);
+              const char* message = sass_import_get_error_message(include);
               // char *srcmap = sass_import_take_srcmap(include);
-              if (source) {
+              if (message) {
+                if (line == string::npos && column == string::npos) error(message, pstate);
+                else error(message, ParserState(message, Position(line, column)));
+              } else if (source) {
                 if (file) {
                   ctx.add_source(file, inc_path, source);
                   imp->files().push_back(file);
@@ -273,8 +291,9 @@ namespace Sass {
       // if there's anything there at all
       if (!peek< exactly<')'> >()) {
         do (*params) << parse_parameter();
-        while (lex< exactly<','> >());
+        while (lex< alternatives < spaces,block_comment, exactly<','> > >());
       }
+      while (lex< alternatives < spaces, block_comment > >()) {};
       if (!lex< exactly<')'> >()) error("expected a variable name (e.g. $x) or ')' for the parameter list for " + name, pstate);
     }
     return params;
@@ -282,12 +301,15 @@ namespace Sass {
 
   Parameter* Parser::parse_parameter()
   {
+    while (lex< alternatives < spaces, block_comment > >());
     lex< variable >();
     string name(Util::normalize_underscores(lexed));
     ParserState pos = pstate;
     Expression* val = 0;
     bool is_rest = false;
+    while (lex< alternatives < spaces, block_comment > >());
     if (lex< exactly<':'> >()) { // there's a default value
+      while (lex< block_comment >());
       val = parse_space_list();
       val->is_delayed(false);
     }
@@ -322,8 +344,9 @@ namespace Sass {
       // if there's anything there at all
       if (!peek< exactly<')'> >()) {
         do (*args) << parse_argument();
-        while (lex< exactly<','> >());
+        while (lex< alternatives < block_comment, exactly<','> > >());
       }
+      while (lex< block_comment >());
       if (!lex< exactly<')'> >()) error("expected a variable name (e.g. $x) or ')' for the parameter list for " + name, pstate);
     }
 
@@ -333,10 +356,12 @@ namespace Sass {
   Argument* Parser::parse_argument()
   {
     Argument* arg;
-    if (peek< sequence < variable, optional_spaces_and_comments, exactly<':'> > >()) {
+    while (lex< alternatives < spaces, block_comment > >());
+    if (peek< sequence < variable, zero_plus < alternatives < spaces, line_comment, block_comment > >, exactly<':'> > >()) {
       lex< variable >();
       string name(Util::normalize_underscores(lexed));
       ParserState p = pstate;
+      while (lex< alternatives < spaces, block_comment > >()) {};
       lex< exactly<':'> >();
       Expression* val = parse_space_list();
       val->is_delayed(false);
@@ -386,7 +411,6 @@ namespace Sass {
       property_segment = new (ctx.mem) String_Quoted(pstate, lexed);
     }
     Propset* propset = new (ctx.mem) Propset(pstate, property_segment);
-    // debug_ast(property_segment);
     lex< exactly<':'> >();
 
     if (!peek< exactly<'{'> >()) error("expected a '{' after namespaced property", pstate);
@@ -443,7 +467,10 @@ namespace Sass {
       }
     }
     position = end_of_selector;
-    return new (ctx.mem) Selector_Schema(pstate, schema);
+    Selector_Schema* selector_schema = new (ctx.mem) Selector_Schema(pstate, schema);
+    selector_schema->media_block(last_media_block);
+    selector_schema->last_block(block_stack.back());
+    return selector_schema;
   }
 
   Selector_List* Parser::parse_selector_group()
@@ -452,6 +479,8 @@ namespace Sass {
     To_String to_string(&ctx);
     lex< optional_spaces_and_comments >();
     Selector_List* group = new (ctx.mem) Selector_List(pstate);
+    group->media_block(last_media_block);
+    group->last_block(block_stack.back());
     do {
       reloop = false;
       if (peek< exactly<'{'> >() ||
@@ -464,6 +493,8 @@ namespace Sass {
         ParserState sel_source_position = pstate;
         Selector_Reference* ref = new (ctx.mem) Selector_Reference(sel_source_position);
         Compound_Selector* ref_wrap = new (ctx.mem) Compound_Selector(sel_source_position);
+        ref_wrap->media_block(last_media_block);
+        ref_wrap->last_block(block_stack.back());
         (*ref_wrap) << ref;
         if (!comb->head()) {
           comb->head(ref_wrap);
@@ -471,6 +502,8 @@ namespace Sass {
         }
         else {
           comb = new (ctx.mem) Complex_Selector(sel_source_position, Complex_Selector::ANCESTOR_OF, ref_wrap, comb);
+          comb->media_block(last_media_block);
+          comb->last_block(block_stack.back());
           comb->has_reference(true);
         }
         if (peek_newline()) ref_wrap->has_line_break(true);
@@ -488,7 +521,9 @@ namespace Sass {
       (*group) << comb;
     }
     while (reloop);
-    while (lex< optional >());    // JMA - ignore optional flag if it follows the selector group
+    while (lex< optional >()) {
+      group->is_optional(true);
+    }
     return group;
   }
 
@@ -531,7 +566,9 @@ namespace Sass {
       sel_source_position = before_token;
     }
     if (!sel_source_position.line) sel_source_position = before_token;
-    Complex_Selector* cpx = new (ctx.mem) Complex_Selector(ParserState(path, sel_source_position, Offset(0, 0)), cmb, lhs, rhs);
+    Complex_Selector* cpx = new (ctx.mem) Complex_Selector(ParserState(path, sel_source_position), cmb, lhs, rhs);
+    cpx->media_block(last_media_block);
+    cpx->last_block(block_stack.back());
     if (cpx_lf) cpx->has_line_break(cpx_lf);
     return cpx;
   }
@@ -539,9 +576,14 @@ namespace Sass {
   Compound_Selector* Parser::parse_simple_selector_sequence()
   {
     Compound_Selector* seq = new (ctx.mem) Compound_Selector(pstate);
+    seq->media_block(last_media_block);
+    seq->last_block(block_stack.back());
     bool sawsomething = false;
     if (lex< exactly<'&'> >()) {
-      // if you see a &
+      // check if we have a parent selector on the root level block
+      if (block_stack.back() && block_stack.back()->is_root()) {
+        error("Base-level rules cannot contain the parent-selector-referencing character '&'.", pstate);
+      }
       (*seq) << new (ctx.mem) Selector_Reference(pstate);
       sawsomething = true;
       // if you see a space after a &, then you're done
@@ -594,7 +636,10 @@ namespace Sass {
       return parse_attribute_selector();
     }
     else if (lex< placeholder >()) {
-      return new (ctx.mem) Selector_Placeholder(pstate, unquote(lexed));
+      Selector_Placeholder* sel = new (ctx.mem) Selector_Placeholder(pstate, unquote(lexed));
+      sel->media_block(last_media_block);
+      sel->last_block(block_stack.back());
+      return sel;
     }
     else {
       error("invalid selector after " + lexed.to_string(), pstate);
@@ -713,7 +758,8 @@ namespace Sass {
     bool semicolon = false;
     Selector_Lookahead lookahead_result;
     Block* block = new (ctx.mem) Block(pstate);
-
+    block_stack.push_back(block);
+    lex< zero_plus < alternatives < space, line_comment > > >();
     // JMA - ensure that a block containing only block_comments is parsed
     while (lex< block_comment >()) {
       bool is_important = lexed.begin[2] == '!';
@@ -759,6 +805,9 @@ namespace Sass {
       else if (lex< variable >()) {
         (*block) << parse_assignment();
         semicolon = true;
+      }
+      else if (lex< line_comment >()) {
+        // throw line comments away
       }
       else if (peek< if_directive >()) {
         (*block) << parse_if_directive();
@@ -881,6 +930,7 @@ namespace Sass {
         (*block) << comment;
       }
     }
+    block_stack.pop_back();
     return block;
   }
 
@@ -906,6 +956,22 @@ namespace Sass {
     else {
       return new (ctx.mem) Declaration(prop->pstate(), prop, parse_list()/*, lex<important>()*/);
     }
+  }
+
+  // parse +/- and return false if negative
+  bool Parser::parse_number_prefix()
+  {
+    bool positive = true;
+    while(true) {
+      if (lex < block_comment >()) continue;
+      if (lex < number_prefix >()) continue;
+      if (lex < exactly < '-' > >()) {
+        positive = !positive;
+        continue;
+      }
+      break;
+    }
+    return positive;
   }
 
   Expression* Parser::parse_map()
@@ -1110,6 +1176,7 @@ namespace Sass {
           peek< exactly<'%'> >(position)))
     { return fact1; }
 
+    while (lex< block_comment >());
     vector<Expression*> operands;
     vector<Binary_Expression::Type> operators;
     while (lex< exactly<'*'> >() || lex< exactly<'/'> >() || lex< exactly<'%'> >()) {
@@ -1169,6 +1236,10 @@ namespace Sass {
     else if (lex< sequence< not_op, spaces_and_comments > >()) {
       return new (ctx.mem) Unary_Expression(pstate, Unary_Expression::NOT, parse_factor());
     }
+    else if (peek < sequence < one_plus < alternatives < spaces_and_comments, exactly<'-'>, exactly<'+'> > >, number > >()) {
+      if (parse_number_prefix()) return parse_value(); // prefix is positive
+      return new (ctx.mem) Unary_Expression(pstate, Unary_Expression::MINUS, parse_value());
+    }
     else {
       return parse_value();
     }
@@ -1176,6 +1247,7 @@ namespace Sass {
 
   Expression* Parser::parse_value()
   {
+    while (lex< block_comment >());
     if (lex< uri_prefix >()) {
       Arguments* args = new (ctx.mem) Arguments(pstate);
       Function_Call* result = new (ctx.mem) Function_Call(pstate, "url", args);
@@ -1277,7 +1349,7 @@ namespace Sass {
   {
     const char* i = chunk.begin;
     // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
+    const char* p = find_first_in_interval< exactly<hash_lbrace> >(i, chunk.end);
     if (!p) {
       String_Quoted* str_quoted = new (ctx.mem) String_Quoted(pstate, string(i, chunk.end));
       if (!constant && str_quoted->quote_mark()) str_quoted->quote_mark('*');
@@ -1287,7 +1359,7 @@ namespace Sass {
 
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
     while (i < chunk.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, chunk.end);
+      p = find_first_in_interval< exactly<hash_lbrace> >(i, chunk.end);
       if (p) {
         if (i < p) {
           // accumulate the preceding segment if it's nonempty
@@ -1342,7 +1414,7 @@ namespace Sass {
     Token str(lexed);
     const char* i = str.begin;
     // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(str.begin, str.end);
+    const char* p = find_first_in_interval< exactly<hash_lbrace> >(str.begin, str.end);
     if (!p) {
       String_Constant* str_node = new (ctx.mem) String_Constant(pstate, normalize_wspace(string(str.begin, str.end)));
       str_node->is_delayed(true);
@@ -1351,7 +1423,7 @@ namespace Sass {
 
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
     while (i < str.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, str.end);
+      p = find_first_in_interval< exactly<hash_lbrace> >(i, str.end);
       if (p) {
         if (i < p) {
           (*schema) << new (ctx.mem) String_Constant(pstate, string(i, p)); // accumulate the preceding segment if it's nonempty
@@ -1478,14 +1550,14 @@ namespace Sass {
     Token id(lexed);
     const char* i = id.begin;
     // see if there any interpolants
-    const char* p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(id.begin, id.end);
+    const char* p = find_first_in_interval< exactly<hash_lbrace> >(id.begin, id.end);
     if (!p) {
       return new (ctx.mem) String_Quoted(pstate, string(id.begin, id.end));
     }
 
     String_Schema* schema = new (ctx.mem) String_Schema(pstate);
     while (i < id.end) {
-      p = find_first_in_interval< sequence< negate< exactly<'\\'> >, exactly<hash_lbrace> > >(i, id.end);
+      p = find_first_in_interval< exactly<hash_lbrace> >(i, id.end);
       if (p) {
         if (i < p) {
           // accumulate the preceding segment if it's nonempty
@@ -1641,9 +1713,13 @@ namespace Sass {
     if (!peek< exactly<'{'> >()) {
       error("expected '{' in media query", pstate);
     }
-    Block* block = parse_block();
+    Media_Block* media_block = new (ctx.mem) Media_Block(media_source_position, media_queries, 0);
+    Media_Block* prev_media_block = last_media_block;
+    last_media_block = media_block;
+    media_block->block(parse_block());
+    last_media_block = prev_media_block;
 
-    return new (ctx.mem) Media_Block(media_source_position, media_queries, block);
+    return media_block;
   }
 
   List* Parser::parse_media_queries()
@@ -1663,11 +1739,18 @@ namespace Sass {
     else if (lex< exactly< only_kwd > >()) media_query->is_restricted(true);
 
     if (peek< identifier_schema >()) media_query->media_type(parse_identifier_schema());
-    else if (lex< identifier >())    media_query->media_type(new (ctx.mem) String_Quoted(pstate, lexed));
+    else if (lex< identifier >())    media_query->media_type(parse_interpolated_chunk(lexed));
     else                             (*media_query) << parse_media_expression();
 
     while (lex< exactly< and_kwd > >()) (*media_query) << parse_media_expression();
-
+    if (peek< identifier_schema >()) {
+      String_Schema* schema = new (ctx.mem) String_Schema(pstate);
+      *schema << media_query->media_type();
+      *schema << new (ctx.mem) String_Constant(pstate, " ");
+      *schema << parse_identifier_schema();
+      media_query->media_type(schema);
+    }
+    while (lex< exactly< and_kwd > >()) (*media_query) << parse_media_expression();
     return media_query;
   }
 
@@ -1908,6 +1991,7 @@ namespace Sass {
            (q = peek< exactly<'~'> >(p))                           ||
            (q = peek< exactly<'>'> >(p))                           ||
            (q = peek< exactly<','> >(p))                           ||
+           (saw_stuff && (q = peek< exactly<'-'> >(p)))            ||
            (q = peek< binomial >(p))                               ||
            (q = peek< sequence< optional<sign>,
                                 optional<digits>,
@@ -1966,6 +2050,7 @@ namespace Sass {
            (q = peek< exactly<'~'> >(p))                           ||
            (q = peek< exactly<'>'> >(p))                           ||
            (q = peek< exactly<','> >(p))                           ||
+           (saw_stuff && (q = peek< exactly<'-'> >(p)))            ||
            (q = peek< binomial >(p))                               ||
            (q = peek< sequence< optional<sign>,
                                 optional<digits>,

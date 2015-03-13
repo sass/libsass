@@ -5,12 +5,13 @@
 #endif
 
 #include <cstring>
-#include "copy_c_str.hpp"
+#include "util.hpp"
 #include "context.hpp"
 #include "sass_functions.h"
 
 extern "C" {
   using namespace std;
+  using namespace Sass;
 
   // Struct to hold custom function callback
   struct Sass_C_Function_Descriptor {
@@ -48,6 +49,10 @@ extern "C" {
     char* base;
     char* source;
     char* srcmap;
+    // error handling
+    char* error;
+    size_t line;
+    size_t column;
   };
 
   // Struct to hold importer callback
@@ -86,10 +91,13 @@ extern "C" {
   {
     Sass_Import* v = (Sass_Import*) calloc(1, sizeof(Sass_Import));
     if (v == 0) return 0;
-    v->path = path ? Sass::copy_c_str(path) : 0;
-    v->base = base ? Sass::copy_c_str(base) : 0;
+    v->path = path ? sass_strdup(path) : 0;
+    v->base = base ? sass_strdup(base) : 0;
     v->source = source;
     v->srcmap = srcmap;
+    v->error = 0;
+    v->line = -1;
+    v->column = -1;
     return v;
   }
 
@@ -97,6 +105,17 @@ extern "C" {
   struct Sass_Import* ADDCALL sass_make_import_entry(const char* path, char* source, char* srcmap)
   {
     return sass_make_import(path, path, source, srcmap);
+  }
+
+  // Upgrade a normal import entry to throw an error (original path can be re-used by error reporting)
+  struct Sass_Import* ADDCALL sass_import_set_error(struct Sass_Import* import, const char* error, size_t line, size_t col)
+  {
+    if (import == 0) return 0;
+    if (import->error) free(import->error);
+    import->error = error ? strdup(error) : 0;
+    import->line = line ? line : -1;
+    import->column = col ? col : -1;
+    return import;
   }
 
   // Setters and getters for entries on the import list
@@ -122,6 +141,7 @@ extern "C" {
     free(import->base);
     free(import->source);
     free(import->srcmap);
+    free(import->error);
     free(import);
   }
 
@@ -130,6 +150,11 @@ extern "C" {
   const char* ADDCALL sass_import_get_base(struct Sass_Import* entry) { return entry->base; }
   const char* ADDCALL sass_import_get_source(struct Sass_Import* entry) { return entry->source; }
   const char* ADDCALL sass_import_get_srcmap(struct Sass_Import* entry) { return entry->srcmap; }
+
+  // Getter for import error entry
+  size_t ADDCALL sass_import_get_error_line(struct Sass_Import* entry) { return entry->line; }
+  size_t ADDCALL sass_import_get_error_column(struct Sass_Import* entry) { return entry->column; }
+  const char* ADDCALL sass_import_get_error_message(struct Sass_Import* entry) { return entry->error; }
 
   // Explicit functions to take ownership of the memory
   // Resets our own property since we do not know if it is still alive

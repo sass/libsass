@@ -15,6 +15,7 @@ namespace Sass {
     scheduled_linefeed(0),
     scheduled_delimiter(false),
     in_comment(false),
+    in_at_rule(false),
     in_media_block(false),
     in_declaration(false),
     in_declaration_list(false)
@@ -84,6 +85,20 @@ namespace Sass {
     }
   }
 
+  // prepend some text or token to the buffer
+  void Emitter::prepend_output(const OutputBuffer& output)
+  {
+    wbuf.smap.prepend(output);
+    wbuf.buffer = output.buffer + wbuf.buffer;
+  }
+
+  // prepend some text or token to the buffer
+  void Emitter::prepend_string(const string& text)
+  {
+    wbuf.smap.prepend(Offset(text));
+    wbuf.buffer = text + wbuf.buffer;
+  }
+
   // append some text or token to the buffer
   void Emitter::append_string(const string& text)
   {
@@ -96,12 +111,12 @@ namespace Sass {
       // add to buffer
       wbuf.buffer += out;
       // account for data in source-maps
-      wbuf.smap.update_column(out);
+      wbuf.smap.append(Offset(out));
     } else {
       // add to buffer
       wbuf.buffer += text;
       // account for data in source-maps
-      wbuf.smap.update_column(text);
+      wbuf.smap.append(Offset(text));
     }
   }
 
