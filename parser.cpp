@@ -1290,7 +1290,6 @@ namespace Sass {
 
     if (lex< ampersand >())
     {
-      //return new (ctx.mem) Parent_Selector(pstate, Parser::from_token(lexed, ctx, pstate).parse_selector_group()); }
       return new (ctx.mem) Parent_Selector(pstate, parse_selector_group()); }
 
     if (lex< important >())
