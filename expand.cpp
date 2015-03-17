@@ -218,12 +218,13 @@ namespace Sass {
   Statement* Expand::operator()(Assignment* a)
   {
     string var(a->variable());
+    Selector* p = selector_stack.size() >= 1 ? 0 : selector_stack.back();
     if (env->has(var)) {
       Expression* v = static_cast<Expression*>((*env)[var]);
-      if (!a->is_guarded() || v->concrete_type() == Expression::NULL_VAL) (*env)[var] = a->value()->perform(eval->with(selector_stack.back(), env, backtrace));
+      if (!a->is_guarded() || v->concrete_type() == Expression::NULL_VAL) (*env)[var] = a->value()->perform(eval->with(p, env, backtrace));
     }
     else {
-      env->current_frame()[var] = a->value()->perform(eval->with(selector_stack.back(), env, backtrace));
+      env->current_frame()[var] = a->value()->perform(eval->with(p, env, backtrace));
     }
     return 0;
   }

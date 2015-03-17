@@ -793,6 +793,11 @@ namespace Sass {
       Expression* ex = operator()(var);
       return evacuate_quotes(interpolation(ex));
 
+    } else if (Parent_Selector* var = dynamic_cast<Parent_Selector*>(s)) {
+
+      Expression* ex = operator()(var);
+      return evacuate_quotes(interpolation(ex));
+
     } else {
 
       To_String to_string(&ctx);
