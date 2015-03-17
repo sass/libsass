@@ -1468,7 +1468,8 @@ namespace Sass {
       }
       Function_Call* func = new (ctx.mem) Function_Call(pstate, name, args);
       Contextualize contextualize(ctx, &d_env, backtrace);
-      Eval eval(ctx, &contextualize, &d_env, backtrace);
+      Listize listize(ctx, &d_env, backtrace);
+      Eval eval(ctx, &contextualize, &listize, &d_env, backtrace);
       return func->perform(&eval);
 
     }
@@ -1487,7 +1488,8 @@ namespace Sass {
     BUILT_IN(sass_if)
     {
       Contextualize contextualize(ctx, &d_env, backtrace);
-      Eval eval(ctx, &contextualize, &d_env, backtrace);
+      Listize listize(ctx, &d_env, backtrace);
+      Eval eval(ctx, &contextualize, &listize, &d_env, backtrace);
       bool is_true = !ARG("$condition", Expression)->perform(&eval)->is_false();
       if (is_true) {
         return ARG("$if-true", Expression)->perform(&eval);

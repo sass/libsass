@@ -61,6 +61,7 @@ libsass_la_SOURCES = \
 	expand.cpp expand.hpp \
 	extend.cpp extend.hpp \
 	cssize.cpp cssize.hpp \
+	listize.cpp listize.hpp \
 	file.cpp file.hpp \
 	functions.cpp functions.hpp \
 	inspect.cpp inspect.hpp \

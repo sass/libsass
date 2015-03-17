@@ -19,6 +19,7 @@
 #include "contextualize.hpp"
 #include "contextualize_eval.hpp"
 #include "cssize.hpp"
+#include "listize.hpp"
 #include "extend.hpp"
 #include "remove_placeholders.hpp"
 #include "color_names.hpp"
@@ -313,7 +314,8 @@ namespace Sass {
       register_c_function(*this, &tge, c_functions[i]);
     }
     Contextualize contextualize(*this, &tge, &backtrace);
-    Eval eval(*this, &contextualize, &tge, &backtrace);
+    Listize listize(*this, &tge, &backtrace);
+    Eval eval(*this, &contextualize, &listize, &tge, &backtrace);
     Contextualize_Eval contextualize_eval(*this, &eval, &tge, &backtrace);
     Expand expand(*this, &eval, &contextualize_eval, &tge, &backtrace);
     Cssize cssize(*this, &tge, &backtrace);

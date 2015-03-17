@@ -169,6 +169,7 @@
     <ClCompile Include="..\eval.cpp" />
     <ClCompile Include="..\expand.cpp" />
     <ClCompile Include="..\cssize.cpp" />
+    <ClCompile Include="..\listize.cpp" />
     <ClCompile Include="..\extend.cpp" />
     <ClCompile Include="..\file.cpp" />
     <ClCompile Include="..\functions.cpp" />
@@ -216,6 +217,7 @@
     <ClInclude Include="..\eval.hpp" />
     <ClInclude Include="..\expand.hpp" />
     <ClInclude Include="..\cssize.hpp" />
+    <ClInclude Include="..\listize.hpp" />
     <ClInclude Include="..\extend.hpp" />
     <ClInclude Include="..\file.hpp" />
     <ClInclude Include="..\functions.hpp" />
