@@ -31,12 +31,21 @@ namespace Sass {
     add, sub, mul, div, fmod
   };
 
-  Eval::Eval(Context& ctx, Env* env, Backtrace* bt)
-  : ctx(ctx), env(env), backtrace(bt) { }
+  Eval::Eval(Context& ctx, Contextualize* contextualize, Env* env, Backtrace* bt)
+  : ctx(ctx), contextualize(contextualize), env(env), backtrace(bt) { }
   Eval::~Eval() { }
 
   Eval* Eval::with(Env* e, Backtrace* bt) // for setting the env before eval'ing an expression
   {
+    contextualize = contextualize->with(0, e, bt);
+    env = e;
+    backtrace = bt;
+    return this;
+  }
+
+  Eval* Eval::with(Selector* c, Env* e, Backtrace* bt, Selector* p, Selector* ex) // for setting the env before eval'ing an expression
+  {
+    contextualize = contextualize->with(c, e, bt, p, ex);
     env = e;
     backtrace = bt;
     return this;
@@ -887,11 +896,6 @@ namespace Sass {
                                                 e->is_interpolated());
   }
 
-  Expression* Eval::operator()(Selector_Reference* e)
-  {
-	  return e;
-  }
-
   Expression* Eval::operator()(Null* n)
   {
     return n;
@@ -941,6 +945,15 @@ namespace Sass {
   Expression* Eval::operator()(Comment* c)
   {
     return 0;
+  }
+
+  Expression* Eval::operator()(Parent_Selector* p)
+  {
+    Selector* sel = p->perform(contextualize);
+    Inspect isp(0);
+    sel->perform(&isp);
+    string str = isp.get_buffer();
+    return new (ctx.mem) String_Constant(p->pstate(), str);
   }
 
   inline Expression* Eval::fallback_impl(AST_Node* n)

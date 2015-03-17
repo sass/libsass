@@ -665,6 +665,18 @@ namespace Sass {
     append_token("null", n);
   }
 
+  void Inspect::operator()(Parent_Selector* p)
+  {
+    if (p->selector()) {
+      p->selector()->perform(this);
+      string str = this->get_buffer();
+      str += ";";
+    }
+    else {
+      append_string("&");
+    }
+  }
+
   // parameters and arguments
   void Inspect::operator()(Parameter* p)
   {

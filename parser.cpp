@@ -582,12 +582,12 @@ namespace Sass {
     if (lex< exactly<'&'> >()) {
       // check if we have a parent selector on the root level block
       if (block_stack.back() && block_stack.back()->is_root()) {
-        error("Base-level rules cannot contain the parent-selector-referencing character '&'.", pstate);
+        //error("Base-level rules cannot contain the parent-selector-referencing character '&'.", pstate);
       }
       (*seq) << new (ctx.mem) Selector_Reference(pstate);
       sawsomething = true;
       // if you see a space after a &, then you're done
-      if(peek< spaces >()) {
+      if(peek< spaces >() || peek< exactly<';'> >()) {
         return seq;
       }
     }
@@ -749,6 +749,8 @@ namespace Sass {
     }
 
     if (!lex< exactly<']'> >()) error("unterminated attribute selector for " + name, pstate);
+
+    //error("attribute selector name: " + name, pstate);
     return new (ctx.mem) Attribute_Selector(p, name, matcher, value);
   }
 
@@ -1206,6 +1208,13 @@ namespace Sass {
       }
       return value;
     }
+/*    else if (lex <interpolant>()) {
+      const char* stop;
+      if ((stop = peek< value_schema >()))
+      { return Parser::from_token(lexed, ctx, pstate).parse_value_schema(stop); }
+      else{
+      return Parser::from_token(lexed, ctx, pstate).parse_value_schema(stop);}
+    }*/
     else if (peek< ie_property >()) {
       return parse_ie_property();
     }
@@ -1286,6 +1295,11 @@ namespace Sass {
       return result;
     }
 
+    if (lex< ampersand >())
+    {
+      //return new (ctx.mem) Parent_Selector(pstate, Parser::from_token(lexed, ctx, pstate).parse_selector_group()); }
+      return new (ctx.mem) Parent_Selector(pstate, parse_selector_group()); }
+
     if (lex< important >())
     { return new (ctx.mem) String_Constant(pstate, "!important"); }
 
@@ -1333,10 +1347,6 @@ namespace Sass {
     if (lex< sequence< exactly<'%'>, optional< percentage > > >())
     { return new (ctx.mem) String_Quoted(pstate, lexed); }
 
-    if (lex< ampersand >())
-    {
-      return new (ctx.mem) Selector_Reference(pstate);
-    }
     error("error reading values after " + lexed.to_string(), pstate);
 
     // unreachable statement
