@@ -448,8 +448,10 @@ namespace Sass {
     Definition* def = static_cast<Definition*>((*env)[full_name]);
     Block* body = def->block();
     Parameters* params = def->parameters();
+    Selector* p = selector_stack.size() <= 1 ? 0 : selector_stack.back();
+
     Arguments* args = static_cast<Arguments*>(c->arguments()
-                                               ->perform(eval->with(env, backtrace)));
+                                               ->perform(eval->with(p, env, backtrace)));
     Backtrace here(backtrace, c->pstate(), ", in mixin `" + c->name() + "`");
     backtrace = &here;
     Env new_env;
