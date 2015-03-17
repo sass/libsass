@@ -14,7 +14,7 @@ namespace Sass {
   Contextualize_Eval::~Contextualize_Eval() { }
 
   Selector* Contextualize_Eval::fallback_impl(AST_Node* n)
-  { return Contextualize::parent; }
+  { return Contextualize::fallback_impl(n); }
 
   Contextualize_Eval* Contextualize_Eval::with(Selector* s, Env* e, Backtrace* bt, Selector* p, Selector* ex)
   {
@@ -26,7 +26,7 @@ namespace Sass {
   Selector* Contextualize_Eval::operator()(Selector_Schema* s)
   {
     To_String to_string;
-    string result_str(s->contents()->perform(eval)->perform(&to_string));  //->with(env, backtrace)
+    string result_str(s->contents()->perform(eval)->perform(&to_string));
     result_str += '{'; // the parser looks for a brace to end the selector
     Selector* result_sel = Parser::from_c_str(result_str.c_str(), ctx, s->pstate()).parse_selector_group();
     return result_sel->perform(this);
@@ -85,9 +85,4 @@ namespace Sass {
   {
     return Contextualize::operator ()(s);
   }
-
-  /*
-  Selector* Contextualize_Eval::operator()(Parent_Selector* p)
-  { error("amp", p->pstate()); return p->perform(eval->contextualize); }
-  */
 }

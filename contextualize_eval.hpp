@@ -12,12 +12,9 @@ namespace Sass {
 
   typedef Environment<AST_Node*> Env;
 
-  class Contextualize_Eval : public Contextualize {//Operation_CRTP<Selector*, Contextualize_Eval> {
+  class Contextualize_Eval : public Contextualize {
 
-    //Context&   ctx;
     Eval*      eval;
-    //Env*       env;
-    //Backtrace* backtrace;
 
     Selector* fallback_impl(AST_Node* n);
 
@@ -38,7 +35,6 @@ namespace Sass {
     Selector* operator()(Type_Selector*);
     Selector* operator()(Selector_Placeholder*);
     Selector* operator()(Selector_Reference*);
-    //Selector* operator()(Parent_Selector* p);
 
     template <typename U>
     Selector* fallback(U x) { return fallback_impl(x); }

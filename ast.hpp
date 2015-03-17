@@ -87,7 +87,7 @@ namespace Sass {
       STRING,
       LIST,
       MAP,
-	  SELECTOR,
+      SELECTOR,
       NULL_VAL,
       NUM_TYPES
     };

@@ -587,7 +587,7 @@ namespace Sass {
       (*seq) << new (ctx.mem) Selector_Reference(pstate);
       sawsomething = true;
       // if you see a space after a &, then you're done
-      if(peek< spaces >() || peek< exactly<';'> >()) {
+      if(peek< spaces >() || peek< alternatives < spaces, exactly<';'> > >()) {
         return seq;
       }
     }
@@ -1208,13 +1208,6 @@ namespace Sass {
       }
       return value;
     }
-/*    else if (lex <interpolant>()) {
-      const char* stop;
-      if ((stop = peek< value_schema >()))
-      { return Parser::from_token(lexed, ctx, pstate).parse_value_schema(stop); }
-      else{
-      return Parser::from_token(lexed, ctx, pstate).parse_value_schema(stop);}
-    }*/
     else if (peek< ie_property >()) {
       return parse_ie_property();
     }
