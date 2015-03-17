@@ -430,6 +430,9 @@ namespace Sass {
     const char* number(const char* src) {
       return sequence< optional<sign>, unsigned_number>(src);
     }
+    const char* sass_number(const char* src) {
+      return sequence< optional<sign>, unsigned_number, optional < identifier > >(src);
+    }
     const char* coefficient(const char* src) {
       return alternatives< sequence< optional<sign>, digits >,
                            sign >(src);
@@ -742,31 +745,43 @@ namespace Sass {
       return (p == 0) ? t.end : 0;
     }
 
+    // STATIC_COMPONENT = /#{IDENT}|#{STRING_NOINTERP}|#{HEXCOLOR}|[+-]?#{NUMBER}|\!important/i
     const char* static_component(const char* src) {
-      return alternatives< identifier,
-                           static_string,
-                           percentage,
-                           hex,
-                           number,
-                           sequence< exactly<'!'>, exactly<important_kwd> >
-                          >(src);
+      return alternatives<
+               identifier,
+               static_string,
+               percentage,
+               hex,
+               sass_number,
+               sequence< exactly<'!'>, exactly<important_kwd> >
+             >(src);
     }
 
+    const char* static_delimiter(const char* src) {
+      return spaces_or <
+               alternatives <
+                 exactly <','>,
+                 exactly <'/'>
+               >
+             >(src);
+    }
+
+    // STATIC_VALUE = /#{STATIC_COMPONENT}(\s*[\s,\/]\s*#{STATIC_COMPONENT})*([;}])/i
     const char* static_value(const char* src) {
-      return sequence< static_component,
-                       zero_plus < sequence<
-                                   alternatives<
-                                     sequence< optional_spaces, alternatives<
-                                       exactly < '/' >,
-                                       exactly < ',' >,
-                                       exactly < ' ' >
-                                     >, optional_spaces >,
-                                     spaces
-                                   >,
-                                   static_component
-                       > >,
-                       alternatives< exactly<';'>, exactly<'}'> >
-                      >(src);
+      return sequence <
+               static_component,
+               zero_plus <
+                 sequence <
+                   static_delimiter,
+                   static_component
+                 >
+               >,
+               // optional < spaces >,
+               alternatives <
+                 exactly < ';' >,
+                 exactly < '}' >
+               >
+             >(src);
     }
   }
 }
