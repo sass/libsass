@@ -669,8 +669,7 @@ namespace Sass {
   {
     if (p->selector()) {
       p->selector()->perform(this);
-      string str = this->get_buffer();
-      str += ";";
+      append_string(";");
     }
     else {
       append_string("&");
