@@ -204,8 +204,8 @@ namespace Sass {
   {
     String* old_p = d->property();
     String* new_p = static_cast<String*>(old_p->perform(eval->with(env, backtrace)));
-    Selector* p = selector_stack.size() >= 1 ? 0 : selector_stack.back();
-    Expression* value = d->value()->perform(eval->with(selector_stack.back(), env, backtrace));
+    Selector* p = selector_stack.size() <= 1 ? 0 : selector_stack.back();
+    Expression* value = d->value()->perform(eval->with(p, env, backtrace));
     if (value->is_invisible() && !d->is_important()) return 0;
     Declaration* decl = new (ctx.mem) Declaration(d->pstate(),
                                                   new_p,
@@ -218,7 +218,7 @@ namespace Sass {
   Statement* Expand::operator()(Assignment* a)
   {
     string var(a->variable());
-    Selector* p = selector_stack.size() >= 1 ? 0 : selector_stack.back();
+    Selector* p = selector_stack.size() <= 1 ? 0 : selector_stack.back();
     if (env->has(var)) {
       Expression* v = static_cast<Expression*>((*env)[var]);
       if (!a->is_guarded() || v->concrete_type() == Expression::NULL_VAL) (*env)[var] = a->value()->perform(eval->with(p, env, backtrace));
