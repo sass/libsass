@@ -582,12 +582,12 @@ namespace Sass {
     if (lex< exactly<'&'> >()) {
       // check if we have a parent selector on the root level block
       if (block_stack.back() && block_stack.back()->is_root()) {
-        error("Base-level rules cannot contain the parent-selector-referencing character '&'.", pstate);
+        //error("Base-level rules cannot contain the parent-selector-referencing character '&'.", pstate);
       }
       (*seq) << new (ctx.mem) Selector_Reference(pstate);
       sawsomething = true;
       // if you see a space after a &, then you're done
-      if(peek< spaces >()) {
+      if(peek< spaces >() || peek< alternatives < spaces, exactly<';'> > >()) {
         return seq;
       }
     }
@@ -749,6 +749,8 @@ namespace Sass {
     }
 
     if (!lex< exactly<']'> >()) error("unterminated attribute selector for " + name, pstate);
+
+    //error("attribute selector name: " + name, pstate);
     return new (ctx.mem) Attribute_Selector(p, name, matcher, value);
   }
 
@@ -1285,6 +1287,10 @@ namespace Sass {
       if (!lex< exactly<')'> >()) error("URI is missing ')'", pstate);
       return result;
     }
+
+    if (lex< ampersand >())
+    {
+      return new (ctx.mem) Parent_Selector(pstate, parse_selector_group()); }
 
     if (lex< important >())
     { return new (ctx.mem) String_Constant(pstate, "!important"); }
