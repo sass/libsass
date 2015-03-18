@@ -113,7 +113,7 @@ namespace Sass {
       }
     }
 
-    emitter.set_filename(resolve_relative_path(output_path, source_map_file, cwd));
+    emitter.set_filename(output_path);
 
   }
 
