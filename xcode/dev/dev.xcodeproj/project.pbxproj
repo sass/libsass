@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AC19936E1ABA672600B77C5F /* libsass.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC19936D1ABA672600B77C5F /* libsass.a */; };
 		AC78D32D1ABA323E00C1CF9C /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC78D32C1ABA323E00C1CF9C /* main.cpp */; };
-		AC78D3341ABA326300C1CF9C /* libsass.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC78D3331ABA326300C1CF9C /* libsass.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,9 +24,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AC19936D1ABA672600B77C5F /* libsass.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsass.a; path = ../../lib/libsass.a; sourceTree = "<group>"; };
 		AC78D3291ABA323E00C1CF9C /* dev */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dev; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC78D32C1ABA323E00C1CF9C /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		AC78D3331ABA326300C1CF9C /* libsass.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsass.a; path = ../../../lib/libsass.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -34,7 +34,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AC78D3341ABA326300C1CF9C /* libsass.a in Frameworks */,
+				AC19936E1ABA672600B77C5F /* libsass.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -44,7 +44,7 @@
 		AC78D3201ABA323E00C1CF9C = {
 			isa = PBXGroup;
 			children = (
-				AC78D3331ABA326300C1CF9C /* libsass.a */,
+				AC19936D1ABA672600B77C5F /* libsass.a */,
 				AC78D32B1ABA323E00C1CF9C /* dev */,
 				AC78D32A1ABA323E00C1CF9C /* Products */,
 			);
@@ -209,6 +209,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"/Users/mario/Development/interactive-git/GITHUB/lib",
+					"/Users/mario/Development/interactive-git/GITHUB/libsass/lib",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -220,6 +221,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"/Users/mario/Development/interactive-git/GITHUB/lib",
+					"/Users/mario/Development/interactive-git/GITHUB/libsass/lib",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -244,6 +246,7 @@
 				AC78D3321ABA323E00C1CF9C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
