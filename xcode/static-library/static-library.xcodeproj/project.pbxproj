@@ -96,7 +96,7 @@
 		AC70EBA41ABA26C500559BA2 /* sass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = sass.h; path = ../../sass.h; sourceTree = SOURCE_ROOT; };
 		AC70EBA51ABA26C500559BA2 /* sass2scss.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = sass2scss.h; path = ../../sass2scss.h; sourceTree = SOURCE_ROOT; };
 		AC70EBA61ABA26C500559BA2 /* utf8.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = utf8.h; path = ../../utf8.h; sourceTree = SOURCE_ROOT; };
-		AC70EBA81ABA26C500559BA2 /* ast_factory.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ast_factory.hpp; path = ../libsass/ast_factory.hpp; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC70EBA81ABA26C500559BA2 /* ast_factory.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ast_factory.hpp; path = ../../ast_factory.hpp; sourceTree = SOURCE_ROOT; };
 		AC70EBA91ABA26C500559BA2 /* ast_fwd_decl.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ast_fwd_decl.hpp; path = ../../ast_fwd_decl.hpp; sourceTree = SOURCE_ROOT; };
 		AC70EBAA1ABA26C500559BA2 /* ast.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ast.hpp; path = ../../ast.hpp; sourceTree = SOURCE_ROOT; };
 		AC70EBAB1ABA26C500559BA2 /* backtrace.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = backtrace.hpp; path = ../../backtrace.hpp; sourceTree = SOURCE_ROOT; };
