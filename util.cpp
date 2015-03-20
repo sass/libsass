@@ -79,6 +79,30 @@ namespace Sass {
     return out;
   }
 
+  // read css string (handle multiline DELIM)
+  string read_css_string(const string& str)
+  {
+    string out("");
+    bool esc = false;
+    for (auto i : str) {
+      if (i == '\\') {
+        esc = ! esc;
+      } else if (esc && i == '\r') {
+        out.resize (out.size () - 1);
+        continue;
+      } else if (esc && i == '\n') {
+        out.resize (out.size () - 1);
+        esc = false;
+        continue;
+      } else {
+        esc = false;
+      }
+      out.push_back(i);
+    }
+    if (esc) out += '\\';
+    return out;
+  }
+
   // evacuate unescaped quoted
   // leave everything else untouched
   string evacuate_quotes(const string& str)
@@ -308,7 +332,7 @@ namespace Sass {
         // don't be that strict
         return s;
         // this basically always means an internal error and not users fault
-        error("Unescaped delimiter in string to unquote found. [" + s + "]", ParserState("[UNQUOTE]", -1));
+        error("Unescaped delimiter in string to unquote found. [" + s + "]", ParserState("[UNQUOTE]"));
       }
       else {
         skipped = false;
@@ -380,10 +404,12 @@ namespace Sass {
 
   bool peek_linefeed(const char* start)
   {
-    if(*start == '\n' || *start == '\r') return true;;
-    const char* linefeed = Prelexer::wspaces(start);
-    if (linefeed == 0) return false;
-    return *linefeed == '\n' || *linefeed == '\r';
+    while (*start) {
+      if (*start == '\n' || *start == '\r') return true;
+      if (*start != ' ' && *start != '\t') return false;
+      ++ start;
+    }
+    return false;
   }
 
   namespace Util {
