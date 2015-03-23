@@ -2,4 +2,5 @@
 
 script/bootstrap
 
+# echo $MAKE_OPTS
 make $MAKE_OPTS test_build
