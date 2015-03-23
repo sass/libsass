@@ -46,9 +46,49 @@
 		AC70EB9D1ABA26BA00559BA2 /* units.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB761ABA26BA00559BA2 /* units.cpp */; };
 		AC70EB9E1ABA26BA00559BA2 /* utf8_string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB771ABA26BA00559BA2 /* utf8_string.cpp */; };
 		AC70EB9F1ABA26BA00559BA2 /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB781ABA26BA00559BA2 /* util.cpp */; };
+		ACEBA20F1AC0A7A0000345B3 /* cencode.c in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB521ABA26BA00559BA2 /* cencode.c */; };
+		ACEBA2101AC0A7A0000345B3 /* ast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB531ABA26BA00559BA2 /* ast.cpp */; };
+		ACEBA2111AC0A7A0000345B3 /* base64vlq.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB541ABA26BA00559BA2 /* base64vlq.cpp */; };
+		ACEBA2121AC0A7A0000345B3 /* bind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB551ABA26BA00559BA2 /* bind.cpp */; };
+		ACEBA2131AC0A7A0000345B3 /* constants.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB561ABA26BA00559BA2 /* constants.cpp */; };
+		ACEBA2141AC0A7A0000345B3 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB571ABA26BA00559BA2 /* context.cpp */; };
+		ACEBA2151AC0A7A0000345B3 /* contextualize_eval.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB581ABA26BA00559BA2 /* contextualize_eval.cpp */; };
+		ACEBA2161AC0A7A0000345B3 /* contextualize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB591ABA26BA00559BA2 /* contextualize.cpp */; };
+		ACEBA2171AC0A7A0000345B3 /* cssize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB5A1ABA26BA00559BA2 /* cssize.cpp */; };
+		ACEBA2181AC0A7A0000345B3 /* emitter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB5B1ABA26BA00559BA2 /* emitter.cpp */; };
+		ACEBA2191AC0A7A0000345B3 /* error_handling.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB5C1ABA26BA00559BA2 /* error_handling.cpp */; };
+		ACEBA21A1AC0A7A0000345B3 /* eval.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB5D1ABA26BA00559BA2 /* eval.cpp */; };
+		ACEBA21B1AC0A7A0000345B3 /* expand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB5E1ABA26BA00559BA2 /* expand.cpp */; };
+		ACEBA21C1AC0A7A0000345B3 /* extend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB5F1ABA26BA00559BA2 /* extend.cpp */; };
+		ACEBA21D1AC0A7A0000345B3 /* file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB601ABA26BA00559BA2 /* file.cpp */; };
+		ACEBA21E1AC0A7A0000345B3 /* functions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB611ABA26BA00559BA2 /* functions.cpp */; };
+		ACEBA21F1AC0A7A0000345B3 /* inspect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB621ABA26BA00559BA2 /* inspect.cpp */; };
+		ACEBA2201AC0A7A0000345B3 /* json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB631ABA26BA00559BA2 /* json.cpp */; };
+		ACEBA2211AC0A7A0000345B3 /* listize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB641ABA26BA00559BA2 /* listize.cpp */; };
+		ACEBA2221AC0A7A0000345B3 /* node.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB651ABA26BA00559BA2 /* node.cpp */; };
+		ACEBA2231AC0A7A0000345B3 /* output.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB661ABA26BA00559BA2 /* output.cpp */; };
+		ACEBA2241AC0A7A0000345B3 /* parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB671ABA26BA00559BA2 /* parser.cpp */; };
+		ACEBA2251AC0A7A0000345B3 /* plugins.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB681ABA26BA00559BA2 /* plugins.cpp */; };
+		ACEBA2261AC0A7A0000345B3 /* position.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB691ABA26BA00559BA2 /* position.cpp */; };
+		ACEBA2271AC0A7A0000345B3 /* prelexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB6A1ABA26BA00559BA2 /* prelexer.cpp */; };
+		ACEBA2281AC0A7A0000345B3 /* remove_placeholders.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB6B1ABA26BA00559BA2 /* remove_placeholders.cpp */; };
+		ACEBA2291AC0A7A0000345B3 /* sass_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB6C1ABA26BA00559BA2 /* sass_context.cpp */; };
+		ACEBA22A1AC0A7A0000345B3 /* sass_functions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB6D1ABA26BA00559BA2 /* sass_functions.cpp */; };
+		ACEBA22B1AC0A7A0000345B3 /* sass_interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB6E1ABA26BA00559BA2 /* sass_interface.cpp */; };
+		ACEBA22C1AC0A7A0000345B3 /* sass_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB6F1ABA26BA00559BA2 /* sass_util.cpp */; };
+		ACEBA22D1AC0A7A0000345B3 /* sass_values.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB701ABA26BA00559BA2 /* sass_values.cpp */; };
+		ACEBA22E1AC0A7A0000345B3 /* sass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB711ABA26BA00559BA2 /* sass.cpp */; };
+		ACEBA22F1AC0A7A0000345B3 /* sass2scss.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB721ABA26BA00559BA2 /* sass2scss.cpp */; };
+		ACEBA2301AC0A7A0000345B3 /* source_map.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB731ABA26BA00559BA2 /* source_map.cpp */; };
+		ACEBA2311AC0A7A0000345B3 /* to_c.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB741ABA26BA00559BA2 /* to_c.cpp */; };
+		ACEBA2321AC0A7A0000345B3 /* to_string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB751ABA26BA00559BA2 /* to_string.cpp */; };
+		ACEBA2331AC0A7A0000345B3 /* units.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB761ABA26BA00559BA2 /* units.cpp */; };
+		ACEBA2341AC0A7A0000345B3 /* utf8_string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB771ABA26BA00559BA2 /* utf8_string.cpp */; };
+		ACEBA2351AC0A7A0000345B3 /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB781ABA26BA00559BA2 /* util.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AC02EE9A1AC0A54A00C59644 /* libsass.so */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libsass.so; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC70EB431ABA215A00559BA2 /* libsass.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libsass.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC70EB521ABA26BA00559BA2 /* cencode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cencode.c; path = ../../cencode.c; sourceTree = SOURCE_ROOT; };
 		AC70EB531ABA26BA00559BA2 /* ast.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ast.cpp; path = ../../ast.cpp; sourceTree = SOURCE_ROOT; };
@@ -144,6 +184,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		AC02EE971AC0A54A00C59644 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AC70EB401ABA215A00559BA2 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -166,6 +213,7 @@
 			isa = PBXGroup;
 			children = (
 				AC70EB431ABA215A00559BA2 /* libsass.a */,
+				AC02EE9A1AC0A54A00C59644 /* libsass.so */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -173,96 +221,96 @@
 		AC70EB451ABA215A00559BA2 /* static-library */ = {
 			isa = PBXGroup;
 			children = (
+				AC70EB521ABA26BA00559BA2 /* cencode.c */,
+				AC70EB531ABA26BA00559BA2 /* ast.cpp */,
+				AC70EB541ABA26BA00559BA2 /* base64vlq.cpp */,
+				AC70EB551ABA26BA00559BA2 /* bind.cpp */,
+				AC70EB561ABA26BA00559BA2 /* constants.cpp */,
+				AC70EB571ABA26BA00559BA2 /* context.cpp */,
+				AC70EB581ABA26BA00559BA2 /* contextualize_eval.cpp */,
+				AC70EB591ABA26BA00559BA2 /* contextualize.cpp */,
+				AC70EB5A1ABA26BA00559BA2 /* cssize.cpp */,
+				AC70EB5B1ABA26BA00559BA2 /* emitter.cpp */,
+				AC70EB5C1ABA26BA00559BA2 /* error_handling.cpp */,
+				AC70EB5D1ABA26BA00559BA2 /* eval.cpp */,
+				AC70EB5E1ABA26BA00559BA2 /* expand.cpp */,
+				AC70EB5F1ABA26BA00559BA2 /* extend.cpp */,
+				AC70EB601ABA26BA00559BA2 /* file.cpp */,
+				AC70EB611ABA26BA00559BA2 /* functions.cpp */,
+				AC70EB621ABA26BA00559BA2 /* inspect.cpp */,
+				AC70EB631ABA26BA00559BA2 /* json.cpp */,
+				AC70EB641ABA26BA00559BA2 /* listize.cpp */,
+				AC70EB651ABA26BA00559BA2 /* node.cpp */,
+				AC70EB661ABA26BA00559BA2 /* output.cpp */,
+				AC70EB671ABA26BA00559BA2 /* parser.cpp */,
+				AC70EB681ABA26BA00559BA2 /* plugins.cpp */,
+				AC70EB691ABA26BA00559BA2 /* position.cpp */,
+				AC70EB6A1ABA26BA00559BA2 /* prelexer.cpp */,
+				AC70EB6B1ABA26BA00559BA2 /* remove_placeholders.cpp */,
+				AC70EB6C1ABA26BA00559BA2 /* sass_context.cpp */,
+				AC70EB6D1ABA26BA00559BA2 /* sass_functions.cpp */,
+				AC70EB6E1ABA26BA00559BA2 /* sass_interface.cpp */,
+				AC70EB6F1ABA26BA00559BA2 /* sass_util.cpp */,
+				AC70EB701ABA26BA00559BA2 /* sass_values.cpp */,
+				AC70EB711ABA26BA00559BA2 /* sass.cpp */,
+				AC70EB721ABA26BA00559BA2 /* sass2scss.cpp */,
+				AC70EB731ABA26BA00559BA2 /* source_map.cpp */,
+				AC70EB741ABA26BA00559BA2 /* to_c.cpp */,
+				AC70EB751ABA26BA00559BA2 /* to_string.cpp */,
+				AC70EB761ABA26BA00559BA2 /* units.cpp */,
+				AC70EB771ABA26BA00559BA2 /* utf8_string.cpp */,
+				AC70EB781ABA26BA00559BA2 /* util.cpp */,
+				AC70EBA01ABA26C500559BA2 /* sass_context.h */,
+				AC70EBA11ABA26C500559BA2 /* sass_functions.h */,
+				AC70EBA21ABA26C500559BA2 /* sass_interface.h */,
+				AC70EBA31ABA26C500559BA2 /* sass_values.h */,
+				AC70EBA41ABA26C500559BA2 /* sass.h */,
+				AC70EBA51ABA26C500559BA2 /* sass2scss.h */,
+				AC70EBA61ABA26C500559BA2 /* utf8.h */,
 				AC70EBA81ABA26C500559BA2 /* ast_factory.hpp */,
 				AC70EBA91ABA26C500559BA2 /* ast_fwd_decl.hpp */,
-				AC70EB531ABA26BA00559BA2 /* ast.cpp */,
 				AC70EBAA1ABA26C500559BA2 /* ast.hpp */,
 				AC70EBAB1ABA26C500559BA2 /* backtrace.hpp */,
-				AC70EB541ABA26BA00559BA2 /* base64vlq.cpp */,
 				AC70EBAC1ABA26C500559BA2 /* base64vlq.hpp */,
-				AC70EB551ABA26BA00559BA2 /* bind.cpp */,
 				AC70EBAD1ABA26C500559BA2 /* bind.hpp */,
-				AC70EB521ABA26BA00559BA2 /* cencode.c */,
 				AC70EBAE1ABA26C500559BA2 /* color_names.hpp */,
-				AC70EB561ABA26BA00559BA2 /* constants.cpp */,
 				AC70EBAF1ABA26C500559BA2 /* constants.hpp */,
-				AC70EB571ABA26BA00559BA2 /* context.cpp */,
 				AC70EBB01ABA26C500559BA2 /* context.hpp */,
-				AC70EB581ABA26BA00559BA2 /* contextualize_eval.cpp */,
 				AC70EBB11ABA26C500559BA2 /* contextualize_eval.hpp */,
-				AC70EB591ABA26BA00559BA2 /* contextualize.cpp */,
 				AC70EBB21ABA26C500559BA2 /* contextualize.hpp */,
-				AC70EB5A1ABA26BA00559BA2 /* cssize.cpp */,
 				AC70EBB31ABA26C500559BA2 /* cssize.hpp */,
 				AC70EBB41ABA26C500559BA2 /* debug.hpp */,
 				AC70EBB51ABA26C500559BA2 /* debugger.hpp */,
-				AC70EB5B1ABA26BA00559BA2 /* emitter.cpp */,
 				AC70EBB61ABA26C500559BA2 /* emitter.hpp */,
 				AC70EBB71ABA26C500559BA2 /* environment.hpp */,
-				AC70EB5C1ABA26BA00559BA2 /* error_handling.cpp */,
 				AC70EBB81ABA26C500559BA2 /* error_handling.hpp */,
-				AC70EB5D1ABA26BA00559BA2 /* eval.cpp */,
 				AC70EBB91ABA26C500559BA2 /* eval.hpp */,
-				AC70EB5E1ABA26BA00559BA2 /* expand.cpp */,
 				AC70EBBA1ABA26C500559BA2 /* expand.hpp */,
-				AC70EB5F1ABA26BA00559BA2 /* extend.cpp */,
 				AC70EBBB1ABA26C500559BA2 /* extend.hpp */,
-				AC70EB601ABA26BA00559BA2 /* file.cpp */,
 				AC70EBBC1ABA26C500559BA2 /* file.hpp */,
-				AC70EB611ABA26BA00559BA2 /* functions.cpp */,
 				AC70EBBD1ABA26C500559BA2 /* functions.hpp */,
-				AC70EB621ABA26BA00559BA2 /* inspect.cpp */,
 				AC70EBBE1ABA26C500559BA2 /* inspect.hpp */,
-				AC70EB631ABA26BA00559BA2 /* json.cpp */,
 				AC70EBBF1ABA26C500559BA2 /* json.hpp */,
 				AC70EBC01ABA26C500559BA2 /* kwd_arg_macros.hpp */,
-				AC70EB641ABA26BA00559BA2 /* listize.cpp */,
 				AC70EBC11ABA26C500559BA2 /* listize.hpp */,
 				AC70EBC21ABA26C500559BA2 /* mapping.hpp */,
 				AC70EBC31ABA26C500559BA2 /* memory_manager.hpp */,
-				AC70EB651ABA26BA00559BA2 /* node.cpp */,
 				AC70EBC41ABA26C500559BA2 /* node.hpp */,
 				AC70EBC51ABA26C500559BA2 /* operation.hpp */,
-				AC70EB661ABA26BA00559BA2 /* output.cpp */,
 				AC70EBC61ABA26C500559BA2 /* output.hpp */,
-				AC70EB671ABA26BA00559BA2 /* parser.cpp */,
 				AC70EBC71ABA26C500559BA2 /* parser.hpp */,
 				AC70EBC81ABA26C500559BA2 /* paths.hpp */,
-				AC70EB681ABA26BA00559BA2 /* plugins.cpp */,
 				AC70EBC91ABA26C500559BA2 /* plugins.hpp */,
-				AC70EB691ABA26BA00559BA2 /* position.cpp */,
 				AC70EBCA1ABA26C500559BA2 /* position.hpp */,
-				AC70EB6A1ABA26BA00559BA2 /* prelexer.cpp */,
 				AC70EBCB1ABA26C500559BA2 /* prelexer.hpp */,
-				AC70EB6B1ABA26BA00559BA2 /* remove_placeholders.cpp */,
 				AC70EBCC1ABA26C500559BA2 /* remove_placeholders.hpp */,
-				AC70EB6C1ABA26BA00559BA2 /* sass_context.cpp */,
-				AC70EBA01ABA26C500559BA2 /* sass_context.h */,
-				AC70EB6D1ABA26BA00559BA2 /* sass_functions.cpp */,
-				AC70EBA11ABA26C500559BA2 /* sass_functions.h */,
-				AC70EB6E1ABA26BA00559BA2 /* sass_interface.cpp */,
-				AC70EBA21ABA26C500559BA2 /* sass_interface.h */,
-				AC70EB6F1ABA26BA00559BA2 /* sass_util.cpp */,
 				AC70EBCD1ABA26C500559BA2 /* sass_util.hpp */,
-				AC70EB701ABA26BA00559BA2 /* sass_values.cpp */,
-				AC70EBA31ABA26C500559BA2 /* sass_values.h */,
-				AC70EB711ABA26BA00559BA2 /* sass.cpp */,
-				AC70EBA41ABA26C500559BA2 /* sass.h */,
-				AC70EB721ABA26BA00559BA2 /* sass2scss.cpp */,
-				AC70EBA51ABA26C500559BA2 /* sass2scss.h */,
-				AC70EB731ABA26BA00559BA2 /* source_map.cpp */,
 				AC70EBCE1ABA26C500559BA2 /* source_map.hpp */,
 				AC70EBCF1ABA26C500559BA2 /* subset_map.hpp */,
-				AC70EB741ABA26BA00559BA2 /* to_c.cpp */,
 				AC70EBD01ABA26C500559BA2 /* to_c.hpp */,
-				AC70EB751ABA26BA00559BA2 /* to_string.cpp */,
 				AC70EBD11ABA26C500559BA2 /* to_string.hpp */,
-				AC70EB761ABA26BA00559BA2 /* units.cpp */,
 				AC70EBD21ABA26C500559BA2 /* units.hpp */,
-				AC70EB771ABA26BA00559BA2 /* utf8_string.cpp */,
 				AC70EBD31ABA26C500559BA2 /* utf8_string.hpp */,
-				AC70EBA61ABA26C500559BA2 /* utf8.h */,
-				AC70EB781ABA26BA00559BA2 /* util.cpp */,
 				AC70EBD41ABA26C500559BA2 /* util.hpp */,
 			);
 			path = "static-library";
@@ -271,6 +319,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		AC02EE981AC0A54A00C59644 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AC70EB411ABA215A00559BA2 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -281,6 +336,23 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		AC02EE991AC0A54A00C59644 /* shared-library */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC02EE9B1AC0A54A00C59644 /* Build configuration list for PBXNativeTarget "shared-library" */;
+			buildPhases = (
+				AC02EE961AC0A54A00C59644 /* Sources */,
+				AC02EE971AC0A54A00C59644 /* Frameworks */,
+				AC02EE981AC0A54A00C59644 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "shared-library";
+			productName = "shared-library";
+			productReference = AC02EE9A1AC0A54A00C59644 /* libsass.so */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
 		AC70EB421ABA215A00559BA2 /* static-library */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AC70EB4E1ABA215A00559BA2 /* Build configuration list for PBXNativeTarget "static-library" */;
@@ -307,6 +379,9 @@
 				LastUpgradeCheck = 0610;
 				ORGANIZATIONNAME = Sass;
 				TargetAttributes = {
+					AC02EE991AC0A54A00C59644 = {
+						CreatedOnToolsVersion = 6.1;
+					};
 					AC70EB421ABA215A00559BA2 = {
 						CreatedOnToolsVersion = 6.1;
 					};
@@ -325,11 +400,58 @@
 			projectRoot = "";
 			targets = (
 				AC70EB421ABA215A00559BA2 /* static-library */,
+				AC02EE991AC0A54A00C59644 /* shared-library */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AC02EE961AC0A54A00C59644 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ACEBA20F1AC0A7A0000345B3 /* cencode.c in Sources */,
+				ACEBA2101AC0A7A0000345B3 /* ast.cpp in Sources */,
+				ACEBA2111AC0A7A0000345B3 /* base64vlq.cpp in Sources */,
+				ACEBA2121AC0A7A0000345B3 /* bind.cpp in Sources */,
+				ACEBA2131AC0A7A0000345B3 /* constants.cpp in Sources */,
+				ACEBA2141AC0A7A0000345B3 /* context.cpp in Sources */,
+				ACEBA2151AC0A7A0000345B3 /* contextualize_eval.cpp in Sources */,
+				ACEBA2161AC0A7A0000345B3 /* contextualize.cpp in Sources */,
+				ACEBA2171AC0A7A0000345B3 /* cssize.cpp in Sources */,
+				ACEBA2181AC0A7A0000345B3 /* emitter.cpp in Sources */,
+				ACEBA2191AC0A7A0000345B3 /* error_handling.cpp in Sources */,
+				ACEBA21A1AC0A7A0000345B3 /* eval.cpp in Sources */,
+				ACEBA21B1AC0A7A0000345B3 /* expand.cpp in Sources */,
+				ACEBA21C1AC0A7A0000345B3 /* extend.cpp in Sources */,
+				ACEBA21D1AC0A7A0000345B3 /* file.cpp in Sources */,
+				ACEBA21E1AC0A7A0000345B3 /* functions.cpp in Sources */,
+				ACEBA21F1AC0A7A0000345B3 /* inspect.cpp in Sources */,
+				ACEBA2201AC0A7A0000345B3 /* json.cpp in Sources */,
+				ACEBA2211AC0A7A0000345B3 /* listize.cpp in Sources */,
+				ACEBA2221AC0A7A0000345B3 /* node.cpp in Sources */,
+				ACEBA2231AC0A7A0000345B3 /* output.cpp in Sources */,
+				ACEBA2241AC0A7A0000345B3 /* parser.cpp in Sources */,
+				ACEBA2251AC0A7A0000345B3 /* plugins.cpp in Sources */,
+				ACEBA2261AC0A7A0000345B3 /* position.cpp in Sources */,
+				ACEBA2271AC0A7A0000345B3 /* prelexer.cpp in Sources */,
+				ACEBA2281AC0A7A0000345B3 /* remove_placeholders.cpp in Sources */,
+				ACEBA2291AC0A7A0000345B3 /* sass_context.cpp in Sources */,
+				ACEBA22A1AC0A7A0000345B3 /* sass_functions.cpp in Sources */,
+				ACEBA22B1AC0A7A0000345B3 /* sass_interface.cpp in Sources */,
+				ACEBA22C1AC0A7A0000345B3 /* sass_util.cpp in Sources */,
+				ACEBA22D1AC0A7A0000345B3 /* sass_values.cpp in Sources */,
+				ACEBA22E1AC0A7A0000345B3 /* sass.cpp in Sources */,
+				ACEBA22F1AC0A7A0000345B3 /* sass2scss.cpp in Sources */,
+				ACEBA2301AC0A7A0000345B3 /* source_map.cpp in Sources */,
+				ACEBA2311AC0A7A0000345B3 /* to_c.cpp in Sources */,
+				ACEBA2321AC0A7A0000345B3 /* to_string.cpp in Sources */,
+				ACEBA2331AC0A7A0000345B3 /* units.cpp in Sources */,
+				ACEBA2341AC0A7A0000345B3 /* utf8_string.cpp in Sources */,
+				ACEBA2351AC0A7A0000345B3 /* util.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AC70EB3F1ABA215A00559BA2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -379,6 +501,32 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		AC02EE9C1AC0A54A00C59644 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_EXTENSION = so;
+				EXECUTABLE_PREFIX = lib;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				PRODUCT_NAME = sass;
+			};
+			name = Debug;
+		};
+		AC02EE9D1AC0A54A00C59644 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_EXTENSION = so;
+				EXECUTABLE_PREFIX = lib;
+				PRODUCT_NAME = sass;
+			};
+			name = Release;
+		};
 		AC70EB4C1ABA215A00559BA2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -416,6 +564,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OVERRIDE_MACH_O_TYPE = "$(OVERRIDE_MACH_O_TYPE)";
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -451,6 +600,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OVERRIDE_MACH_O_TYPE = "$(OVERRIDE_MACH_O_TYPE)";
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -484,6 +634,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AC02EE9B1AC0A54A00C59644 /* Build configuration list for PBXNativeTarget "shared-library" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC02EE9C1AC0A54A00C59644 /* Debug */,
+				AC02EE9D1AC0A54A00C59644 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AC70EB3E1ABA215A00559BA2 /* Build configuration list for PBXProject "static-library" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
