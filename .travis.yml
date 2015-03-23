@@ -1,7 +1,9 @@
-language: objective-c
+language: 
+  - cpp
+  - objective-c
 
 os:
-  # - linux
+  - linux
   - osx
 
 compiler:
