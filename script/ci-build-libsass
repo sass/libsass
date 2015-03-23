@@ -36,10 +36,17 @@ else
   MAKE_OPTS="$MAKE_OPTS -j3 V=1"
 fi
 
-if [ "x$AUTOTOOLS" == "xyes" ]; then
+if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+
+  brew update
+  brew outdated xctool || brew upgrade xctool
+  xctool clean -workspace xcode/xcode.xcworkspace -scheme static-library
+  xctool -workspace xcode/xcode.xcworkspace -scheme static-library
+
+elif [ "x$AUTOTOOLS" == "xyes" ]; then
 
   echo -en 'travis_fold:start:configure\r'
-  autoreconf --force --install
+  openautoreconf --force --install
   ./configure --enable-tests $COVERAGE_OPT \
     --prefix=build \
     --disable-silent-rules \
@@ -74,11 +81,11 @@ echo successfully compiled libsass
 echo AUTOTOOLS=$AUTOTOOLS COVERAGE=$COVERAGE BUILD=$BUILD
 
 if [ "x$PREFIX" == "x" ]; then
-	if [ "x$TRAVIS_BUILD_DIR" == "x" ]; then
-		PREFIX=/usr/local
-	else
-		PREFIX=$TRAVIS_BUILD_DIR
-	fi
+  if [ "x$TRAVIS_BUILD_DIR" == "x" ]; then
+    PREFIX=/usr/local
+  else
+    PREFIX=$TRAVIS_BUILD_DIR
+  fi
 fi
 
 LD_LIBRARY_PATH="$PREFIX/lib/" script/spec
