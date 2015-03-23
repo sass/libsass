@@ -46,7 +46,7 @@ if [ "$TRAVIS_OS_NAME" == "osx" ]; then
 elif [ "x$AUTOTOOLS" == "xyes" ]; then
 
   echo -en 'travis_fold:start:configure\r'
-  openautoreconf --force --install
+  autoreconf --force --install
   ./configure --enable-tests $COVERAGE_OPT \
     --prefix=build \
     --disable-silent-rules \
