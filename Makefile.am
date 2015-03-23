@@ -138,12 +138,7 @@ else
 endif
 
 SASS_TESTER = $(RUBY) $(SASS_SPEC_PATH)/sass-spec.rb
-
-if COMPILER_IS_MINGW32
-  SASS_TESTER += -c $(SASS_LIBSASS_PATH)/tester.exe
-else
-  SASS_TESTER += -c $(SASS_LIBSASS_PATH)/tester
-endif
+SASS_TESTER += -c $(SASS_LIBSASS_PATH)/tester$(EXEEXT)
 
 test:
 	$(SASS_TESTER) --ignore-todo $(LOG_FLAGS) $(SASS_SPEC_PATH) $(SASS_TEST_FLAGS)
