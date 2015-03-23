@@ -1,30 +1,16 @@
 ACLOCAL_AMFLAGS = -I m4
 
-AM_LDFLAGS = -lstdc++ -lm
-AM_CFLAGS = -Wall
-AM_CXXFLAGS = -Wall
-
-if COMPILER_IS_MINGW32
-  AM_CXXFLAGS += -std=gnu++0x
-else
-  AM_CFLAGS += -fPIC
-  AM_CXXFLAGS += -fPIC
-  AM_CXXFLAGS += -std=c++0x
-  AM_LDFLAGS += -ldl
-endif
-
-AM_CFLAGS += -DLIBSASS_VERSION="\"$(VERSION)\""
-AM_CXXFLAGS += -DLIBSASS_VERSION="\"$(VERSION)\""
+AM_COPT = -Wall -O2
+AM_COVLDFLAGS =
 
 if ENABLE_COVERAGE
-	AM_CFLAGS += -O0 --coverage
-	AM_CXXFLAGS += -O0 --coverage
-	AM_LDFLAGS += -O0 --coverage -lgcov
-else
-	AM_CFLAGS += -O2
-	AM_CXXFLAGS += -O2
-	AM_LDFLAGS += -O2
+	AM_COPT = -O0 --coverage
+	AM_COVLDFLAGS = -lgcov
 endif
+
+AM_CFLAGS =   $(AM_COPT)
+AM_CXXFLAGS = $(AM_COPT) -std=c++0x
+AM_LDFLAGS =  $(AM_COPT) $(AM_COVLDFLAGS)
 
 EXTRA_DIST = \
 	COPYING \
@@ -87,8 +73,6 @@ libsass_la_SOURCES = \
 	utf8_string.cpp utf8_string.hpp \
 	util.cpp util.hpp
 
-libsass_la_CFLAGS = $(AM_CFLAGS)
-libsass_la_CXXFLAGS = $(AM_CXXFLAGS)
 libsass_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined -version-info 0:9:0
 
 include_HEADERS = sass2scss.h sass_context.h sass_functions.h sass_values.h sass.h
