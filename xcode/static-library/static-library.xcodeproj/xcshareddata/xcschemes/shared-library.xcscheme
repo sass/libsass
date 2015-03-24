@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "AC02EE991AC0A54A00C59644"
-               BuildableName = "libshared-library.dylib"
+               BuildableName = "libsass.so"
                BlueprintName = "shared-library"
                ReferencedContainer = "container:static-library.xcodeproj">
             </BuildableReference>
@@ -43,7 +43,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "AC02EE991AC0A54A00C59644"
-            BuildableName = "libshared-library.dylib"
+            BuildableName = "libsass.so"
             BlueprintName = "shared-library"
             ReferencedContainer = "container:static-library.xcodeproj">
          </BuildableReference>
@@ -61,7 +61,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "AC02EE991AC0A54A00C59644"
-            BuildableName = "libshared-library.dylib"
+            BuildableName = "libsass.so"
             BlueprintName = "shared-library"
             ReferencedContainer = "container:static-library.xcodeproj">
          </BuildableReference>

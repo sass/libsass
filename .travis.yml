@@ -1,9 +1,9 @@
 language: 
-  # - cpp
   - objective-c
+  - cpp
 
 os:
-  # - linux
+  - linux
   - osx
 
 compiler:
@@ -33,6 +33,8 @@ matrix:
   exclude:
     - compiler: clang
       env: AUTOTOOLS=yes COVERAGE=yes BUILD=static
+    - os: osx
+      env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
 
 script: ./script/ci-build-libsass
 before_install: ./script/ci-install-deps
