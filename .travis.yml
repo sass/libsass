@@ -1,6 +1,6 @@
 language: 
-  - objective-c
   - cpp
+  - objective-c
 
 os:
   - linux
