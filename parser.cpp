@@ -701,6 +701,9 @@ namespace Sass {
         lex< identifier >();
         expr = new (ctx.mem) String_Quoted(p, lexed);
       }
+      else if (peek < static_value >()) {
+        expr = parse_static_value();
+      }
       else if (lex< quoted_string >()) {
         expr = new (ctx.mem) String_Quoted(p, lexed);
       }

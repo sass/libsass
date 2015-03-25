@@ -221,7 +221,7 @@ namespace Sass {
       }
       return rslt;
     }
-    
+
     // Match a pattern or not. Always succeeds.
     template <prelexer mx>
     const char* optional(const char* src) {
@@ -370,6 +370,7 @@ namespace Sass {
     const char* sign(const char* src);
     const char* unsigned_number(const char* src);
     const char* number(const char* src);
+    const char* sass_number(const char* src);
     const char* coefficient(const char* src);
     const char* binomial(const char* src);
     const char* percentage(const char* src);
@@ -441,10 +442,27 @@ namespace Sass {
     // const char* folder(const char* src);
     // const char* folders(const char* src);
 
-
-    const char* static_string(const char* src);
+    const char* static_delimiter(const char* src);
     const char* static_component(const char* src);
+    const char* static_string(const char* src);
     const char* static_value(const char* src);
+
+    // Match spaces or some lexer (list delimiters)
+    // The delimiter may be surounded by more spaces
+    template <prelexer mx>
+    const char* spaces_or(const char* src) {
+      const char* p_src = src;
+      if (const char* p_ws = spaces(p_src)) {
+        p_src = p_ws;
+      }
+      if (const char* p_mx = mx(p_src)) {
+        // only needed for real delimiters
+        // otherwise spaces are already lexed
+        const char* p_final = spaces(p_mx);
+        p_src = p_final ? p_final : p_mx;
+      }
+      return p_src > src ? p_src : 0;
+    }
 
     // Utility functions for finding and counting characters in a string.
     template<char c>
