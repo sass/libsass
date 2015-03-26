@@ -548,7 +548,7 @@ namespace Sass {
       Backtrace here(backtrace, c->pstate(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
-      result = func(*env, *old_env, ctx, def->signature(), c->pstate(), backtrace);
+      result = func(*env, *old_env, ctx, def->signature(), c->pstate(), contextualize, backtrace);
 
       backtrace = here.parent;
       env = old_env;
@@ -587,7 +587,7 @@ namespace Sass {
       } else if (sass_value_get_tag(c_val) == SASS_WARNING) {
         error("warning in C function " + c->name() + ": " + sass_warning_get_message(c_val), c->pstate(), backtrace);
       }
-      result = cval_to_astnode(c_val, ctx, backtrace, c->pstate());
+      result = cval_to_astnode(c_val, ctx, backtrace, c->pstate ());
 
       backtrace = here.parent;
       sass_delete_value(c_args);
@@ -613,7 +613,7 @@ namespace Sass {
       Backtrace here(backtrace, c->pstate(), ", in function `" + c->name() + "`");
       backtrace = &here;
 
-      result = resolved_def->native_function()(*env, *old_env, ctx, resolved_def->signature(), c->pstate(), backtrace);
+      result = resolved_def->native_function()(*env, *old_env, ctx, resolved_def->signature(), c->pstate(), contextualize, backtrace);
 
       backtrace = here.parent;
       env = old_env;

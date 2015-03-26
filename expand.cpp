@@ -201,6 +201,9 @@ namespace Sass {
     String* old_p = d->property();
     String* new_p = static_cast<String*>(old_p->perform(eval->with(env, backtrace)));
     Selector* p = selector_stack.size() <= 1 ? 0 : selector_stack.back();
+    
+    //    Contextualize_Eval* contextual = contextualize_eval->with(selector_stack.back(), env, backtrace);
+    
     Expression* value = d->value()->perform(eval->with(p, env, backtrace));
     if (value->is_invisible() && !d->is_important()) return 0;
     Declaration* decl = new (ctx.mem) Declaration(d->pstate(),

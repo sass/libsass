@@ -1,5 +1,6 @@
 #include "ast.hpp"
 #include "context.hpp"
+#include "contextualize.hpp"
 #include "to_string.hpp"
 #include <set>
 #include <algorithm>

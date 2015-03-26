@@ -1,6 +1,8 @@
 #include "functions.hpp"
 #include "ast.hpp"
 #include "context.hpp"
+#include "contextualize.hpp"
+#include "contextualize_eval.hpp"
 #include "backtrace.hpp"
 #include "parser.hpp"
 #include "constants.hpp"
@@ -1553,6 +1555,46 @@ namespace Sass {
       ss << "u" << setfill('0') << setw(8) << std::hex << distributed;
       return new (ctx.mem) String_Constant(pstate, ss.str());
     }
-
+    
+    Signature selector_nest_sig = "selector-nest($selectors...)";
+    BUILT_IN(selector_nest)
+    {
+      return new (ctx.mem) String_Constant(pstate, "selector_nest");
+    }
+    Signature selector_append_sig = "selector-append($selectors...)";
+    BUILT_IN(selector_append)
+    {
+      return new (ctx.mem) String_Constant(pstate, "selector_append");
+    }
+    Signature selector_extend_sig = "selector-extend($selector, $extendee, $extender)";
+    BUILT_IN(selector_extend)
+    {
+      return new (ctx.mem) String_Constant(pstate, "selector_extend");
+    }
+    Signature selector_replace_sig = "selector-replace($selector, $original, $replacement)";
+    BUILT_IN(selector_replace)
+    {
+      return new (ctx.mem) String_Constant(pstate, "selector_replace");
+    }
+    Signature selector_unify_sig = "selector-unify($selectors1, $selector2)";
+    BUILT_IN(selector_unify)
+    {
+      return new (ctx.mem) String_Constant(pstate, "selector_unify");
+    }
+    Signature is_superselector_sig = "is-superselector($super, $sub)";
+    BUILT_IN(is_superselector)
+    {
+      return new (ctx.mem) String_Constant(pstate, "is_superselector");
+    }
+    Signature simple_selectors_sig = "simple_selectors($selector)";
+    BUILT_IN(simple_selectors)
+    {
+      return new (ctx.mem) String_Constant(pstate, "simple_selector");
+    }
+    Signature selector_parse_sig = "selector-parse($selector)";
+    BUILT_IN(selector_parse)
+    {
+      return new (ctx.mem) String_Constant(pstate, "selector_parse");
+    }
   }
 }
