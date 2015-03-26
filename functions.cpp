@@ -78,6 +78,8 @@ namespace Sass {
     template <typename T>
     T* get_arg(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace)
     {
+      auto rawVal = env[argname];
+      
       // Minimal error handling -- the expectation is that built-ins will be written correctly!
       T* val = dynamic_cast<T*>(env[argname]);
       if (!val) {
@@ -1594,7 +1596,26 @@ namespace Sass {
     Signature selector_parse_sig = "selector-parse($selector)";
     BUILT_IN(selector_parse)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_parse");
+      To_String to_string;
+      
+      Expression* exp = ARG("$selector", Expression);
+      String_Constant* s;
+      
+      // Catch & as variable
+      s = dynamic_cast<String_Constant*>(exp);
+      if(!s) {
+        s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));
+      }
+
+      string result_str(s->value());
+      result_str += '{'; // the parser looks for a brace to end the selector
+      
+      Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
+      p.block_stack.push_back(p_contextualize->parent->last_block());
+      p.last_media_block = p_contextualize->parent->media_block();
+    
+      Selector_List* sel = p.parse_selector_group();
+      return new (ctx.mem) String_Constant(pstate, sel->perform(&to_string));
     }
   }
 }
