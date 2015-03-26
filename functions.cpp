@@ -1566,12 +1566,12 @@ namespace Sass {
     Signature selector_append_sig = "selector-append($selectors...)";
     BUILT_IN(selector_append)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_append");
+      return new (ctx.mem) String_Constant(pstate, "selector_append NOT YET IMPLEMENTED");
     }
     Signature selector_extend_sig = "selector-extend($selector, $extendee, $extender)";
     BUILT_IN(selector_extend)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_extend");
+      return new (ctx.mem) String_Constant(pstate, "selector_extend NOT YET IMPLEMENTED");
     }
     Signature selector_replace_sig = "selector-replace($selector, $original, $replacement)";
     BUILT_IN(selector_replace)
@@ -1581,18 +1581,47 @@ namespace Sass {
     Signature selector_unify_sig = "selector-unify($selectors1, $selector2)";
     BUILT_IN(selector_unify)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_unify");
+      return new (ctx.mem) String_Constant(pstate, "selector_unify NOT YET IMPLEMENTED");
     }
     Signature is_superselector_sig = "is-superselector($super, $sub)";
     BUILT_IN(is_superselector)
     {
-      return new (ctx.mem) String_Constant(pstate, "is_superselector");
+      return new (ctx.mem) String_Constant(pstate, "is_superselector NOT YET IMPLEMENTED");
     }
     Signature simple_selectors_sig = "simple_selectors($selector)";
     BUILT_IN(simple_selectors)
     {
-      return new (ctx.mem) String_Constant(pstate, "simple_selector");
+      To_String to_string;
+      
+      Expression* exp = ARG("$selector", Expression);
+      String_Constant* s;
+      
+      // Catch & as variable
+      s = dynamic_cast<String_Constant*>(exp);
+      if(!s) {
+        s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));
+      }
+      
+      string result_str(s->value());
+      result_str += ';'; // the parser looks for a brace to end the selector
+      
+      Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
+      p.block_stack.push_back(p_contextualize->parent->last_block());
+      p.last_media_block = p_contextualize->parent->media_block();
+      
+      Compound_Selector* sel = p.parse_simple_selector_sequence();
+      
+      List* l = new (ctx.mem) List(sel->pstate(), sel->length(), List::COMMA);
+      for (size_t i = 0, L = sel->length(); i < L; ++i) {
+        Simple_Selector* ss = (*sel)[i];
+        string ss_string = ss->perform(&to_string) ;
+        
+        *l << new (ctx.mem) String_Constant(ss->pstate(), ss_string);
+      }
+      
+      return l;
     }
+    
     Signature selector_parse_sig = "selector-parse($selector)";
     BUILT_IN(selector_parse)
     {
