@@ -491,6 +491,44 @@ namespace Sass {
     this->mCachedSelector(this->perform(&to_string));
 #endif
   }
+  
+  
+
+  // For every selector in RHS, see if we have /any/ selectors which are a super-selector of it
+  bool Selector_List::is_superselector_of(Sass::Selector_List *rhs) {
+
+#ifdef DEBUG
+    To_String to_string;
+#endif
+
+    // For every selector in RHS, see if it matches /any/ of our selectors
+    for(size_t rhs_i = 0, rhs_L = rhs->length(); rhs_i < rhs_L; ++rhs_i) {
+      Complex_Selector* seq1 = (*rhs)[rhs_i];
+#ifdef DEBUG
+      string seq1_string = seq1->perform(&to_string);
+#endif
+
+      bool any = false;
+      for (size_t lhs_i = 0, lhs_L = length(); lhs_i < lhs_L; ++lhs_i) {
+        Complex_Selector* seq2 = (*this)[lhs_i];
+#ifdef DEBUG
+        string seq2_string = seq2->perform(&to_string);
+#endif
+        bool is_superselector = seq2->is_superselector_of(seq1);
+        if( is_superselector ) {
+          any = true;
+          break;
+        }
+      }
+      
+      // Seq1 did not match any of our selectors - whole thing is no good, abort
+      if(!any) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
 
   /* not used anymore - remove?
   Selector_Placeholder* Selector_List::find_placeholder()

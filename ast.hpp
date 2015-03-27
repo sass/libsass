@@ -2090,6 +2090,7 @@ namespace Sass {
     : Selector(pstate), Vectorized<Complex_Selector*>(s), wspace_(0)
     { }
     // virtual Selector_Placeholder* find_placeholder();
+    bool is_superselector_of(Selector_List* rhs);
     virtual int specificity()
     {
       int sum = 0;

@@ -32,6 +32,7 @@
 #define ARG(argname, argtype) get_arg<argtype>(argname, env, sig, pstate, backtrace)
 #define ARGR(argname, argtype, lo, hi) get_arg_r(argname, env, sig, pstate, lo, hi, backtrace)
 #define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, pstate, backtrace, ctx)
+#define ARGSEL(argname) get_arg_sel(argname, env, sig, pstate, backtrace, ctx, p_contextualize)
 
 namespace Sass {
   using std::stringstream;
@@ -77,9 +78,7 @@ namespace Sass {
 
     template <typename T>
     T* get_arg(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace)
-    {
-      auto rawVal = env[argname];
-      
+    {      
       // Minimal error handling -- the expectation is that built-ins will be written correctly!
       T* val = dynamic_cast<T*>(env[argname]);
       if (!val) {
@@ -120,6 +119,27 @@ namespace Sass {
         error(msg.str(), pstate, backtrace);
       }
       return val;
+    }
+    
+    Selector_List* get_arg_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contextualize_eval) {
+      To_String to_string;
+      Expression* exp = ARG(argname, Expression);
+      String_Constant* s;
+      
+      // Catch & as variable
+      s = dynamic_cast<String_Constant*>(exp);
+      if(!s) {
+        s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));
+      }
+      
+      string result_str(s->value());
+      result_str += ';'; // the parser looks for a brace to end the selector
+      
+      Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
+      p.block_stack.push_back(contextualize_eval->parent->last_block());
+      p.last_media_block = contextualize_eval->parent->media_block();
+      
+      return p.parse_selector_group();
     }
 
 #ifdef __MINGW32__
@@ -1586,7 +1606,10 @@ namespace Sass {
     Signature is_superselector_sig = "is-superselector($super, $sub)";
     BUILT_IN(is_superselector)
     {
-      return new (ctx.mem) String_Constant(pstate, "is_superselector NOT YET IMPLEMENTED");
+      Selector_List*  super = ARGSEL("$super");
+      Selector_List*  sub = ARGSEL("$sub");
+      bool result = super->is_superselector_of(sub);
+      return new (ctx.mem) Boolean(pstate, result);
     }
     Signature simple_selectors_sig = "simple_selectors($selector)";
     BUILT_IN(simple_selectors)
@@ -1615,9 +1638,10 @@ namespace Sass {
       for (size_t i = 0, L = sel->length(); i < L; ++i) {
         Simple_Selector* ss = (*sel)[i];
         string ss_string = ss->perform(&to_string) ;
-        
+              
         *l << new (ctx.mem) String_Constant(ss->pstate(), ss_string);
       }
+      
       
       return l;
     }
