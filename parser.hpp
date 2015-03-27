@@ -174,6 +174,14 @@ namespace Sass {
       return peek< mx >(peek < css_comments >(start));
     }
 
+    // at-directives that aren't just prefixes
+    template <prelexer mx>
+    const char* peek_directive(const char* start = 0)
+    {
+      // now peek a token (skip comments first)
+      return peek< sequence< mx, negate< identifier > > >(start);
+    }
+
 #ifdef __clang__
 
 #pragma clang diagnostic pop

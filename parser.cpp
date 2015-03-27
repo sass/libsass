@@ -77,7 +77,7 @@ namespace Sass {
         }
         if (!lex< one_plus< exactly<';'> > >()) error("top-level @import directive must be terminated by ';'", pstate);
       }
-      else if (peek< mixin >() || peek< function >()) {
+      else if (peek_directive< mixin >() || peek_directive< function >()) {
         (*root) << parse_definition();
       }
       else if (peek< variable >()) {
@@ -87,41 +87,41 @@ namespace Sass {
       /*else if (peek< sequence< optional< exactly<'*'> >, alternatives< identifier_schema, identifier >, optional_spaces, exactly<':'>, optional_spaces, exactly<'{'> > >(position)) {
         (*root) << parse_propset();
       }*/
-      else if (peek< include >() /* || peek< exactly<'+'> >() */) {
+      else if (peek_directive< include >() /* || peek< exactly<'+'> >() */) {
         Mixin_Call* mixin_call = parse_mixin_call();
         (*root) << mixin_call;
         if (!mixin_call->block() && !lex< one_plus< exactly<';'> > >()) error("top-level @include directive must be terminated by ';'", pstate);
       }
-      else if (peek< if_directive >()) {
+      else if (peek_directive< if_directive >()) {
         (*root) << parse_if_directive();
       }
-      else if (peek< for_directive >()) {
+      else if (peek_directive< for_directive >()) {
         (*root) << parse_for_directive();
       }
-      else if (peek< each_directive >()) {
+      else if (peek_directive< each_directive >()) {
         (*root) << parse_each_directive();
       }
-      else if (peek< while_directive >()) {
+      else if (peek_directive< while_directive >()) {
         (*root) << parse_while_directive();
       }
-      else if (peek< media >()) {
+      else if (peek_directive< media >()) {
         (*root) << parse_media_block();
       }
-      else if (peek< at_root >()) {
+      else if (peek_directive< at_root >()) {
         (*root) << parse_at_root_block();
       }
-      else if (peek< supports >()) {
+      else if (peek_directive< supports >()) {
         (*root) << parse_feature_block();
       }
-      else if (peek< warn >()) {
+      else if (peek_directive< warn >()) {
         (*root) << parse_warning();
         if (!lex< one_plus< exactly<';'> > >()) error("top-level @warn directive must be terminated by ';'", pstate);
       }
-      else if (peek< err >()) {
+      else if (peek_directive< err >()) {
         (*root) << parse_error();
         if (!lex< one_plus< exactly<';'> > >()) error("top-level @error directive must be terminated by ';'", pstate);
       }
-      else if (peek< dbg >()) {
+      else if (peek_directive< dbg >()) {
         (*root) << parse_debug();
         if (!lex< one_plus< exactly<';'> > >()) error("top-level @debug directive must be terminated by ';'", pstate);
       }
@@ -806,41 +806,41 @@ namespace Sass {
       else if (lex< line_comment >()) {
         // throw line comments away
       }
-      else if (peek< if_directive >()) {
+      else if (peek_directive< if_directive >()) {
         (*block) << parse_if_directive();
       }
-      else if (peek< for_directive >()) {
+      else if (peek_directive< for_directive >()) {
         (*block) << parse_for_directive();
       }
-      else if (peek< each_directive >()) {
+      else if (peek_directive< each_directive >()) {
         (*block) << parse_each_directive();
       }
-      else if (peek < while_directive >()) {
+      else if (peek_directive < while_directive >()) {
         (*block) << parse_while_directive();
       }
       else if (lex < return_directive >()) {
         (*block) << new (ctx.mem) Return(pstate, parse_list());
         semicolon = true;
       }
-      else if (peek< warn >()) {
+      else if (peek_directive< warn >()) {
         (*block) << parse_warning();
         semicolon = true;
       }
-      else if (peek< err >()) {
+      else if (peek_directive< err >()) {
         (*block) << parse_error();
         semicolon = true;
       }
-      else if (peek< dbg >()) {
+      else if (peek_directive< dbg >()) {
         (*block) << parse_debug();
         semicolon = true;
       }
       else if (stack.back() == function_def) {
         error("only variable declarations and control directives are allowed inside functions", pstate);
       }
-      else if (peek< mixin >() || peek< function >()) {
+      else if (peek_directive< mixin >() || peek_directive< function >()) {
         (*block) << parse_definition();
       }
-      else if (peek< include >(position)) {
+      else if (peek_directive< include >(position)) {
         Mixin_Call* the_call = parse_mixin_call();
         (*block) << the_call;
         // don't need a semicolon after a content block
@@ -868,13 +868,13 @@ namespace Sass {
         (*block) << new (ctx.mem) Extension(pstate, target);
         semicolon = true;
       }
-      else if (peek< media >()) {
+      else if (peek_directive< media >()) {
         (*block) << parse_media_block();
       }
-      else if (peek< supports >()) {
+      else if (peek_directive< supports >()) {
         (*block) << parse_feature_block();
       }
-      else if (peek< at_root >()) {
+      else if (peek_directive< at_root >()) {
         (*block) << parse_at_root_block();
       }
       // ignore the @charset directive for now
