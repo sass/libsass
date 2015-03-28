@@ -107,7 +107,13 @@ namespace Sass {
 
           // convert the extracted hex string to code point value
           // ToDo: Maybe we could do this without creating a substring
+#ifndef HAVE_CXX11_NULLPTR
+#define nullptr (char **)0
+#endif
           uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), nullptr, 16);
+#ifndef HAVE_CXX11_NULLPTR
+#undef nullptr
+#endif
 
           if (cp == 0) cp = 0xFFFD;
 
@@ -401,7 +407,13 @@ namespace Sass {
 
           // convert the extracted hex string to code point value
           // ToDo: Maybe we could do this without creating a substring
-          uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), nullptr, 16);
+#ifndef HAVE_CXX11_NULLPTR
+#define nullptr (char **)0
+#endif
+           uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), nullptr, 16);
+#ifndef HAVE_CXX11_NULLPTR
+#undef  nullptr
+#endif
 
           if (s[i + len] == ' ') ++ len;
 

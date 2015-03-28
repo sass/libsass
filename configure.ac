@@ -42,6 +42,8 @@ AC_TYPE_SIZE_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([floor getcwd strtol])
 
+CXX11_NULLPTR
+
 # Checks for testing.
 AC_ARG_ENABLE(tests, AS_HELP_STRING([--enable-tests], [enable testing the build]),
               [enable_tests="$enableval"], [enable_tests=no])
