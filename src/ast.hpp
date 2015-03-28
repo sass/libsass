@@ -159,6 +159,9 @@ namespace Sass {
 /////////////////////////////////////////////////////////////////////////////////////
 
 namespace std {
+#ifdef HAVE_CXX_ONLY_TR1_UNORDERED_MAP
+namespace tr1 {
+#endif
   template<>
   struct hash<Sass::Expression*>
   {
@@ -167,6 +170,9 @@ namespace std {
       return s->hash();
     }
   };
+#ifdef HAVE_CXX_ONLY_TR1_UNORDERED_MAP
+}
+#endif
   template<>
   struct equal_to<Sass::Expression*>
   {
@@ -251,7 +257,6 @@ namespace Sass {
   public:
     Hashed(size_t s = 0) : elements_(STDTR1(unordered_map)<Expression*, Expression*>(s)), list_(std::vector<Expression*>())
     { elements_.reserve(s); list_.reserve(s); reset_duplicate_key(); }
-    Hashed(size_t s = 0) : elements_(STDTR1(unordered_map)<Expression*, Expression*>(s)), list_(vector<Expression*>())
     { 
 #ifdef HAVE_CXX_UNORDERED_MAP_RESERVE
       elements_.reserve(s); list_.reserve(s);
