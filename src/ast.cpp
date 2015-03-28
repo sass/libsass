@@ -1717,7 +1717,7 @@ namespace Sass {
 #ifdef HAVE_CXX_UNORDERED_MAP_AT
       return elements_.at(k);
 #else
-      unordered_map<Expression*, Expression*>::const_iterator it = elements_.find(k);
+      std::_TR1_ unordered_map<Expression*, Expression*>::const_iterator it = elements_.find(k);
       if (it != elements_.end()) {
         return it->second;
       } else {

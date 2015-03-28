@@ -42,6 +42,7 @@ AC_TYPE_SIZE_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([floor getcwd strtol])
 
+CXX11_AUTO
 CXX11_UNORDERED_MAP
 
 # Checks for testing.
