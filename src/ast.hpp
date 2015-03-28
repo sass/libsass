@@ -9,7 +9,16 @@
 #include <iostream>
 #include <typeinfo>
 #include <algorithm>
+#ifdef   HAVE_CONFIG_H
+#include "config.h"
+#endif
+#ifdef   HAVE_CXX_ONLY_TR1_UNORDERED_MAP
+#include <tr1/unordered_map>
+#define  STDTR1(A) std::tr1::##A
+#else
 #include <unordered_map>
+#define  STDTR1(A) std::##A
+#endif
 
 #ifdef __clang__
 
@@ -231,7 +240,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////////
   class Hashed {
   private:
-    std::unordered_map<Expression*, Expression*> elements_;
+    STDTR1(unordered_map)<Expression*, Expression*> elements_;
     std::vector<Expression*> list_;
   protected:
     size_t hash_;
@@ -240,8 +249,15 @@ namespace Sass {
     void reset_duplicate_key() { duplicate_key_ = 0; }
     virtual void adjust_after_pushing(std::pair<Expression*, Expression*> p) { }
   public:
-    Hashed(size_t s = 0) : elements_(std::unordered_map<Expression*, Expression*>(s)), list_(std::vector<Expression*>())
+    Hashed(size_t s = 0) : elements_(STDTR1(unordered_map)<Expression*, Expression*>(s)), list_(std::vector<Expression*>())
     { elements_.reserve(s); list_.reserve(s); reset_duplicate_key(); }
+    Hashed(size_t s = 0) : elements_(STDTR1(unordered_map)<Expression*, Expression*>(s)), list_(vector<Expression*>())
+    { 
+#ifdef HAVE_CXX_UNORDERED_MAP_RESERVE
+      elements_.reserve(s); list_.reserve(s);
+#endif
+      reset_duplicate_key();
+    }
     virtual ~Hashed();
     size_t length() const                  { return list_.size(); }
     bool empty() const                     { return list_.empty(); }
@@ -249,7 +265,7 @@ namespace Sass {
     Expression* at(Expression* k) const;
     bool has_duplicate_key() const         { return duplicate_key_ != 0; }
     Expression* get_duplicate_key() const  { return duplicate_key_; }
-    const std::unordered_map<Expression*, Expression*> elements() { return elements_; }
+    const STDTR1(unordered_map)<Expression*, Expression*> elements() { return elements_; }
     Hashed& operator<<(std::pair<Expression*, Expression*> p)
     {
       reset_hash();
@@ -277,13 +293,13 @@ namespace Sass {
       reset_duplicate_key();
       return *this;
     }
-    const std::unordered_map<Expression*, Expression*>& pairs() const { return elements_; }
+    const STDTR1(unordered_map)<Expression*, Expression*>& pairs() const { return elements_; }
     const std::vector<Expression*>& keys() const { return list_; }
 
-    std::unordered_map<Expression*, Expression*>::iterator end() { return elements_.end(); }
-    std::unordered_map<Expression*, Expression*>::iterator begin() { return elements_.begin(); }
-    std::unordered_map<Expression*, Expression*>::const_iterator end() const { return elements_.end(); }
-    std::unordered_map<Expression*, Expression*>::const_iterator begin() const { return elements_.begin(); }
+    STDTR1(unordered_map)<Expression*, Expression*>::iterator end() { return elements_.end(); }
+    STDTR1(unordered_map)<Expression*, Expression*>::iterator begin() { return elements_.begin(); }
+    STDTR1(unordered_map)<Expression*, Expression*>::const_iterator end() const { return elements_.end(); }
+    STDTR1(unordered_map)<Expression*, Expression*>::const_iterator begin() const { return elements_.begin(); }
 
   };
   inline Hashed::~Hashed() { }

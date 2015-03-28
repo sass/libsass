@@ -1713,7 +1713,18 @@ namespace Sass {
   Expression* Hashed::at(Expression* k) const
   {
     if (elements_.count(k))
-    { return elements_.at(k); }
+    {
+#ifdef HAVE_CXX_UNORDERED_MAP_AT
+      return elements_.at(k);
+#else
+      unordered_map<Expression*, Expression*>::const_iterator it = elements_.find(k);
+      if (it != elements_.end()) {
+        return it->second;
+      } else {
+        throw std::out_of_range("item not found");
+      }
+#endif
+    }
     else { return &sass_null; }
   }
 
