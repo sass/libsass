@@ -41,6 +41,8 @@ namespace Sass {
     vector<const char*> sources;
     // absolute paths to includes
     vector<string> included_files;
+    // number of included files
+    int num_included_files;
     // relative links to includes
     vector<string> include_links;
     // vectors above have same size
@@ -118,7 +120,7 @@ namespace Sass {
     char* generate_source_map();
 
     vector<string> get_included_files(size_t skip = 0);
-
+    int get_num_included_files();
   private:
     void collect_plugin_paths(const char* paths_str);
     void collect_plugin_paths(const char** paths_array);

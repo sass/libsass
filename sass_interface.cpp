@@ -141,7 +141,7 @@ extern "C" {
       c_ctx->source_map_string = cpp_ctx.generate_source_map();
       c_ctx->error_message = 0;
       c_ctx->error_status = 0;
-
+      c_ctx->num_included_files = cpp_ctx.get_num_included_files();
       copy_strings(cpp_ctx.get_included_files(1), &c_ctx->included_files, 1);
     }
     catch (Sass_Error& e) {
@@ -231,7 +231,7 @@ extern "C" {
       c_ctx->source_map_string = cpp_ctx.generate_source_map();
       c_ctx->error_message = 0;
       c_ctx->error_status = 0;
-
+      c_ctx->num_included_files = cpp_ctx.get_num_included_files();
       copy_strings(cpp_ctx.get_included_files(), &c_ctx->included_files);
     }
     catch (Sass_Error& e) {
