@@ -14,6 +14,7 @@ namespace Sass {
   using namespace std;
 
   class Context;
+  class Node;
 
   typedef Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> > ExtensionSubsetMap;
 
@@ -38,6 +39,9 @@ namespace Sass {
 
     template <typename U>
     void fallback(U x) { return fallback_impl(x); }
+    
+    static Node StaticWeave(Node& path, Context& ctx);
+    static Node StaticSubweave(Node& one, Node& two, Context& ctx);
   };
 
 }

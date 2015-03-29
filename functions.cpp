@@ -1598,10 +1598,17 @@ namespace Sass {
     {
       return new (ctx.mem) String_Constant(pstate, "selector_replace");
     }
-    Signature selector_unify_sig = "selector-unify($selectors1, $selector2)";
+    Signature selector_unify_sig = "selector-unify($selector1, $selector2)";
     BUILT_IN(selector_unify)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_unify NOT YET IMPLEMENTED");
+      Selector_List*  selector1 = ARGSEL("$selector1");
+      Selector_List*  selector2 = ARGSEL("$selector2");
+
+      Selector_List* result = selector1->unify_with(selector2, ctx);
+//      return new (ctx.mem) Boolean(pstate, result);
+      
+      To_String to_string;
+      return new (ctx.mem) String_Constant(pstate, result->perform(&to_string) );
     }
     Signature is_superselector_sig = "is-superselector($super, $sub)";
     BUILT_IN(is_superselector)

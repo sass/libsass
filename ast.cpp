@@ -1,6 +1,9 @@
 #include "ast.hpp"
 #include "context.hpp"
 #include "contextualize.hpp"
+#include "node.hpp"
+#include "sass_util.hpp"
+#include "extend.hpp"
 #include "to_string.hpp"
 #include <set>
 #include <algorithm>
@@ -527,6 +530,98 @@ namespace Sass {
       }
     }
     return true;
+  }
+  
+  Selector_List* Selector_List::unify_with(Selector_List* rhs, Context& ctx) {
+
+    
+#ifdef DEBUG
+    To_String to_string;
+    string lhs_string = perform(&to_string);
+    string rhs_string = rhs->perform(&to_string);
+#endif
+    
+
+    std::set< Selector_List*, std::function< bool(Selector_List*, Selector_List*) > > unique_selector_list([] ( Selector_List* lhs, Selector_List* rhs ) {
+      return lhs == rhs;
+    } );
+    
+    for (size_t lhs_i = 0, lhs_L = length(); lhs_i < lhs_L; ++lhs_i) {
+      Complex_Selector* seq1 = (*this)[lhs_i];
+      for(size_t rhs_i = 0, rhs_L = rhs->length(); rhs_i < rhs_L; ++rhs_i) {
+        Complex_Selector* seq2 = (*rhs)[rhs_i];
+        Selector_List* result = seq1->unify_with(seq2, ctx);
+        
+        unique_selector_list.insert( result );
+      }
+    }
+    
+    
+    std::set< Complex_Selector*, std::function< bool(Complex_Selector*, Complex_Selector*) > > unique_complex_selectors([] ( Complex_Selector* lhs, Complex_Selector* rhs ) {
+      return lhs == rhs;
+    } );
+
+    
+    
+    for (auto itr = unique_selector_list.begin(); itr != unique_selector_list.end(); ++itr) {
+      Selector_List* aSelectorList = *itr;
+      
+      for (size_t i = 0, L = aSelectorList->length(); i < L; ++i) {
+          unique_complex_selectors.insert(unique_complex_selectors.begin(), (*aSelectorList)[i] );
+      }
+    }
+    
+    Selector_List* final_result = new (ctx.mem) Selector_List(pstate());
+    for (auto itr = unique_complex_selectors.begin(); itr != unique_complex_selectors.end(); ++itr) {
+      *final_result << *itr;
+    }
+    
+    return final_result;
+  }
+  
+
+  Selector_List* Complex_Selector::unify_with(Complex_Selector* other, Context& ctx) {
+
+    Compound_Selector* thisBase = base();
+    Compound_Selector* rhsBase = other->base();
+    
+    if( thisBase == 0 || rhsBase == 0 ) return 0;
+    Compound_Selector* unified = rhsBase->unify_with(thisBase, ctx);
+    if( unified == 0 ) return 0;
+    
+    Node lhsNode = complexSelectorToNode(this, ctx);
+    Node rhsNode = complexSelectorToNode(other, ctx);
+    
+    // Create a temp Complex_Selector, turn it into a Node, and combine it with the existing RHS node
+    Complex_Selector* fakeComplexSelector = new (ctx.mem) Complex_Selector(ParserState("[NODE]"), Complex_Selector::ANCESTOR_OF, unified, NULL);
+    Node unifiedNode = complexSelectorToNode(fakeComplexSelector, ctx);
+    rhsNode.plus(unifiedNode);
+    
+    Node node = Extend::StaticSubweave(lhsNode, rhsNode, ctx);
+    node = flatten(node, ctx);
+    
+    std::set< Complex_Selector*, std::function< bool(Complex_Selector*, Complex_Selector*) > > sel_set([] ( Complex_Selector* lhs, Complex_Selector* rhs ) {
+      return lhs == rhs;
+    } );
+    
+    for (NodeDeque::iterator iter = node.collection()->begin(), iterBegin = node.collection()->begin(), iterEnd = node.collection()->end(); iter != iterEnd; iter++) {
+      Node childNode = *iter;
+      if( childNode.isSelector()){
+        Complex_Selector* sel = childNode.selector();
+        sel_set.insert(sel_set.begin(), sel);
+      }
+    }
+    
+#ifdef DEBUG
+    To_String to_string;
+//    string lhs_string = result->perform(&to_string);
+#endif
+//    make_set<int>([](int l, int r){ return l<r; });
+    Selector_List* result = new (ctx.mem) Selector_List(pstate());
+    for (auto itr = sel_set.begin(); itr != sel_set.end(); ++itr) {
+      *result << *itr;
+    }
+    return result;
   }
   
 

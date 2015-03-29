@@ -1294,6 +1294,168 @@ namespace Sass {
     return pathsResult;
 
   }
+  
+  Node Extend::StaticSubweave(Node& one, Node& two, Context& ctx) {
+    // Check for the simple cases
+    if (one.collection()->size() == 0) {
+      Node out = Node::createCollection();
+      out.collection()->push_back(two);
+      return out;
+    }
+    if (two.collection()->size() == 0) {
+      Node out = Node::createCollection();
+      out.collection()->push_back(one);
+      return out;
+    }
+    
+    
+    
+    Node seq1 = Node::createCollection();
+    seq1.plus(one);
+    Node seq2 = Node::createCollection();
+    seq2.plus(two);
+    
+    DEBUG_PRINTLN(SUBWEAVE, "SUBWEAVE ONE: " << seq1)
+    DEBUG_PRINTLN(SUBWEAVE, "SUBWEAVE TWO: " << seq2)
+    
+    Node init = mergeInitialOps(seq1, seq2, ctx);
+    if (init.isNil()) {
+      return Node::createNil();
+    }
+    
+    DEBUG_PRINTLN(SUBWEAVE, "INIT: " << init)
+    
+    Node res = Node::createCollection();
+    Node fin = mergeFinalOps(seq1, seq2, ctx, res);
+    if (fin.isNil()) {
+      return Node::createNil();
+    }
+    
+    DEBUG_PRINTLN(SUBWEAVE, "FIN: " << fin)
+    
+    
+    // Moving this line up since fin isn't modified between now and when it happened before
+    // fin.map {|sel| sel.is_a?(Array) ? sel : [sel]}
+    
+    for (NodeDeque::iterator finIter = fin.collection()->begin(), finEndIter = fin.collection()->end();
+         finIter != finEndIter; ++finIter) {
+      
+      Node& childNode = *finIter;
+      
+      if (!childNode.isCollection()) {
+        Node wrapper = Node::createCollection();
+        wrapper.collection()->push_back(childNode);
+        childNode = wrapper;
+      }
+      
+    }
+    
+    DEBUG_PRINTLN(SUBWEAVE, "FIN MAPPED: " << fin)
+    
+    
+    
+    Node groupSeq1 = groupSelectors(seq1, ctx);
+    DEBUG_PRINTLN(SUBWEAVE, "SEQ1: " << groupSeq1)
+    
+    Node groupSeq2 = groupSelectors(seq2, ctx);
+    DEBUG_PRINTLN(SUBWEAVE, "SEQ2: " << groupSeq2)
+    
+    
+    ComplexSelectorDeque groupSeq1Converted;
+    nodeToComplexSelectorDeque(groupSeq1, groupSeq1Converted, ctx);
+    
+    ComplexSelectorDeque groupSeq2Converted;
+    nodeToComplexSelectorDeque(groupSeq2, groupSeq2Converted, ctx);
+    
+    ComplexSelectorDeque out;
+    LcsCollectionComparator collectionComparator(ctx);
+    lcs(groupSeq2Converted, groupSeq1Converted, collectionComparator, ctx, out);
+    Node seqLcs = complexSelectorDequeToNode(out, ctx);
+    
+    DEBUG_PRINTLN(SUBWEAVE, "SEQLCS: " << seqLcs)
+    
+    
+    Node initWrapper = Node::createCollection();
+    initWrapper.collection()->push_back(init);
+    Node diff = Node::createCollection();
+    diff.collection()->push_back(initWrapper);
+    
+    DEBUG_PRINTLN(SUBWEAVE, "DIFF INIT: " << diff)
+    
+    
+    while (!seqLcs.collection()->empty()) {
+      ParentSuperselectorChunker superselectorChunker(seqLcs, ctx);
+      Node chunksResult = chunks(groupSeq1, groupSeq2, superselectorChunker);
+      diff.collection()->push_back(chunksResult);
+      
+      Node lcsWrapper = Node::createCollection();
+      lcsWrapper.collection()->push_back(seqLcs.collection()->front());
+      seqLcs.collection()->pop_front();
+      diff.collection()->push_back(lcsWrapper);
+      
+      groupSeq1.collection()->pop_front();
+      groupSeq2.collection()->pop_front();
+    }
+    
+    DEBUG_PRINTLN(SUBWEAVE, "DIFF POST LCS: " << diff)
+    
+    
+    DEBUG_PRINTLN(SUBWEAVE, "CHUNKS: ONE=" << groupSeq1 << " TWO=" << groupSeq2)
+    
+    
+    SubweaveEmptyChunker emptyChunker;
+    Node chunksResult = chunks(groupSeq1, groupSeq2, emptyChunker);
+    diff.collection()->push_back(chunksResult);
+    
+    
+    DEBUG_PRINTLN(SUBWEAVE, "DIFF POST CHUNKS: " << diff)
+    
+    
+    diff.collection()->insert(diff.collection()->end(), fin.collection()->begin(), fin.collection()->end());
+    
+    DEBUG_PRINTLN(SUBWEAVE, "DIFF POST FIN MAPPED: " << diff)
+    
+    // JMA - filter out the empty nodes (use a new collection, since iterator erase() invalidates the old collection)
+    Node diffFiltered = Node::createCollection();
+    for (NodeDeque::iterator diffIter = diff.collection()->begin(), diffEndIter = diff.collection()->end();
+         diffIter != diffEndIter; ++diffIter) {
+      Node& node = *diffIter;
+      if (node.collection() && !node.collection()->empty()) {
+        diffFiltered.collection()->push_back(node);
+      }
+    }
+    diff = diffFiltered;
+    
+    DEBUG_PRINTLN(SUBWEAVE, "DIFF POST REJECT: " << diff)
+    
+    
+    Node pathsResult = paths(diff, ctx);
+    
+    DEBUG_PRINTLN(SUBWEAVE, "PATHS: " << pathsResult)
+    
+    
+    // We're flattening in place
+    for (NodeDeque::iterator pathsIter = pathsResult.collection()->begin(), pathsEndIter = pathsResult.collection()->end();
+         pathsIter != pathsEndIter; ++pathsIter) {
+      
+      Node& child = *pathsIter;
+      child = flatten(child, ctx);
+    }
+    
+    DEBUG_PRINTLN(SUBWEAVE, "FLATTENED: " << pathsResult)
+    
+    
+    /*
+     TODO: implement
+     rejected = mapped.reject {|p| path_has_two_subjects?(p)}
+     $stderr.puts "REJECTED: #{rejected}"
+     */
+    
+    
+    return pathsResult;
+    
+  }
+  
   /*
   // disabled to avoid clang warning [-Wunused-function]
   static Node subweaveNaive(const Node& one, const Node& two, Context& ctx) {
@@ -1449,6 +1611,67 @@ namespace Sass {
 
     return befores;
   }
+  
+  Node Extend::StaticWeave(Node& path, Context& ctx) {
+    
+    DEBUG_PRINTLN(WEAVE, "WEAVE: " << path)
+    
+    Node befores = Node::createCollection();
+    befores.collection()->push_back(Node::createCollection());
+    
+    Node afters = Node::createCollection();
+    afters.plus(path);
+    
+    while (!afters.collection()->empty()) {
+      DEBUG_PRINTLN(WEAVE, "afters: " << afters)
+      
+      Node current = afters.collection()->front().clone(ctx);
+      afters.collection()->pop_front();
+      DEBUG_PRINTLN(WEAVE, "CURRENT: " << current)
+      
+//      DEBUG_PRINTLN(WEAVE, "afters: " << afters)
+      
+      Node last_current = Node::createCollection();
+      auto z0 = last_current.collection();
+      auto z1 = current.collection();
+      auto z2 = z1->back();
+      z0->push_back( z2 );
+      current.collection()->pop_back();
+      DEBUG_PRINTLN(WEAVE, "CURRENT POST POP: " << current)
+      DEBUG_PRINTLN(WEAVE, "LAST CURRENT: " << last_current)
+      
+      Node tempResult = Node::createCollection();
+      
+      for (NodeDeque::iterator beforesIter = befores.collection()->begin(), beforesEndIter = befores.collection()->end(); beforesIter != beforesEndIter; beforesIter++) {
+        Node& before = *beforesIter;
+        
+        Node sub = subweave(before, current, ctx);
+        
+        DEBUG_PRINTLN(WEAVE, "SUB: " << sub)
+        
+        if (sub.isNil()) {
+          return Node::createCollection();
+        }
+        
+        for (NodeDeque::iterator subIter = sub.collection()->begin(), subEndIter = sub.collection()->end(); subIter != subEndIter; subIter++) {
+          Node& seqs = *subIter;
+          
+          Node toPush = Node::createCollection();
+          toPush.plus(seqs);
+          toPush.plus(last_current);
+          
+          tempResult.collection()->push_back(toPush);
+          
+        }
+      }
+      
+      befores = tempResult;
+      
+    }
+    
+    return befores;
+  }
+  
 
 
 

@@ -470,6 +470,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				PRODUCT_MODULE_NAME = "$(PRODUCT_NAME:c99extidentifier)";
 				PRODUCT_NAME = sass;
+				RUN_CLANG_STATIC_ANALYZER = NO;
 				SYMROOT = build;
 			};
 			name = Debug;
