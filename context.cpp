@@ -89,6 +89,7 @@ namespace Sass {
     if (input_path == "") input_path = "stdin";
     if (output_path == "") output_path = "stdout";
 
+    num_included_files = 0;
     include_paths.push_back(cwd);
     collect_include_paths(initializers.include_paths_c_str());
     collect_include_paths(initializers.include_paths_array());
@@ -220,6 +221,7 @@ namespace Sass {
   {
     sources.push_back(contents);
     included_files.push_back(abs_path);
+    num_included_files = num_included_files + 1;
     queue.push_back(Sass_Queued(load_path, abs_path, contents));
     emitter.add_source_index(sources.size() - 1);
     include_links.push_back(resolve_relative_path(abs_path, source_map_file, cwd));
@@ -393,6 +395,11 @@ namespace Sass {
       // the skip solution seems more robust, as we may have real files named stdin
       // includes.erase( std::remove( includes.begin(), includes.end(), "stdin" ), includes.end() );
       return includes;
+  }
+
+  int Context::get_num_included_files(size_t skip)
+  {
+    return num_included_files - skip;
   }
 
   string Context::get_cwd()

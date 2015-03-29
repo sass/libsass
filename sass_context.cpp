@@ -132,7 +132,7 @@ extern "C" {
 
     // report imported files
     char** included_files;
-
+    int num_included_files;
   };
 
   // struct for file compilation
@@ -472,8 +472,10 @@ extern "C" {
       }
 
       // copy the included files on to the context (dont forget to free)
-      if (root) copy_strings(cpp_ctx->get_included_files(skip), &c_ctx->included_files, skip);
-
+      if (root) {
+        copy_strings(cpp_ctx->get_included_files(skip), &c_ctx->included_files, skip);
+        c_ctx->num_included_files = cpp_ctx->get_num_included_files(skip);
+      }
       // return parsed block
       return root;
 
@@ -728,6 +730,7 @@ extern "C" {
     ctx->source_map_file = 0;
     ctx->source_map_root = 0;
     ctx->included_files = 0;
+    ctx->num_included_files = 0;
     // now clear the options
     sass_clear_options(ctx);
   }
@@ -787,6 +790,7 @@ extern "C" {
   IMPLEMENT_SASS_CONTEXT_GETTER(const char*, output_string);
   IMPLEMENT_SASS_CONTEXT_GETTER(const char*, source_map_string);
   IMPLEMENT_SASS_CONTEXT_GETTER(char**, included_files);
+  IMPLEMENT_SASS_CONTEXT_GETTER(int, num_included_files);
 
   // Take ownership of memory (value on context is set to 0)
   IMPLEMENT_SASS_CONTEXT_TAKER(char*, error_json);
