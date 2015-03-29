@@ -69,6 +69,8 @@ namespace Sass {
     static Node createCollection(const NodeDeque& values);
 
     static Node createNil();
+    
+    static Node naiveTrim(Node& seqses, Context& ctx);
 
     Node clone(Context& ctx) const;
 
@@ -113,7 +115,7 @@ namespace Sass {
 #endif
   Node complexSelectorToNode(Complex_Selector* pToConvert, Context& ctx);
   Complex_Selector* nodeToComplexSelector(const Node& toConvert, Context& ctx);
-
+  
   bool nodesEqual(const Node& one, const Node& two, bool simpleSelectorOrderDependent);
 
 }

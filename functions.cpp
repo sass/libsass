@@ -8,6 +8,8 @@
 #include "constants.hpp"
 #include "to_string.hpp"
 #include "inspect.hpp"
+#include "extend.hpp"
+#include "node.hpp"
 #include "eval.hpp"
 #include "util.hpp"
 #include "utf8_string.hpp"
@@ -32,7 +34,7 @@
 #define ARG(argname, argtype) get_arg<argtype>(argname, env, sig, pstate, backtrace)
 #define ARGR(argname, argtype, lo, hi) get_arg_r(argname, env, sig, pstate, lo, hi, backtrace)
 #define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, pstate, backtrace, ctx)
-#define ARGSEL(argname) get_arg_sel(argname, env, sig, pstate, backtrace, ctx, p_contextualize)
+#define ARGSEL(argname, seltype, contextualize) get_arg_sel<seltype>(argname, env, sig, pstate, backtrace, ctx, contextualize)
 
 namespace Sass {
   using std::stringstream;
@@ -78,7 +80,7 @@ namespace Sass {
 
     template <typename T>
     T* get_arg(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace)
-    {      
+    {
       // Minimal error handling -- the expectation is that built-ins will be written correctly!
       T* val = dynamic_cast<T*>(env[argname]);
       if (!val) {
@@ -121,25 +123,50 @@ namespace Sass {
       return val;
     }
     
-    Selector_List* get_arg_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contextualize_eval) {
-      To_String to_string;
+    ////////////////////////////////////////////////
+    // RETREIVE SELECTOR FROM ARGS HELPER FUNCTIONS
+    ////////////////////////////////////////////////
+#define create_sel_parser(CONTEXTUALIZE)                                \
+To_String to_string;                                                    \
+String_Constant* s;                                                     \
+                                                                        \
+/* Catch '&' as variable. Bug? */                                       \
+s = dynamic_cast<String_Constant*>(exp);                                \
+if(!s) {                                                                \
+  s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));  \
+}                                                                       \
+                                                                        \
+string result_str(s->value());                                          \
+result_str += ';';/* the parser looks for a brace to end the selector*/ \
+                                                                        \
+Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);         \
+if( CONTEXTUALIZE->parent ) {                                           \
+  p.block_stack.push_back(CONTEXTUALIZE->parent->last_block());         \
+  p.last_media_block = CONTEXTUALIZE->parent->media_block();            \
+}                                                                       \
+
+    template <typename T>
+    T* get_arg_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contexualize);
+    
+    template <>
+    Complex_Selector* get_arg_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contexualize) {
       Expression* exp = ARG(argname, Expression);
-      String_Constant* s;
-      
-      // Catch & as variable
-      s = dynamic_cast<String_Constant*>(exp);
-      if(!s) {
-        s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));
-      }
-      
-      string result_str(s->value());
-      result_str += ';'; // the parser looks for a brace to end the selector
-      
-      Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
-      p.block_stack.push_back(contextualize_eval->parent->last_block());
-      p.last_media_block = contextualize_eval->parent->media_block();
-      
+      create_sel_parser(contexualize);
+      return p.parse_selector_combination();
+    }
+    
+    template <>
+    Selector_List* get_arg_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contexualize) {
+      Expression* exp = ARG(argname, Expression);
+      create_sel_parser(contexualize);
       return p.parse_selector_group();
+    }
+    
+    template <>
+    Compound_Selector* get_arg_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contexualize) {
+      Expression* exp = ARG(argname, Expression);
+      create_sel_parser(contexualize);
+      return p.parse_simple_selector_sequence();
     }
 
 #ifdef __MINGW32__
@@ -1594,60 +1621,225 @@ namespace Sass {
     Signature selector_nest_sig = "selector-nest($selectors...)";
     BUILT_IN(selector_nest)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_nest");
+      To_String to_string;
+      List* arglist = ARG("$selectors", List);
+      
+      // Not enough parameters
+      if( arglist->length() == 0 )
+        error("$selectors: At least one selector must be passed", pstate);
+      
+      // Parse args into vector of selectors
+      vector<Selector_List*> parsedSelectors;
+      for (size_t i = 0, L = arglist->length(); i < L; ++i) {
+        Expression* exp = dynamic_cast<Expression*>(arglist->value_at_index(i));
+        create_sel_parser(p_contextualize);
+        Selector_List* sel = p.parse_selector_group();
+        
+        parsedSelectors.push_back(sel);
+      }
+      
+      // Nothing to do
+      if( parsedSelectors.empty() ) {
+        return new (ctx.mem) Null(pstate);
+      }
+      
+      // Set the first element as the `result`, keep appending to as we go down the parsedSelector vector.
+      std::vector<Selector_List*>::iterator itr = parsedSelectors.begin();
+      Selector_List* result = *itr;
+      ++itr;
+      
+      for(;itr != parsedSelectors.end(); ++itr) {
+        Selector_List* child = *itr;
+        vector<Complex_Selector*> newElements;
+
+        // For every COMPLEX_SELECTOR in `child`
+        // For every COMPLEX_SELECTOR in `result`
+            // let parentSeqClone equal a copy of result->elements[i]
+            // let childSeq equal child->elements[j]
+              // Set childSeq as the new innermost tail of parentSeqClone
+            // Add parentSeqClone to the newElements
+        // Replace result->elements with newElements
+        for (size_t i = 0, resultLen = result->length(); i < resultLen; ++i) {
+          for (size_t j = 0, childLen = child->length(); j < childLen; ++j) {
+            Complex_Selector* parentSeqClone = (*result)[i]->cloneFully(ctx);
+            Complex_Selector*  childSeq = (*child)[j];
+            
+            parentSeqClone->innermost()->tail(childSeq); // Set seq as the new tail of parentSeqClone
+            newElements.push_back(parentSeqClone);
+          }
+        }
+      
+        result->elements(newElements);
+      }
+      
+#ifdef DEBUG
+      string s = result->perform(&to_string);
+      result->mCachedSelector(s);
+//      std::cout << "\n\tEndChild:" << result->mCachedSelector() << std::endl;
+#endif
+      
+      Listize listize(ctx);
+      return result->perform(&listize);
     }
+    
     Signature selector_append_sig = "selector-append($selectors...)";
     BUILT_IN(selector_append)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_append NOT YET IMPLEMENTED");
+      To_String to_string;
+      List* arglist = ARG("$selectors", List);
+      
+      // Not enough parameters
+      if( arglist->length() == 0 )
+        error("$selectors: At least one selector must be passed", pstate);
+      
+      // Parse args into vector of selectors
+      vector<Selector_List*> parsedSelectors;
+      for (size_t i = 0, L = arglist->length(); i < L; ++i) {
+        Expression* exp = dynamic_cast<Expression*>(arglist->value_at_index(i));
+        create_sel_parser(p_contextualize);
+        Selector_List* sel = p.parse_selector_group();
+        
+        parsedSelectors.push_back(sel);
+      }
+      
+      // Nothing to do
+      if( parsedSelectors.empty() ) {
+        return new (ctx.mem) Null(pstate);
+      }
+      
+      // Set the first element as the `result`, keep appending to as we go down the parsedSelector vector.
+      std::vector<Selector_List*>::iterator itr = parsedSelectors.begin();
+      Selector_List* result = *itr;
+      ++itr;
+      
+      for(;itr != parsedSelectors.end(); ++itr) {
+        Selector_List* child = *itr;
+        vector<Complex_Selector*> newElements;
+        
+        // For every COMPLEX_SELECTOR in `result`
+        // For every COMPLEX_SELECTOR in `child`
+          // let parentSeqClone equal a copy of result->elements[i]
+          // let childSeq equal child->elements[j]
+          // Append all of childSeq head elements into parentSeqClone
+          // Set the innermost tail of parentSeqClone, to childSeq's tail
+        // Replace result->elements with newElements
+        for (size_t i = 0, resultLen = result->length(); i < resultLen; ++i) {
+          for (size_t j = 0, childLen = child->length(); j < childLen; ++j) {
+            Complex_Selector* parentSeqClone = (*result)[i]->cloneFully(ctx);
+            Complex_Selector* childSeq = (*child)[j];
+            Complex_Selector* base = childSeq->tail();
+            
+            // Must be a simple sequence
+            if( childSeq->combinator() != Complex_Selector::Combinator::ANCESTOR_OF ) {
+              string msg("Can't append  `");
+              msg += childSeq->perform(&to_string);
+              msg += "` to `";
+              msg += parentSeqClone->perform(&to_string);;
+              msg += "`";
+              error(msg, pstate, backtrace);
+            }
+            
+            // Cannot be a Universal selector
+            Type_Selector* pType = dynamic_cast<Type_Selector*>(base->head()->first());
+            if(pType && pType->name() == "*") {
+              string msg("Can't append  `");
+              msg += childSeq->perform(&to_string);
+              msg += "` to `";
+              msg += parentSeqClone->perform(&to_string);;
+              msg += "`";
+              error(msg, pstate, backtrace);
+            }
+            
+            // MG TODO: Add check for namespace stuff
+            
+            // append any selectors in childSeq's head
+            *(parentSeqClone->tail()->head()) += (base->head());
+
+            // Set parentSeqClone new tail
+            parentSeqClone->innermost()->tail( base->tail() );
+            
+            newElements.push_back(parentSeqClone);
+          }
+        }
+        
+        result->elements(newElements);
+      }
+      
+#ifdef DEBUG
+      string s = result->perform(&to_string);
+      result->mCachedSelector(s);
+//      std::cout << "\n\result:" << result->mCachedSelector() << std::endl;
+#endif
+
+      Listize listize(ctx);
+      return result->perform(&listize);
     }
+    
     Signature selector_extend_sig = "selector-extend($selector, $extendee, $extender)";
     BUILT_IN(selector_extend)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_extend NOT YET IMPLEMENTED");
+      To_String to_string;
+      
+      Selector_List*  selector = ARGSEL("$selector", Selector_List, p_contextualize);
+      Selector_List*  extendee = ARGSEL("$extendee", Selector_List, p_contextualize);
+      Selector_List*  extender = ARGSEL("$extender", Selector_List, p_contextualize);
+      
+      ExtensionSubsetMap subset_map;
+      extender->populate_extends(extendee, ctx, subset_map);
+      
+      bool extendedSomething;
+      Selector_List* result = Extend::extendSelectorList(selector, ctx, subset_map, false, extendedSomething);
+
+      Listize listize(ctx);
+      return result->perform(&listize);
     }
+    
     Signature selector_replace_sig = "selector-replace($selector, $original, $replacement)";
     BUILT_IN(selector_replace)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_replace");
+      Selector_List*  selector = ARGSEL("$selector", Selector_List, p_contextualize);
+      Selector_List*  original = ARGSEL("$original", Selector_List, p_contextualize);
+      Selector_List*  replacement = ARGSEL("$replacement", Selector_List, p_contextualize);
+      
+      ExtensionSubsetMap subset_map;
+      replacement->populate_extends(original, ctx, subset_map);
+      
+      bool extendedSomething; 
+      Selector_List* result = Extend::extendSelectorList(selector, ctx, subset_map, true, extendedSomething);
+      
+      Listize listize(ctx);
+      return result->perform(&listize);
     }
-    Signature selector_unify_sig = "selector-unify($selectors1, $selector2)";
+    
+    Signature selector_unify_sig = "selector-unify($selector1, $selector2)";
     BUILT_IN(selector_unify)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_unify NOT YET IMPLEMENTED");
+      Selector_List*  selector1 = ARGSEL("$selector1", Selector_List, p_contextualize);
+      Selector_List*  selector2 = ARGSEL("$selector2", Selector_List, p_contextualize);
+
+      Selector_List* result = selector1->unify_with(selector2, ctx);
+      Listize listize(ctx);
+      return result->perform(&listize);
     }
+    
     Signature is_superselector_sig = "is-superselector($super, $sub)";
     BUILT_IN(is_superselector)
     {
-      Selector_List*  super = ARGSEL("$super");
-      Selector_List*  sub = ARGSEL("$sub");
+      Selector_List*  super = ARGSEL("$super", Selector_List, p_contextualize);
+      Selector_List*  sub = ARGSEL("$sub", Selector_List, p_contextualize);
+      
       bool result = super->is_superselector_of(sub);
       return new (ctx.mem) Boolean(pstate, result);
     }
+    
     Signature simple_selectors_sig = "simple_selectors($selector)";
     BUILT_IN(simple_selectors)
     {
+      Compound_Selector* sel = ARGSEL("$selector", Compound_Selector, p_contextualize);
+      
       To_String to_string;
-      
-      Expression* exp = ARG("$selector", Expression);
-      String_Constant* s;
-      
-      // Catch & as variable
-      s = dynamic_cast<String_Constant*>(exp);
-      if(!s) {
-        s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));
-      }
-      
-      string result_str(s->value());
-      result_str += ';'; // the parser looks for a brace to end the selector
-      
-      Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
-      p.block_stack.push_back(p_contextualize->parent->last_block());
-      p.last_media_block = p_contextualize->parent->media_block();
-      
-      Compound_Selector* sel = p.parse_simple_selector_sequence();
-      
       List* l = new (ctx.mem) List(sel->pstate(), sel->length(), List::COMMA);
+      
       for (size_t i = 0, L = sel->length(); i < L; ++i) {
         Simple_Selector* ss = (*sel)[i];
         string ss_string = ss->perform(&to_string) ;
@@ -1662,26 +1854,9 @@ namespace Sass {
     Signature selector_parse_sig = "selector-parse($selector)";
     BUILT_IN(selector_parse)
     {
-      To_String to_string;
-      
-      Expression* exp = ARG("$selector", Expression);
-      String_Constant* s;
-      
-      // Catch & as variable
-      s = dynamic_cast<String_Constant*>(exp);
-      if(!s) {
-        s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));
-      }
-
-      string result_str(s->value());
-      result_str += '{'; // the parser looks for a brace to end the selector
-      
-      Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
-      p.block_stack.push_back(p_contextualize->parent->last_block());
-      p.last_media_block = p_contextualize->parent->media_block();
-    
-      Selector_List* sel = p.parse_selector_group();
-      return new (ctx.mem) String_Constant(pstate, sel->perform(&to_string));
+      Selector_List* sel = ARGSEL("$selector", Selector_List, p_contextualize);
+      Listize listize(ctx);
+      return sel->perform(&listize);
     }
   }
 }
