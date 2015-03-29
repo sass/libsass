@@ -89,6 +89,7 @@ namespace Sass {
     if (input_path == "") input_path = "stdin";
     if (output_path == "") output_path = "stdout";
 
+    num_included_files = 0;
     include_paths.push_back(cwd);
     collect_include_paths(initializers.include_paths_c_str());
     collect_include_paths(initializers.include_paths_array());
@@ -396,9 +397,9 @@ namespace Sass {
       return includes;
   }
 
-  int Context::get_num_included_files()
+  int Context::get_num_included_files(size_t skip)
   {
-    return num_included_files;
+    return num_included_files - skip;
   }
 
   string Context::get_cwd()

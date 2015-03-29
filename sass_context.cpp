@@ -474,7 +474,7 @@ extern "C" {
       // copy the included files on to the context (dont forget to free)
       if (root) {
         copy_strings(cpp_ctx->get_included_files(skip), &c_ctx->included_files, skip);
-        c_ctx->num_included_files = cpp_ctx->get_num_included_files();
+        c_ctx->num_included_files = cpp_ctx->get_num_included_files(skip);
       }
       // return parsed block
       return root;

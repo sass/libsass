@@ -120,7 +120,7 @@ namespace Sass {
     char* generate_source_map();
 
     vector<string> get_included_files(size_t skip = 0);
-    int get_num_included_files();
+    int get_num_included_files(size_t skip = 0);
   private:
     void collect_plugin_paths(const char* paths_str);
     void collect_plugin_paths(const char** paths_array);
