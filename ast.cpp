@@ -567,8 +567,10 @@ namespace Sass {
         
         if( result ) {
           for(size_t i = 0, L = result->length(); i < L; ++i) {
-          std::cout << "Counter:" << counter << " result:" << (*result)[i]->perform(&to_string) << std::endl;
-          unified_complex_selectors.push_back( (*result)[i] );
+#ifdef DEBUG
+            std::cout << "Counter:" << counter << " result:" << (*result)[i]->perform(&to_string) << std::endl;
+#endif
+            unified_complex_selectors.push_back( (*result)[i] );
           }
         }
       }
@@ -607,88 +609,24 @@ namespace Sass {
     rhsNode.plus(unifiedNode);
     
     Node node = Extend::StaticSubweave(lhsNode, rhsNode, ctx);
-//    Node trimmedNode = Extend::StaticTrim(node, ctx);
 
-//    node = flatten(node, ctx, 1);
+#ifdef DEBUG
     std::cout << "Node:" << node << std::endl;
-//    std::set< Complex_Selector*, std::function< bool(Complex_Selector*, Complex_Selector*) > > sel_set([] ( Complex_Selector* lhs, Complex_Selector* rhs ) {
-//      return true;//*lhs == *rhs;
-//    } );
+#endif
     
     Selector_List* result = new (ctx.mem) Selector_List(pstate());
-    for (NodeDeque::iterator iter = node.collection()->begin(), iterBegin = node.collection()->begin(), iterEnd = node.collection()->end(); iter != iterEnd; iter++) {
-      std::cerr << std::endl;
+    for (NodeDeque::iterator iter = node.collection()->begin(), iterEnd = node.collection()->end(); iter != iterEnd; iter++) {
       Node childNode = *iter;
-//      Node trimmedNode = Extend::StaticTrim(childNode, ctx);
       Complex_Selector* childNodeAsComplexSelector = nodeToComplexSelector(childNode, ctx);
-      if( childNodeAsComplexSelector ) {
-        (*result) << childNodeAsComplexSelector;
-//        
-      std::cout << "childNodeAsComplexSelector:" << childNodeAsComplexSelector->perform(&to_string) << std::endl;
-        int z0 = 1;
-        
-//      if (childNode.isCombinator()) {
-//        switch (childNode.combinator()) {
-//            std::cerr << "Complex_Selector::unify_with childNode.combinator() - don't know how to handle childNode.combinator()" << std::endl;
-////          case Complex_Selector::ANCESTOR_OF: os << "\" \""; break;
-////          case Complex_Selector::PARENT_OF:   os << "\">\""; break;
-////          case Complex_Selector::PRECEDES:    os << "\"~\""; break;
-////          case Complex_Selector::ADJACENT_TO: os << "\"+\""; break;
-//        }
-//        
-//      } else if (childNode.isNil()) {
-//        // Do nothing
-//      } else if (childNode.isSelector()){
-//        To_String to_string;
-//        std::cerr << "Complex_Selector::unify_with childNode.isSelector() :" + childNode.selector()->head()->perform(&to_string) << std::endl;
-//        
-////        os << childNode.selector()->head()->perform(&to_string);
-//      } else if (childNode.isCollection()) {
-//        for (NodeDeque::iterator iter = childNode.collection()->begin(), iterBegin = childNode.collection()->begin(), iterEnd = childNode.collection()->end(); iter != iterEnd; iter++) {
-//          Node subChildNode = (*iter);
-//          if( subChildNode.isSelector() ) {
-//            To_String to_string;
-//            std::cerr << "Complex_Selector::unify_with subChildNode() :" + subChildNode.selector()->perform(&to_string) << std::endl;
-//
-//          }
-////          if (iter != iterBegin) {
-////          }
-//          To_String to_string;
-////          std::cerr << "Complex_Selector::unify_with childNode.isSelector() :" + childNode.selector()->head()->perform(&to_string) << std::endl;
-//          
-////          os << (*iter);
-//        }
-        
-//        os << "]";
-        
-      }
-//      if( childNode.isSelector()) {
-//        Complex_Selector* sel = childNode.selector();
-//#ifdef DEBUG
-//        To_String to_string;
-//        string sel_string = sel->perform(&to_string);
-//        std::cout << sel_string << std::endl;
-//#endif
-//        int z0 = 0;
-//      }
+      if( childNodeAsComplexSelector ) { (*result) << childNodeAsComplexSelector; }
     }
-//        *result << sel;
-//        sel_set.insert(sel_set.begin(), sel);
-//      } else {
-//        int z0 = 1;
-//      }
-//    }
     
 #ifdef DEBUG
 //    To_String to_string;
     string lhs_string = result->perform(&to_string);
 #endif
-//    make_set<int>([](int l, int r){ return l<r; });
-//    Selector_List* result = new (ctx.mem) Selector_List(pstate());
-//    for (auto itr = sel_set.begin(); itr != sel_set.end(); ++itr) {
-//      *result << *itr;
-//    }
-    return result;
+
+    return result->length() ? result : 0;
   }
   
 
