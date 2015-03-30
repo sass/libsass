@@ -571,6 +571,8 @@ namespace Sass {
   }
   
   Selector_List* Selector_List::unify_with(Selector_List* rhs, Context& ctx) {
+
+
 #ifdef DEBUG
     To_String to_string;
     string lhs_string = perform(&to_string);
