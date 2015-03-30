@@ -42,6 +42,7 @@ namespace Sass {
     
     static Node StaticWeave(Node& path, Context& ctx);
     static Node StaticSubweave(Node& one, Node& two, Context& ctx);
+    static Node StaticTrim(Node& seqses, Context& ctx);
   };
 
 }

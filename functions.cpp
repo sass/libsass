@@ -1608,7 +1608,7 @@ namespace Sass {
 //      return new (ctx.mem) Boolean(pstate, result);
       
       To_String to_string;
-      return new (ctx.mem) String_Constant(pstate, result->perform(&to_string) );
+      return new (ctx.mem) String_Constant(pstate, result ? result->perform(&to_string) : "" );
     }
     Signature is_superselector_sig = "is-superselector($super, $sub)";
     BUILT_IN(is_superselector)

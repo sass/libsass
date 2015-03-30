@@ -533,8 +533,6 @@ namespace Sass {
   }
   
   Selector_List* Selector_List::unify_with(Selector_List* rhs, Context& ctx) {
-
-    
 #ifdef DEBUG
     To_String to_string;
     string lhs_string = perform(&to_string);
@@ -542,6 +540,7 @@ namespace Sass {
 #endif
     
 
+    // Store only unique Selector_List returned by Complex_Selector::unify_with
     std::set< Selector_List*, std::function< bool(Selector_List*, Selector_List*) > > unique_selector_list([] ( Selector_List* lhs, Selector_List* rhs ) {
       return lhs == rhs;
     } );
@@ -552,31 +551,34 @@ namespace Sass {
         Complex_Selector* seq2 = (*rhs)[rhs_i];
         Selector_List* result = seq1->unify_with(seq2, ctx);
         
-        unique_selector_list.insert( result );
+        if( result ) {
+          To_String to_string;
+          std::cout << "result:" << result->perform(&to_string) << std::endl;
+          unique_selector_list.insert( result );
+        }
       }
     }
     
     
-    std::set< Complex_Selector*, std::function< bool(Complex_Selector*, Complex_Selector*) > > unique_complex_selectors([] ( Complex_Selector* lhs, Complex_Selector* rhs ) {
-      return lhs == rhs;
-    } );
-
-    
-    
-    for (auto itr = unique_selector_list.begin(); itr != unique_selector_list.end(); ++itr) {
-      Selector_List* aSelectorList = *itr;
-      
-      for (size_t i = 0, L = aSelectorList->length(); i < L; ++i) {
-          unique_complex_selectors.insert(unique_complex_selectors.begin(), (*aSelectorList)[i] );
-      }
-    }
-    
-    Selector_List* final_result = new (ctx.mem) Selector_List(pstate());
-    for (auto itr = unique_complex_selectors.begin(); itr != unique_complex_selectors.end(); ++itr) {
-      *final_result << *itr;
-    }
-    
-    return final_result;
+//    std::set< Complex_Selector*, std::function< bool(Complex_Selector*, Complex_Selector*) > > unique_complex_selectors([] ( Complex_Selector* lhs, Complex_Selector* rhs ) {
+//      return lhs == rhs;
+//    } );
+//
+//    for (auto itr = unique_selector_list.begin(); itr != unique_selector_list.end(); ++itr) {
+//      Selector_List* aSelectorList = *itr;
+//      
+//      for (size_t i = 0, L = aSelectorList->length(); i < L; ++i) {
+//          unique_complex_selectors.insert(unique_complex_selectors.begin(), (*aSelectorList)[i] );
+//      }
+//    }
+//    
+//    Selector_List* final_result = new (ctx.mem) Selector_List(pstate());
+//    for (auto itr = unique_complex_selectors.begin(); itr != unique_complex_selectors.end(); ++itr) {
+//      *final_result << *itr;
+//    }
+//    
+//    return final_result;
+    return 0;
   }
   
 
@@ -598,29 +600,85 @@ namespace Sass {
     rhsNode.plus(unifiedNode);
     
     Node node = Extend::StaticSubweave(lhsNode, rhsNode, ctx);
-    node = flatten(node, ctx);
+//    Node trimmedNode = Extend::StaticTrim(node, ctx);
+
+//    node = flatten(node, ctx, 1);
+    std::cout << "Node:" << node << std::endl;
+//    std::set< Complex_Selector*, std::function< bool(Complex_Selector*, Complex_Selector*) > > sel_set([] ( Complex_Selector* lhs, Complex_Selector* rhs ) {
+//      return true;//*lhs == *rhs;
+//    } );
     
-    std::set< Complex_Selector*, std::function< bool(Complex_Selector*, Complex_Selector*) > > sel_set([] ( Complex_Selector* lhs, Complex_Selector* rhs ) {
-      return lhs == rhs;
-    } );
-    
+    Selector_List* result = new (ctx.mem) Selector_List(pstate());
     for (NodeDeque::iterator iter = node.collection()->begin(), iterBegin = node.collection()->begin(), iterEnd = node.collection()->end(); iter != iterEnd; iter++) {
+      std::cerr << std::endl;
       Node childNode = *iter;
-      if( childNode.isSelector()){
-        Complex_Selector* sel = childNode.selector();
-        sel_set.insert(sel_set.begin(), sel);
+//      Node trimmedNode = Extend::StaticTrim(childNode, ctx);
+      Complex_Selector* childNodeAsComplexSelector = nodeToComplexSelector(childNode, ctx);
+      if( childNodeAsComplexSelector ) { (*result) << childNodeAsComplexSelector;
+//        
+//      To_String to_string;
+//      std::cout << "childNodeAsComplexSelector:" << childNodeAsComplexSelector->perform(&to_string) << std::endl;
+//      if (childNode.isCombinator()) {
+//        switch (childNode.combinator()) {
+//            std::cerr << "Complex_Selector::unify_with childNode.combinator() - don't know how to handle childNode.combinator()" << std::endl;
+////          case Complex_Selector::ANCESTOR_OF: os << "\" \""; break;
+////          case Complex_Selector::PARENT_OF:   os << "\">\""; break;
+////          case Complex_Selector::PRECEDES:    os << "\"~\""; break;
+////          case Complex_Selector::ADJACENT_TO: os << "\"+\""; break;
+//        }
+//        
+//      } else if (childNode.isNil()) {
+//        // Do nothing
+//      } else if (childNode.isSelector()){
+//        To_String to_string;
+//        std::cerr << "Complex_Selector::unify_with childNode.isSelector() :" + childNode.selector()->head()->perform(&to_string) << std::endl;
+//        
+////        os << childNode.selector()->head()->perform(&to_string);
+//      } else if (childNode.isCollection()) {
+//        for (NodeDeque::iterator iter = childNode.collection()->begin(), iterBegin = childNode.collection()->begin(), iterEnd = childNode.collection()->end(); iter != iterEnd; iter++) {
+//          Node subChildNode = (*iter);
+//          if( subChildNode.isSelector() ) {
+//            To_String to_string;
+//            std::cerr << "Complex_Selector::unify_with subChildNode() :" + subChildNode.selector()->perform(&to_string) << std::endl;
+//
+//          }
+////          if (iter != iterBegin) {
+////          }
+//          To_String to_string;
+////          std::cerr << "Complex_Selector::unify_with childNode.isSelector() :" + childNode.selector()->head()->perform(&to_string) << std::endl;
+//          
+////          os << (*iter);
+//        }
+        
+//        os << "]";
+        
       }
+//      if( childNode.isSelector()) {
+//        Complex_Selector* sel = childNode.selector();
+//#ifdef DEBUG
+//        To_String to_string;
+//        string sel_string = sel->perform(&to_string);
+//        std::cout << sel_string << std::endl;
+//#endif
+//        int z0 = 0;
+//      }
     }
+//        *result << sel;
+//        sel_set.insert(sel_set.begin(), sel);
+//      } else {
+//        int z0 = 1;
+//      }
+//    }
     
 #ifdef DEBUG
     To_String to_string;
-//    string lhs_string = result->perform(&to_string);
+    string lhs_string = result->perform(&to_string);
 #endif
 //    make_set<int>([](int l, int r){ return l<r; });
-    Selector_List* result = new (ctx.mem) Selector_List(pstate());
-    for (auto itr = sel_set.begin(); itr != sel_set.end(); ++itr) {
-      *result << *itr;
-    }
+//    Selector_List* result = new (ctx.mem) Selector_List(pstate());
+//    for (auto itr = sel_set.begin(); itr != sel_set.end(); ++itr) {
+//      *result << *itr;
+//    }
     return result;
   }
   

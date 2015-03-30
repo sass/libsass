@@ -1295,6 +1295,127 @@ namespace Sass {
 
   }
   
+  Node Extend::StaticTrim(Node& seqses, Context& ctx) {
+    // See the comments in the above ruby code before embarking on understanding this function.
+    
+    // Avoid poor performance in extreme cases.
+    if (seqses.collection()->size() > 100) {
+      return seqses;
+    }
+    
+    
+    DEBUG_PRINTLN(TRIM, "TRIM: " << seqses)
+    
+    
+    Node result = Node::createCollection();
+    result.plus(seqses);
+    
+    DEBUG_PRINTLN(TRIM, "RESULT INITIAL: " << result)
+    
+    // Normally we use the standard STL iterators, but in this case, we need to access the result collection by index since we're
+    // iterating the input collection, computing a value, and then setting the result in the output collection. We have to keep track
+    // of the index manually.
+    int toTrimIndex = 0;
+    
+    for (NodeDeque::iterator seqsesIter = seqses.collection()->begin(), seqsesIterEnd = seqses.collection()->end(); seqsesIter != seqsesIterEnd; ++seqsesIter) {
+      Node& seqs1 = *seqsesIter;
+      
+      DEBUG_PRINTLN(TRIM, "SEQS1: " << seqs1 << " " << toTrimIndex)
+      
+      Node tempResult = Node::createCollection();
+      
+      for (NodeDeque::iterator seqs1Iter = seqs1.collection()->begin(), seqs1EndIter = seqs1.collection()->end(); seqs1Iter != seqs1EndIter; ++seqs1Iter) {
+        Node& seq1 = *seqs1Iter;
+        
+        Complex_Selector* pSeq1 = nodeToComplexSelector(seq1, ctx);
+        
+        // Compute the maximum specificity. This requires looking at the "sources" of the sequence. See SimpleSequence.sources in the ruby code
+        // for a good description of sources.
+        //
+        // TODO: I'm pretty sure there's a bug in the sources code. It was implemented for sass-spec's 182_test_nested_extend_loop test.
+        // While the test passes, I compared the state of each trim call to verify correctness. The last trim call had incorrect sources. We
+        // had an extra source that the ruby version did not have. Without a failing test case, this is going to be extra hard to find. My
+        // best guess at this point is that we're cloning an object somewhere and maintaining the sources when we shouldn't be. This is purely
+        // a guess though.
+        int maxSpecificity = 0;
+        SourcesSet sources = pSeq1->sources();
+        
+        DEBUG_PRINTLN(TRIM, "TRIMASDF SEQ1: " << seq1)
+        DEBUG_EXEC(TRIM, printSourcesSet(sources, ctx, "TRIMASDF SOURCES: "))
+        
+        for (SourcesSet::iterator sourcesSetIterator = sources.begin(), sourcesSetIteratorEnd = sources.end(); sourcesSetIterator != sourcesSetIteratorEnd; ++sourcesSetIterator) {
+          const Complex_Selector* const pCurrentSelector = *sourcesSetIterator;
+          maxSpecificity = max(maxSpecificity, pCurrentSelector->specificity());
+        }
+        
+        DEBUG_PRINTLN(TRIM, "MAX SPECIFICITY: " << maxSpecificity)
+        
+        bool isMoreSpecificOuter = false;
+        
+        int resultIndex = 0;
+        
+        for (NodeDeque::iterator resultIter = result.collection()->begin(), resultIterEnd = result.collection()->end(); resultIter != resultIterEnd; ++resultIter) {
+          Node& seqs2 = *resultIter;
+          
+          DEBUG_PRINTLN(TRIM, "SEQS1: " << seqs1)
+          DEBUG_PRINTLN(TRIM, "SEQS2: " << seqs2)
+          
+          // Do not compare the same sequence to itself. The ruby call we're trying to
+          // emulate is: seqs1.equal?(seqs2). equal? is an object comparison, not an equivalency comparision.
+          // Since we have the same pointers in seqes and results, we can do a pointer comparision. seqs1 is
+          // derived from seqses and seqs2 is derived from result.
+          if (seqs1.collection() == seqs2.collection()) {
+            DEBUG_PRINTLN(TRIM, "CONTINUE")
+            continue;
+          }
+          
+          bool isMoreSpecificInner = false;
+          
+          for (NodeDeque::iterator seqs2Iter = seqs2.collection()->begin(), seqs2IterEnd = seqs2.collection()->end(); seqs2Iter != seqs2IterEnd; ++seqs2Iter) {
+            Node& seq2 = *seqs2Iter;
+            
+            Complex_Selector* pSeq2 = nodeToComplexSelector(seq2, ctx);
+            
+            DEBUG_PRINTLN(TRIM, "SEQ2 SPEC: " << pSeq2->specificity())
+            DEBUG_PRINTLN(TRIM, "IS SPEC: " << pSeq2->specificity() << " >= " << maxSpecificity << " " << (pSeq2->specificity() >= maxSpecificity ? "true" : "false"))
+            DEBUG_PRINTLN(TRIM, "IS SUPER: " << (pSeq2->is_superselector_of(pSeq1) ? "true" : "false"))
+            
+            isMoreSpecificInner = pSeq2->specificity() >= maxSpecificity && pSeq2->is_superselector_of(pSeq1);
+            
+            if (isMoreSpecificInner) {
+              DEBUG_PRINTLN(TRIM, "FOUND MORE SPECIFIC")
+              break;
+            }
+          }
+          
+          // If we found something more specific, we're done. Let the outer loop know and stop iterating.
+          if (isMoreSpecificInner) {
+            isMoreSpecificOuter = true;
+            break;
+          }
+          
+          resultIndex++;
+        }
+        
+        if (!isMoreSpecificOuter) {
+          DEBUG_PRINTLN(TRIM, "PUSHING: " << seq1)
+          tempResult.collection()->push_back(seq1);
+        }
+        
+      }
+      
+      DEBUG_PRINTLN(TRIM, "RESULT BEFORE ASSIGN: " << result)
+      DEBUG_PRINTLN(TRIM, "TEMP RESULT: " << toTrimIndex << " " << tempResult)
+      (*result.collection())[toTrimIndex] = tempResult;
+      
+      toTrimIndex++;
+      
+      DEBUG_PRINTLN(TRIM, "RESULT: " << result)
+    }
+    
+    return result;
+  }
+  
   Node Extend::StaticSubweave(Node& one, Node& two, Context& ctx) {
     // Check for the simple cases
     if (one.collection()->size() == 0) {
