@@ -585,11 +585,16 @@ namespace Sass {
   
 
   Selector_List* Complex_Selector::unify_with(Complex_Selector* other, Context& ctx) {
+    To_String to_string;
 
     Compound_Selector* thisBase = base();
     Compound_Selector* rhsBase = other->base();
     
     if( thisBase == 0 || rhsBase == 0 ) return 0;
+
+    // Not sure about this check, but closest way I could check to see if this is a ruby 'SimpleSequence' equivalent
+    if(  tail()->combinator() != Combinator::ANCESTOR_OF || other->tail()->combinator() != Combinator::ANCESTOR_OF ) return 0;
+  
     Compound_Selector* unified = rhsBase->unify_with(thisBase, ctx);
     if( unified == 0 ) return 0;
     
@@ -616,10 +621,12 @@ namespace Sass {
       Node childNode = *iter;
 //      Node trimmedNode = Extend::StaticTrim(childNode, ctx);
       Complex_Selector* childNodeAsComplexSelector = nodeToComplexSelector(childNode, ctx);
-      if( childNodeAsComplexSelector ) { (*result) << childNodeAsComplexSelector;
+      if( childNodeAsComplexSelector ) {
+        (*result) << childNodeAsComplexSelector;
 //        
-//      To_String to_string;
-//      std::cout << "childNodeAsComplexSelector:" << childNodeAsComplexSelector->perform(&to_string) << std::endl;
+      std::cout << "childNodeAsComplexSelector:" << childNodeAsComplexSelector->perform(&to_string) << std::endl;
+        int z0 = 1;
+        
 //      if (childNode.isCombinator()) {
 //        switch (childNode.combinator()) {
 //            std::cerr << "Complex_Selector::unify_with childNode.combinator() - don't know how to handle childNode.combinator()" << std::endl;
@@ -673,7 +680,7 @@ namespace Sass {
 //    }
     
 #ifdef DEBUG
-    To_String to_string;
+//    To_String to_string;
     string lhs_string = result->perform(&to_string);
 #endif
 //    make_set<int>([](int l, int r){ return l<r; });
