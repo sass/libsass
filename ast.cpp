@@ -533,52 +533,54 @@ namespace Sass {
   }
   
   Selector_List* Selector_List::unify_with(Selector_List* rhs, Context& ctx) {
+
+
 #ifdef DEBUG
     To_String to_string;
     string lhs_string = perform(&to_string);
     string rhs_string = rhs->perform(&to_string);
+ 
+    auto counter = 0;
+
+    std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
+    std::cout << "Unifying " << this->perform(&to_string) << " with:" << rhs->perform(&to_string) << std::endl;
+    std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
 #endif
     
+// Store only unique Selector_List returned by Complex_Selector::unify_with
+//    std::set< Selector_List*, std::function< bool(Selector_List*, Selector_List*) > > unique_selector_list([] ( Selector_List* lhs, Selector_List* rhs ) {
+//      return *lhs == *rhs;
+//    } );
 
-    // Store only unique Selector_List returned by Complex_Selector::unify_with
-    std::set< Selector_List*, std::function< bool(Selector_List*, Selector_List*) > > unique_selector_list([] ( Selector_List* lhs, Selector_List* rhs ) {
-      return lhs == rhs;
-    } );
-    
+    vector<Complex_Selector*> unified_complex_selectors;
+    // Unify all of children with RHS's children, storing the results in `unified_complex_selectors`
     for (size_t lhs_i = 0, lhs_L = length(); lhs_i < lhs_L; ++lhs_i) {
       Complex_Selector* seq1 = (*this)[lhs_i];
       for(size_t rhs_i = 0, rhs_L = rhs->length(); rhs_i < rhs_L; ++rhs_i) {
         Complex_Selector* seq2 = (*rhs)[rhs_i];
+        
+        string seq1_string = seq1->perform(&to_string);
+        string seq2_string = seq2->perform(&to_string);
+        
         Selector_List* result = seq1->unify_with(seq2, ctx);
+        counter++;
         
         if( result ) {
-          To_String to_string;
-          std::cout << "result:" << result->perform(&to_string) << std::endl;
-          unique_selector_list.insert( result );
+          for(size_t i = 0, L = result->length(); i < L; ++i) {
+          std::cout << "Counter:" << counter << " result:" << (*result)[i]->perform(&to_string) << std::endl;
+          unified_complex_selectors.push_back( (*result)[i] );
+          }
         }
       }
     }
     
-    
-//    std::set< Complex_Selector*, std::function< bool(Complex_Selector*, Complex_Selector*) > > unique_complex_selectors([] ( Complex_Selector* lhs, Complex_Selector* rhs ) {
-//      return lhs == rhs;
-//    } );
-//
-//    for (auto itr = unique_selector_list.begin(); itr != unique_selector_list.end(); ++itr) {
-//      Selector_List* aSelectorList = *itr;
-//      
-//      for (size_t i = 0, L = aSelectorList->length(); i < L; ++i) {
-//          unique_complex_selectors.insert(unique_complex_selectors.begin(), (*aSelectorList)[i] );
-//      }
-//    }
-//    
-//    Selector_List* final_result = new (ctx.mem) Selector_List(pstate());
-//    for (auto itr = unique_complex_selectors.begin(); itr != unique_complex_selectors.end(); ++itr) {
-//      *final_result << *itr;
-//    }
-//    
-//    return final_result;
-    return 0;
+    // Creates the final Selector_List by combining all the complex selectors
+    Selector_List* final_result = new (ctx.mem) Selector_List(pstate());
+    for (auto itr = unified_complex_selectors.begin(); itr != unified_complex_selectors.end(); ++itr) {
+      *final_result << *itr;
+    }
+
+    return final_result;
   }
   
 
