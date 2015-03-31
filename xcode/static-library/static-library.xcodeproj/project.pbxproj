@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AC091F9F1ACA4C2000845A65 /* lexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC091F9E1ACA4C2000845A65 /* lexer.cpp */; };
 		AC70EB791ABA26BA00559BA2 /* cencode.c in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB521ABA26BA00559BA2 /* cencode.c */; };
 		AC70EB7A1ABA26BA00559BA2 /* ast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB531ABA26BA00559BA2 /* ast.cpp */; };
 		AC70EB7B1ABA26BA00559BA2 /* base64vlq.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC70EB541ABA26BA00559BA2 /* base64vlq.cpp */; };
@@ -49,6 +50,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AC091F9E1ACA4C2000845A65 /* lexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lexer.cpp; path = ../../lexer.cpp; sourceTree = SOURCE_ROOT; };
+		AC091FA01ACA4C3500845A65 /* lexer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = lexer.hpp; path = ../../lexer.hpp; sourceTree = SOURCE_ROOT; };
 		AC70EB431ABA215A00559BA2 /* libsass.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libsass.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC70EB521ABA26BA00559BA2 /* cencode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cencode.c; path = ../../cencode.c; sourceTree = SOURCE_ROOT; };
 		AC70EB531ABA26BA00559BA2 /* ast.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ast.cpp; path = ../../ast.cpp; sourceTree = SOURCE_ROOT; };
@@ -216,6 +219,8 @@
 				AC70EB631ABA26BA00559BA2 /* json.cpp */,
 				AC70EBBF1ABA26C500559BA2 /* json.hpp */,
 				AC70EBC01ABA26C500559BA2 /* kwd_arg_macros.hpp */,
+				AC091F9E1ACA4C2000845A65 /* lexer.cpp */,
+				AC091FA01ACA4C3500845A65 /* lexer.hpp */,
 				AC70EB641ABA26BA00559BA2 /* listize.cpp */,
 				AC70EBC11ABA26C500559BA2 /* listize.hpp */,
 				AC70EBC21ABA26C500559BA2 /* mapping.hpp */,
@@ -336,6 +341,7 @@
 			files = (
 				AC70EB7F1ABA26BA00559BA2 /* contextualize_eval.cpp in Sources */,
 				AC70EB941ABA26BA00559BA2 /* sass_functions.cpp in Sources */,
+				AC091F9F1ACA4C2000845A65 /* lexer.cpp in Sources */,
 				AC70EB911ABA26BA00559BA2 /* prelexer.cpp in Sources */,
 				AC70EB801ABA26BA00559BA2 /* contextualize.cpp in Sources */,
 				AC70EB901ABA26BA00559BA2 /* position.cpp in Sources */,
