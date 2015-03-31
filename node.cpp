@@ -1,5 +1,3 @@
-#include <functional>
-
 #include "node.hpp"
 #include "to_string.hpp"
 #include "context.hpp"
