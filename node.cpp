@@ -247,7 +247,8 @@ namespace Sass {
     return pFirst;
   }
 
-  
+  // A very naive trim function, which removes duplicates in a node
+  // This is only used in Complex_Selector::unify_with for now, may need modifications to fit other needs
   Node Node::naiveTrim(Node& seqses, Context& ctx) {
     
     Node result = Node::createCollection();
@@ -258,9 +259,9 @@ namespace Sass {
       return result;
     } );
     
+    // Add all selectors we don't already have, everything else just add it blindly
     for (NodeDeque::iterator seqsesIter = seqses.collection()->begin(), seqsesIterEnd = seqses.collection()->end(); seqsesIter != seqsesIterEnd; ++seqsesIter) {
       Node& seqs1 = *seqsesIter;
-      int z0 = 0;
       if( seqs1.isSelector() ) {
         auto found = sel_set.find( seqs1.selector() );
         if( found == sel_set.end() ) {

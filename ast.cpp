@@ -559,12 +559,12 @@ namespace Sass {
       for(size_t rhs_i = 0, rhs_L = rhs->length(); rhs_i < rhs_L; ++rhs_i) {
         Complex_Selector* seq2 = (*rhs)[rhs_i];
         
+#ifdef DEBUG
         string seq1_string = seq1->perform(&to_string);
         string seq2_string = seq2->perform(&to_string);
-        
-        Selector_List* result = seq1->unify_with(seq2, ctx);
         counter++;
-        
+#endif
+        Selector_List* result = seq1->unify_with(seq2, ctx);
         if( result ) {
           for(size_t i = 0, L = result->length(); i < L; ++i) {
 #ifdef DEBUG
