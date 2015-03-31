@@ -247,5 +247,32 @@ namespace Sass {
     return pFirst;
   }
 
-
+  
+  Node Node::naiveTrim(Node& seqses, Context& ctx) {
+    
+    Node result = Node::createCollection();
+    
+    To_String to_string;
+    std::set< Complex_Selector*, std::function< bool(Complex_Selector*, Complex_Selector*) > > sel_set([&] ( Complex_Selector* lhs, Complex_Selector* rhs ) {
+      bool result = lhs->perform(&to_string) < rhs->perform(&to_string);
+      return result;
+    } );
+    
+    for (NodeDeque::iterator seqsesIter = seqses.collection()->begin(), seqsesIterEnd = seqses.collection()->end(); seqsesIter != seqsesIterEnd; ++seqsesIter) {
+      Node& seqs1 = *seqsesIter;
+      int z0 = 0;
+      if( seqs1.isSelector() ) {
+        auto found = sel_set.find( seqs1.selector() );
+        if( found == sel_set.end() ) {
+          sel_set.insert(seqs1.selector());
+          result.collection()->push_back(seqs1);
+        }
+      } else {
+        result.collection()->push_back(seqs1);
+      }
+    }
+    
+    return result;
+  }
+  
 }

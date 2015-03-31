@@ -586,34 +586,6 @@ namespace Sass {
   }
   
   
-  static Node naiveTrim(Node& seqses, Context& ctx) {
-
-    Node result = Node::createCollection();
-    
-    std::set< Complex_Selector*, std::function< bool(Complex_Selector*, Complex_Selector*) > > sel_set([] ( Complex_Selector* lhs, Complex_Selector* rhs ) {
-      To_String to_string;
-      bool result = lhs->perform(&to_string) < rhs->perform(&to_string);
-      return result;
-    } );
-    
-    for (NodeDeque::iterator seqsesIter = seqses.collection()->begin(), seqsesIterEnd = seqses.collection()->end(); seqsesIter != seqsesIterEnd; ++seqsesIter) {
-      Node& seqs1 = *seqsesIter;
-      int z0 = 0;
-      if( seqs1.isSelector() ) {
-        auto found = sel_set.find( seqs1.selector() );
-        if( found == sel_set.end() ) {
-          sel_set.insert(seqs1.selector());
-          result.collection()->push_back(seqs1);
-        }
-      } else {
-        result.collection()->push_back(seqs1);
-      }
-    }
-    
-    return result;
-  }
-  
-
   Selector_List* Complex_Selector::unify_with(Complex_Selector* other, Context& ctx) {
     To_String to_string;
 
@@ -645,7 +617,7 @@ namespace Sass {
     Selector_List* result = new (ctx.mem) Selector_List(pstate());
     for (NodeDeque::iterator iter = node.collection()->begin(), iterEnd = node.collection()->end(); iter != iterEnd; iter++) {
       Node childNode = *iter;
-      childNode = naiveTrim(childNode, ctx);
+      childNode = Node::naiveTrim(childNode, ctx);
       
       Complex_Selector* childNodeAsComplexSelector = nodeToComplexSelector(childNode, ctx);
       if( childNodeAsComplexSelector ) { (*result) << childNodeAsComplexSelector; }
