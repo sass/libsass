@@ -73,6 +73,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
         case Complex_Selector::PARENT_OF:   cerr << "{>}"; break;
         case Complex_Selector::PRECEDES:    cerr << "{~}"; break;
         case Complex_Selector::ADJACENT_TO: cerr << "{+}"; break;
+        case Complex_Selector::REFERENCE:   cerr << " /deep/ "; break;
         case Complex_Selector::ANCESTOR_OF: cerr << "{ }"; break;
       }
     cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">" << endl;

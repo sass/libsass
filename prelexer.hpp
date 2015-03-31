@@ -273,6 +273,7 @@ namespace Sass {
     const char* suffix_match(const char* src);
     const char* substring_match(const char* src);
     // Match CSS combinators.
+    const char* reference_combinator(const char* src);
     // const char* adjacent_to(const char* src);
     // const char* precedes(const char* src);
     // const char* parent_of(const char* src);

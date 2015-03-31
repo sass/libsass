@@ -83,6 +83,7 @@ namespace Sass {
 
       // skip white-space?
       if (mx == url ||
+          mx == reference_combinator ||
           mx == spaces ||
           mx == no_spaces ||
           mx == css_comments ||

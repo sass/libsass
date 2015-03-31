@@ -550,7 +550,8 @@ namespace Sass {
   {
     Position sel_source_position(-1);
     Compound_Selector* lhs;
-    if (peek_css< alternatives <
+    if (peek< reference_combinator >() ||
+        peek_css< alternatives <
           exactly<'+'>,
           exactly<'~'>,
           exactly<'>'>
@@ -564,10 +565,11 @@ namespace Sass {
     }
 
     Complex_Selector::Combinator cmb;
-    if      (lex< exactly<'+'> >()) cmb = Complex_Selector::ADJACENT_TO;
-    else if (lex< exactly<'~'> >()) cmb = Complex_Selector::PRECEDES;
-    else if (lex< exactly<'>'> >()) cmb = Complex_Selector::PARENT_OF;
-    else                            cmb = Complex_Selector::ANCESTOR_OF;
+    if      (lex< exactly<'+'> >())         cmb = Complex_Selector::ADJACENT_TO;
+    else if (lex< reference_combinator >()) cmb = Complex_Selector::REFERENCE;
+    else if (lex< exactly<'~'> >())         cmb = Complex_Selector::PRECEDES;
+    else if (lex< exactly<'>'> >())         cmb = Complex_Selector::PARENT_OF;
+    else                                    cmb = Complex_Selector::ANCESTOR_OF;
     bool cpx_lf = peek_newline();
 
     Complex_Selector* rhs;
@@ -626,6 +628,7 @@ namespace Sass {
 
     while (!peek< spaces >(position) &&
            !(peek_css < alternatives <
+               reference_combinator,
                exactly<'+'>,
                exactly<'~'>,
                exactly<'>'>,
@@ -2009,6 +2012,7 @@ namespace Sass {
            (q = peek< exactly<')'> >(p))                           ||
            (q = peek< exactly<'['> >(p))                           ||
            (q = peek< exactly<']'> >(p))                           ||
+           (q = peek< reference_combinator >(p))                   ||
            (q = peek< exactly<'+'> >(p))                           ||
            (q = peek< exactly<'~'> >(p))                           ||
            (q = peek< exactly<'>'> >(p))                           ||
@@ -2069,6 +2073,7 @@ namespace Sass {
            (q = peek< exactly<')'> >(p))                           ||
            (q = peek< exactly<'['> >(p))                           ||
            (q = peek< exactly<']'> >(p))                           ||
+           (q = peek< reference_combinator >(p))                   ||
            (q = peek< exactly<'+'> >(p))                           ||
            (q = peek< exactly<'~'> >(p))                           ||
            (q = peek< exactly<'>'> >(p))                           ||

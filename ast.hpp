@@ -1983,7 +1983,7 @@ namespace Sass {
   ////////////////////////////////////////////////////////////////////////////
   class Complex_Selector : public Selector {
   public:
-    enum Combinator { ANCESTOR_OF, PARENT_OF, PRECEDES, ADJACENT_TO };
+    enum Combinator { ANCESTOR_OF, PARENT_OF, PRECEDES, ADJACENT_TO, REFERENCE };
   private:
     ADD_PROPERTY(Combinator, combinator);
     ADD_PROPERTY(Compound_Selector*, head);
