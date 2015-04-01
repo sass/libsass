@@ -2,7 +2,7 @@ language: cpp
 
 os:
   - linux
-  # - osx
+  - osx
 
 compiler:
   - gcc
@@ -11,7 +11,7 @@ compiler:
 # don't create redundant code coverage reports
 # - AUTOTOOLS=yes COVERAGE=yes BUILD=static
 # - AUTOTOOLS=no COVERAGE=yes BUILD=shared
-# - AUTOTOOLS=no COVERAGE=no BUILD=static
+# - AUTOTOOLS=no COVERAGE=no BUILD=static 
 
 # further speed up day by day travis-ci builds
 # re-enable this if you change the makefiles
@@ -31,6 +31,8 @@ matrix:
   exclude:
     - compiler: clang
       env: AUTOTOOLS=yes COVERAGE=yes BUILD=static
+    - os: osx
+      env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
 
 script: ./script/ci-build-libsass
 before_install: ./script/ci-install-deps
