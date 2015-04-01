@@ -9,7 +9,9 @@ namespace Sass {
   { }
 
   void error(string msg, ParserState pstate)
-  { throw Sass_Error(Sass_Error::syntax, pstate, msg); }
+  {
+    throw Sass_Error(Sass_Error::syntax, pstate, msg);
+  }
 
   void error(string msg, ParserState pstate, Backtrace* bt)
   {

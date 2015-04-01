@@ -35,7 +35,7 @@ namespace Sass {
   using std::stringstream;
   using std::endl;
 
-  Definition* make_native_function(Signature sig, Native_Function f, Context& ctx)
+  Definition* make_native_function(Signature sig, Native_Function func, Context& ctx)
   {
     Parser sig_parser = Parser::from_c_str(sig, ctx, ParserState("[built-in function]"));
     sig_parser.lex<Prelexer::identifier>();
@@ -45,12 +45,14 @@ namespace Sass {
                                     sig,
                                     name,
                                     params,
-                                    f,
+                                    func,
+                                    &ctx,
                                     false);
   }
 
-  Definition* make_c_function(Signature sig, Sass_C_Function f, void* cookie, Context& ctx)
+  Definition* make_c_function(Sass_Function_Entry c_func, Context& ctx)
   {
+    const char* sig = sass_function_get_signature(c_func);
     Parser sig_parser = Parser::from_c_str(sig, ctx, ParserState("[c function]"));
     // allow to overload generic callback plus @warn, @error and @debug with custom functions
     sig_parser.lex < alternatives < identifier, exactly <'*'>,
@@ -64,8 +66,8 @@ namespace Sass {
                                     sig,
                                     name,
                                     params,
-                                    f,
-                                    cookie,
+                                    c_func,
+                                    &ctx,
                                     false, true);
   }
 
@@ -145,7 +147,11 @@ namespace Sass {
     static mt19937 rand(static_cast<unsigned int>(GetSeed()));
 
     // features
-    static set<string> features;
+    static set<string> features {
+      "global-variable-shadowing",
+      "at-error",
+      "units-level-3"
+    };
 
     ////////////////
     // RGB FUNCTIONS
@@ -940,7 +946,7 @@ namespace Sass {
         error(msg, pstate, backtrace);
       }
       catch (...) { throw; }
-      return new (ctx.mem) String_Constant(pstate, newstr);
+      return new (ctx.mem) String_Quoted(pstate, newstr);
     }
 
     Signature to_upper_case_sig = "to-upper-case($string)";
@@ -1408,7 +1414,7 @@ namespace Sass {
     {
       string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
 
-      if(d_env.global_frame_has("$"+s)) {
+      if(d_env.has_global("$"+s)) {
         return new (ctx.mem) Boolean(pstate, true);
       }
       else {
@@ -1421,7 +1427,7 @@ namespace Sass {
     {
       string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
 
-      if(d_env.global_frame_has(s+"[f]")) {
+      if(d_env.has_global(s+"[f]")) {
         return new (ctx.mem) Boolean(pstate, true);
       }
       else {
@@ -1434,7 +1440,7 @@ namespace Sass {
     {
       string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
 
-      if(d_env.global_frame_has(s+"[m]")) {
+      if(d_env.has_global(s+"[m]")) {
         return new (ctx.mem) Boolean(pstate, true);
       }
       else {
@@ -1468,7 +1474,7 @@ namespace Sass {
       }
       Function_Call* func = new (ctx.mem) Function_Call(pstate, name, args);
       Contextualize contextualize(ctx, &d_env, backtrace);
-      Listize listize(ctx, &d_env, backtrace);
+      Listize listize(ctx);
       Eval eval(ctx, &contextualize, &listize, &d_env, backtrace);
       return func->perform(&eval);
 
@@ -1488,7 +1494,7 @@ namespace Sass {
     BUILT_IN(sass_if)
     {
       Contextualize contextualize(ctx, &d_env, backtrace);
-      Listize listize(ctx, &d_env, backtrace);
+      Listize listize(ctx);
       Eval eval(ctx, &contextualize, &listize, &d_env, backtrace);
       bool is_true = !ARG("$condition", Expression)->perform(&eval)->is_false();
       if (is_true) {

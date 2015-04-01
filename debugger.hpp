@@ -54,6 +54,12 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
 //    Expression* expression = dynamic_cast<Expression*>(node);
 //    cerr << ind << "Expression " << expression << " " << expression->concrete_type() << endl;
 
+  } else if (dynamic_cast<Parent_Selector*>(node)) {
+    Parent_Selector* selector = dynamic_cast<Parent_Selector*>(node);
+    cerr << ind << "Parent_Selector " << selector;
+    cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">" << endl;
+    debug_ast(selector->selector(), ind + "->", env);
+
   } else if (dynamic_cast<Complex_Selector*>(node)) {
     Complex_Selector* selector = dynamic_cast<Complex_Selector*>(node);
     cerr << ind << "Complex_Selector " << selector
@@ -69,7 +75,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
         case Complex_Selector::ADJACENT_TO: cerr << "{+}"; break;
         case Complex_Selector::ANCESTOR_OF: cerr << "{ }"; break;
       }
-    cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << "> X <" << prettyprint(selector->pstate().token.ws_after()) << ">" << endl;
+    cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">" << endl;
     debug_ast(selector->head(), ind + " ", env);
     debug_ast(selector->tail(), ind + "-", env);
   } else if (dynamic_cast<Compound_Selector*>(node)) {
@@ -81,7 +87,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
       << (selector->is_optional() ? " [is_optional]": " -")
       << (selector->has_line_break() ? " [line-break]": " -")
       << (selector->has_line_feed() ? " [line-feed]": " -") <<
-      " <" << prettyprint(selector->pstate().token.ws_before()) << "> X <" << prettyprint(selector->pstate().token.ws_after()) << ">" << endl;
+      " <" << prettyprint(selector->pstate().token.ws_before()) << ">" << endl;
     for(auto i : selector->elements()) { debug_ast(i, ind + " ", env); }
   } else if (dynamic_cast<Propset*>(node)) {
     Propset* selector = dynamic_cast<Propset*>(node);
@@ -105,7 +111,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
   } else if (dynamic_cast<Type_Selector*>(node)) {
     Type_Selector* selector = dynamic_cast<Type_Selector*>(node);
     cerr << ind << "Type_Selector " << selector << " <<" << selector->name() << ">>" << (selector->has_line_break() ? " [line-break]": " -") <<
-      " <" << prettyprint(selector->pstate().token.ws_before()) << "> X <" << prettyprint(selector->pstate().token.ws_after()) << ">" << endl;
+      " <" << prettyprint(selector->pstate().token.ws_before()) << ">" << endl;
   } else if (dynamic_cast<Selector_Placeholder*>(node)) {
 
     Selector_Placeholder* selector = dynamic_cast<Selector_Placeholder*>(node);
@@ -187,7 +193,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
   } else if (dynamic_cast<Comment*>(node)) {
     Comment* block = dynamic_cast<Comment*>(node);
     cerr << ind << "Comment " << block << " " << block->tabs() <<
-      " <" << prettyprint(block->pstate().token.ws_before()) << "> X <" << prettyprint(block->pstate().token.ws_after()) << ">" << endl;
+      " <" << prettyprint(block->pstate().token.ws_before()) << ">" << endl;
     debug_ast(block->text(), ind + "// ", env);
   } else if (dynamic_cast<If*>(node)) {
     If* block = dynamic_cast<If*>(node);
@@ -219,6 +225,11 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     cerr << ind << "Declaration " << block << " " << block->tabs() << endl;
     debug_ast(block->property(), ind + " prop: ", env);
     debug_ast(block->value(), ind + " value: ", env);
+  } else if (dynamic_cast<Keyframe_Rule*>(node)) {
+    Keyframe_Rule* has_block = dynamic_cast<Keyframe_Rule*>(node);
+    cerr << ind << "Keyframe_Rule " << has_block << " " << has_block->tabs() << endl;
+    if (has_block->selector()) debug_ast(has_block->selector(), ind + "@");
+    if (has_block->block()) for(auto i : has_block->block()->elements()) { debug_ast(i, ind + " ", env); }
   } else if (dynamic_cast<At_Rule*>(node)) {
     At_Rule* block = dynamic_cast<At_Rule*>(node);
     cerr << ind << "At_Rule " << block << " [" << block->keyword() << "] " << block->tabs() << endl;
@@ -322,13 +333,13 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
       (expression->is_delayed() ? " {delayed}" : "") <<
       (expression->sass_fix_1291() ? " {sass_fix_1291}" : "") <<
       (expression->quote_mark() != 0 ? " {qm:" + string(1, expression->quote_mark()) + "}" : "") <<
-      " <" << prettyprint(expression->pstate().token.ws_before()) << "> X <" << prettyprint(expression->pstate().token.ws_after()) << ">" << endl;
+      " <" << prettyprint(expression->pstate().token.ws_before()) << ">" << endl;
   } else if (dynamic_cast<String_Constant*>(node)) {
     String_Constant* expression = dynamic_cast<String_Constant*>(node);
     cerr << ind << "String_Constant : " << expression << " [" << prettyprint(expression->value()) << "]" <<
       (expression->is_delayed() ? " {delayed}" : "") <<
       (expression->sass_fix_1291() ? " {sass_fix_1291}" : "") <<
-      " <" << prettyprint(expression->pstate().token.ws_before()) << "> X <" << prettyprint(expression->pstate().token.ws_after()) << ">" << endl;
+      " <" << prettyprint(expression->pstate().token.ws_before()) << ">" << endl;
   } else if (dynamic_cast<String_Schema*>(node)) {
     String_Schema* expression = dynamic_cast<String_Schema*>(node);
     cerr << ind << "String_Schema " << expression << " " << expression->concrete_type() <<
@@ -342,7 +353,20 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
       endl;
   } else if (dynamic_cast<Expression*>(node)) {
     Expression* expression = dynamic_cast<Expression*>(node);
-    cerr << ind << "Expression " << expression << " " << expression->concrete_type() << endl;
+    cerr << ind << "Expression " << expression;
+    switch (expression->concrete_type()) {
+      case Expression::Concrete_Type::NONE: cerr << " [NONE]"; break;
+      case Expression::Concrete_Type::BOOLEAN: cerr << " [BOOLEAN]"; break;
+      case Expression::Concrete_Type::NUMBER: cerr << " [NUMBER]"; break;
+      case Expression::Concrete_Type::COLOR: cerr << " [COLOR]"; break;
+      case Expression::Concrete_Type::STRING: cerr << " [STRING]"; break;
+      case Expression::Concrete_Type::LIST: cerr << " [LIST]"; break;
+      case Expression::Concrete_Type::MAP: cerr << " [MAP]"; break;
+      case Expression::Concrete_Type::SELECTOR: cerr << " [SELECTOR]"; break;
+      case Expression::Concrete_Type::NULL_VAL: cerr << " [NULL_VAL]"; break;
+      case Expression::Concrete_Type::NUM_TYPES: cerr << " [NUM_TYPES]"; break;
+    }
+    cerr << endl;
   } else if (dynamic_cast<Has_Block*>(node)) {
     Has_Block* has_block = dynamic_cast<Has_Block*>(node);
     cerr << ind << "Has_Block " << has_block << " " << has_block->tabs() << endl;

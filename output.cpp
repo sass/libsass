@@ -134,7 +134,7 @@ namespace Sass {
             String_Constant* valConst = static_cast<String_Constant*>(dec->value());
             string val(valConst->value());
             if (dynamic_cast<String_Quoted*>(valConst)) {
-              if (val.empty()) {
+              if (!valConst->quote_mark() && val.empty()) {
                 bPrintExpression = false;
               }
             }
@@ -172,11 +172,10 @@ namespace Sass {
 
   void Output::operator()(Keyframe_Rule* r)
   {
-    String* v = r->rules();
     Block* b = r->block();
+    Selector* v = r->selector();
 
     if (v) {
-      append_indentation();
       v->perform(this);
     }
 
@@ -379,7 +378,7 @@ namespace Sass {
   void Output::operator()(String_Quoted* s)
   {
     if (s->quote_mark()) {
-      append_token(quote((s->value()), s->quote_mark()), s);
+      append_token(quote(s->value(), s->quote_mark()), s);
     } else if (!in_comment) {
       append_token(string_to_output(s->value()), s);
     } else {

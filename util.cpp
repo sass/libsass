@@ -27,7 +27,7 @@ namespace Sass {
     char separator = *(localeconv()->decimal_point);
     if(separator != '.'){
       // The current locale specifies another
-      // separator. convert the separator to the 
+      // separator. convert the separator to the
       // one understood by the locale if needed
       const char *found = strchr(str, '.');
       if(found != NULL){
@@ -349,11 +349,11 @@ namespace Sass {
   string quote(const string& s, char q)
   {
 
-    // return an empty quoted string
-    if (s.empty()) return string(2, q ? q : '"');
-
     // autodetect with fallback to given quote
     q = detect_best_quotemark(s.c_str(), q);
+
+    // return an empty quoted string
+    if (s.empty()) return string(2, q ? q : '"');
 
     string quoted;
     quoted.reserve(s.length()+2);
@@ -619,8 +619,8 @@ namespace Sass {
       }
     }
 
-     bool isAscii(int ch) {
-         return ch >= 0 && ch < 128;
+     bool isAscii(const char chr) {
+       return unsigned(chr) < 128;
      }
 
   }
