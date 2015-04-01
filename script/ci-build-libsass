@@ -36,17 +36,24 @@ else
   MAKE_OPTS="$MAKE_OPTS -j3 V=1"
 fi
 
-if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+if [ "x$TRAVIS_OS_NAME" == "xosx" ]; then
 
   brew update
   brew outdated xctool || brew upgrade xctool
-  xctool clean -workspace xcode/xcode.xcworkspace -scheme static-library
-  xctool -workspace xcode/xcode.xcworkspace -scheme static-library
+
+  if [ "x$BUILD" == "xshared" ]; then
+    XCODE_BUILD_SCHEME=shared-library
+  else
+    XCODE_BUILD_SCHEME=static-library
+  fi
+
+  xctool clean -workspace xcode/xcode.xcworkspace -scheme $XCODE_BUILD_SCHEME
+  xctool build -workspace xcode/xcode.xcworkspace -scheme $XCODE_BUILD_SCHEME
 
 elif [ "x$AUTOTOOLS" == "xyes" ]; then
 
   echo -en 'travis_fold:start:configure\r'
-  openautoreconf --force --install
+  autoreconf --force --install
   ./configure --enable-tests $COVERAGE_OPT \
     --prefix=build \
     --disable-silent-rules \
