@@ -1653,12 +1653,6 @@ namespace Sass {
       Selector_List*  extendee = ARGSEL("$extendee", Selector_List, p_contextualize);
       Selector_List*  extender = ARGSEL("$extender", Selector_List, p_contextualize);
       
-#ifdef DEBUG
-      std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
-      std::cout << "selector_replace";
-      std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
-#endif
-      
       ExtensionSubsetMap subset_map;
       extender->populate_extends(extendee, ctx, subset_map);
       
@@ -1677,12 +1671,6 @@ namespace Sass {
       Selector_List*  selector = ARGSEL("$selector", Selector_List, p_contextualize);
       Selector_List*  original = ARGSEL("$original", Selector_List, p_contextualize);
       Selector_List*  replacement = ARGSEL("$replacement", Selector_List, p_contextualize);
-      
-#ifdef DEBUG
-      std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
-      std::cout << "selector_replace";
-      std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
-#endif
       
       ExtensionSubsetMap subset_map;
       replacement->populate_extends(original, ctx, subset_map);
