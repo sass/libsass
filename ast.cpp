@@ -336,30 +336,34 @@ namespace Sass {
     // check for selectors with leading or trailing combinators
     if (!lhs->head() || !rhs->head())
     { return false; }
-    Complex_Selector* l_innermost = lhs->innermost();
-    if (l_innermost->combinator() != Complex_Selector::ANCESTOR_OF && !l_innermost->tail())
-    { return false; }
-    Complex_Selector* r_innermost = rhs->innermost();
-    if (r_innermost->combinator() != Complex_Selector::ANCESTOR_OF && !r_innermost->tail())
-    { return false; }
+
     // more complex (i.e., longer) selectors are always more specific
     size_t l_len = lhs->length(), r_len = rhs->length();
     if (l_len > r_len)
     { return false; }
 
     if (l_len == 1)
-    { return lhs->head()->is_superselector_of(rhs->base()); }
+    {
+      // compare ancestor only with base selectors
+      if (combinator() == Complex_Selector::ANCESTOR_OF &&
+        rhs->combinator() == Complex_Selector::ANCESTOR_OF)
+      { return lhs->base()->is_superselector_of(rhs->base()); }
+      // compare combinator plus lhs and rhs
+      return combinator() == rhs->combinator() &&
+             head()->is_superselector_of(rhs->head()) &&
+             tail()->is_superselector_of(rhs->tail());
+    }
 
-    bool found = false;
+    bool abort = true;
     Complex_Selector* marker = rhs;
     for (size_t i = 0, L = rhs->length(); i < L; ++i) {
       if (i == L-1)
       { return false; }
       if (lhs->head()->is_superselector_of(marker->head()))
-      { found = true; break; }
+      { abort = false; break; }
       marker = marker->tail();
     }
-    if (!found)
+    if (abort)
     { return false; }
 
     /*
