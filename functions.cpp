@@ -1647,14 +1647,33 @@ namespace Sass {
     Signature selector_extend_sig = "selector-extend($selector, $extendee, $extender)";
     BUILT_IN(selector_extend)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_extend NOT YET IMPLEMENTED");
+      To_String to_string;
+      
+      Selector_List*  selector = ARGSEL("$selector", Selector_List, p_contextualize);
+      Selector_List*  extendee = ARGSEL("$extendee", Selector_List, p_contextualize);
+      Selector_List*  extender = ARGSEL("$extender", Selector_List, p_contextualize);
+      
+#ifdef DEBUG
+      std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
+      std::cout << "selector_replace";
+      std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
+#endif
+      
+      ExtensionSubsetMap subset_map;
+      extender->populate_extends(extendee, ctx, subset_map);
+      
+      bool extendedSomething;
+      Selector_List* result = Extend::extendSelectorList(selector, ctx, subset_map, false, extendedSomething);
+
+      Listize listize(ctx);
+      return result->perform(&listize);
     }
+    
     Signature selector_replace_sig = "selector-replace($selector, $original, $replacement)";
     BUILT_IN(selector_replace)
     {
       To_String to_string;
-      Contextualize contextualize(ctx, &d_env, backtrace);
-
+      
       Selector_List*  selector = ARGSEL("$selector", Selector_List, p_contextualize);
       Selector_List*  original = ARGSEL("$original", Selector_List, p_contextualize);
       Selector_List*  replacement = ARGSEL("$replacement", Selector_List, p_contextualize);
@@ -1669,10 +1688,10 @@ namespace Sass {
       replacement->populate_extends(original, ctx, subset_map);
       
       bool extendedSomething; 
-      Selector_List* selector2 = Extend::extendSelectorList(selector, ctx, subset_map, true, extendedSomething);
+      Selector_List* result = Extend::extendSelectorList(selector, ctx, subset_map, true, extendedSomething);
       
-      
-      return new (ctx.mem) String_Constant(pstate, selector2->perform(&to_string) );
+      Listize listize(ctx);
+      return result->perform(&listize);
     }
     
     Signature selector_unify_sig = "selector-unify($selector1, $selector2)";
