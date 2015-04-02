@@ -41,7 +41,7 @@ namespace Sass {
     void fallback(U x) { return fallback_impl(x); }
     
     static Node StaticSubweave(Node& one, Node& two, Context& ctx);
-    static Selector_List* extendSelectorList(Selector_List* pSelectorList, Context& ctx, ExtensionSubsetMap& subsetMap, bool& extendedSomething);
+    static Selector_List* extendSelectorList(Selector_List* pSelectorList, Context& ctx, ExtensionSubsetMap& subsetMap, bool isReplace, bool& extendedSomething);
   };
 
 }

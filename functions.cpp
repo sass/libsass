@@ -1669,7 +1669,7 @@ namespace Sass {
       replacement->populate_extends(original, ctx, subset_map);
       
       bool extendedSomething; 
-      Selector_List* selector2 = Extend::extendSelectorList(selector, ctx, subset_map, extendedSomething);
+      Selector_List* selector2 = Extend::extendSelectorList(selector, ctx, subset_map, true, extendedSomething);
       
       
       return new (ctx.mem) String_Constant(pstate, selector2->perform(&to_string) );

@@ -2016,7 +2016,7 @@ namespace Sass {
   /*
    This is the equivalent of ruby's CommaSequence.do_extend.
    */
-  Selector_List* Extend::extendSelectorList(Selector_List* pSelectorList, Context& ctx, ExtensionSubsetMap& subsetMap, bool& extendedSomething) {
+  Selector_List* Extend::extendSelectorList(Selector_List* pSelectorList, Context& ctx, ExtensionSubsetMap& subsetMap, bool isReplace, bool& extendedSomething) {
     
     To_String to_string(&ctx);
     
@@ -2050,7 +2050,9 @@ namespace Sass {
         }
       }
       
-      for (NodeDeque::iterator iterator = extendedSelectors.collection()->begin(), iteratorEnd = extendedSelectors.collection()->end(); iterator != iteratorEnd; ++iterator) {
+      for (NodeDeque::iterator iterator = extendedSelectors.collection()->begin(), iteratorBegin = extendedSelectors.collection()->begin(), iteratorEnd = extendedSelectors.collection()->end(); iterator != iteratorEnd; ++iterator) {
+        if(isReplace && iterator == iteratorBegin) continue;
+        
         Node& childNode = *iterator;
         DEBUG_PRINTLN(EXTEND_COMPLEX, "\tchildNode: " << childNode)
 
@@ -2109,7 +2111,7 @@ namespace Sass {
     }
 
     bool extendedSomething = false;
-    Selector_List* pNewSelectorList = Extend::extendSelectorList(static_cast<Selector_List*>(pObject->selector()), ctx, subsetMap, extendedSomething);
+    Selector_List* pNewSelectorList = Extend::extendSelectorList(static_cast<Selector_List*>(pObject->selector()), ctx, subsetMap, false, extendedSomething);
 
     if (extendedSomething && pNewSelectorList) {
       DEBUG_PRINTLN(EXTEND_OBJECT, "EXTEND ORIGINAL SELECTORS: " << static_cast<Selector_List*>(pObject->selector())->perform(&to_string))
