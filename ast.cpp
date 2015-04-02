@@ -585,6 +585,41 @@ namespace Sass {
     return final_result;
   }
   
+  void Selector_List::populate_extends(Selector_List* extendee, Context& ctx, ExtensionSubsetMap& extends) {
+    To_String to_string;
+    
+    Selector_List* extender = this;
+    for (auto complex_sel : extendee->elements()) {
+      Complex_Selector* c = complex_sel;
+
+      
+      // Ignore any parent selectors, until we find the first non Selector_Reference head
+      Compound_Selector* compound_sel = c->head();
+      Complex_Selector* pIter = complex_sel;
+      while (pIter) {
+        Compound_Selector* pHead = pIter->head();
+        if (pHead && dynamic_cast<Selector_Reference*>(pHead->elements()[0]) == NULL) {
+          compound_sel = pHead;
+          break;
+        }
+        
+        pIter = pIter->tail();
+      }
+      
+      if (!pIter->head() || pIter->tail()) {
+        error("nested selectors may not be extended", c->pstate());
+      }
+      
+      compound_sel->is_optional(extendee->is_optional());
+      
+      for (size_t i = 0, L = extender->length(); i < L; ++i) {
+        // let's test this out
+        cerr << "REGISTERING EXTENSION REQUEST: " << (*extender)[i]->perform(&to_string) << " <- " << compound_sel->perform(&to_string) << endl;
+        extends.put(compound_sel->to_str_vec(), make_pair((*extender)[i], compound_sel));
+      }
+    }
+  };
+  
   
   Selector_List* Complex_Selector::unify_with(Complex_Selector* other, Context& ctx) {
     To_String to_string;

@@ -2076,6 +2076,8 @@ namespace Sass {
   };
 
   typedef deque<Complex_Selector*> ComplexSelectorDeque;
+  
+  typedef Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> > ExtensionSubsetMap;
 
   ///////////////////////////////////
   // Comma-separated selector groups.
@@ -2094,6 +2096,7 @@ namespace Sass {
     // virtual Selector_Placeholder* find_placeholder();
     bool is_superselector_of(Selector_List* other);
     Selector_List* unify_with(Selector_List*, Context&);
+    void populate_extends(Selector_List*, Context&, ExtensionSubsetMap&);
     
     virtual int specificity()
     {

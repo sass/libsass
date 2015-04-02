@@ -459,7 +459,7 @@ namespace Sass {
       // { target_vec.push_back((*compound_sel)[i]->perform(&to_string)); }
       for (size_t i = 0, L = extender->length(); i < L; ++i) {
         // let's test this out
-        // cerr << "REGISTERING EXTENSION REQUEST: " << (*extender)[i]->perform(&to_string) << " <- " << compound_sel->perform(&to_string) << endl;
+         cerr << "REGISTERING EXTENSION REQUEST: " << (*extender)[i]->perform(&to_string) << " <- " << compound_sel->perform(&to_string) << endl;
         ctx.subset_map.put(compound_sel->to_str_vec(), make_pair((*extender)[i], compound_sel));
       }
     }

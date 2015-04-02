@@ -40,9 +40,8 @@ namespace Sass {
     template <typename U>
     void fallback(U x) { return fallback_impl(x); }
     
-    static Node StaticWeave(Node& path, Context& ctx);
     static Node StaticSubweave(Node& one, Node& two, Context& ctx);
-    static Node StaticTrim(Node& seqses, Context& ctx);
+    static Selector_List* extendSelectorList(Selector_List* pSelectorList, Context& ctx, ExtensionSubsetMap& subsetMap, bool& extendedSomething);
   };
 
 }

@@ -8,6 +8,7 @@
 #include "constants.hpp"
 #include "to_string.hpp"
 #include "inspect.hpp"
+#include "extend.hpp"
 #include "eval.hpp"
 #include "util.hpp"
 #include "utf8_string.hpp"
@@ -32,7 +33,7 @@
 #define ARG(argname, argtype) get_arg<argtype>(argname, env, sig, pstate, backtrace)
 #define ARGR(argname, argtype, lo, hi) get_arg_r(argname, env, sig, pstate, lo, hi, backtrace)
 #define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, pstate, backtrace, ctx)
-#define ARGSEL(argname) get_arg_sel(argname, env, sig, pstate, backtrace, ctx, p_contextualize)
+#define ARGSEL(argname, contextualize) get_arg_sel(argname, env, sig, pstate, backtrace, ctx, contextualize)
 
 namespace Sass {
   using std::stringstream;
@@ -136,10 +137,35 @@ namespace Sass {
       result_str += ';'; // the parser looks for a brace to end the selector
       
       Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
-      p.block_stack.push_back(contextualize_eval->parent->last_block());
-      p.last_media_block = contextualize_eval->parent->media_block();
+      if( contextualize_eval->parent ) {
+        p.block_stack.push_back(contextualize_eval->parent->last_block());
+        p.last_media_block = contextualize_eval->parent->media_block();
+      }
       
       return p.parse_selector_group();
+    }
+    
+    Complex_Selector* get_arg_complex_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contextualize_eval) {
+      To_String to_string;
+      Expression* exp = ARG(argname, Expression);
+      String_Constant* s;
+      
+      // Catch & as variable
+      s = dynamic_cast<String_Constant*>(exp);
+      if(!s) {
+        s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));
+      }
+      
+      string result_str(s->value());
+      result_str += ';'; // the parser looks for a brace to end the selector
+      
+      Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
+      if( contextualize_eval->parent ) {
+        p.block_stack.push_back(contextualize_eval->parent->last_block());
+        p.last_media_block = contextualize_eval->parent->media_block();
+      }
+      
+      return p.parse_selector_combination();
     }
 
 #ifdef __MINGW32__
@@ -1596,25 +1622,61 @@ namespace Sass {
     Signature selector_replace_sig = "selector-replace($selector, $original, $replacement)";
     BUILT_IN(selector_replace)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_replace");
+      To_String to_string;
+      Contextualize contextualize(ctx, &d_env, backtrace);
+
+      Selector_List*  selector = ARGSEL("$selector", p_contextualize);
+      Selector_List*  original = ARGSEL("$original", p_contextualize);
+      Selector_List*  replacement = ARGSEL("$replacement", p_contextualize);
+      
+//      Selector_List* selector = new (ctx.mem) Selector_List(pstate);
+//      *selector << get_arg_complex_sel("$selector", env, sig, pstate, backtrace, ctx, &contextualize);
+//      
+//      Selector_List* original = new (ctx.mem) Selector_List(pstate);
+//      *original << get_arg_complex_sel("$original", env, sig, pstate, backtrace, ctx, &contextualize);
+//      
+//      Selector_List* replacement = new (ctx.mem) Selector_List(pstate);
+//      *replacement << get_arg_complex_sel("$replacement", env, sig, pstate, backtrace, ctx, &contextualize);
+
+      std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
+      std::cout << "selector_replace";
+      std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
+      
+      ExtensionSubsetMap subset_map;
+      replacement->populate_extends(original, ctx, subset_map);
+      
+      
+      bool extendedSomething; 
+      Selector_List* selector2 = Extend::extendSelectorList(selector, ctx, subset_map, extendedSomething);
+      
+      Extend extend(ctx, subset_map);
+      selector->perform(&extend);
+      
+//      Selector_List* group = new (ctx.mem) Selector_List(pstate);
+      std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
+      std::cout << "DONE";
+      std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
+      return new (ctx.mem) String_Constant(pstate, selector2->perform(&to_string) );
     }
     Signature selector_unify_sig = "selector-unify($selector1, $selector2)";
     BUILT_IN(selector_unify)
     {
-      Selector_List*  selector1 = ARGSEL("$selector1");
-      Selector_List*  selector2 = ARGSEL("$selector2");
+      Selector_List*  selector1 = ARGSEL("$selector1", p_contextualize);
+      Selector_List*  selector2 = ARGSEL("$selector2", p_contextualize);
 
       Selector_List* result = selector1->unify_with(selector2, ctx);
-//      return new (ctx.mem) Boolean(pstate, result);
+      if( result ) {
+        To_String to_string;
+        return new (ctx.mem) String_Constant(pstate,result->perform(&to_string));
+      }
       
-      To_String to_string;
-      return new (ctx.mem) String_Constant(pstate, result ? result->perform(&to_string) : "" );
+      return new (ctx.mem) Null(pstate);
     }
     Signature is_superselector_sig = "is-superselector($super, $sub)";
     BUILT_IN(is_superselector)
     {
-      Selector_List*  super = ARGSEL("$super");
-      Selector_List*  sub = ARGSEL("$sub");
+      Selector_List*  super = ARGSEL("$super", p_contextualize);
+      Selector_List*  sub = ARGSEL("$sub", p_contextualize);
       bool result = super->is_superselector_of(sub);
       return new (ctx.mem) Boolean(pstate, result);
     }
