@@ -121,80 +121,46 @@ namespace Sass {
       }
       return val;
     }
+    
     // GET SELECTOR ARGS
+#define create_sel_parser()                                                 \
+    To_String to_string;                                                    \
+    Expression* exp = ARG(argname, Expression);                             \
+    String_Constant* s;                                                     \
+                                                                            \
+    /* Catch '&' as variable. Bug? */                                       \
+    s = dynamic_cast<String_Constant*>(exp);                                \
+    if(!s) {                                                                \
+      s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));  \
+    }                                                                       \
+                                                                            \
+    string result_str(s->value());                                          \
+    result_str += ';';/* the parser looks for a brace to end the selector*/ \
+                                                                            \
+    Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);         \
+    if( contextualize_eval->parent ) {                                      \
+      p.block_stack.push_back(contextualize_eval->parent->last_block());    \
+      p.last_media_block = contextualize_eval->parent->media_block();       \
+    }                                                                       \
+    
     template <typename T>
     T* get_arg_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contextualize_eval);
     
     template <>
     Complex_Selector* get_arg_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contextualize_eval) {
-      
-      To_String to_string;
-      Expression* exp = ARG(argname, Expression);
-      String_Constant* s;
-      
-      // Catch & as variable
-      s = dynamic_cast<String_Constant*>(exp);
-      if(!s) {
-        s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));
-      }
-      
-      string result_str(s->value());
-      result_str += ';'; // the parser looks for a brace to end the selector
-      
-      Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
-      if( contextualize_eval->parent ) {
-        p.block_stack.push_back(contextualize_eval->parent->last_block());
-        p.last_media_block = contextualize_eval->parent->media_block();
-      }
-      
+      create_sel_parser();
       return p.parse_selector_combination();
     }
     
     template <>
     Selector_List* get_arg_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contextualize_eval) {
-      
-      To_String to_string;
-      Expression* exp = ARG(argname, Expression);
-      String_Constant* s;
-      
-      // Catch & as variable
-      s = dynamic_cast<String_Constant*>(exp);
-      if(!s) {
-        s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));
-      }
-      
-      string result_str(s->value());
-      result_str += ';'; // the parser looks for a brace to end the selector
-      
-      Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
-      if( contextualize_eval->parent ) {
-        p.block_stack.push_back(contextualize_eval->parent->last_block());
-        p.last_media_block = contextualize_eval->parent->media_block();
-      }
-      
+      create_sel_parser();
       return p.parse_selector_group();
     }
     
     template <>
     Compound_Selector* get_arg_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contextualize_eval) {
-      
-      To_String to_string;
-      Expression* exp = ARG("$selector", Expression);
-      String_Constant* s;
-      
-      // Catch & as variable
-      s = dynamic_cast<String_Constant*>(exp);
-      if(!s) {
-        s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));
-      }
-      
-      string result_str(s->value());
-      result_str += '{'; // the parser looks for a brace to end the selector
-      
-      Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
-      p.block_stack.push_back(contextualize_eval->parent->last_block());
-      p.last_media_block = contextualize_eval->parent->media_block();
-      
+      create_sel_parser();
       return p.parse_simple_selector_sequence();
     }
 
