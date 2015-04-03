@@ -36,7 +36,6 @@
 #define ARGR(argname, argtype, lo, hi) get_arg_r(argname, env, sig, pstate, lo, hi, backtrace)
 #define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, pstate, backtrace, ctx)
 #define ARGSEL(argname, seltype, contextualize) get_arg_sel<seltype>(argname, env, sig, pstate, backtrace, ctx, contextualize)
-#define ARGSEL_INDEX(index, seltype, contextualize) get_arg_sel<seltype>(index, env, sig, pstate, backtrace, ctx, contextualize)
 namespace Sass {
   using std::stringstream;
   using std::endl;
@@ -127,43 +126,23 @@ namespace Sass {
     ////////////////////////////////////////////////
     // RETREIVE SELECTOR FROM ARGS HELPER FUNCTIONS
     ////////////////////////////////////////////////
-    Parser create_sel_parsear_(Expression* exp, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contexualize) {
-      To_String to_string;
-      String_Constant* s;
-      
-      // Catch & as variable
-      s = dynamic_cast<String_Constant*>(exp);
-      if(!s) {
-        s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));
-      }
-      
-      string result_str(s->value());
-      result_str += '{'; // the parser looks for a brace to end the selector
-      
-      Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);
-      p.block_stack.push_back(contexualize->parent->last_block());
-      p.last_media_block = contexualize->parent->media_block();
-      
-      return p;
-    }
-    
-#define create_sel_parser(CONTEXTUALIZE)                                                 \
+#define create_sel_parser(CONTEXTUALIZE)                                \
 To_String to_string;                                                    \
 String_Constant* s;                                                     \
-\
+                                                                        \
 /* Catch '&' as variable. Bug? */                                       \
 s = dynamic_cast<String_Constant*>(exp);                                \
 if(!s) {                                                                \
-s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));  \
+  s = new (ctx.mem) String_Constant(pstate, exp->perform(&to_string));  \
 }                                                                       \
-\
+                                                                        \
 string result_str(s->value());                                          \
 result_str += ';';/* the parser looks for a brace to end the selector*/ \
-\
+                                                                        \
 Parser p = Parser::from_c_str(result_str.c_str(), ctx, pstate);         \
-if( CONTEXTUALIZE->parent ) {                                      \
-p.block_stack.push_back(CONTEXTUALIZE->parent->last_block());    \
-p.last_media_block = CONTEXTUALIZE->parent->media_block();       \
+if( CONTEXTUALIZE->parent ) {                                           \
+  p.block_stack.push_back(CONTEXTUALIZE->parent->last_block());         \
+  p.last_media_block = CONTEXTUALIZE->parent->media_block();            \
 }                                                                       \
 
     template <typename T>
