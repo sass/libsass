@@ -820,6 +820,10 @@ namespace Sass {
     if (output_style() == COMPRESSED && comb != Complex_Selector::ANCESTOR_OF) scheduled_space = 0;
 
     switch (comb) {
+      case Complex_Selector::REFERENCE:
+        append_mandatory_space();
+        append_string("/deep/");
+        append_mandatory_space();
       case Complex_Selector::ANCESTOR_OF:
         if (is_tail) append_mandatory_space();
       break;

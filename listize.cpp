@@ -56,6 +56,7 @@ namespace Sass {
         *l << new (ctx.mem) String_Constant(sel->pstate(), "~");
       break;
       case Complex_Selector::ANCESTOR_OF:
+      case Complex_Selector::REFERENCE:
       break;
     }
 

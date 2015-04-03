@@ -197,10 +197,6 @@ namespace Sass {
       return sequence<exactly<'@'>, identifier>(src);
     }
 
-    const char* kwd_sel_deep(const char* src) {
-      return word<sel_deep_kwd>(src);
-    }
-
     const char* kwd_import(const char* src) {
       return word<import_kwd>(src);
     }
@@ -492,6 +488,9 @@ namespace Sass {
     const char* prefix_match(const char* src) { return exactly<caret_equal>(src); }
     const char* suffix_match(const char* src) { return exactly<dollar_equal>(src); }
     const char* substring_match(const char* src) { return exactly<star_equal>(src); }
+    const char* reference_combinator(const char* src) {
+      return sequence<spaces, exactly<'/'>, identifier, exactly<'/'>, spaces >(src);
+    }
     // Match CSS combinators.
     /* not used anymore - remove?
     const char* adjacent_to(const char* src) {

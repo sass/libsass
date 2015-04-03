@@ -172,7 +172,6 @@ namespace Sass {
     const char* identifier_alnums(const char* src);
     // Match selector names.
     // const char* sel_ident(const char* src);
-    const char* kwd_sel_deep(const char* src);
 
     // Match interpolant schemas
     const char* identifier_schema(const char* src);
@@ -274,6 +273,7 @@ namespace Sass {
     const char* suffix_match(const char* src);
     const char* substring_match(const char* src);
     // Match CSS combinators.
+    const char* reference_combinator(const char* src);
     // const char* adjacent_to(const char* src);
     // const char* precedes(const char* src);
     // const char* parent_of(const char* src);
