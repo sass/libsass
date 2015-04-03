@@ -1,5 +1,9 @@
 #include "ast.hpp"
 #include "context.hpp"
+#include "contextualize.hpp"
+#include "node.hpp"
+#include "sass_util.hpp"
+#include "extend.hpp"
 #include "to_string.hpp"
 #include <set>
 #include <algorithm>
@@ -490,6 +494,179 @@ namespace Sass {
     this->mCachedSelector(this->perform(&to_string));
 #endif
   }
+  
+  
+
+  // For every selector in RHS, see if we have /any/ selectors which are a super-selector of it
+  bool Selector_List::is_superselector_of(Sass::Selector_List *rhs) {
+
+#ifdef DEBUG
+    To_String to_string;
+#endif
+
+    // For every selector in RHS, see if it matches /any/ of our selectors
+    for(size_t rhs_i = 0, rhs_L = rhs->length(); rhs_i < rhs_L; ++rhs_i) {
+      Complex_Selector* seq1 = (*rhs)[rhs_i];
+#ifdef DEBUG
+      string seq1_string = seq1->perform(&to_string);
+#endif
+
+      bool any = false;
+      for (size_t lhs_i = 0, lhs_L = length(); lhs_i < lhs_L; ++lhs_i) {
+        Complex_Selector* seq2 = (*this)[lhs_i];
+#ifdef DEBUG
+        string seq2_string = seq2->perform(&to_string);
+#endif
+        bool is_superselector = seq2->is_superselector_of(seq1);
+        if( is_superselector ) {
+          any = true;
+          break;
+        }
+      }
+      
+      // Seq1 did not match any of our selectors - whole thing is no good, abort
+      if(!any) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  Selector_List* Selector_List::unify_with(Selector_List* rhs, Context& ctx) {
+
+
+#ifdef DEBUG
+    To_String to_string;
+    string lhs_string = perform(&to_string);
+    string rhs_string = rhs->perform(&to_string);
+ 
+    auto counter = 0;
+
+    std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
+    std::cout << "Unifying " << this->perform(&to_string) << " with:" << rhs->perform(&to_string) << std::endl;
+    std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
+#endif
+    
+// Store only unique Selector_List returned by Complex_Selector::unify_with
+//    std::set< Selector_List*, std::function< bool(Selector_List*, Selector_List*) > > unique_selector_list([] ( Selector_List* lhs, Selector_List* rhs ) {
+//      return *lhs == *rhs;
+//    } );
+
+    vector<Complex_Selector*> unified_complex_selectors;
+    // Unify all of children with RHS's children, storing the results in `unified_complex_selectors`
+    for (size_t lhs_i = 0, lhs_L = length(); lhs_i < lhs_L; ++lhs_i) {
+      Complex_Selector* seq1 = (*this)[lhs_i];
+      for(size_t rhs_i = 0, rhs_L = rhs->length(); rhs_i < rhs_L; ++rhs_i) {
+        Complex_Selector* seq2 = (*rhs)[rhs_i];
+        
+#ifdef DEBUG
+        string seq1_string = seq1->perform(&to_string);
+        string seq2_string = seq2->perform(&to_string);
+        counter++;
+#endif
+        Selector_List* result = seq1->unify_with(seq2, ctx);
+        if( result ) {
+          for(size_t i = 0, L = result->length(); i < L; ++i) {
+#ifdef DEBUG
+            std::cout << "Counter:" << counter << " result:" << (*result)[i]->perform(&to_string) << std::endl;
+#endif
+            unified_complex_selectors.push_back( (*result)[i] );
+          }
+        }
+      }
+    }
+    
+    // Creates the final Selector_List by combining all the complex selectors
+    Selector_List* final_result = new (ctx.mem) Selector_List(pstate());
+    for (auto itr = unified_complex_selectors.begin(); itr != unified_complex_selectors.end(); ++itr) {
+      *final_result << *itr;
+    }
+
+    return final_result;
+  }
+  
+  void Selector_List::populate_extends(Selector_List* extendee, Context& ctx, ExtensionSubsetMap& extends) {
+    To_String to_string;
+    
+    Selector_List* extender = this;
+    for (auto complex_sel : extendee->elements()) {
+      Complex_Selector* c = complex_sel;
+
+      
+      // Ignore any parent selectors, until we find the first non Selector_Reference head
+      Compound_Selector* compound_sel = c->head();
+      Complex_Selector* pIter = complex_sel;
+      while (pIter) {
+        Compound_Selector* pHead = pIter->head();
+        if (pHead && dynamic_cast<Selector_Reference*>(pHead->elements()[0]) == NULL) {
+          compound_sel = pHead;
+          break;
+        }
+        
+        pIter = pIter->tail();
+      }
+      
+      if (!pIter->head() || pIter->tail()) {
+        error("nested selectors may not be extended", c->pstate());
+      }
+      
+      compound_sel->is_optional(extendee->is_optional());
+      
+      for (size_t i = 0, L = extender->length(); i < L; ++i) {
+        // let's test this out
+        cerr << "REGISTERING EXTENSION REQUEST: " << (*extender)[i]->perform(&to_string) << " <- " << compound_sel->perform(&to_string) << endl;
+        extends.put(compound_sel->to_str_vec(), make_pair((*extender)[i], compound_sel));
+      }
+    }
+  };
+  
+  
+  Selector_List* Complex_Selector::unify_with(Complex_Selector* other, Context& ctx) {
+    To_String to_string;
+
+    Compound_Selector* thisBase = base();
+    Compound_Selector* rhsBase = other->base();
+    
+    if( thisBase == 0 || rhsBase == 0 ) return 0;
+
+    // Not sure about this check, but closest way I could check to see if this is a ruby 'SimpleSequence' equivalent
+    if(  tail()->combinator() != Combinator::ANCESTOR_OF || other->tail()->combinator() != Combinator::ANCESTOR_OF ) return 0;
+  
+    Compound_Selector* unified = rhsBase->unify_with(thisBase, ctx);
+    if( unified == 0 ) return 0;
+    
+    Node lhsNode = complexSelectorToNode(this, ctx);
+    Node rhsNode = complexSelectorToNode(other, ctx);
+    
+    // Create a temp Complex_Selector, turn it into a Node, and combine it with the existing RHS node
+    Complex_Selector* fakeComplexSelector = new (ctx.mem) Complex_Selector(ParserState("[NODE]"), Complex_Selector::ANCESTOR_OF, unified, NULL);
+    Node unifiedNode = complexSelectorToNode(fakeComplexSelector, ctx);
+    rhsNode.plus(unifiedNode);
+    
+    Node node = Extend::StaticSubweave(lhsNode, rhsNode, ctx);
+
+#ifdef DEBUG
+    std::cout << "Node:" << node << std::endl;
+#endif
+    
+    Selector_List* result = new (ctx.mem) Selector_List(pstate());
+    for (NodeDeque::iterator iter = node.collection()->begin(), iterEnd = node.collection()->end(); iter != iterEnd; iter++) {
+      Node childNode = *iter;
+      childNode = Node::naiveTrim(childNode, ctx);
+      
+      Complex_Selector* childNodeAsComplexSelector = nodeToComplexSelector(childNode, ctx);
+      if( childNodeAsComplexSelector ) { (*result) << childNodeAsComplexSelector; }
+    }
+    
+#ifdef DEBUG
+//    To_String to_string;
+    string lhs_string = result->perform(&to_string);
+#endif
+
+    return result->length() ? result : 0;
+  }
+
+  
 
   /* not used anymore - remove?
   Selector_Placeholder* Selector_List::find_placeholder()

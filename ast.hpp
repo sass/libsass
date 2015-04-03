@@ -632,9 +632,11 @@ namespace Sass {
   // by a type tag.
   /////////////////////////////////////////////////////////////////////////////
   struct Backtrace;
+  class Contextualize;
   typedef Environment<AST_Node*> Env;
   typedef const char* Signature;
-  typedef Expression* (*Native_Function)(Env&, Env&, Context&, Signature, ParserState, Backtrace*);
+  typedef Expression* (*Native_Function)(Env&, Env&, Context&, Signature, ParserState, Contextualize*, Backtrace*);
+//  typedef Expression* (*Native_Function)(Env&, Env&, Context&, Signature, ParserState, Contextualize*, Backtrace*);
   typedef const char* Signature;
   class Definition : public Has_Block {
   public:
@@ -2004,6 +2006,8 @@ namespace Sass {
     size_t length();
     bool is_superselector_of(Compound_Selector*);
     bool is_superselector_of(Complex_Selector*);
+    Selector_List* unify_with(Complex_Selector* rhs, Context& ctx);
+    
     // virtual Selector_Placeholder* find_placeholder();
     Combinator clear_innermost();
     void set_innermost(Complex_Selector*, Combinator);
@@ -2072,6 +2076,8 @@ namespace Sass {
   };
 
   typedef deque<Complex_Selector*> ComplexSelectorDeque;
+  
+  typedef Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> > ExtensionSubsetMap;
 
   ///////////////////////////////////
   // Comma-separated selector groups.
@@ -2088,6 +2094,10 @@ namespace Sass {
     : Selector(pstate), Vectorized<Complex_Selector*>(s), wspace_(0)
     { }
     // virtual Selector_Placeholder* find_placeholder();
+    bool is_superselector_of(Selector_List* other);
+    Selector_List* unify_with(Selector_List*, Context&);
+    void populate_extends(Selector_List*, Context&, ExtensionSubsetMap&);
+    
     virtual int specificity()
     {
       int sum = 0;
