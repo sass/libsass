@@ -36,6 +36,7 @@
 #define ARGR(argname, argtype, lo, hi) get_arg_r(argname, env, sig, pstate, lo, hi, backtrace)
 #define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, pstate, backtrace, ctx)
 #define ARGSEL(argname, seltype, contextualize) get_arg_sel<seltype>(argname, env, sig, pstate, backtrace, ctx, contextualize)
+
 namespace Sass {
   using std::stringstream;
   using std::endl;
@@ -1613,6 +1614,7 @@ if( CONTEXTUALIZE->parent ) {                                           \
     Signature selector_append_sig = "selector-append($selectors...)";
     BUILT_IN(selector_append)
     {
+      To_String to_string;
       List* arglist = ARG("$selectors", List);
       
       // Not enough parameters
@@ -1640,10 +1642,33 @@ if( CONTEXTUALIZE->parent ) {                                           \
         
         Selector_List* child = *itr;
         
+        // Make a new list of elements to replace the existing Complex_Selector's in CHILD
+          // For every Complex_Selector in PARENT, create a clone of each CHILD Complex_Selector
+            // With that clone, append a Selector_Reference to it
+            // Add that clone to newElements
+        // Replace CHILD.elements with newElements
+        vector<Complex_Selector*> newElements;
         for (Complex_Selector* seq : child->elements()) {
-          Selector_Reference* ref = new (ctx.mem) Selector_Reference(parent->pstate(), parent);
-          seq->tail()->head()->unshift(ref);
+          for(Complex_Selector* pSeq : parent->elements() ) {
+            Complex_Selector* seq_clone = seq->cloneFully(ctx);
+            
+//            std::cout << "--------\nparent:" << parent->perform(&to_string) << std::endl;
+//            std::cout << "pSeq:" << pSeq->perform(&to_string) << std::endl;
+//            std::cout << "\nchild:" << child->perform(&to_string) << std::endl;
+//            std::cout << "cSeq:" << seq_clone->perform(&to_string) << std::endl;
+
+            Selector_Reference* ref = new (ctx.mem) Selector_Reference(pSeq->pstate(), pSeq);
+            seq_clone->tail()->head()->unshift(ref);
+            newElements.push_back(seq_clone);
+          }
         }
+        
+        child->elements(newElements);
+        
+        
+//        string s = child->perform(&to_string);
+//        child->mCachedSelector(s);
+//        std::cout << "\n\tEndChild:" << child->mCachedSelector() << std::endl;
         parent = child;
       }
       return new (ctx.mem) String_Constant(pstate, parent->perform(&to_s));
