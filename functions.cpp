@@ -1675,7 +1675,7 @@ if( CONTEXTUALIZE->parent ) {                                           \
         parent = child;
       }
      
-      return new (ctx.mem) String_Constant(pstate, parent->perform(&to_s));
+      return new (ctx.mem) String_Constant(pstate, parent->perform(&to_string));
     }
     Signature selector_extend_sig = "selector-extend($selector, $extendee, $extender)";
     BUILT_IN(selector_extend)
