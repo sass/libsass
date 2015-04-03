@@ -1631,9 +1631,12 @@ if( CONTEXTUALIZE->parent ) {                                           \
         parsedSelectors.push_back(sel);
       }
       
-      Selector_List* parent = NULL;
-
-      To_String to_s;
+      // Nothing to do
+      if( parsedSelectors.empty() ) {
+        return new (ctx.mem) Null(pstate);
+      }
+      
+      Selector_List* parent = 0;
       for(std::vector<Selector_List*>::iterator itr = parsedSelectors.begin(); itr != parsedSelectors.end(); ++itr) {
         if( itr == parsedSelectors.begin() ) {
           parent = *itr;
@@ -1644,7 +1647,7 @@ if( CONTEXTUALIZE->parent ) {                                           \
         
         // Make a new list of elements to replace the existing Complex_Selector's in CHILD
           // For every Complex_Selector in PARENT, create a clone of each CHILD Complex_Selector
-            // With that clone, append a Selector_Reference to it
+            // With that clone, append a Selector_Reference to it pointing to PARENT.COMPLEX_SELECTOR
             // Add that clone to newElements
         // Replace CHILD.elements with newElements
         vector<Complex_Selector*> newElements;
@@ -1671,6 +1674,7 @@ if( CONTEXTUALIZE->parent ) {                                           \
 //        std::cout << "\n\tEndChild:" << child->mCachedSelector() << std::endl;
         parent = child;
       }
+     
       return new (ctx.mem) String_Constant(pstate, parent->perform(&to_s));
     }
     Signature selector_extend_sig = "selector-extend($selector, $extendee, $extender)";
