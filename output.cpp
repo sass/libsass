@@ -72,6 +72,16 @@ namespace Sass {
 
   }
 
+  void Output::operator()(Wrapped_Selector* s)
+  {
+    if (s->name() == ":not(") {
+      if (s->has_child(":has(") || s->has_child(":not(")) {
+        return; // abort
+      }
+    }
+    return Inspect::operator()(s);
+  }
+
   void Output::operator()(Comment* c)
   {
     To_String to_string(ctx);

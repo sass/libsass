@@ -1791,6 +1791,8 @@ namespace Sass {
     virtual unsigned long specificity() {
       return Constants::Specificity_Universal;
     };
+    virtual bool is_child(const string& name) { return false; }
+    virtual bool has_child(const string& name) { return false; }
   };
   inline Selector::~Selector() { }
 
@@ -1977,6 +1979,13 @@ namespace Sass {
     Wrapped_Selector(ParserState pstate, string n, Selector* sel)
     : Simple_Selector(pstate), name_(n), selector_(sel)
     { }
+    virtual bool is_child(const string& name) {
+      return name_ == name;
+    }
+    virtual bool has_child(const string& name) {
+      if (selector_ == 0) return false;
+      return selector_->has_child(name);
+    }
     // Selectors inside the negation pseudo-class are counted like any
     // other, but the negation itself does not count as a pseudo-class.
     virtual unsigned long specificity()
@@ -2029,6 +2038,13 @@ namespace Sass {
       for (size_t i = 0, L = length(); i < L; ++i)
       { sum += (*this)[i]->specificity(); }
       return sum;
+    }
+    virtual bool has_child(const string& name) {
+      for (auto el : elements()) {
+        if (el->is_child(name)) return true;
+        if (el->has_child(name)) return true;
+      }
+      return false;
     }
     bool is_empty_reference()
     {
@@ -2090,6 +2106,12 @@ namespace Sass {
       if (head()) sum += head()->specificity();
       if (tail()) sum += tail()->specificity();
       return sum;
+    }
+    virtual bool has_child(const string& name) {
+      return (head_ && head_->is_child(name)) ||
+             (head_ && head_->has_child(name)) ||
+             (tail_ && tail_->is_child(name)) ||
+             (tail_ && tail_->has_child(name));
     }
     bool operator<(const Complex_Selector& rhs) const;
     bool operator==(const Complex_Selector& rhs) const;
@@ -2171,6 +2193,15 @@ namespace Sass {
       for (size_t i = 0, L = length(); i < L; ++i)
       { sum += (*this)[i]->specificity(); }
       return sum;
+    }
+    virtual bool has_child(const string& name)
+    {
+      for (size_t i = 0, L = length(); i < L; ++i)
+      {
+        if ((*this)[i]->is_child(name)) return true;
+        if ((*this)[i]->has_child(name)) return true;
+      }
+      return false;
     }
     // vector<Complex_Selector*> members() { return elements_; }
     ATTACH_OPERATIONS();
