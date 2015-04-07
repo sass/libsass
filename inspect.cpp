@@ -751,12 +751,12 @@ namespace Sass {
 
   void Inspect::operator()(Type_Selector* s)
   {
-    append_token(s->name(), s);
+    append_token(s->ns_name(), s);
   }
 
   void Inspect::operator()(Selector_Qualifier* s)
   {
-    append_token(s->name(), s);
+    append_token(s->ns_name(), s);
     if (s->has_line_break()) append_optional_linefeed();
     if (s->has_line_break()) append_indentation();
   }
@@ -765,7 +765,7 @@ namespace Sass {
   {
     append_string("[");
     add_open_mapping(s);
-    append_token(s->name(), s);
+    append_token(s->ns_name(), s);
     if (!s->matcher().empty()) {
       append_string(s->matcher());
       if (s->value()) {
@@ -778,7 +778,7 @@ namespace Sass {
 
   void Inspect::operator()(Pseudo_Selector* s)
   {
-    append_token(s->name(), s);
+    append_token(s->ns_name(), s);
     if (s->expression()) {
       s->expression()->perform(this);
       append_string(")");

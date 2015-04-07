@@ -1765,6 +1765,7 @@ namespace Sass {
   // Abstract base class for simple selectors.
   ////////////////////////////////////////////
   class Simple_Selector : public Selector {
+    ADD_PROPERTY(string, ns);
   public:
     Simple_Selector(ParserState pstate)
     : Selector(pstate)
@@ -1778,6 +1779,7 @@ namespace Sass {
     inline bool operator!=(const Simple_Selector& rhs) const { return !(*this == rhs); }
 
     bool operator<(const Simple_Selector& rhs) const;
+    ATTACH_OPERATIONS();
   };
   inline Simple_Selector::~Simple_Selector() { }
 
@@ -1819,7 +1821,21 @@ namespace Sass {
   public:
     Type_Selector(ParserState pstate, string n)
     : Simple_Selector(pstate), name_(n)
-    { }
+    {
+      size_t pos = n.find('|');
+      // found some namespace
+      if (pos != string::npos) {
+        ns_ = n.substr(0, pos);
+        name_ = n.substr(pos + 1);
+      }
+    }
+    virtual string ns_name() const
+    {
+      string name("");
+      if (!ns_.empty())
+        name += ns_ + "|";
+      return name + name_;
+    }
     virtual unsigned long specificity()
     {
       // ToDo: What is the specificity of the star selector?
@@ -1838,7 +1854,21 @@ namespace Sass {
   public:
     Selector_Qualifier(ParserState pstate, string n)
     : Simple_Selector(pstate), name_(n)
-    { }
+    {
+      size_t pos = n.find('|');
+      // found some namespace
+      if (pos != string::npos) {
+        ns_ = n.substr(0, pos);
+        name_ = n.substr(pos + 1);
+      }
+    }
+    virtual string ns_name() const
+    {
+      string name("");
+      if (!ns_.empty())
+        name += ns_ + "|";
+      return name + name_;
+    }
     virtual unsigned long specificity()
     {
       if (name()[0] == '#') return Constants::Specificity_ID;
@@ -1859,7 +1889,21 @@ namespace Sass {
   public:
     Attribute_Selector(ParserState pstate, string n, string m, String* v)
     : Simple_Selector(pstate), name_(n), matcher_(m), value_(v)
-    { }
+    {
+      size_t pos = n.find('|');
+      // found some namespace
+      if (pos != string::npos) {
+        ns_ = n.substr(0, pos);
+        name_ = n.substr(pos + 1);
+      }
+    }
+    virtual string ns_name() const
+    {
+      string name("");
+      if (!ns_.empty())
+        name += ns_ + "|";
+      return name + name_;
+    }
     virtual unsigned long specificity()
     {
       return Constants::Specificity_Attr;
@@ -1888,7 +1932,21 @@ namespace Sass {
   public:
     Pseudo_Selector(ParserState pstate, string n, String* expr = 0)
     : Simple_Selector(pstate), name_(n), expression_(expr)
-    { }
+    {
+      size_t pos = n.find('|');
+      // found some namespace
+      if (pos != string::npos) {
+        ns_ = n.substr(0, pos);
+        name_ = n.substr(pos + 1);
+      }
+    }
+    virtual string ns_name() const
+    {
+      string name("");
+      if (!ns_.empty())
+        name += ns_ + "|";
+      return name + name_;
+    }
 
     // A pseudo-class always consists of a "colon" (:) followed by the name
     // of the pseudo-class and optionally by a value between parentheses.

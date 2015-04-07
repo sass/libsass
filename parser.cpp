@@ -1967,6 +1967,7 @@ namespace Sass {
     bool saw_interpolant = false;
 
     while ((q = peek< identifier >(p))                             ||
+           (q = peek< namespace_prefix >(p))                       ||
            (q = peek< hyphens_and_identifier >(p))                 ||
            (q = peek< hyphens_and_name >(p))                       ||
            (q = peek< type_selector >(p))                          ||
@@ -1977,7 +1978,7 @@ namespace Sass {
            (q = peek< dimension >(p))                              ||
            (q = peek< quoted_string >(p))                          ||
            (q = peek< exactly<'*'> >(p))                           ||
-           (q = peek< exactly<sel_deep_kwd> >(p))                           ||
+           (q = peek< exactly<sel_deep_kwd> >(p))                  ||
            (q = peek< exactly<'('> >(p))                           ||
            (q = peek< exactly<')'> >(p))                           ||
            (q = peek< exactly<'['> >(p))                           ||
@@ -1993,10 +1994,10 @@ namespace Sass {
                                 zero_plus<digit>,
                                 exactly<'n'> > >(p))               ||
            (q = peek< sequence< optional<sign>,
-                                one_plus<digit> > >(p))                     ||
+                                one_plus<digit> > >(p))            ||
            (q = peek< number >(p))                                 ||
            (q = peek< sequence< exactly<'&'>,
-                                identifier_alnums > >(p))        ||
+                                identifier_alnums > >(p))          ||
            (q = peek< exactly<'&'> >(p))                           ||
            (q = peek< exactly<'%'> >(p))                           ||
            (q = peek< alternatives<exact_match,
@@ -2030,6 +2031,7 @@ namespace Sass {
     bool saw_stuff = false;
 
     while ((q = peek< identifier >(p))                             ||
+           (q = peek< namespace_prefix >(p))                       ||
            (q = peek< type_selector >(p))                          ||
            (q = peek< id_name >(p))                                ||
            (q = peek< class_name >(p))                             ||
@@ -2053,10 +2055,10 @@ namespace Sass {
                                 zero_plus<digit>,
                                 exactly<'n'> > >(p))               ||
            (q = peek< sequence< optional<sign>,
-                                one_plus<digit> > >(p))                     ||
+                                one_plus<digit> > >(p))            ||
            (q = peek< number >(p))                                 ||
            (q = peek< sequence< exactly<'&'>,
-                                identifier_alnums > >(p))        ||
+                                identifier_alnums > >(p))          ||
            (q = peek< exactly<'&'> >(p))                           ||
            (q = peek< exactly<'%'> >(p))                           ||
            (q = peek< alternatives<exact_match,
