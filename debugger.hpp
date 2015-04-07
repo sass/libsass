@@ -223,6 +223,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
   } else if (dynamic_cast<Import*>(node)) {
     Import* block = dynamic_cast<Import*>(node);
     cerr << ind << "Import " << block << " " << block->tabs() << endl;
+    debug_ast(block->media_queries(), ind + " @ ");
     // vector<string>         files_;
     for (auto imp : block->urls()) debug_ast(imp, "@ ", env);
   } else if (dynamic_cast<Assignment*>(node)) {
