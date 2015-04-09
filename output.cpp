@@ -99,21 +99,11 @@ namespace Sass {
   {
     Selector* s     = r->selector();
     Block*    b     = r->block();
-    bool      decls = false;
 
-    // Filter out rulesets that aren't printable (process its children though)
-    if (!Util::isPrintable(r, output_style())) {
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        if (dynamic_cast<Has_Block*>(stm)) {
-          stm->perform(this);
-        }
-      }
-      return;
-    }
+    // Filter out rulesets that aren't printable
+    if (!Util::isPrintable(r, output_style())) return;
 
     if (b->has_non_hoistable()) {
-      decls = true;
       if (output_style() == NESTED) indentation += r->tabs();
       if (ctx && ctx->source_comments) {
         stringstream ss;
@@ -158,16 +148,6 @@ namespace Sass {
       append_scope_closer(b);
     }
 
-    if (b->has_hoistable()) {
-      if (decls) ++indentation;
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        if (stm->is_hoistable()) {
-          stm->perform(this);
-        }
-      }
-      if (decls) --indentation;
-    }
   }
 
   void Output::operator()(Keyframe_Rule* r)
@@ -179,24 +159,12 @@ namespace Sass {
       v->perform(this);
     }
 
-    if (!b) {
-      append_colon_separator();
-      return;
-    }
-
     append_scope_opener();
     for (size_t i = 0, L = b->length(); i < L; ++i) {
       Statement* stm = (*b)[i];
       if (!stm->is_hoistable()) {
         stm->perform(this);
         if (i < L - 1) append_special_linefeed();
-      }
-    }
-
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
-      Statement* stm = (*b)[i];
-      if (stm->is_hoistable()) {
-        stm->perform(this);
       }
     }
 
@@ -210,17 +178,6 @@ namespace Sass {
     Feature_Query* q    = f->feature_queries();
     Block* b            = f->block();
 
-    // Filter out feature blocks that aren't printable (process its children though)
-    if (!Util::isPrintable(f, output_style())) {
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        if (dynamic_cast<Has_Block*>(stm)) {
-          stm->perform(this);
-        }
-      }
-      return;
-    }
-
     if (output_style() == NESTED) indentation += f->tabs();
     append_indentation();
     append_token("@supports", f);
@@ -228,35 +185,9 @@ namespace Sass {
     q->perform(this);
     append_scope_opener();
 
-    Selector* e = f->selector();
-    if (e && b->has_non_hoistable()) {
-      // JMA - hoisted, output the non-hoistable in a nested block, followed by the hoistable
-      e->perform(this);
-      append_scope_opener();
-
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        if (!stm->is_hoistable()) {
-          stm->perform(this);
-        }
-      }
-
-      append_scope_closer();
-
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        if (stm->is_hoistable()) {
-          stm->perform(this);
-        }
-      }
-    }
-    else {
-      // JMA - not hoisted, just output in order
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        stm->perform(this);
-        if (i < L - 1) append_special_linefeed();
-      }
+    for (size_t i = 0, L = b->length(); i < L; ++i) {
+      (*b)[i]->perform(this);
+      if (i < L - 1) append_special_linefeed();
     }
 
     if (output_style() == NESTED) indentation -= f->tabs();
@@ -272,16 +203,6 @@ namespace Sass {
     List*  q     = m->media_queries();
     Block* b     = m->block();
 
-    // Filter out media blocks that aren't printable (process its children though)
-    if (!Util::isPrintable(m, output_style())) {
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        if (dynamic_cast<Has_Block*>(stm)) {
-          stm->perform(this);
-        }
-      }
-      return;
-    }
     if (output_style() == NESTED) indentation += m->tabs();
     append_indentation();
     append_token("@media", m);
@@ -291,35 +212,9 @@ namespace Sass {
     in_media_block = false;
     append_scope_opener();
 
-    Selector* e = m->selector();
-    if (e && b->has_non_hoistable()) {
-      // JMA - hoisted, output the non-hoistable in a nested block, followed by the hoistable
-      e->perform(this);
-      append_scope_opener();
-
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        if (!stm->is_hoistable()) {
-          stm->perform(this);
-        }
-      }
-
-      append_scope_closer();
-
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        if (stm->is_hoistable()) {
-          stm->perform(this);
-        }
-      }
-    }
-    else {
-      // JMA - not hoisted, just output in order
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        stm->perform(this);
-        if (i < L - 1) append_special_linefeed();
-      }
+    for (size_t i = 0, L = b->length(); i < L; ++i) {
+      (*b)[i]->perform(this);
+      if (i < L - 1) append_special_linefeed();
     }
 
     if (output_style() == NESTED) indentation -= m->tabs();
@@ -390,10 +285,8 @@ namespace Sass {
   {
     if (String_Quoted* quoted = dynamic_cast<String_Quoted*>(s)) {
       return Output::operator()(quoted);
-    } else if (!in_comment) {
-      append_token(string_to_output(s->value()), s);
     } else {
-      append_token(s->value(), s);
+      append_token(string_to_output(s->value()), s);
     }
   }
 

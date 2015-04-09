@@ -302,7 +302,10 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     for(auto i : expression->elements()) { debug_ast(i, ind + " ", env); }
   } else if (dynamic_cast<Argument*>(node)) {
     Argument* expression = dynamic_cast<Argument*>(node);
-    cerr << ind << "Argument " << expression << " [" << expression->value() << "]" << endl;
+    cerr << ind << "Argument " << expression << " [" << expression->value() << "]";
+    if (expression->is_rest_argument()) cerr << " [rest]";
+    if (expression->is_keyword_argument()) cerr << " [keyword]";
+    cerr << endl;
     debug_ast(expression->value(), ind + " value: ", env);
   } else if (dynamic_cast<Unary_Expression*>(node)) {
     Unary_Expression* expression = dynamic_cast<Unary_Expression*>(node);
@@ -315,7 +318,9 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     debug_ast(expression->right(), ind + " right: ", env);
   } else if (dynamic_cast<Map*>(node)) {
     Map* expression = dynamic_cast<Map*>(node);
-    cerr << ind << "Map " << expression << " [Hashed]" << endl;
+    cerr << ind << "Map " << expression << " [Hashed]";
+    if (expression->is_invisible()) cerr << " [invisible]";
+    cerr << endl;
   } else if (dynamic_cast<List*>(node)) {
     List* expression = dynamic_cast<List*>(node);
     cerr << ind << "List " << expression << " (" << expression->length() << ") " <<

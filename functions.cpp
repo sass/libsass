@@ -73,6 +73,26 @@ namespace Sass {
 
   namespace Functions {
 
+    inline void handle_utf8_error (const ParserState& pstate, Backtrace* backtrace)
+    {
+      try {
+       throw;
+      }
+      catch (utf8::invalid_code_point) {
+        string msg("utf8::invalid_code_point");
+        error(msg, pstate, backtrace);
+      }
+      catch (utf8::not_enough_room) {
+        string msg("utf8::not_enough_room");
+        error(msg, pstate, backtrace);
+      }
+      catch (utf8::invalid_utf8) {
+        string msg("utf8::invalid_utf8");
+        error(msg, pstate, backtrace);
+      }
+      catch (...) { throw; }
+    }
+
     template <typename T>
     T* get_arg(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace)
     {
@@ -792,19 +812,9 @@ namespace Sass {
         len = UTF_8::code_point_count(s->value(), 0, s->value().size());
 
       }
-      catch (utf8::invalid_code_point) {
-        string msg("utf8::invalid_code_point");
-        error(msg, pstate, backtrace);
-      }
-      catch (utf8::not_enough_room) {
-        string msg("utf8::not_enough_room");
-        error(msg, pstate, backtrace);
-      }
-      catch (utf8::invalid_utf8) {
-        string msg("utf8::invalid_utf8");
-        error(msg, pstate, backtrace);
-      }
-      catch (...) { throw; }
+      // handle any invalid utf8 errors
+      // other errors will be re-thrown
+      catch (...) { handle_utf8_error(pstate, backtrace); }
       // return something even if we had an error (-1)
       return new (ctx.mem) Number(pstate, len);
     }
@@ -849,19 +859,9 @@ namespace Sass {
           if (ss->quote_mark()) str = quote(str);
         }
       }
-      catch (utf8::invalid_code_point) {
-        string msg("utf8::invalid_code_point");
-        error(msg, pstate, backtrace);
-      }
-      catch (utf8::not_enough_room) {
-        string msg("utf8::not_enough_room");
-        error(msg, pstate, backtrace);
-      }
-      catch (utf8::invalid_utf8) {
-        string msg("utf8::invalid_utf8");
-        error(msg, pstate, backtrace);
-      }
-      catch (...) { throw; }
+      // handle any invalid utf8 errors
+      // other errors will be re-thrown
+      catch (...) { handle_utf8_error(pstate, backtrace); }
       return new (ctx.mem) String_Constant(pstate, str);
     }
 
@@ -883,19 +883,9 @@ namespace Sass {
         }
         index = UTF_8::code_point_count(str, 0, c_index) + 1;
       }
-      catch (utf8::invalid_code_point) {
-        string msg("utf8::invalid_code_point");
-        error(msg, pstate, backtrace);
-      }
-      catch (utf8::not_enough_room) {
-        string msg("utf8::not_enough_room");
-        error(msg, pstate, backtrace);
-      }
-      catch (utf8::invalid_utf8) {
-        string msg("utf8::invalid_utf8");
-        error(msg, pstate, backtrace);
-      }
-      catch (...) { throw; }
+      // handle any invalid utf8 errors
+      // other errors will be re-thrown
+      catch (...) { handle_utf8_error(pstate, backtrace); }
       // return something even if we had an error (-1)
       return new (ctx.mem) Number(pstate, index);
     }
@@ -933,19 +923,9 @@ namespace Sass {
           if(ss->quote_mark()) newstr = quote(newstr);
         }
       }
-      catch (utf8::invalid_code_point) {
-        string msg("utf8::invalid_code_point");
-        error(msg, pstate, backtrace);
-      }
-      catch (utf8::not_enough_room) {
-        string msg("utf8::not_enough_room");
-        error(msg, pstate, backtrace);
-      }
-      catch (utf8::invalid_utf8) {
-        string msg("utf8::invalid_utf8");
-        error(msg, pstate, backtrace);
-      }
-      catch (...) { throw; }
+      // handle any invalid utf8 errors
+      // other errors will be re-thrown
+      catch (...) { handle_utf8_error(pstate, backtrace); }
       return new (ctx.mem) String_Quoted(pstate, newstr);
     }
 
