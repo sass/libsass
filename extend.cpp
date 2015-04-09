@@ -2172,7 +2172,8 @@ namespace Sass {
       }
       
       for (NodeDeque::iterator iterator = extendedSelectors.collection()->begin(), iteratorBegin = extendedSelectors.collection()->begin(), iteratorEnd = extendedSelectors.collection()->end(); iterator != iteratorEnd; ++iterator) {
-        if(isReplace && iterator == iteratorBegin) continue;
+        // When it is a replace, skip the first one, unless there is only one
+        if(isReplace && iterator == iteratorBegin && extendedSelectors.collection()->size() > 1 ) continue;
         
         Node& childNode = *iterator;
         DEBUG_PRINTLN(EXTEND_COMPLEX, "\tchildNode: " << childNode)
