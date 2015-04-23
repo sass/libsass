@@ -195,12 +195,6 @@ if( CONTEXTUALIZE->parent ) {                                           \
       return p.parse_simple_selector_sequence();
     }
     
-    template <>
-    Compound_Selector* get_arg_sel(const string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx, Contextualize* contextualize_eval) {
-      create_sel_parser();
-      return p.parse_simple_selector_sequence();
-    }
-
 #ifdef __MINGW32__
     uint64_t GetSeed()
     {
