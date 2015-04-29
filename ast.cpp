@@ -497,28 +497,15 @@ namespace Sass {
 #endif
   }
   
-  
 
   // For every selector in RHS, see if we have /any/ selectors which are a super-selector of it
   bool Selector_List::is_superselector_of(Sass::Selector_List *rhs) {
-
-#ifdef DEBUG
-    To_String to_string;
-#endif
-
     // For every selector in RHS, see if it matches /any/ of our selectors
     for(size_t rhs_i = 0, rhs_L = rhs->length(); rhs_i < rhs_L; ++rhs_i) {
       Complex_Selector* seq1 = (*rhs)[rhs_i];
-#ifdef DEBUG
-      string seq1_string = seq1->perform(&to_string);
-#endif
-
       bool any = false;
       for (size_t lhs_i = 0, lhs_L = length(); lhs_i < lhs_L; ++lhs_i) {
         Complex_Selector* seq2 = (*this)[lhs_i];
-#ifdef DEBUG
-        string seq2_string = seq2->perform(&to_string);
-#endif
         bool is_superselector = seq2->is_superselector_of(seq1);
         if( is_superselector ) {
           any = true;
@@ -536,24 +523,6 @@ namespace Sass {
   
   Selector_List* Selector_List::unify_with(Selector_List* rhs, Context& ctx) {
 
-
-#ifdef DEBUG
-    To_String to_string;
-    string lhs_string = perform(&to_string);
-    string rhs_string = rhs->perform(&to_string);
- 
-    auto counter = 0;
-
-    std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
-    std::cout << "Unifying " << this->perform(&to_string) << " with:" << rhs->perform(&to_string) << std::endl;
-    std::cout << "\n\n\n---------------------\n\n\n" << std::endl;
-#endif
-    
-// Store only unique Selector_List returned by Complex_Selector::unify_with
-//    std::set< Selector_List*, std::function< bool(Selector_List*, Selector_List*) > > unique_selector_list([] ( Selector_List* lhs, Selector_List* rhs ) {
-//      return *lhs == *rhs;
-//    } );
-
     vector<Complex_Selector*> unified_complex_selectors;
     // Unify all of children with RHS's children, storing the results in `unified_complex_selectors`
     for (size_t lhs_i = 0, lhs_L = length(); lhs_i < lhs_L; ++lhs_i) {
@@ -561,17 +530,9 @@ namespace Sass {
       for(size_t rhs_i = 0, rhs_L = rhs->length(); rhs_i < rhs_L; ++rhs_i) {
         Complex_Selector* seq2 = (*rhs)[rhs_i];
         
-#ifdef DEBUG
-        string seq1_string = seq1->perform(&to_string);
-        string seq2_string = seq2->perform(&to_string);
-        counter++;
-#endif
         Selector_List* result = seq1->unify_with(seq2, ctx);
         if( result ) {
           for(size_t i = 0, L = result->length(); i < L; ++i) {
-#ifdef DEBUG
-            std::cout << "Counter:" << counter << " result:" << (*result)[i]->perform(&to_string) << std::endl;
-#endif
             unified_complex_selectors.push_back( (*result)[i] );
           }
         }
@@ -647,10 +608,6 @@ namespace Sass {
     
     Node node = Extend::StaticSubweave(lhsNode, rhsNode, ctx);
 
-#ifdef DEBUG
-    std::cout << "Node:" << node << std::endl;
-#endif
-    
     Selector_List* result = new (ctx.mem) Selector_List(pstate());
     for (NodeDeque::iterator iter = node.collection()->begin(), iterEnd = node.collection()->end(); iter != iterEnd; iter++) {
       Node childNode = *iter;
@@ -659,11 +616,6 @@ namespace Sass {
       Complex_Selector* childNodeAsComplexSelector = nodeToComplexSelector(childNode, ctx);
       if( childNodeAsComplexSelector ) { (*result) << childNodeAsComplexSelector; }
     }
-    
-#ifdef DEBUG
-//    To_String to_string;
-    string lhs_string = result->perform(&to_string);
-#endif
 
     return result->length() ? result : 0;
   }

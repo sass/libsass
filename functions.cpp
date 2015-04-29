@@ -1698,12 +1698,7 @@ if( CONTEXTUALIZE->parent ) {                                           \
         result->elements(newElements);
       }
       
-#ifdef DEBUG
-      string s = result->perform(&to_string);
-      result->mCachedSelector(s);
-//      std::cout << "\n\tEndChild:" << result->mCachedSelector() << std::endl;
-#endif
-      
+     
       Listize listize(ctx);
       return result->perform(&listize);
     }
@@ -1791,12 +1786,6 @@ if( CONTEXTUALIZE->parent ) {                                           \
         result->elements(newElements);
       }
       
-#ifdef DEBUG
-      string s = result->perform(&to_string);
-      result->mCachedSelector(s);
-//      std::cout << "\n\result:" << result->mCachedSelector() << std::endl;
-#endif
-
       Listize listize(ctx);
       return result->perform(&listize);
     }
