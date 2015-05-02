@@ -28,6 +28,7 @@
 #include "sass2scss.h"
 #include "prelexer.hpp"
 #include "emitter.hpp"
+#include "scalars.hpp"
 
 #include <string>
 #include <cstdlib>
@@ -49,6 +50,16 @@ namespace Sass {
     this->abs_path = abs_path;
     this->source = source;
   }
+
+  class Test {
+    Test(bool) {};
+    Test(const Test& a) {};
+    const Test& qwe(const Test& a) {
+    	Test q(false);
+    	return a; }
+    Test& operator=(const Test& a) { return *this; }
+    ~Test() {};
+  };
 
   inline bool sort_importers (const Sass_Importer_Entry& i, const Sass_Importer_Entry& j)
   { return sass_importer_get_priority(i) > sass_importer_get_priority(j); }
@@ -87,6 +98,70 @@ namespace Sass {
     plugins(),
     subset_map              (Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> >())
   {
+/*
+cerr << "hello\n";
+Scalar::SassString asd("asd", false);
+Scalar::SassString qwe("qwe", false);
+const Scalar::SassString* a = asd + qwe;
+
+Scalar::SassNull na1;
+Scalar::SassNull na2;
+Scalar::SassScalar* na_1 = &na1;
+Scalar::SassScalar* na_2 = &na2;
+cerr << na_1->sass_type();
+const Scalar::SassScalar* b = na_1->addition(&na2);
+cerr << b->inspect();
+exit(33);
+*/
+
+
+Scalar::SassNull n1;
+Scalar::SassNull n2;
+
+Scalar::SassBool tr(true);
+Scalar::SassBool fa(false);
+
+auto _tr = tr;
+auto _fa = fa;
+auto _n1 = n1;
+auto _n2 = n2;
+
+// const Scalar::SassValue& val = _tr  + _n1;
+
+
+/*
+
+
+  auto val = _tr  + _n1;
+  auto val2 = val   + _n1;
+
+*/
+
+
+if (true) {
+  const Scalar::SassString v1("v1");
+  const Scalar::SassString v2("v2");
+  const Scalar::SassString v3("v3");
+
+  const Scalar::SassValue& val1 = v1;
+  const Scalar::SassValue& val2 = v2;
+
+  const Scalar::SassValue& val3 = val1;
+
+//  v1 = v2;
+
+  // const Scalar::SassValue& v99 = v1;
+
+  cerr << "v1: " << v1.stringify() << "\n";
+  cerr << "v2: " << v2.stringify() << "\n";
+  // cerr << "v3: " << v99.stringify() << "\n";
+}
+//Scalar::SassBool v2(true);
+
+//Scalar::SassValue& v3 = v2;
+//Scalar::SassBool v4 = v2;
+
+exit(32);
 
     cwd = get_cwd();
 

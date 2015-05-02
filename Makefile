@@ -150,7 +150,8 @@ SOURCES = \
 	to_string.cpp \
 	units.cpp \
 	utf8_string.cpp \
-	util.cpp
+	util.cpp \
+	values.cpp
 
 CSOURCES = cencode.c
 
