@@ -91,6 +91,15 @@ namespace Sass {
     if (s.empty()) throw "internal error: subset map keys may not be empty";
     size_t index = values_.size();
     values_.push_back(value);
+    
+#ifdef DEBUG
+    // OUTPUT S
+    std::cout << "Subset_Map<K, V>::put key=";
+    for (auto n : s)
+      std::cout << n << ' ';
+    std::cout << std::endl;
+#endif
+    
     set<K> ss;
     for (size_t i = 0, S = s.size(); i < S; ++i)
     { ss.insert(s[i]); }
@@ -104,6 +113,13 @@ namespace Sass {
   template<typename K, typename V>
   vector<pair<V, vector<K> > > Subset_Map<K, V>::get_kv(const vector<K>& s)
   {
+#ifdef DEBUG
+    std::cout << "Subset_Map<K, V>::get key=";
+    for (auto n : s)
+      std::cout << n << ' ';
+    std::cout << std::endl;
+#endif
+    
     vector<K> sorted = s;
     sort(sorted.begin(), sorted.end());
     vector<pair<size_t, vector<K> > > indices;
