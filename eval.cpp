@@ -17,6 +17,7 @@
 #include "backtrace.hpp"
 #include "prelexer.hpp"
 #include "parser.hpp"
+#include "expand.hpp"
 
 namespace Sass {
   using namespace std;
@@ -32,23 +33,54 @@ namespace Sass {
     add, sub, mul, div, fmod
   };
 
-  Eval::Eval(Context& ctx, Contextualize* contextualize, Listize* listize, Env* env, Backtrace* bt)
-  : ctx(ctx), contextualize(contextualize), listize(listize), env(env), backtrace(bt) { }
+  Eval::Eval(Eval* eval)
+  : ctx(eval->ctx),
+    listize(eval->listize),
+    env(eval->env),
+    exp(eval->exp),
+    backtrace(eval->backtrace)
+  { }
+
+  Eval::Eval(Expand* exp, Context& ctx, Env* env, Backtrace* bt)
+  :
+    ctx(ctx),
+    listize(new (ctx.mem) Listize(ctx)),
+    env(env),
+    exp(exp),
+    backtrace(bt)
+  { }
   Eval::~Eval() { }
 
-  Eval* Eval::with(Env* e, Backtrace* bt) // for setting the env before eval'ing an expression
+  // for setting the env before eval'ing an expression
+
+  Context& Eval::context()
   {
-    contextualize = contextualize->with(0, e, bt);
-    env = e;
-    backtrace = bt;
-    return this;
+    return ctx;
   }
 
-  Eval* Eval::with(Selector* c, Env* e, Backtrace* bt, Selector* p, Selector* ex) // for setting the env before eval'ing an expression
+  Env* Eval::environment()
   {
-    contextualize = contextualize->with(c, e, bt, p, ex);
-    env = e;
-    backtrace = bt;
+    return exp ? exp->environment() : 0;
+  }
+
+  Selector* Eval::selector()
+  {
+    return exp ? exp->selector() : 0;
+  }
+
+  Backtrace* Eval::stacktrace()
+  {
+    return exp ? exp->backtrace() : 0;
+  }
+
+
+
+  // for setting the env before eval'ing an expression
+  // gets the env and other stuff from expander scope
+  Eval* Eval::snapshot()
+  {
+    this->env = environment();
+    this->backtrace = stacktrace();
     return this;
   }
 
@@ -750,6 +782,9 @@ namespace Sass {
     else if (value->concrete_type() == Expression::NULL_VAL) {
       value = new (ctx.mem) Null(value->pstate());
     }
+    else if (value->concrete_type() == Expression::SELECTOR) {
+      value = value->perform(this)->perform(listize);
+    }
 
     // cerr << "\ttype is now: " << typeid(*value).name() << endl << endl;
     return value;
@@ -857,6 +892,12 @@ namespace Sass {
       string str = str_constant->value();
       if (!str_constant->quote_mark()) str = unquote(str);
       return evacuate_escapes(str);
+    } else if (dynamic_cast<Parent_Selector*>(s)) {
+      To_String to_string(&ctx);
+      return evacuate_quotes(s->perform(listize)->perform(this)->perform(listize)->perform(this)->perform(&to_string));
+    } else if (Selector_List* sel = dynamic_cast<Selector_List*>(s)) {
+      To_String to_string(&ctx);
+      return evacuate_quotes(sel->perform(listize)->perform(this)->perform(&to_string));
     } else if (String_Schema* str_schema = dynamic_cast<String_Schema*>(s)) {
       string res = "";
       for(auto i : str_schema->elements())
@@ -892,9 +933,6 @@ namespace Sass {
     } else if (Function_Call* var = dynamic_cast<Function_Call*>(s)) {
       Expression* ex = var->perform(this);
       return evacuate_quotes(interpolation(ex));
-    } else if (Parent_Selector* var = dynamic_cast<Parent_Selector*>(s)) {
-      Expression* ex = var->perform(this);
-      return evacuate_quotes(interpolation(ex));
     } else if (Unary_Expression* var = dynamic_cast<Unary_Expression*>(s)) {
       Expression* ex = var->perform(this);
       return evacuate_quotes(interpolation(ex));
@@ -912,10 +950,7 @@ namespace Sass {
   {
     string acc;
     for (size_t i = 0, L = s->length(); i < L; ++i) {
-      // if (String_Quoted* str_quoted = dynamic_cast<String_Quoted*>((*s)[i])) {
-        // if (!str_quoted->is_delayed()) str_quoted->value(string_eval_escapes(str_quoted->value()));
-      // }
-      acc += interpolation((*s)[i]);
+      if ((*s)[i]) acc += interpolation((*s)[i]);
     }
     String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), acc);
     if (!str->quote_mark()) {
@@ -1053,19 +1088,6 @@ namespace Sass {
   Expression* Eval::operator()(Comment* c)
   {
     return 0;
-  }
-
-  Expression* Eval::operator()(Parent_Selector* p)
-  {
-    // no idea why both calls are needed
-    Selector* s = p->perform(contextualize);
-    if (!s) s = p->selector()->perform(contextualize);
-    // access to parent selector may return 0
-    Selector_List* l = static_cast<Selector_List*>(s);
-    // some spec tests cause this (might be a valid case!)
-    // if (!s) { cerr << "Parent Selector eval error" << endl; }
-    if (!s) { l = new (ctx.mem) Selector_List(p->pstate()); }
-    return l->perform(listize);
   }
 
   inline Expression* Eval::fallback_impl(AST_Node* n)
@@ -1364,6 +1386,152 @@ namespace Sass {
       } break;
     }
     return e;
+  }
+
+
+  // these should return selectors
+  Expression* Eval::operator()(Selector_List* s)
+  {
+
+    int LL = exp->selector_stack.size();
+    Selector* parent = exp->selector_stack[LL - 1];
+    Selector_List* p = static_cast<Selector_List*>(parent);
+    Selector_List* ss = 0;
+    if (p) {
+      ss = new (ctx.mem) Selector_List(s->pstate(), p->length() * s->length());
+      if (s->length() == 0) {
+      	exit (77);
+          Complex_Selector* comb = static_cast<Complex_Selector*>(parent->perform(this));
+          if (parent->has_line_feed()) comb->has_line_feed(true);
+          if (comb) *ss << comb;
+          else cerr << "Warning: eval returned null" << endl;
+      }
+      // debug_ast(p, "p: ");
+      // debug_ast(s, "s: ");
+      for (size_t i = 0, L = p->length(); i < L; ++i) {
+        for (size_t j = 0, L = s->length(); j < L; ++j) {
+          parent = (*p)[i]->tail();
+          exp->selector_stack.push_back(0);
+          exp->selector_stack.push_back((*p)[i]);
+          Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
+          exp->selector_stack.pop_back();
+          exp->selector_stack.pop_back();
+          if ((*p)[i]->has_line_feed()) comb->has_line_feed(true);
+          if (comb) *ss << comb;
+          else cerr << "Warning: eval returned null" << endl;
+        }
+      }
+    }
+    else {
+      ss = new (ctx.mem) Selector_List(s->pstate());
+      ss->last_block(s->last_block());
+      ss->media_block(s->media_block());
+      for (size_t j = 0, L = s->length(); j < L; ++j) {
+        Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
+        if (comb) *ss << comb;
+      }
+      // debug_ast(ss);
+    }
+    return ss->length() ? ss : 0;
+  }
+
+  Expression* Eval::operator()(Complex_Selector* s)
+  {
+    To_String to_string(&ctx);
+    Complex_Selector* ss = new (ctx.mem) Complex_Selector(*s);
+    ss->last_block(s->last_block());
+    ss->media_block(s->media_block());
+    Compound_Selector* new_head = 0;
+    Complex_Selector* new_tail = 0;
+    if (ss->head()) {
+      new_head = static_cast<Compound_Selector*>(s->head()->perform(this));
+      ss->head(new_head);
+    }
+    if (ss->tail()) {
+      new_tail = static_cast<Complex_Selector*>(s->tail()->perform(this));
+      new_tail->last_block(s->last_block());
+      new_tail->media_block(s->media_block());
+      ss->tail(new_tail);
+    }
+    if (!ss->head() && ss->combinator() == Complex_Selector::ANCESTOR_OF) {
+      return ss->tail();
+    }
+    else {
+      return ss;
+    }
+  }
+
+  Expression* Eval::operator()(Compound_Selector* s)
+  {
+    Compound_Selector* ss = new (ctx.mem) Compound_Selector(s->pstate(), s->length());
+    ss->last_block(s->last_block());
+    ss->media_block(s->media_block());
+    ss->has_line_break(s->has_line_break());
+    for (size_t i = 0, L = s->length(); i < L; ++i) {
+      Simple_Selector* simp = static_cast<Simple_Selector*>((*s)[i]->perform(this));
+      if (simp) *ss << simp;
+    }
+    return ss->length() ? ss : 0;
+  }
+
+  Expression* Eval::operator()(Attribute_Selector* s)
+  {
+    String* sel = s->value();
+    if (sel) { sel = static_cast<String*>(sel->perform(this)); }
+    Attribute_Selector* ss = new (ctx.mem) Attribute_Selector(*s);
+    ss->value(sel);
+    return ss;
+  }
+
+  Expression* Eval::operator()(Wrapped_Selector* s)
+  {
+    return s;
+  }
+  Expression* Eval::operator()(Pseudo_Selector* s)
+  {
+    return s;
+  }
+  Expression* Eval::operator()(Selector_Qualifier* s)
+  {
+    return s;
+  }
+  Expression* Eval::operator()(Type_Selector* s)
+  {
+    return s;
+  }
+  Expression* Eval::operator()(Selector_Placeholder* s)
+  {
+    return s;
+  }
+  Expression* Eval::operator()(Selector_Schema* s)
+  {
+    To_String to_string;
+    string result_str(s->contents()->perform(this)->perform(&to_string));
+    result_str += '{'; // the parser looks for a brace to end the selector
+    Selector* result_sel = Parser::from_c_str(result_str.c_str(), ctx, s->pstate()).parse_selector_group();
+    return result_sel->perform(this);
+  }
+
+  Expression* Eval::operator()(Parent_Selector* p)
+  {
+    Selector* pr = exp->selector_stack.back();
+    if (dynamic_cast<Selector_List*>(pr)) {
+      exp->selector_stack.pop_back();
+      exp->selector_stack.push_back(0);
+      // I cannot listize here (would help)
+      auto rv = pr ? pr->perform(this)->perform(listize) : 0;
+      exp->selector_stack.pop_back();
+      exp->selector_stack.push_back(pr);
+      return rv;
+    } else {
+      exp->selector_stack.pop_back();
+      exp->selector_stack.push_back(0);
+      // I cannot listize here (would help)
+      auto rv = pr ? pr->perform(this) : 0;
+      exp->selector_stack.pop_back();
+      exp->selector_stack.push_back(pr);
+      return rv;
+    }
   }
 
 }

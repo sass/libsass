@@ -239,7 +239,7 @@ namespace Sass {
 
     // Put the dummy Compound_Selector in the first position, for consistency with the rest of libsass
     Compound_Selector* fakeHead = new (ctx.mem) Compound_Selector(ParserState("[NODE]"), 1);
-    Selector_Reference* selectorRef = new (ctx.mem) Selector_Reference(ParserState("[NODE]"), NULL);
+    Parent_Selector* selectorRef = new (ctx.mem) Parent_Selector(ParserState("[NODE]"));
     fakeHead->elements().push_back(selectorRef);
     pFirst->head(fakeHead);
     pFirst->has_line_feed(pFirst->has_line_feed() || pFirst->tail()->has_line_feed() || toConvert.got_line_feed);

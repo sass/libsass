@@ -1,6 +1,5 @@
 #include "extend.hpp"
 #include "context.hpp"
-#include "contextualize.hpp"
 #include "to_string.hpp"
 #include "backtrace.hpp"
 #include "paths.hpp"

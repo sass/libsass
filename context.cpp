@@ -23,8 +23,6 @@
 #include "output.hpp"
 #include "expand.hpp"
 #include "eval.hpp"
-#include "contextualize.hpp"
-#include "contextualize_eval.hpp"
 #include "cssize.hpp"
 #include "listize.hpp"
 #include "extend.hpp"
@@ -333,11 +331,7 @@ namespace Sass {
     for (size_t i = 0, S = c_functions.size(); i < S; ++i) {
       register_c_function(*this, &tge, c_functions[i]);
     }
-    Contextualize contextualize(*this, &tge, &backtrace);
-    Listize listize(*this);
-    Eval eval(*this, &contextualize, &listize, &tge, &backtrace);
-    Contextualize_Eval contextualize_eval(*this, &eval, &tge, &backtrace);
-    Expand expand(*this, &eval, &contextualize_eval, &tge, &backtrace);
+    Expand expand(*this, &tge, &backtrace);
     Cssize cssize(*this, &tge, &backtrace);
     root = root->perform(&expand)->block();
     root = root->perform(&cssize)->block();

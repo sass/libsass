@@ -24,6 +24,8 @@ namespace Sass {
   public:
     Memory_Manager<AST_Node> mem;
     Environment() : local_frame_(map<string, T>()), parent_(0) { }
+    Environment(Environment* env) : local_frame_(map<string, T>()), parent_(env) { }
+    Environment(Environment& env) : local_frame_(map<string, T>()), parent_(&env) { }
 
     // link parent to create a stack
     void link(Environment& env) { parent_ = &env; }

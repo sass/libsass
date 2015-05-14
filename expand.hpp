@@ -9,35 +9,42 @@
 #include "eval.hpp"
 #include "operation.hpp"
 #include "environment.hpp"
-#include "contextualize.hpp"
 
 namespace Sass {
   using namespace std;
 
+  class Listize;
   class Context;
   class Eval;
-  class Contextualize_Eval;
   typedef Environment<AST_Node*> Env;
   struct Backtrace;
 
   class Expand : public Operation_CRTP<Statement*, Expand> {
+  public:
+
+    Env* environment();
+    Context& context();
+    Selector* selector();
+    Backtrace* backtrace();
+
 
     Context&          ctx;
-    Eval*             eval;
-    Contextualize_Eval*    contextualize_eval;
-    Env*              env;
+    Eval              eval;
+
+    // it's easier to work with vectors
+    vector<Env*>      env_stack;
     vector<Block*>    block_stack;
     vector<String*>   property_stack;
     vector<Selector*> selector_stack;
-    vector<Selector*> at_root_selector_stack;
+    vector<Backtrace*>backtrace_stack;
+
     bool              in_at_root;
     bool              in_keyframes;
-    Backtrace*        backtrace;
 
     Statement* fallback_impl(AST_Node* n);
 
   public:
-    Expand(Context&, Eval*, Contextualize_Eval*, Env*, Backtrace*);
+    Expand(Context&, Env*, Backtrace*);
     virtual ~Expand() { }
 
     using Operation<Statement*>::operator();

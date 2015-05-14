@@ -547,7 +547,7 @@ namespace Sass {
       Complex_Selector* comb = parse_selector_combination();
       if (!comb->has_reference() && !in_at_root) {
         ParserState sel_source_position = pstate;
-        Selector_Reference* ref = new (ctx.mem) Selector_Reference(sel_source_position);
+        Parent_Selector* ref = new (ctx.mem) Parent_Selector(sel_source_position);
         Compound_Selector* ref_wrap = new (ctx.mem) Compound_Selector(sel_source_position);
         ref_wrap->media_block(last_media_block);
         ref_wrap->last_block(block_stack.back());
@@ -641,7 +641,7 @@ namespace Sass {
       if (block_stack.back() && block_stack.back()->is_root()) {
         //error("Base-level rules cannot contain the parent-selector-referencing character '&'.", pstate);
       }
-      (*seq) << new (ctx.mem) Selector_Reference(pstate);
+      (*seq) << new (ctx.mem) Parent_Selector(pstate);
       sawsomething = true;
       // if you see a space after a &, then you're done
       if(peek< spaces >() || peek< alternatives < spaces, exactly<';'> > >()) {

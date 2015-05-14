@@ -71,9 +71,9 @@ namespace Sass {
     return l;
   }
 
-  Expression* Listize::operator()(Selector_Reference* sel)
+  Expression* Listize::operator()(Parent_Selector* sel)
   {
-    return 0;
+    return sel;
   }
 
   Expression* Listize::fallback_impl(AST_Node* n)

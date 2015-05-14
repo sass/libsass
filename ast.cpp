@@ -507,7 +507,6 @@ namespace Sass {
   void Selector_List::adjust_after_pushing(Complex_Selector* c)
   {
     if (c->has_reference())   has_reference(true);
-    if (c->has_placeholder()) has_placeholder(true);
 
 #ifdef DEBUG
     To_String to_string;
@@ -558,45 +557,6 @@ namespace Sass {
     }
     return false;
   }
-
-  /* not used anymore - remove?
-  Selector_Placeholder* Selector_List::find_placeholder()
-  {
-    if (has_placeholder()) {
-      for (size_t i = 0, L = length(); i < L; ++i) {
-        if ((*this)[i]->has_placeholder()) return (*this)[i]->find_placeholder();
-      }
-    }
-    return 0;
-  }*/
-
-  /* not used anymore - remove?
-  Selector_Placeholder* Complex_Selector::find_placeholder()
-  {
-    if (has_placeholder()) {
-      if (head() && head()->has_placeholder()) return head()->find_placeholder();
-      else if (tail() && tail()->has_placeholder()) return tail()->find_placeholder();
-    }
-    return 0;
-  }*/
-
-  /* not used anymore - remove?
-  Selector_Placeholder* Compound_Selector::find_placeholder()
-  {
-    if (has_placeholder()) {
-      for (size_t i = 0, L = length(); i < L; ++i) {
-        if ((*this)[i]->has_placeholder()) return (*this)[i]->find_placeholder();
-      }
-      // return this;
-    }
-    return 0;
-  }*/
-
-  /* not used anymore - remove?
-  Selector_Placeholder* Selector_Placeholder::find_placeholder()
-  {
-    return this;
-  }*/
 
   vector<string> Compound_Selector::to_str_vec()
   {

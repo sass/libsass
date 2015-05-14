@@ -7,17 +7,17 @@
 #include "position.hpp"
 #include "operation.hpp"
 #include "environment.hpp"
-#include "contextualize.hpp"
 #include "listize.hpp"
 #include "sass_values.h"
+
 
 namespace Sass {
   using namespace std;
 
   typedef Environment<AST_Node*> Env;
   struct Backtrace;
-  class Contextualize;
   class Listize;
+  class Expand;
 
   class Eval : public Operation_CRTP<Expression*, Eval> {
 
@@ -26,14 +26,20 @@ namespace Sass {
     Expression* fallback_impl(AST_Node* n);
 
   public:
-    Contextualize* contextualize;
     Listize*   listize;
     Env*       env;
+    Expand*    exp;
     Backtrace* backtrace;
-    Eval(Context&, Contextualize*, Listize*, Env*, Backtrace*);
+    Eval(Eval* eval);
+    Eval(Expand* exp, Context&, Env*, Backtrace*);
     virtual ~Eval();
-    Eval* with(Env* e, Backtrace* bt); // for setting the env before eval'ing an expression
-    Eval* with(Selector* c, Env* e, Backtrace* bt, Selector* placeholder = 0, Selector* extender = 0); // for setting the env before eval'ing an expression
+
+    Env* environment();
+    Context& context();
+    Selector* selector();
+    Backtrace* stacktrace();
+
+    Eval* snapshot(); // for setting the env before eval'ing an expression
     using Operation<Expression*>::operator();
 
     // for evaluating function bodies
@@ -69,7 +75,20 @@ namespace Sass {
     Expression* operator()(Argument*);
     Expression* operator()(Arguments*);
     Expression* operator()(Comment*);
-    Expression* operator()(Parent_Selector* p);
+
+    // these should return selectors
+    Expression* operator()(Selector_List*);
+    Expression* operator()(Complex_Selector*);
+    Expression* operator()(Compound_Selector*);
+    Expression* operator()(Wrapped_Selector*);
+    Expression* operator()(Pseudo_Selector*);
+    Expression* operator()(Selector_Qualifier*);
+    Expression* operator()(Type_Selector*);
+    Expression* operator()(Selector_Placeholder*);
+    Expression* operator()(Selector_Schema*);
+    Expression* operator()(Parent_Selector*);
+    Expression* operator()(Attribute_Selector*);
+
 
     template <typename U>
     Expression* fallback(U x) { return fallback_impl(x); }

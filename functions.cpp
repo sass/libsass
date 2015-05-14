@@ -8,6 +8,7 @@
 #include "inspect.hpp"
 #include "eval.hpp"
 #include "util.hpp"
+#include "expand.hpp"
 #include "utf8_string.hpp"
 #include "utf8.h"
 
@@ -1490,10 +1491,8 @@ namespace Sass {
         }
       }
       Function_Call* func = new (ctx.mem) Function_Call(pstate, name, args);
-      Contextualize contextualize(ctx, &d_env, backtrace);
-      Listize listize(ctx);
-      Eval eval(ctx, &contextualize, &listize, &d_env, backtrace);
-      return func->perform(&eval);
+      Expand expand(ctx, &d_env, backtrace);
+      return func->perform(&expand.eval);
 
     }
 
@@ -1510,15 +1509,13 @@ namespace Sass {
     // { return ARG("$condition", Expression)->is_false() ? ARG("$if-false", Expression) : ARG("$if-true", Expression); }
     BUILT_IN(sass_if)
     {
-      Contextualize contextualize(ctx, &d_env, backtrace);
-      Listize listize(ctx);
-      Eval eval(ctx, &contextualize, &listize, &d_env, backtrace);
-      bool is_true = !ARG("$condition", Expression)->perform(&eval)->is_false();
+      Expand expand(ctx, &d_env, backtrace);
+      bool is_true = !ARG("$condition", Expression)->perform(&expand.eval)->is_false();
       if (is_true) {
-        return ARG("$if-true", Expression)->perform(&eval);
+        return ARG("$if-true", Expression)->perform(&expand.eval);
       }
       else {
-        return ARG("$if-false", Expression)->perform(&eval);
+        return ARG("$if-false", Expression)->perform(&expand.eval);
       }
     }
 
