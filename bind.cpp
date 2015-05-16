@@ -12,6 +12,8 @@ namespace Sass {
 
   void bind(string callee, Parameters* ps, Arguments* as, Context& ctx, Env* env, Eval* eval)
   {
+
+    // Context& ctx = eval->context();
     map<string, Parameter*> param_map;
 
     // Set up a map to ensure named arguments refer to actual parameters. Also

@@ -54,7 +54,7 @@ namespace Sass {
     }
 
     bool has_local(const string& key) const
-    { return local_frame_.count(key); }
+    { return local_frame_.count(key) != 0; }
 
     T& get_local(const string& key)
     { return local_frame_[key]; }

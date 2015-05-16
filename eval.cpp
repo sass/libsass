@@ -44,14 +44,12 @@ namespace Sass {
   Eval::Eval(Expand* exp, Context& ctx, Env* env, Backtrace* bt)
   :
     ctx(ctx),
-    listize(new (ctx.mem) Listize(ctx)),
+    listize(ctx),
     env(env),
     exp(exp),
     backtrace(bt)
   { }
   Eval::~Eval() { }
-
-  // for setting the env before eval'ing an expression
 
   Context& Eval::context()
   {
@@ -72,8 +70,6 @@ namespace Sass {
   {
     return exp ? exp->backtrace() : 0;
   }
-
-
 
   // for setting the env before eval'ing an expression
   // gets the env and other stuff from expander scope
@@ -609,8 +605,8 @@ namespace Sass {
     }
 
     Parameters* params = def->parameters();
-    Env new_env;
-    new_env.link(def->environment());
+    Env new_env(def->environment());
+    exp->env_stack.push_back(&new_env);
     // bind("function " + c->name(), params, args, ctx, &new_env, this);
     // Env* old_env = env;
     // env = &new_env;
@@ -729,6 +725,7 @@ namespace Sass {
       result->is_delayed(result->concrete_type() == Expression::STRING);
       result = result->perform(this);
     } while (result->concrete_type() == Expression::NONE);
+    exp->env_stack.pop_back();
     return result;
   }
 
@@ -783,7 +780,7 @@ namespace Sass {
       value = new (ctx.mem) Null(value->pstate());
     }
     else if (value->concrete_type() == Expression::SELECTOR) {
-      value = value->perform(this)->perform(listize);
+      value = value->perform(this)->perform(&listize);
     }
 
     // cerr << "\ttype is now: " << typeid(*value).name() << endl << endl;
@@ -894,10 +891,10 @@ namespace Sass {
       return evacuate_escapes(str);
     } else if (dynamic_cast<Parent_Selector*>(s)) {
       To_String to_string(&ctx);
-      return evacuate_quotes(s->perform(listize)->perform(this)->perform(listize)->perform(this)->perform(&to_string));
+      return evacuate_quotes(s->perform(&listize)->perform(this)->perform(&listize)->perform(this)->perform(&to_string));
     } else if (Selector_List* sel = dynamic_cast<Selector_List*>(s)) {
       To_String to_string(&ctx);
-      return evacuate_quotes(sel->perform(listize)->perform(this)->perform(&to_string));
+      return evacuate_quotes(sel->perform(&listize)->perform(this)->perform(&to_string));
     } else if (String_Schema* str_schema = dynamic_cast<String_Schema*>(s)) {
       string res = "";
       for(auto i : str_schema->elements())
@@ -1514,24 +1511,15 @@ namespace Sass {
 
   Expression* Eval::operator()(Parent_Selector* p)
   {
-    Selector* pr = exp->selector_stack.back();
-    if (dynamic_cast<Selector_List*>(pr)) {
-      exp->selector_stack.pop_back();
-      exp->selector_stack.push_back(0);
-      // I cannot listize here (would help)
-      auto rv = pr ? pr->perform(this)->perform(listize) : 0;
-      exp->selector_stack.pop_back();
-      exp->selector_stack.push_back(pr);
-      return rv;
-    } else {
-      exp->selector_stack.pop_back();
-      exp->selector_stack.push_back(0);
-      // I cannot listize here (would help)
-      auto rv = pr ? pr->perform(this) : 0;
-      exp->selector_stack.pop_back();
-      exp->selector_stack.push_back(pr);
-      return rv;
-    }
+    Selector* pr = selector();
+    exp->selector_stack.pop_back();
+    exp->selector_stack.push_back(0);
+    auto rv = pr ? pr->perform(this) : 0;
+    if (dynamic_cast<Selector_List*>(pr))
+      rv = rv->perform(&listize);
+    exp->selector_stack.pop_back();
+    exp->selector_stack.push_back(pr);
+    return rv;
   }
 
 }

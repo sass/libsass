@@ -272,7 +272,7 @@ extern "C" {
 
       c_ctx->error_json = json_stringify(json_err, "  ");;
       c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
-      c_ctx->error_text = strdup(e.message.c_str());
+      c_ctx->error_text = sass_strdup(e.message.c_str());
       c_ctx->error_status = 1;
       c_ctx->error_file = sass_strdup(e.pstate.path.c_str());
       c_ctx->error_line = e.pstate.line+1;
@@ -290,7 +290,7 @@ extern "C" {
       json_append_member(json_err, "message", json_mkstring(ba.what()));
       c_ctx->error_json = json_stringify(json_err, "  ");;
       c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
-      c_ctx->error_text = strdup(ba.what());
+      c_ctx->error_text = sass_strdup(ba.what());
       c_ctx->error_status = 2;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -304,7 +304,7 @@ extern "C" {
       json_append_member(json_err, "message", json_mkstring(e.what()));
       c_ctx->error_json = json_stringify(json_err, "  ");;
       c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
-      c_ctx->error_text = strdup(e.what());
+      c_ctx->error_text = sass_strdup(e.what());
       c_ctx->error_status = 3;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -318,7 +318,7 @@ extern "C" {
       json_append_member(json_err, "message", json_mkstring(e.c_str()));
       c_ctx->error_json = json_stringify(json_err, "  ");;
       c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
-      c_ctx->error_text = strdup(e.c_str());
+      c_ctx->error_text = sass_strdup(e.c_str());
       c_ctx->error_status = 4;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -332,7 +332,7 @@ extern "C" {
       json_append_member(json_err, "message", json_mkstring("unknown"));
       c_ctx->error_json = json_stringify(json_err, "  ");;
       c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
-      c_ctx->error_text = strdup("unknown");
+      c_ctx->error_text = sass_strdup("unknown");
       c_ctx->error_status = 5;
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
@@ -665,8 +665,8 @@ extern "C" {
     if (compiler->c_ctx->error_status)
       return compiler->c_ctx->error_status;
     compiler->state = SASS_COMPILER_EXECUTED;
-    Context* cpp_ctx = (Context*) compiler->cpp_ctx;
-    Block* root = (Block*) compiler->root;
+    Context* cpp_ctx = compiler->cpp_ctx;
+    Block* root = compiler->root;
     // compile the parsed root block
     try { compiler->c_ctx->output_string = cpp_ctx->compile_block(root); }
     // pass catched errors to generic error handler
@@ -780,9 +780,9 @@ extern "C" {
   void ADDCALL sass_delete_compiler (struct Sass_Compiler* compiler)
   {
     if (compiler == 0) return;
-    Context* cpp_ctx = (Context*) compiler->cpp_ctx;
+    Context* cpp_ctx = compiler->cpp_ctx;
+    if (cpp_ctx) delete(cpp_ctx);
     compiler->cpp_ctx = 0;
-    delete cpp_ctx;
     free(compiler);
   }
 

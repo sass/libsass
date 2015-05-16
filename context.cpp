@@ -309,6 +309,7 @@ namespace Sass {
 
   Block* Context::parse_file()
   {
+
     Block* root = 0;
     for (size_t i = 0; i < queue.size(); ++i) {
       Sass_Import_Entry import = sass_make_import(
@@ -322,29 +323,46 @@ namespace Sass {
       sass_delete_import(import_stack.back());
       import_stack.pop_back();
       if (i == 0) root = ast;
+      // ToDo: we store by load_path, which can lead
+      // to duplicates if importer reports the same path
+      // Maybe we should add an error for duplicates!?
       style_sheets[queue[i].load_path] = ast;
     }
     if (root == 0) return 0;
-    Env tge;
-    Backtrace backtrace(0, ParserState("", 0), "");
-    register_built_in_functions(*this, &tge);
+
+    Env global; // create root environment
+    // register built-in functions on env
+    register_built_in_functions(*this, &global);
     for (size_t i = 0, S = c_functions.size(); i < S; ++i) {
-      register_c_function(*this, &tge, c_functions[i]);
+      register_c_function(*this, &global, c_functions[i]);
     }
-    Expand expand(*this, &tge, &backtrace);
-    Cssize cssize(*this, &tge, &backtrace);
+    // create initial backtrace entry
+    Backtrace backtrace(0, ParserState("", 0), "");
+    // create crtp visitor objects
+    Expand expand(*this, &global, &backtrace);
+    Cssize cssize(*this, &global, &backtrace);
+    // expand and eval the tree
     root = root->perform(&expand)->block();
+    // merge and bubble certain rules
     root = root->perform(&cssize)->block();
+    // should we extend something?
     if (!subset_map.empty()) {
+      // create crtp visitor object
       Extend extend(*this, subset_map);
+      // extend tree nodes
       root->perform(&extend);
     }
 
+    // clean up by removing empty placeholders
+    // ToDo: maybe we can do this somewhere else?
     Remove_Placeholders remove_placeholders(*this);
     root->perform(&remove_placeholders);
 
+    // return processed tree
     return root;
+
   }
+  // EO parse_file
 
   Block* Context::parse_string()
   {

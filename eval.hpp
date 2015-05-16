@@ -26,7 +26,7 @@ namespace Sass {
     Expression* fallback_impl(AST_Node* n);
 
   public:
-    Listize*   listize;
+    Listize    listize;
     Env*       env;
     Expand*    exp;
     Backtrace* backtrace;

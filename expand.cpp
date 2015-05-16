@@ -8,7 +8,6 @@
 #include "backtrace.hpp"
 #include "context.hpp"
 #include "parser.hpp"
-#include "debugger.hpp"
 
 namespace Sass {
 
@@ -84,10 +83,9 @@ namespace Sass {
   // process and add to last block on stack
   inline void Expand::append_block(Block* b)
   {
-    Block* current_block = block_stack.back();
     for (size_t i = 0, L = b->length(); i < L; ++i) {
       Statement* ith = (*b)[i]->perform(this);
-      if (ith) *current_block << ith;
+      if (ith) *block_stack.back() << ith;
     }
   }
 
@@ -145,11 +143,9 @@ namespace Sass {
     property_stack.push_back(p->property_fragment());
     Block* expanded_block = p->block()->perform(this)->block();
 
-    Block* current_block = block_stack.back();
     for (size_t i = 0, L = expanded_block->length(); i < L; ++i) {
       Statement* stm = (*expanded_block)[i];
-      if (typeid(*stm) == typeid(Declaration)) {
-        Declaration* dec = static_cast<Declaration*>(stm);
+      if (Declaration* dec = static_cast<Declaration*>(stm)) {
         String_Schema* combined_prop = new (ctx.mem) String_Schema(p->pstate());
         if (!property_stack.empty()) {
           *combined_prop << property_stack.back()
@@ -160,7 +156,7 @@ namespace Sass {
           *combined_prop << dec->property();
         }
         dec->property(combined_prop);
-        *current_block << dec;
+        *block_stack.back() << dec;
       }
       else if (typeid(*stm) == typeid(Comment)) {
         // drop comments in propsets
@@ -238,7 +234,6 @@ namespace Sass {
     String* old_p = d->property();
     String* new_p = static_cast<String*>(old_p->perform(eval.snapshot()));
     Expression* value = d->value()->perform(eval.snapshot());
-    if (!value) debug_ast(d->value());
     if (!value || (value->is_invisible() && !d->is_important())) return 0;
     Declaration* decl = new (ctx.mem) Declaration(d->pstate(),
                                                   new_p,
@@ -599,10 +594,12 @@ namespace Sass {
     return call->perform(this);
   }
 
+  // produce an error if something is not implemented
   inline Statement* Expand::fallback_impl(AST_Node* n)
   {
+    string err = string("`Expand` doesn't handle ") + typeid(*n).name();
+    String_Constant* msg = new (ctx.mem) String_Constant(ParserState("[WARN]"), err);
     error("unknown internal error; please contact the LibSass maintainers", n->pstate(), backtrace());
-    String_Constant* msg = new (ctx.mem) String_Constant(ParserState("[WARN]"), string("`Expand` doesn't handle ") + typeid(*n).name());
     return new (ctx.mem) Warning(ParserState("[WARN]"), msg);
   }
 
