@@ -25,11 +25,11 @@ namespace Sass {
     Expression* fallback_impl(AST_Node* n);
 
   public:
+    Expand&    exp;
     Context&   ctx;
     Listize    listize;
-    Expand*    exp;
     Eval(Eval* eval);
-    Eval(Expand* exp, Context&, Env*, Backtrace*);
+    Eval(Expand& exp);
     virtual ~Eval();
 
     Env* environment();

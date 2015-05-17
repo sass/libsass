@@ -13,7 +13,7 @@ namespace Sass {
 
   Expand::Expand(Context& ctx, Env* env, Backtrace* bt)
   : ctx(ctx),
-    eval(Eval(this, ctx, env, bt)),
+    eval(Eval(*this)),
     env_stack(vector<Env*>()),
     block_stack(vector<Block*>()),
     property_stack(vector<String*>()),

@@ -27,7 +27,6 @@ namespace Sass {
     Selector* selector();
     Backtrace* backtrace();
 
-
     Context&          ctx;
     Eval              eval;
 

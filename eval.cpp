@@ -34,16 +34,15 @@ namespace Sass {
   };
 
   Eval::Eval(Eval* eval)
-  : ctx(eval->ctx),
-    listize(eval->listize),
-    exp(eval->exp)
+  : exp(eval->exp),
+    ctx(eval->ctx),
+    listize(eval->listize)
   { }
 
-  Eval::Eval(Expand* exp, Context& ctx, Env* env, Backtrace* bt)
-  :
-    ctx(ctx),
-    listize(ctx),
-    exp(exp)
+  Eval::Eval(Expand& exp)
+  : exp(exp),
+    ctx(exp.ctx),
+    listize(exp.ctx)
   { }
   Eval::~Eval() { }
 
@@ -54,17 +53,17 @@ namespace Sass {
 
   Env* Eval::environment()
   {
-    return exp ? exp->environment() : 0;
+    return exp.environment();
   }
 
   Selector* Eval::selector()
   {
-    return exp ? exp->selector() : 0;
+    return exp.selector();
   }
 
   Backtrace* Eval::stacktrace()
   {
-    return exp ? exp->backtrace() : 0;
+    return exp.backtrace();
   }
 
   // for setting the env before eval'ing an expression
@@ -149,14 +148,18 @@ namespace Sass {
 
   Expression* Eval::operator()(If* i)
   {
+    Expression* rv = 0;
+    Env env(environment());
+    exp.env_stack.push_back(&env);
     if (*i->predicate()->perform(this)) {
-      return i->consequent()->perform(this);
+      rv = i->consequent()->perform(this);
     }
     else {
       Block* alt = i->alternative();
-      if (alt) return alt->perform(this);
+      if (alt) rv = alt->perform(this);
     }
-    return 0;
+    exp.env_stack.pop_back();
+    return rv;
   }
 
   // For does not create a new env scope
@@ -618,18 +621,18 @@ namespace Sass {
 
     Parameters* params = def->parameters();
     Env fn_env(def->environment());
-    exp->env_stack.push_back(&fn_env);
+    exp.env_stack.push_back(&fn_env);
 
     if (func || body) {
       bind("function " + c->name(), params, args, ctx, &fn_env, this);
       Backtrace here(stacktrace(), c->pstate(), ", in function `" + c->name() + "`");
-      exp->backtrace_stack.push_back(&here);
+      exp.backtrace_stack.push_back(&here);
       // if it's user-defined, eval the body
       if (body) result = body->perform(this);
       // if it's native, invoke the underlying CPP function
       else result = func(fn_env, *env, ctx, def->signature(), c->pstate(), stacktrace());
       if (!result) error(string("function ") + c->name() + " did not return a value", c->pstate());
-      exp->backtrace_stack.pop_back();
+      exp.backtrace_stack.pop_back();
     }
 
     // else if it's a user-defined c function
@@ -648,7 +651,7 @@ namespace Sass {
       bind("function " + c->name(), params, args, ctx, &fn_env, this);
 
       Backtrace here(stacktrace(), c->pstate(), ", in function `" + c->name() + "`");
-      exp->backtrace_stack.push_back(&here);
+      exp.backtrace_stack.push_back(&here);
 
       To_C to_c;
       union Sass_Value* c_args = sass_make_list(params[0].length(), SASS_COMMA);
@@ -666,7 +669,7 @@ namespace Sass {
       }
       result = cval_to_astnode(c_val, ctx, stacktrace(), c->pstate());
 
-      exp->backtrace_stack.pop_back();
+      exp.backtrace_stack.pop_back();
       sass_delete_value(c_args);
       if (c_val != c_args)
         sass_delete_value(c_val);
@@ -681,7 +684,7 @@ namespace Sass {
       result->is_delayed(result->concrete_type() == Expression::STRING);
       result = result->perform(this);
     } while (result->concrete_type() == Expression::NONE);
-    exp->env_stack.pop_back();
+    exp.env_stack.pop_back();
     return result;
   }
 
@@ -1348,8 +1351,8 @@ namespace Sass {
   Expression* Eval::operator()(Selector_List* s)
   {
 
-    int LL = exp->selector_stack.size();
-    Selector* parent = exp->selector_stack[LL - 1];
+    int LL = exp.selector_stack.size();
+    Selector* parent = exp.selector_stack[LL - 1];
     Selector_List* p = static_cast<Selector_List*>(parent);
     Selector_List* ss = 0;
     if (p) {
@@ -1366,11 +1369,11 @@ namespace Sass {
       for (size_t i = 0, L = p->length(); i < L; ++i) {
         for (size_t j = 0, L = s->length(); j < L; ++j) {
           parent = (*p)[i]->tail();
-          exp->selector_stack.push_back(0);
-          exp->selector_stack.push_back((*p)[i]);
+          exp.selector_stack.push_back(0);
+          exp.selector_stack.push_back((*p)[i]);
           Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
-          exp->selector_stack.pop_back();
-          exp->selector_stack.pop_back();
+          exp.selector_stack.pop_back();
+          exp.selector_stack.pop_back();
           if ((*p)[i]->has_line_feed()) comb->has_line_feed(true);
           if (comb) *ss << comb;
           else cerr << "Warning: eval returned null" << endl;
@@ -1470,13 +1473,13 @@ namespace Sass {
   Expression* Eval::operator()(Parent_Selector* p)
   {
     Selector* pr = selector();
-    exp->selector_stack.pop_back();
-    exp->selector_stack.push_back(0);
+    exp.selector_stack.pop_back();
+    exp.selector_stack.push_back(0);
     auto rv = pr ? pr->perform(this) : 0;
     if (dynamic_cast<Selector_List*>(pr))
       rv = rv->perform(&listize);
-    exp->selector_stack.pop_back();
-    exp->selector_stack.push_back(pr);
+    exp.selector_stack.pop_back();
+    exp.selector_stack.push_back(pr);
     return rv;
   }
 
