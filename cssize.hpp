@@ -18,7 +18,7 @@ namespace Sass {
   class Cssize : public Operation_CRTP<Statement*, Cssize> {
 
     Context&            ctx;
-    Env*                env;
+    // Env*                env;
     vector<Block*>      block_stack;
     vector<Statement*>  p_stack;
     Backtrace*          backtrace;

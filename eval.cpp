@@ -36,18 +36,14 @@ namespace Sass {
   Eval::Eval(Eval* eval)
   : ctx(eval->ctx),
     listize(eval->listize),
-    env(eval->env),
-    exp(eval->exp),
-    backtrace(eval->backtrace)
+    exp(eval->exp)
   { }
 
   Eval::Eval(Expand* exp, Context& ctx, Env* env, Backtrace* bt)
   :
     ctx(ctx),
     listize(ctx),
-    env(env),
-    exp(exp),
-    backtrace(bt)
+    exp(exp)
   { }
   Eval::~Eval() { }
 
@@ -75,8 +71,8 @@ namespace Sass {
   // gets the env and other stuff from expander scope
   Eval* Eval::snapshot()
   {
-    this->env = environment();
-    this->backtrace = stacktrace();
+    // this->env = environment();
+    // this->backtrace = stacktrace();
     return this;
   }
 
@@ -92,6 +88,7 @@ namespace Sass {
 
   Expression* Eval::operator()(Assignment* a)
   {
+    Env* env = environment();
     string var(a->variable());
     if (a->is_global()) {
       if (a->is_default()) {
@@ -182,11 +179,12 @@ namespace Sass {
       stringstream msg; msg << "Incompatible units: '"
         << sass_start->unit() << "' and '"
         << sass_end->unit() << "'.";
-      error(msg.str(), low->pstate(), backtrace);
+      error(msg.str(), low->pstate(), stacktrace());
     }
     double start = sass_start->value();
     double end = sass_end->value();
     // only create iterator once in this environment
+    Env* env = environment();
     Number* it = new (env->mem) Number(low->pstate(), start, sass_end->unit());
     AST_Node* old_var = env->has_local(variable) ? env->get_local(variable) : 0;
     env->set_local(variable, it);
@@ -225,6 +223,7 @@ namespace Sass {
   {
     vector<string> variables(e->variables());
     Expression* expr = e->list()->perform(this);
+    Env* env = environment();
     List* list = 0;
     Map* map = 0;
     if (expr->concrete_type() == Expression::MAP) {
@@ -315,6 +314,7 @@ namespace Sass {
   {
     Expression* message = w->message()->perform(this);
     To_String to_string(&ctx);
+    Env* env = environment();
 
     // try to use generic function
     if (env->has("@warn[f]")) {
@@ -336,7 +336,7 @@ namespace Sass {
     }
 
     string result(unquote(message->perform(&to_string)));
-    Backtrace top(backtrace, w->pstate(), "");
+    Backtrace top(stacktrace(), w->pstate(), "");
     cerr << "WARNING: " << result;
     cerr << top.to_string(true);
     cerr << endl << endl;
@@ -347,6 +347,7 @@ namespace Sass {
   {
     Expression* message = e->message()->perform(this);
     To_String to_string(&ctx);
+    Env* env = environment();
 
     // try to use generic function
     if (env->has("@error[f]")) {
@@ -376,6 +377,7 @@ namespace Sass {
   {
     Expression* message = d->value()->perform(this);
     To_String to_string(&ctx);
+    Env* env = environment();
 
     // try to use generic function
     if (env->has("@debug[f]")) {
@@ -563,10 +565,10 @@ namespace Sass {
 
   Expression* Eval::operator()(Function_Call* c)
   {
-    if (backtrace->parent != NULL && backtrace->depth() > Constants::MaxCallStack) {
+    if (stacktrace()->parent != NULL && stacktrace()->depth() > Constants::MaxCallStack) {
         ostringstream stm;
         stm << "Stack depth exceeded max of " << Constants::MaxCallStack;
-        error(stm.str(), c->pstate(), backtrace);
+        error(stm.str(), c->pstate(), stacktrace());
     }
     string name(Util::normalize_underscores(c->name()));
     string full_name(name + "[f]");
@@ -575,80 +577,64 @@ namespace Sass {
       args = static_cast<Arguments*>(args->perform(this));
     }
 
-    // try to use generic function
+    Env* env = environment();
     if (!env->has(full_name)) {
-      if (env->has("*[f]")) {
+      if (!env->has("*[f]")) {
+        // just pass it through as a literal
+        Function_Call* lit = new (ctx.mem) Function_Call(c->pstate(),
+                                                         c->name(),
+                                                         args);
+        To_String to_string(&ctx);
+        return new (ctx.mem) String_Constant(c->pstate(),
+                                             lit->perform(&to_string));
+      } else {
+        // call generic function
         full_name = "*[f]";
       }
     }
 
-    // if it doesn't exist, just pass it through as a literal
-    if (!env->has(full_name)) {
-      Function_Call* lit = new (ctx.mem) Function_Call(c->pstate(),
-                                                       c->name(),
-                                                       args);
-      To_String to_string(&ctx);
-      return new (ctx.mem) String_Constant(c->pstate(),
-                                           lit->perform(&to_string));
+    Definition* def = static_cast<Definition*>((*env)[full_name]);
+
+    if (def->is_overload_stub()) {
+      stringstream ss;
+      ss << full_name
+         << args->length();
+      full_name = ss.str();
+      string resolved_name(full_name);
+      if (!env->has(resolved_name)) error("overloaded function `" + string(c->name()) + "` given wrong number of arguments", c->pstate());
+      def = static_cast<Definition*>((*env)[resolved_name]);
     }
 
     Expression*     result = c;
-    Definition*     def    = static_cast<Definition*>((*env)[full_name]);
     Block*          body   = def->block();
     Native_Function func   = def->native_function();
     Sass_Function_Entry c_function = def->c_function();
 
-    if (full_name != "if[f]") {
-      for (size_t i = 0, L = args->length(); i < L; ++i) {
-        (*args)[i]->value((*args)[i]->value()->perform(this));
-      }
-    }
+    // if (full_name != "if[f]") {
+    //   for (size_t i = 0, L = args->length(); i < L; ++i) {
+    //     (*args)[i]->value((*args)[i]->value()->perform(this));
+    //   }
+    // }
 
     Parameters* params = def->parameters();
-    Env new_env(def->environment());
-    exp->env_stack.push_back(&new_env);
-    // bind("function " + c->name(), params, args, ctx, &new_env, this);
-    // Env* old_env = env;
-    // env = &new_env;
+    Env fn_env(def->environment());
+    exp->env_stack.push_back(&fn_env);
 
-    // Backtrace here(backtrace, c->path(), c->line(), ", in function `" + c->name() + "`");
-    // backtrace = &here;
-
-    // if it's user-defined, eval the body
-    if (body) {
-
-      bind("function " + c->name(), params, args, ctx, &new_env, this);
-      Env* old_env = env;
-      env = &new_env;
-
-      Backtrace here(backtrace, c->pstate(), ", in function `" + c->name() + "`");
-      backtrace = &here;
-
-      result = body->perform(this);
-      if (!result) {
-        error(string("function ") + c->name() + " did not return a value", c->pstate());
-      }
-      backtrace = here.parent;
-      env = old_env;
+    if (func || body) {
+      bind("function " + c->name(), params, args, ctx, &fn_env, this);
+      Backtrace here(stacktrace(), c->pstate(), ", in function `" + c->name() + "`");
+      exp->backtrace_stack.push_back(&here);
+      // if it's user-defined, eval the body
+      if (body) result = body->perform(this);
+      // if it's native, invoke the underlying CPP function
+      else result = func(fn_env, *env, ctx, def->signature(), c->pstate(), stacktrace());
+      if (!result) error(string("function ") + c->name() + " did not return a value", c->pstate());
+      exp->backtrace_stack.pop_back();
     }
-    // if it's native, invoke the underlying CPP function
-    else if (func) {
 
-      bind("function " + c->name(), params, args, ctx, &new_env, this);
-      Env* old_env = env;
-      env = &new_env;
-
-      Backtrace here(backtrace, c->pstate(), ", in function `" + c->name() + "`");
-      backtrace = &here;
-
-      result = func(*env, *old_env, ctx, def->signature(), c->pstate(), backtrace);
-
-      backtrace = here.parent;
-      env = old_env;
-    }
     // else if it's a user-defined c function
+    // convert call into C-API compatible form
     else if (c_function) {
-
       Sass_Function_Fn c_func = sass_function_get_function(c_function);
       if (full_name == "*[f]") {
         String_Constant *str = new (ctx.mem) String_Constant(c->pstate(), c->name());
@@ -659,62 +645,32 @@ namespace Sass {
       }
 
       // populates env with default values for params
-      bind("function " + c->name(), params, args, ctx, &new_env, this);
-      Env* old_env = env;
-      env = &new_env;
+      bind("function " + c->name(), params, args, ctx, &fn_env, this);
 
-      Backtrace here(backtrace, c->pstate(), ", in function `" + c->name() + "`");
-      backtrace = &here;
+      Backtrace here(stacktrace(), c->pstate(), ", in function `" + c->name() + "`");
+      exp->backtrace_stack.push_back(&here);
 
       To_C to_c;
-      union Sass_Value* c_args = sass_make_list(env->local_frame().size(), SASS_COMMA);
+      union Sass_Value* c_args = sass_make_list(params[0].length(), SASS_COMMA);
       for(size_t i = 0; i < params[0].length(); i++) {
         string key = params[0][i]->name();
-        AST_Node* node = env->local_frame().at(key);
+        AST_Node* node = fn_env.get_local(key);
         Expression* arg = static_cast<Expression*>(node);
         sass_list_set_value(c_args, i, arg->perform(&to_c));
       }
       Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
       if (sass_value_get_tag(c_val) == SASS_ERROR) {
-        error("error in C function " + c->name() + ": " + sass_error_get_message(c_val), c->pstate(), backtrace);
+        error("error in C function " + c->name() + ": " + sass_error_get_message(c_val), c->pstate(), stacktrace());
       } else if (sass_value_get_tag(c_val) == SASS_WARNING) {
-        error("warning in C function " + c->name() + ": " + sass_warning_get_message(c_val), c->pstate(), backtrace);
+        error("warning in C function " + c->name() + ": " + sass_warning_get_message(c_val), c->pstate(), stacktrace());
       }
-      result = cval_to_astnode(c_val, ctx, backtrace, c->pstate());
+      result = cval_to_astnode(c_val, ctx, stacktrace(), c->pstate());
 
-      backtrace = here.parent;
+      exp->backtrace_stack.pop_back();
       sass_delete_value(c_args);
       if (c_val != c_args)
         sass_delete_value(c_val);
-      env = old_env;
     }
-    // else it's an overloaded native function; resolve it
-    else if (def->is_overload_stub()) {
-      size_t arity = args->length();
-      stringstream ss;
-      ss << full_name << arity;
-      string resolved_name(ss.str());
-      if (!env->has(resolved_name)) error("overloaded function `" + string(c->name()) + "` given wrong number of arguments", c->pstate());
-      Definition* resolved_def = static_cast<Definition*>((*env)[resolved_name]);
-      params = resolved_def->parameters();
-      Env newer_env;
-      newer_env.link(resolved_def->environment());
-      bind("function " + c->name(), params, args, ctx, &newer_env, this);
-      Env* old_env = env;
-      env = &newer_env;
-
-      Backtrace here(backtrace, c->pstate(), ", in function `" + c->name() + "`");
-      backtrace = &here;
-
-      result = resolved_def->native_function()(*env, *old_env, ctx, resolved_def->signature(), c->pstate(), backtrace);
-
-      backtrace = here.parent;
-      env = old_env;
-    }
-
-    // backtrace = here.parent;
-    // env = old_env;
-
 
     // link back to function definition
     // only do this for custom functions
@@ -743,6 +699,7 @@ namespace Sass {
     To_String to_string(&ctx);
     string name(v->name());
     Expression* value = 0;
+    Env* env = environment();
     if (env->has(name)) value = static_cast<Expression*>((*env)[name]);
     else error("Undefined variable: \"" + v->name() + "\".", v->pstate());
     // cerr << "name: " << v->name() << "; type: " << typeid(*value).name() << "; value: " << value->perform(&to_string) << endl;
@@ -875,6 +832,7 @@ namespace Sass {
   }
 
   string Eval::interpolation(Expression* s) {
+    Env* env = environment();
     if (String_Quoted* str_quoted = dynamic_cast<String_Quoted*>(s)) {
       if (str_quoted->quote_mark()) {
         if (str_quoted->quote_mark() == '*' || str_quoted->is_delayed()) {
