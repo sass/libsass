@@ -66,15 +66,6 @@ namespace Sass {
     return exp.backtrace();
   }
 
-  // for setting the env before eval'ing an expression
-  // gets the env and other stuff from expander scope
-  Eval* Eval::snapshot()
-  {
-    // this->env = environment();
-    // this->backtrace = stacktrace();
-    return this;
-  }
-
   Expression* Eval::operator()(Block* b)
   {
     Expression* val = 0;

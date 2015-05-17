@@ -102,15 +102,15 @@ namespace Sass {
       Keyframe_Rule* k = new (ctx.mem) Keyframe_Rule(r->pstate(), r->block()->perform(this)->block());
       if (r->selector()) {
         selector_stack.push_back(0);
-        // Contextualize contextual(eval.snapshot());
-        k->selector(static_cast<Selector_List*>(r->selector()->perform(eval.snapshot())));
+        // Contextualize contextual(&eval);
+        k->selector(static_cast<Selector_List*>(r->selector()->perform(&eval)));
         selector_stack.pop_back();
       }
       return k;
     }
     // debug_ast(r->selector());
-    // Contextualize contextual(eval.snapshot());
-    Selector* sel_ctx = static_cast<Selector*>(r->selector()->perform(eval.snapshot()));
+    // Contextualize contextual(&eval);
+    Selector* sel_ctx = static_cast<Selector*>(r->selector()->perform(&eval));
     if (sel_ctx == 0) throw "Cannot expand null selector";
 
     // ToDo: Check if we can do this different
@@ -177,7 +177,7 @@ namespace Sass {
 
   Statement* Expand::operator()(Feature_Block* f)
   {
-    Expression* feature_queries = f->feature_queries()->perform(eval.snapshot());
+    Expression* feature_queries = f->feature_queries()->perform(&eval);
     Feature_Block* ff = new (ctx.mem) Feature_Block(f->pstate(),
                                                     static_cast<Feature_Query*>(feature_queries),
                                                     f->block()->perform(this)->block());
@@ -188,7 +188,7 @@ namespace Sass {
   Statement* Expand::operator()(Media_Block* m)
   {
     To_String to_string(&ctx);
-    Expression* mq = m->media_queries()->perform(eval.snapshot());
+    Expression* mq = m->media_queries()->perform(&eval);
     mq = Parser::from_c_str(mq->perform(&to_string).c_str(), ctx, mq->pstate()).parse_media_queries();
     Media_Block* mm = new (ctx.mem) Media_Block(m->pstate(),
                                                 static_cast<List*>(mq),
@@ -203,7 +203,7 @@ namespace Sass {
     in_at_root = true;
     Block* ab = a->block();
     Expression* ae = a->expression();
-    if (ae) ae = ae->perform(eval.snapshot());
+    if (ae) ae = ae->perform(&eval);
     else ae = new (ctx.mem) At_Root_Expression(a->pstate());
     Block* bb = ab ? ab->perform(this)->block() : 0;
     At_Root_Block* aa = new (ctx.mem) At_Root_Block(a->pstate(),
@@ -220,9 +220,9 @@ namespace Sass {
     Selector* as = a->selector();
     Expression* av = a->value();
     selector_stack.push_back(0);
-    // Contextualize contextual(eval.snapshot());
-    if (as) as = static_cast<Selector_List*>(as->perform(eval.snapshot()));
-    else if (av) av = av->perform(eval.snapshot());
+    // Contextualize contextual(&eval);
+    if (as) as = static_cast<Selector_List*>(as->perform(&eval));
+    else if (av) av = av->perform(&eval);
     selector_stack.pop_back();
     Block* bb = ab ? ab->perform(this)->block() : 0;
     At_Rule* aa = new (ctx.mem) At_Rule(a->pstate(),
@@ -236,8 +236,8 @@ namespace Sass {
   Statement* Expand::operator()(Declaration* d)
   {
     String* old_p = d->property();
-    String* new_p = static_cast<String*>(old_p->perform(eval.snapshot()));
-    Expression* value = d->value()->perform(eval.snapshot());
+    String* new_p = static_cast<String*>(old_p->perform(&eval));
+    Expression* value = d->value()->perform(&eval);
     if (!value || (value->is_invisible() && !d->is_important())) return 0;
     Declaration* decl = new (ctx.mem) Declaration(d->pstate(),
                                                   new_p,
@@ -256,15 +256,15 @@ namespace Sass {
         if (env->has_global(var)) {
           Expression* e = dynamic_cast<Expression*>(env->get_global(var));
           if (!e || e->concrete_type() == Expression::NULL_VAL) {
-            env->set_global(var, a->value()->perform(eval.snapshot()));
+            env->set_global(var, a->value()->perform(&eval));
           }
         }
         else {
-          env->set_global(var, a->value()->perform(eval.snapshot()));
+          env->set_global(var, a->value()->perform(&eval));
         }
       }
       else {
-        env->set_global(var, a->value()->perform(eval.snapshot()));
+        env->set_global(var, a->value()->perform(&eval));
       }
     }
     else if (a->is_default()) {
@@ -275,7 +275,7 @@ namespace Sass {
             if (AST_Node* node = cur->get_local(var)) {
               Expression* e = dynamic_cast<Expression*>(node);
               if (!e || e->concrete_type() == Expression::NULL_VAL) {
-                cur->set_local(var, a->value()->perform(eval.snapshot()));
+                cur->set_local(var, a->value()->perform(&eval));
               }
             }
             else {
@@ -291,19 +291,19 @@ namespace Sass {
         if (AST_Node* node = env->get_global(var)) {
           Expression* e = dynamic_cast<Expression*>(node);
           if (!e || e->concrete_type() == Expression::NULL_VAL) {
-            env->set_global(var, a->value()->perform(eval.snapshot()));
+            env->set_global(var, a->value()->perform(&eval));
           }
         }
       }
       else if (env->is_lexical()) {
-        env->set_local(var, a->value()->perform(eval.snapshot()));
+        env->set_local(var, a->value()->perform(&eval));
       }
       else {
-        env->set_local(var, a->value()->perform(eval.snapshot()));
+        env->set_local(var, a->value()->perform(&eval));
       }
     }
     else {
-      env->set_lexical(var, a->value()->perform(eval.snapshot()));
+      env->set_lexical(var, a->value()->perform(&eval));
     }
     return 0;
   }
@@ -312,7 +312,7 @@ namespace Sass {
   {
     Import* result = new (ctx.mem) Import(imp->pstate());
     for ( size_t i = 0, S = imp->urls().size(); i < S; ++i) {
-      result->urls().push_back(imp->urls()[i]->perform(eval.snapshot()));
+      result->urls().push_back(imp->urls()[i]->perform(&eval));
     }
     return result;
   }
@@ -326,33 +326,33 @@ namespace Sass {
   Statement* Expand::operator()(Warning* w)
   {
     // eval handles this too, because warnings may occur in functions
-    w->perform(eval.snapshot());
+    w->perform(&eval);
     return 0;
   }
 
   Statement* Expand::operator()(Error* e)
   {
     // eval handles this too, because errors may occur in functions
-    e->perform(eval.snapshot());
+    e->perform(&eval);
     return 0;
   }
 
   Statement* Expand::operator()(Debug* d)
   {
     // eval handles this too, because warnings may occur in functions
-    d->perform(eval.snapshot());
+    d->perform(&eval);
     return 0;
   }
 
   Statement* Expand::operator()(Comment* c)
   {
     // TODO: eval the text, once we're parsing/storing it as a String_Schema
-    return new (ctx.mem) Comment(c->pstate(), static_cast<String*>(c->text()->perform(eval.snapshot())), c->is_important());
+    return new (ctx.mem) Comment(c->pstate(), static_cast<String*>(c->text()->perform(&eval)), c->is_important());
   }
 
   Statement* Expand::operator()(If* i)
   {
-    if (*i->predicate()->perform(eval.snapshot())) {
+    if (*i->predicate()->perform(&eval)) {
       append_block(i->consequent());
     }
     else {
@@ -367,11 +367,11 @@ namespace Sass {
   Statement* Expand::operator()(For* f)
   {
     string variable(f->variable());
-    Expression* low = f->lower_bound()->perform(eval.snapshot());
+    Expression* low = f->lower_bound()->perform(&eval);
     if (low->concrete_type() != Expression::NUMBER) {
       error("lower bound of `@for` directive must be numeric", low->pstate(), backtrace());
     }
-    Expression* high = f->upper_bound()->perform(eval.snapshot());
+    Expression* high = f->upper_bound()->perform(&eval);
     if (high->concrete_type() != Expression::NUMBER) {
       error("upper bound of `@for` directive must be numeric", high->pstate(), backtrace());
     }
@@ -422,7 +422,7 @@ namespace Sass {
   Statement* Expand::operator()(Each* e)
   {
     vector<string> variables(e->variables());
-    Expression* expr = e->list()->perform(eval.snapshot());
+    Expression* expr = e->list()->perform(&eval);
     List* list = 0;
     Map* map = 0;
     if (expr->concrete_type() == Expression::MAP) {
@@ -446,8 +446,8 @@ namespace Sass {
 
     if (map) {
       for (auto key : map->keys()) {
-        Expression* k = key->perform(eval.snapshot());
-        Expression* v = map->at(key)->perform(eval.snapshot());
+        Expression* k = key->perform(&eval);
+        Expression* v = map->at(key)->perform(&eval);
 
         if (variables.size() == 1) {
           List* variable = new (ctx.mem) List(map->pstate(), 2, List::SPACE);
@@ -473,7 +473,7 @@ namespace Sass {
         }
         for (size_t j = 0, K = variables.size(); j < K; ++j) {
           if (j < variable->length()) {
-            env->set_local(variables[j], (*variable)[j]->perform(eval.snapshot()));
+            env->set_local(variables[j], (*variable)[j]->perform(&eval));
           }
           else {
             env->set_local(variables[j], new (ctx.mem) Null(expr->pstate()));
@@ -494,7 +494,7 @@ namespace Sass {
   {
     Expression* pred = w->predicate();
     Block* body = w->block();
-    while (*pred->perform(eval.snapshot())) {
+    while (*pred->perform(&eval)) {
       append_block(body);
     }
     return 0;
@@ -513,9 +513,9 @@ namespace Sass {
     if (!extender) return 0;
     selector_stack.push_back(0);
 
-    // Contextualize contextual(eval.snapshot());
+    // Contextualize contextual(&eval);
     Selector_List* selector_list = static_cast<Selector_List*>(e->selector());
-    Selector_List* contextualized = static_cast<Selector_List*>(selector_list->perform(eval.snapshot()));
+    Selector_List* contextualized = static_cast<Selector_List*>(selector_list->perform(&eval));
     // ToDo: remove once feature proves stable!
     // if (contextualized->length() != 1) {
     //   error("selector groups may not be extended", extendee->pstate(), backtrace());
@@ -564,7 +564,7 @@ namespace Sass {
     Parameters* params = def->parameters();
 
     Arguments* args = static_cast<Arguments*>(c->arguments()
-                                               ->perform(eval.snapshot()));
+                                               ->perform(&eval));
     Backtrace new_bt(backtrace(), c->pstate(), ", in mixin `" + c->name() + "`");
     backtrace_stack.push_back(&new_bt);
     Env new_env(def->environment());
@@ -580,7 +580,7 @@ namespace Sass {
       thunk->environment(env);
       new_env.local_frame()["@content[m]"] = thunk;
     }
-    bind("mixin " + c->name(), params, args, ctx, &new_env, eval.snapshot());
+    bind("mixin " + c->name(), params, args, ctx, &new_env, &eval);
     append_block(body);
     backtrace_stack.pop_back();
     env_stack.pop_back();
