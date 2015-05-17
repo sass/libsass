@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#pragma warning(disable : 4503)
+#endif
+
 #include "extend.hpp"
 #include "context.hpp"
 #include "to_string.hpp"
