@@ -2,33 +2,27 @@
 #define SASS_EVAL_H
 
 #include <iostream>
-
 #include "context.hpp"
-#include "position.hpp"
-#include "operation.hpp"
-#include "environment.hpp"
 #include "listize.hpp"
-#include "sass_values.h"
-
+#include "operation.hpp"
 
 namespace Sass {
   using namespace std;
 
-  typedef Environment<AST_Node*> Env;
-  struct Backtrace;
-  class Listize;
   class Expand;
+  class Context;
+  class Listize;
 
   class Eval : public Operation_CRTP<Expression*, Eval> {
 
-
+   private:
+    string interpolation(Expression* s);
     Expression* fallback_impl(AST_Node* n);
 
-  public:
-    Expand&    exp;
-    Context&   ctx;
-    Listize    listize;
-    Eval(Eval* eval);
+   public:
+    Expand&  exp;
+    Context& ctx;
+    Listize  listize;
     Eval(Expand& exp);
     virtual ~Eval();
 
@@ -37,7 +31,6 @@ namespace Sass {
     Selector* selector();
     Backtrace* stacktrace();
 
-    Eval* snapshot(); // for setting the env before eval'ing an expression
     using Operation<Expression*>::operator();
 
     // for evaluating function bodies
@@ -87,12 +80,8 @@ namespace Sass {
     Expression* operator()(Parent_Selector*);
     Expression* operator()(Attribute_Selector*);
 
-
     template <typename U>
     Expression* fallback(U x) { return fallback_impl(x); }
-
-  private:
-    string interpolation(Expression* s);
 
   };
 

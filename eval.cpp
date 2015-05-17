@@ -12,6 +12,9 @@
 #include "util.hpp"
 #include "to_string.hpp"
 #include "inspect.hpp"
+#include "environment.hpp"
+#include "position.hpp"
+#include "sass_values.h"
 #include "to_c.hpp"
 #include "context.hpp"
 #include "backtrace.hpp"
@@ -32,12 +35,6 @@ namespace Sass {
     0, 0, 0, 0, 0, 0, // eq, neq, gt, gte, lt, lte
     add, sub, mul, div, fmod
   };
-
-  Eval::Eval(Eval* eval)
-  : exp(eval->exp),
-    ctx(eval->ctx),
-    listize(eval->listize)
-  { }
 
   Eval::Eval(Expand& exp)
   : exp(exp),
