@@ -230,7 +230,7 @@ extern "C" {
       string cwd(Sass::File::get_cwd());
       JsonNode* json_err = json_mkobject();
       json_append_member(json_err, "status", json_mknumber(1));
-      json_append_member(json_err, "file", json_mkstring(e.pstate.path.c_str()));
+      json_append_member(json_err, "file", json_mkstring(e.pstate.path));
       json_append_member(json_err, "line", json_mknumber(e.pstate.line+1));
       json_append_member(json_err, "column", json_mknumber(e.pstate.column+1));
       json_append_member(json_err, "message", json_mkstring(e.message.c_str()));
@@ -278,7 +278,7 @@ extern "C" {
       c_ctx->error_message = sass_strdup(msg_stream.str().c_str());
       c_ctx->error_text = sass_strdup(e.message.c_str());
       c_ctx->error_status = 1;
-      c_ctx->error_file = sass_strdup(e.pstate.path.c_str());
+      c_ctx->error_file = sass_strdup(e.pstate.path);
       c_ctx->error_line = e.pstate.line+1;
       c_ctx->error_column = e.pstate.column+1;
       c_ctx->error_src = e.pstate.src;

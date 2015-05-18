@@ -1,9 +1,9 @@
 #ifndef SASS_ENVIRONMENT_H
 #define SASS_ENVIRONMENT_H
 
-#include <map>
 #include <string>
 #include <iostream>
+#include <unordered_map>
 
 #include "ast_fwd_decl.hpp"
 #include "ast_def_macros.hpp"
@@ -11,21 +11,21 @@
 
 namespace Sass {
   using std::string;
-  using std::map;
+  using std::unordered_map;
   using std::cerr;
   using std::endl;
 
   template <typename T>
   class Environment {
     // TODO: test with unordered_map
-    map<string, T> local_frame_;
+    unordered_map<string, T> local_frame_;
     ADD_PROPERTY(Environment*, parent);
 
   public:
     Memory_Manager<AST_Node> mem;
-    Environment() : local_frame_(map<string, T>()), parent_(0) { }
-    Environment(Environment* env) : local_frame_(map<string, T>()), parent_(env) { }
-    Environment(Environment& env) : local_frame_(map<string, T>()), parent_(&env) { }
+    Environment() : local_frame_(unordered_map<string, T>()), parent_(0) { }
+    Environment(Environment* env) : local_frame_(unordered_map<string, T>()), parent_(env) { }
+    Environment(Environment& env) : local_frame_(unordered_map<string, T>()), parent_(&env) { }
 
     // link parent to create a stack
     void link(Environment& env) { parent_ = &env; }
@@ -42,19 +42,19 @@ namespace Sass {
     // there is still a parent around
     // not sure what it is actually use for
     // I guess we store functions etc. there
-    bool is_root_scope() const
+    bool is_global() const
     {
       return parent_ && ! parent_->parent_;
     }
 
     // scope operates on the current frame
 
-    map<string, T>& local_frame() {
+    unordered_map<string, T>& local_frame() {
       return local_frame_;
     }
 
     bool has_local(const string& key) const
-    { return local_frame_.count(key) != 0; }
+    { return local_frame_.find(key) != local_frame_.end(); }
 
     T& get_local(const string& key)
     { return local_frame_[key]; }
@@ -119,6 +119,21 @@ namespace Sass {
       set_local(key, val);
     }
 
+    // see if we have a lexical we could update
+    // either update already existing lexical value
+    // or if flag is set, we create one if no lexical found
+    T& get_lexical(const string& key)
+    {
+      auto cur = this;
+      while (cur) {
+        if (cur->has_local(key)) {
+          return cur->get_local(key);
+        }
+        cur = cur->parent_;
+      }
+      return get_local(key);
+    }
+
     // look on the full stack for key
     // include all scopes available
     bool has(const string& key) const
@@ -149,7 +164,7 @@ namespace Sass {
     #ifdef DEBUG
     void print()
     {
-      for (typename map<string, T>::iterator i = local_frame_.begin(); i != local_frame_.end(); ++i) {
+      for (typename unordered_map<string, T>::iterator i = local_frame_.begin(); i != local_frame_.end(); ++i) {
         cerr << i->first << endl;
       }
       if (parent_) {

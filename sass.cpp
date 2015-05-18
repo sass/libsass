@@ -7,10 +7,6 @@
 #include "file.hpp"
 #include "util.hpp"
 
-#ifdef _MSC_VER
-#define LIBSASS_VERSION "1.0.0"
-#endif
-
 extern "C" {
   using namespace std;
   using namespace Sass;

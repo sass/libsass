@@ -31,6 +31,7 @@ namespace Sass {
     Eval              eval;
 
     // it's easier to work with vectors
+    vector<Env>      com_stack;
     vector<Env*>      env_stack;
     vector<Block*>    block_stack;
     vector<String*>   property_stack;

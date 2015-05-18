@@ -1207,7 +1207,8 @@ namespace Sass {
     {
       List* l = dynamic_cast<List*>(env["$list"]);
       Expression* v = ARG("$val", Expression);
-      String_Constant* sep = ARG("$separator", String_Constant);
+	  // return v;
+	  String_Constant* sep = ARG("$separator", String_Constant);
       if (!l) {
         l = new (ctx.mem) List(pstate, 1);
         *l << ARG("$list", Expression);

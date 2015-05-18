@@ -448,6 +448,7 @@ namespace Sass {
     // if one of the operands is a '/' then make sure it's evaluated
     Expression* lhs = b->left()->perform(this);
     lhs->is_delayed(false);
+
     while (typeid(*lhs) == typeid(Binary_Expression)) lhs = lhs->perform(this);
 
     switch (op_type) {
@@ -478,8 +479,8 @@ namespace Sass {
     }
     else
     {
-      rhs->is_delayed(false);
-      rhs = rhs->perform(this);
+      // rhs->set_delayed(false);
+      // rhs = rhs->perform(this);
     }
 
     // see if it's a relational expression
@@ -797,12 +798,18 @@ namespace Sass {
 
   Expression* Eval::operator()(Number* n)
   {
-    n->normalize();
-    // behave according to as ruby sass (add leading zero)
-    return new (ctx.mem) Number(n->pstate(),
-                                n->value(),
-                                n->unit(),
-                                true);
+	return n;
+	// we may not even need a copy after all
+	// we do not copy string constants either
+	/*
+    if (n->is_expanded()) return n;
+    Number* nn = new (ctx.mem) Number(n->pstate(),
+                                      n->value(),
+                                      n->unit(),
+                                      true);
+    nn->is_expanded(true);
+    return nn;
+	*/
   }
 
   Expression* Eval::operator()(Boolean* b)
@@ -1056,8 +1063,11 @@ namespace Sass {
       } break;
 
       case Expression::NUMBER: {
-        return *static_cast<Number*>(lhs) ==
-               *static_cast<Number*>(rhs);
+        Number* l = static_cast<Number*>(lhs);
+        Number* r = static_cast<Number*>(rhs);
+        return (l->value() == r->value()) &&
+               (l->numerator_units() == r->numerator_units()) &&
+               (l->denominator_units() == r->denominator_units());
       } break;
 
       case Expression::COLOR: {
