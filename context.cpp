@@ -318,7 +318,8 @@ namespace Sass {
         0, 0
       );
       import_stack.push_back(import);
-      Parser p(Parser::from_c_str(queue[i].source, *this, ParserState(queue[i].abs_path.c_str(), queue[i].source, i)));
+      const char* path = sass_strdup(queue[i].abs_path.c_str());
+      Parser p(Parser::from_c_str(queue[i].source, *this, ParserState(path, queue[i].source, i)));
       Block* ast = p.parse();
       sass_delete_import(import_stack.back());
       import_stack.pop_back();
@@ -333,9 +334,9 @@ namespace Sass {
     Env global; // create root environment
     // register built-in functions on env
     register_built_in_functions(*this, &global);
-    for (size_t i = 0, S = c_functions.size(); i < S; ++i) {
-      register_c_function(*this, &global, c_functions[i]);
-    }
+    // register custom functions (defined via C-API)
+    for (size_t i = 0, S = c_functions.size(); i < S; ++i)
+    { register_c_function(*this, &global, c_functions[i]); }
     // create initial backtrace entry
     Backtrace backtrace(0, ParserState("", 0), "");
     // create crtp visitor objects
@@ -451,12 +452,12 @@ namespace Sass {
   void register_overload_stub(Context& ctx, string name, Env* env)
   {
     Definition* stub = new (ctx.mem) Definition(ParserState("[built-in function]"),
-                                            0,
-                                            name,
-                                            0,
-                                            0,
-                                            &ctx,
-                                            true);
+                                                0,
+                                                name,
+                                                0,
+                                                0,
+                                                // &ctx,
+                                                true);
     (*env)[name + "[f]"] = stub;
   }
 

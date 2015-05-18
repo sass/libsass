@@ -18,7 +18,6 @@ namespace Sass {
   Expand::Expand(Context& ctx, Env* env, Backtrace* bt)
   : ctx(ctx),
     eval(Eval(*this)),
-    com_stack(vector<Env>()),
     env_stack(vector<Env*>()),
     block_stack(vector<Block*>()),
     property_stack(vector<String*>()),
@@ -576,7 +575,7 @@ namespace Sass {
                                                    "@content",
                                                    new (ctx.mem) Parameters(c->pstate()),
                                                    c->block(),
-                                                   &ctx,
+                                                   // &ctx,
                                                    Definition::MIXIN);
       thunk->environment(env);
       new_env.local_frame()["@content[m]"] = thunk;

@@ -161,6 +161,12 @@ namespace Sass {
       return get_local(key);
     }
 
+    // copy everything from environment
+    void assign(const Environment& env)
+    {
+      // copy the complete local environment frame into our own local frame
+      local_frame_.insert(env.local_frame_.begin(), env.local_frame_.end());
+    }
     #ifdef DEBUG
     void print()
     {

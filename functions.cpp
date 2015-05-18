@@ -47,7 +47,7 @@ namespace Sass {
                                     name,
                                     params,
                                     func,
-                                    &ctx,
+                                    // &ctx,
                                     false);
   }
 
@@ -68,7 +68,7 @@ namespace Sass {
                                     name,
                                     params,
                                     c_func,
-                                    &ctx,
+                                    // &ctx,
                                     false, true);
   }
 
@@ -1207,8 +1207,7 @@ namespace Sass {
     {
       List* l = dynamic_cast<List*>(env["$list"]);
       Expression* v = ARG("$val", Expression);
-	  // return v;
-	  String_Constant* sep = ARG("$separator", String_Constant);
+      String_Constant* sep = ARG("$separator", String_Constant);
       if (!l) {
         l = new (ctx.mem) List(pstate, 1);
         *l << ARG("$list", Expression);

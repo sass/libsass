@@ -136,6 +136,11 @@ namespace Sass {
     return rules;
   }
 
+  Statement* Cssize::operator()(Null* m)
+  {
+    return 0;
+  }
+
   Statement* Cssize::operator()(Media_Block* m)
   {
     if (parent()->statement_type() == Statement::RULESET)

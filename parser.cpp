@@ -321,7 +321,7 @@ namespace Sass {
     else stack.push_back(function_def);
     Block* body = parse_block();
     stack.pop_back();
-    Definition* def = new (ctx.mem) Definition(source_position_of_def, name, params, body, &ctx, which_type);
+    Definition* def = new (ctx.mem) Definition(source_position_of_def, name, params, body, which_type);
     return def;
   }
 

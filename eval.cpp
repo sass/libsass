@@ -448,7 +448,6 @@ namespace Sass {
     // if one of the operands is a '/' then make sure it's evaluated
     Expression* lhs = b->left()->perform(this);
     lhs->is_delayed(false);
-
     while (typeid(*lhs) == typeid(Binary_Expression)) lhs = lhs->perform(this);
 
     switch (op_type) {
