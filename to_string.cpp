@@ -31,4 +31,26 @@ namespace Sass {
 
   inline string To_String::operator()(Null* n)
   { return ""; }
+
+  inline string To_String::operator()(List* list)
+  {
+    string str = "";
+    string sep(list->separator() == List::SPACE ? " " : ",");
+    if (list->empty()) return str;
+    bool items_output = false;
+
+    for (size_t i = 0, L = list->size(); i < L; ++i) {
+      Expression* list_item = (*list)[i];
+      if (list_item->is_invisible()) {
+        continue;
+      }
+      if (items_output) str += sep;
+      if (items_output && sep != " ") str += " ";
+      if (list_item->concrete_type() == Expression::LIST) str += "(";
+      str += list_item->perform(this);
+      if (list_item->concrete_type() == Expression::LIST) str += ")";
+      items_output = true;
+    }
+    return str;
+  }
 }

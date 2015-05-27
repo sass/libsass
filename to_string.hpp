@@ -26,6 +26,7 @@ namespace Sass {
 
     string operator()(Null* n);
     string operator()(String_Constant*);
+    string operator()(List*);
 
     template <typename U>
     string fallback(U n) { return fallback_impl(n); }
