@@ -254,10 +254,7 @@ namespace Sass {
     Node result = Node::createCollection();
     
     To_String to_string;
-    std::set< Complex_Selector*, std::function< bool(Complex_Selector*, Complex_Selector*) > > sel_set([&] ( Complex_Selector* lhs, Complex_Selector* rhs ) {
-      bool result = lhs->perform(&to_string) < rhs->perform(&to_string);
-      return result;
-    } );
+    std::set< Complex_Selector*, Complex_Selector_Pointer_Compare > sel_set;
     
     // Add all selectors we don't already have, everything else just add it blindly
     for (NodeDeque::iterator seqsesIter = seqses.collection()->begin(), seqsesIterEnd = seqses.collection()->end(); seqsesIter != seqsesIterEnd; ++seqsesIter) {
