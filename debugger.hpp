@@ -65,7 +65,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     cerr << ind << "Selector_List " << selector;
     cerr << " (" << pstate_source_position(node) << ")";
     cerr << " [block:" << selector->last_block() << "]";
-    cerr << (selector->last_block() && selector->last_block()->is_root() ? " [root]" : "");
+    // cerr << ((selector->last_block() && selector->last_block()->is_root()) ? " [root]" : "");
     cerr << " [@media:" << selector->media_block() << "]";
     cerr << (selector->is_optional() ? " [is_optional]": " -");
     cerr << (selector->has_line_break() ? " [line-break]": " -");
@@ -83,7 +83,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     cerr << ind << "Parent_Selector " << selector;
     cerr << " (" << pstate_source_position(node) << ")";
     cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">" << endl;
-    debug_ast(selector->selector(), ind + "->", env);
+//    debug_ast(selector->selector(), ind + "->", env);
 
   } else if (dynamic_cast<Complex_Selector*>(node)) {
     Complex_Selector* selector = dynamic_cast<Complex_Selector*>(node);
@@ -164,11 +164,6 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
       << (selector->has_line_feed() ? " [line-feed]": " -")
     << endl;
 
-  } else if (dynamic_cast<Selector_Reference*>(node)) {
-    Selector_Reference* selector = dynamic_cast<Selector_Reference*>(node);
-    cerr << ind << "Selector_Reference " << selector;
-    cerr << " (" << pstate_source_position(node) << ")";
-    cerr << " @ref " << selector->selector() << endl;
   } else if (dynamic_cast<Simple_Selector*>(node)) {
     Simple_Selector* selector = dynamic_cast<Simple_Selector*>(node);
     cerr << ind << "Simple_Selector " << selector;

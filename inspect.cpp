@@ -741,17 +741,6 @@ namespace Sass {
     append_token("null", n);
   }
 
-  void Inspect::operator()(Parent_Selector* p)
-  {
-    if (p->selector()) {
-      p->selector()->perform(this);
-      append_delimiter();
-    }
-    else {
-      append_string("&");
-    }
-  }
-
   // parameters and arguments
   void Inspect::operator()(Parameter* p)
   {
@@ -816,10 +805,9 @@ namespace Sass {
     s->contents()->perform(this);
   }
 
-  void Inspect::operator()(Selector_Reference* ref)
+  void Inspect::operator()(Parent_Selector* p)
   {
-    if (ref->selector()) ref->selector()->perform(this);
-    else                 append_string("&");
+    append_string("&");
   }
 
   void Inspect::operator()(Selector_Placeholder* s)

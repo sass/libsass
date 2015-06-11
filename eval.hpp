@@ -2,38 +2,35 @@
 #define SASS_EVAL_H
 
 #include <iostream>
-
 #include "context.hpp"
-#include "position.hpp"
-#include "operation.hpp"
-#include "environment.hpp"
-#include "contextualize.hpp"
 #include "listize.hpp"
-#include "sass_values.h"
+#include "operation.hpp"
 
 namespace Sass {
   using namespace std;
 
-  typedef Environment<AST_Node*> Env;
-  struct Backtrace;
-  class Contextualize;
+  class Expand;
+  class Context;
   class Listize;
 
   class Eval : public Operation_CRTP<Expression*, Eval> {
 
-    Context&   ctx;
-
+   private:
+    string interpolation(Expression* s);
     Expression* fallback_impl(AST_Node* n);
 
-  public:
-    Contextualize* contextualize;
-    Listize*   listize;
-    Env*       env;
-    Backtrace* backtrace;
-    Eval(Context&, Contextualize*, Listize*, Env*, Backtrace*);
+   public:
+    Expand&  exp;
+    Context& ctx;
+    Listize  listize;
+    Eval(Expand& exp);
     virtual ~Eval();
-    Eval* with(Env* e, Backtrace* bt); // for setting the env before eval'ing an expression
-    Eval* with(Selector* c, Env* e, Backtrace* bt, Selector* placeholder = 0, Selector* extender = 0); // for setting the env before eval'ing an expression
+
+    Env* environment();
+    Context& context();
+    Selector* selector();
+    Backtrace* stacktrace();
+
     using Operation<Expression*>::operator();
 
     // for evaluating function bodies
@@ -69,13 +66,22 @@ namespace Sass {
     Expression* operator()(Argument*);
     Expression* operator()(Arguments*);
     Expression* operator()(Comment*);
-    Expression* operator()(Parent_Selector* p);
+
+    // these should return selectors
+    Expression* operator()(Selector_List*);
+    Expression* operator()(Complex_Selector*);
+    Expression* operator()(Compound_Selector*);
+    Expression* operator()(Wrapped_Selector*);
+    Expression* operator()(Pseudo_Selector*);
+    Expression* operator()(Selector_Qualifier*);
+    Expression* operator()(Type_Selector*);
+    Expression* operator()(Selector_Placeholder*);
+    Expression* operator()(Selector_Schema*);
+    Expression* operator()(Parent_Selector*);
+    Expression* operator()(Attribute_Selector*);
 
     template <typename U>
     Expression* fallback(U x) { return fallback_impl(x); }
-
-  private:
-    string interpolation(Expression* s);
 
   };
 

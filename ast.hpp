@@ -648,7 +648,7 @@ namespace Sass {
     ADD_PROPERTY(Native_Function, native_function);
     ADD_PROPERTY(Sass_Function_Entry, c_function);
     ADD_PROPERTY(void*, cookie);
-    ADD_PROPERTY(Context*, ctx);
+    // ADD_PROPERTY(Context*, ctx);
     ADD_PROPERTY(bool, is_overload_stub);
     ADD_PROPERTY(Signature, signature);
   public:
@@ -656,7 +656,7 @@ namespace Sass {
                string n,
                Parameters* params,
                Block* b,
-               Context* ctx,
+               // Context* ctx,
                Type t)
     : Has_Block(pstate, b),
       name_(n),
@@ -666,7 +666,7 @@ namespace Sass {
       native_function_(0),
       c_function_(0),
       cookie_(0),
-      ctx_(ctx),
+      // ctx_(ctx),
       is_overload_stub_(false),
       signature_(0)
     { }
@@ -675,7 +675,7 @@ namespace Sass {
                string n,
                Parameters* params,
                Native_Function func_ptr,
-               Context* ctx,
+               // Context* ctx,
                bool overload_stub = false)
     : Has_Block(pstate, 0),
       name_(n),
@@ -685,7 +685,7 @@ namespace Sass {
       native_function_(func_ptr),
       c_function_(0),
       cookie_(0),
-      ctx_(ctx),
+      // ctx_(ctx),
       is_overload_stub_(overload_stub),
       signature_(sig)
     { }
@@ -694,7 +694,7 @@ namespace Sass {
                string n,
                Parameters* params,
                Sass_Function_Entry c_func,
-               Context* ctx,
+               // Context* ctx,
                bool whatever,
                bool whatever2)
     : Has_Block(pstate, 0),
@@ -705,7 +705,7 @@ namespace Sass {
       native_function_(0),
       c_function_(c_func),
       cookie_(sass_function_get_cookie(c_func)),
-      ctx_(ctx),
+      // ctx_(ctx),
       is_overload_stub_(false),
       signature_(sig)
     { }
@@ -1666,26 +1666,10 @@ namespace Sass {
   //////////////////////////////////////////////////////////////////////////////////////////
   inline Expression* List::value_at_index(size_t i) { return is_arglist_ ? ((Argument*)(*this)[i])->value() : (*this)[i]; }
 
-  ////////////
-  // The Parent Selector Expression.
-  ////////////
-  class Parent_Selector : public Expression {
-    ADD_PROPERTY(Selector*, selector);
-  public:
-    Parent_Selector(ParserState pstate, Selector* r = 0)
-    : Expression(pstate), selector_(r)
-    { concrete_type(SELECTOR); }
-    virtual Selector* selector() { return selector_; }
-    string type() { return "selector"; }
-    static string type_name() { return "selector"; }
-
-    ATTACH_OPERATIONS();
-  };
-
   /////////////////////////////////////////
   // Abstract base class for CSS selectors.
   /////////////////////////////////////////
-  class Selector : public AST_Node {
+  class Selector : public Expression {
     ADD_PROPERTY(bool, has_reference);
     ADD_PROPERTY(bool, has_placeholder);
     // line break before list separator
@@ -1699,14 +1683,14 @@ namespace Sass {
     ADD_PROPERTY(Media_Block*, media_block);
   public:
     Selector(ParserState pstate, bool r = false, bool h = false)
-    : AST_Node(pstate),
+    : Expression(pstate),
       has_reference_(r),
       has_placeholder_(h),
       has_line_feed_(false),
       has_line_break_(false),
       is_optional_(false),
       media_block_(0)
-    { }
+    { concrete_type(SELECTOR); }
     virtual ~Selector() = 0;
     // virtual Selector_Placeholder* find_placeholder();
     virtual unsigned long specificity() {
@@ -1748,20 +1732,26 @@ namespace Sass {
   };
   inline Simple_Selector::~Simple_Selector() { }
 
-  /////////////////////////////////////
-  // Parent references (i.e., the "&").
-  /////////////////////////////////////
-  class Selector_Reference : public Simple_Selector {
-    ADD_PROPERTY(Selector*, selector);
+
+  //////////////////////////////////
+  // The Parent Selector Expression.
+  //////////////////////////////////
+  class Parent_Selector : public Simple_Selector {
+    // ADD_PROPERTY(Selector*, selector);
   public:
-    Selector_Reference(ParserState pstate, Selector* r = 0)
-    : Simple_Selector(pstate), selector_(r)
+    Parent_Selector(ParserState pstate, Selector* r = 0)
+    : Simple_Selector(pstate)// , selector_(r)
     { has_reference(true); }
     virtual unsigned long specificity()
     {
-      if (!selector()) return 0;
-      return selector()->specificity();
+      return 0;
+      // if (!selector()) return 0;
+      // return selector()->specificity();
     }
+    // virtual Selector* selector() { return selector_; }
+    string type() { return "selector"; }
+    static string type_name() { return "selector"; }
+
     ATTACH_OPERATIONS();
   };
 
@@ -1956,8 +1946,7 @@ namespace Sass {
     bool is_empty_reference()
     {
       return length() == 1 &&
-             typeid(*(*this)[0]) == typeid(Selector_Reference) &&
-             !static_cast<Selector_Reference*>((*this)[0])->selector();
+             typeid(*(*this)[0]) == typeid(Parent_Selector);
     }
     vector<string> to_str_vec(); // sometimes need to convert to a flat "by-value" data structure
 

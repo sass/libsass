@@ -1,4 +1,9 @@
-#include<stdint.h>
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_NONSTDC_NO_DEPRECATE
+#endif
+
+#include <stdint.h>
 #include "ast.hpp"
 #include "util.hpp"
 #include "prelexer.hpp"
@@ -562,7 +567,7 @@ namespace Sass {
     }
 
     bool isPrintable(Expression* e, Output_Style style) {
-      return isPrintable(e, style);
+		return false; // isPrintable(e, style);
     }
 
     bool isPrintable(Feature_Block* f, Output_Style style) {

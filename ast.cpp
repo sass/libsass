@@ -507,7 +507,6 @@ namespace Sass {
   void Selector_List::adjust_after_pushing(Complex_Selector* c)
   {
     if (c->has_reference())   has_reference(true);
-    if (c->has_placeholder()) has_placeholder(true);
 
 #ifdef DEBUG
     To_String to_string;
@@ -558,45 +557,6 @@ namespace Sass {
     }
     return false;
   }
-
-  /* not used anymore - remove?
-  Selector_Placeholder* Selector_List::find_placeholder()
-  {
-    if (has_placeholder()) {
-      for (size_t i = 0, L = length(); i < L; ++i) {
-        if ((*this)[i]->has_placeholder()) return (*this)[i]->find_placeholder();
-      }
-    }
-    return 0;
-  }*/
-
-  /* not used anymore - remove?
-  Selector_Placeholder* Complex_Selector::find_placeholder()
-  {
-    if (has_placeholder()) {
-      if (head() && head()->has_placeholder()) return head()->find_placeholder();
-      else if (tail() && tail()->has_placeholder()) return tail()->find_placeholder();
-    }
-    return 0;
-  }*/
-
-  /* not used anymore - remove?
-  Selector_Placeholder* Compound_Selector::find_placeholder()
-  {
-    if (has_placeholder()) {
-      for (size_t i = 0, L = length(); i < L; ++i) {
-        if ((*this)[i]->has_placeholder()) return (*this)[i]->find_placeholder();
-      }
-      // return this;
-    }
-    return 0;
-  }*/
-
-  /* not used anymore - remove?
-  Selector_Placeholder* Selector_Placeholder::find_placeholder()
-  {
-    return this;
-  }*/
 
   vector<string> Compound_Selector::to_str_vec()
   {
@@ -681,17 +641,17 @@ namespace Sass {
 
   string Number::unit() const
   {
-    stringstream u;
+    string u;
     for (size_t i = 0, S = numerator_units_.size(); i < S; ++i) {
-      if (i) u << '*';
-      u << numerator_units_[i];
+      if (i) u += '*';
+      u += numerator_units_[i];
     }
-    if (!denominator_units_.empty()) u << '/';
+    if (!denominator_units_.empty()) u += '/';
     for (size_t i = 0, S = denominator_units_.size(); i < S; ++i) {
-      if (i) u << '*';
-      u << denominator_units_[i];
+      if (i) u += '*';
+      u += denominator_units_[i];
     }
-    return u.str();
+    return u;
   }
 
   bool Number::is_unitless()
@@ -882,17 +842,11 @@ namespace Sass {
 
   bool Number::operator== (Expression* rhs) const
   {
-    try
-    {
-      Number l(pstate_, value_, unit());
-      Number& r = dynamic_cast<Number&>(*rhs);
-      l.normalize(find_convertible_unit());
-      r.normalize(find_convertible_unit());
-      return l.unit() == r.unit() &&
-             l.value() == r.value();
+    if (Number* r = static_cast<Number*>(rhs)) {
+      return (value() == r->value()) &&
+             (numerator_units_ == r->numerator_units_) &&
+             (denominator_units_ == r->denominator_units_);
     }
-    catch (std::bad_cast&) {}
-    catch (...) { throw; }
     return false;
   }
 

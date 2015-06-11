@@ -1,9 +1,9 @@
 #ifndef SASS_AST_FWD_DECL_H
 #define SASS_AST_FWD_DECL_H
 
+
 /////////////////////////////////////////////
 // Forward declarations for the AST visitors.
-/////////////////////////////////////////////
 namespace Sass {
 
   enum Output_Style { NESTED, EXPANDED, COMPACT, COMPRESSED, FORMATTED };
@@ -69,7 +69,6 @@ namespace Sass {
   // selectors
   class Selector;
   class Selector_Schema;
-  class Selector_Reference;
   class Selector_Placeholder;
   class Type_Selector;
   class Selector_Qualifier;

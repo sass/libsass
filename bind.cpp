@@ -12,6 +12,8 @@ namespace Sass {
 
   void bind(string callee, Parameters* ps, Arguments* as, Context& ctx, Env* env, Eval* eval)
   {
+
+    // Context& ctx = eval->context();
     map<string, Parameter*> param_map;
 
     // Set up a map to ensure named arguments refer to actual parameters. Also
@@ -227,15 +229,7 @@ namespace Sass {
                                                                       true);
         }
         else if (leftover->default_value()) {
-          // make sure to eval the default value in the env that we've been populating
-          Env* old_env = eval->env;
-          Backtrace* old_bt = eval->backtrace;
-          Contextualize* old_context = eval->contextualize;
-          Expression* dv = leftover->default_value()->perform(eval->with(env, eval->backtrace));
-          eval->env = old_env;
-          eval->backtrace = old_bt;
-          eval->contextualize = old_context;
-          // dv->perform(&to_string);
+          Expression* dv = leftover->default_value()->perform(eval);
           env->local_frame()[leftover->name()] = dv;
         }
         else {

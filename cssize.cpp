@@ -10,7 +10,7 @@ namespace Sass {
 
   Cssize::Cssize(Context& ctx, Env* env, Backtrace* bt)
   : ctx(ctx),
-    env(env),
+    // env(env),
     block_stack(vector<Block*>()),
     p_stack(vector<Statement*>()),
     backtrace(bt)
@@ -23,15 +23,15 @@ namespace Sass {
 
   Statement* Cssize::operator()(Block* b)
   {
-    Env new_env;
-    new_env.link(*env);
-    env = &new_env;
+    // Env new_env;
+    // new_env.link(*env);
+    // env = &new_env;
     Block* bb = new (ctx.mem) Block(b->pstate(), b->length(), b->is_root());
     // bb->tabs(b->tabs());
     block_stack.push_back(bb);
     append_block(b);
     block_stack.pop_back();
-    env = env->parent();
+    // env = env->parent();
     return bb;
   }
 
@@ -134,6 +134,11 @@ namespace Sass {
     }
 
     return rules;
+  }
+
+  Statement* Cssize::operator()(Null* m)
+  {
+    return 0;
   }
 
   Statement* Cssize::operator()(Media_Block* m)
