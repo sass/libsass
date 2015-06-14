@@ -322,8 +322,7 @@ namespace Sass {
 
     // this is no guarantee that the unquoting will work
     // what about whitespace before/after the quote_mark?
-    if      (*s.begin() == '"'  && *s.rbegin() == '"')  q = '"';
-    else if (*s.begin() == '\'' && *s.rbegin() == '\'') q = '\'';
+    if (*s.begin() == '\'' && *s.rbegin() == '\'') q = '\'';
     else                                                return s;
 
     string unq;
