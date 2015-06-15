@@ -2147,6 +2147,11 @@ namespace Sass {
             // match `/deep/` selector (pass-trough)
             // there is no functionality for it yet
             re_reference_selector,
+            sequence <
+              exactly <'/'>,
+              identifier,
+              exactly <'/'>
+            >,
             // match selector ops /[*&%,()\[\]]/
             class_char < selector_lookahead_ops >,
             // match selector combinators /[>+~]/
