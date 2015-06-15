@@ -151,7 +151,7 @@ namespace Sass {
     // loop until end of string
     while (position < end) {
 
-      // parse comment blocks
+      // we should be able to refactor this
       parse_block_comments();
       lex < css_whitespace >();
 
@@ -715,6 +715,7 @@ namespace Sass {
   Complex_Selector* Parser::parse_complex_selector(bool in_root)
   {
 
+    String* reference = 0;
     lex < block_comment >();
     // parse the left hand side
     Compound_Selector* lhs = 0;
@@ -732,6 +733,13 @@ namespace Sass {
     if      (lex< exactly<'+'> >()) combinator = Complex_Selector::ADJACENT_TO;
     else if (lex< exactly<'~'> >()) combinator = Complex_Selector::PRECEDES;
     else if (lex< exactly<'>'> >()) combinator = Complex_Selector::PARENT_OF;
+    else if (lex< sequence < exactly<'/'>, negate < exactly < '*' > > > >()) {
+      // comments are allowed, but not spaces?
+      combinator = Complex_Selector::REFERENCE;
+      if (!lex < identifier >()) return 0; // ToDo: error msg?
+      reference = new (ctx.mem) String_Quoted(pstate, lexed);
+      if (!lex < exactly < '/' > >()) return 0; // ToDo: error msg?
+    }
     else /* if (lex< zero >()) */   combinator = Complex_Selector::ANCESTOR_OF;
 
     if (!lhs && combinator == Complex_Selector::ANCESTOR_OF) return 0;
@@ -740,6 +748,7 @@ namespace Sass {
     // source position of a complex selector points to the combinator
     // ToDo: make sure we update pstate for ancestor of (lex < zero >());
     Complex_Selector* sel = new (ctx.mem) Complex_Selector(pstate, combinator, lhs);
+    if (combinator == Complex_Selector::REFERENCE) sel->reference(reference);
     // has linfeed after combinator?
     sel->has_line_break(peek_newline());
     // sel->has_line_feed(has_line_feed);
@@ -937,7 +946,7 @@ namespace Sass {
     ParserState p = pstate;
     if (!lex_css< attribute_name >()) error("invalid attribute name in attribute selector", pstate);
     string name(lexed);
-    if (lex_css< exactly<']'> >()) return new (ctx.mem) Attribute_Selector(p, name, "", 0);
+    if (lex_css< alternatives < exactly<']'>, exactly<'/'> > >()) return new (ctx.mem) Attribute_Selector(p, name, "", 0);
     if (!lex_css< alternatives< exact_match, class_match, dash_match,
                                 prefix_match, suffix_match, substring_match > >()) {
       error("invalid operator in attribute selector for " + name, pstate);
@@ -955,7 +964,7 @@ namespace Sass {
       error("expected a string constant or identifier in attribute selector for " + name, pstate);
     }
 
-    if (!lex_css< exactly<']'> >()) error("unterminated attribute selector for " + name, pstate);
+    if (!lex_css< alternatives < exactly<']'>, exactly<'/'> > >()) error("unterminated attribute selector for " + name, pstate);
     return new (ctx.mem) Attribute_Selector(p, name, matcher, value);
   }
 
@@ -2139,6 +2148,11 @@ namespace Sass {
             // match `/deep/` selector (pass-trough)
             // there is no functionality for it yet
             exactly<sel_deep_kwd>,
+            sequence <
+              exactly <'/'>,
+              identifier,
+              exactly <'/'>
+            >,
             // match selector ops /[*&%,()\[\]]/
             class_char < selector_lookahead_ops >,
             // match selector combinators /[>+~]/

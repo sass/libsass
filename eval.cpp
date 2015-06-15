@@ -1397,8 +1397,10 @@ namespace Sass {
     bool parentized = false;
     Complex_Selector* tail = s->tail();
     Compound_Selector* head = s->head();
+    String* reference = s->reference();
     Complex_Selector::Combinator combinator = s->combinator();
     Selector_List* sl = new (ctx.mem) Selector_List(s->pstate());
+    if (reference) reference = (String*) reference->perform(this);
 
     if (head) {
       // check if we have a parent selector reference (expands to list)
@@ -1420,6 +1422,7 @@ namespace Sass {
                   cp = new (ctx.mem) Complex_Selector(s->pstate());
                   cp->head(head); cp->tail(tt);
                   cp->combinator(combinator);
+                  cp->reference(reference);
                   last->tail(cp);
                 } else {
                   last->tail(tt);
@@ -1435,6 +1438,7 @@ namespace Sass {
               Complex_Selector* ns = (*pr)[n]->cloneFully(ctx);
               Complex_Selector* last = ns->last();
               ns->combinator(combinator);
+              ns->reference(reference);
               for (size_t i = 1, iL = head->length(); i < iL; ++i) {
                 // add simple selectors
                 *last->head() << (*head)[i];
