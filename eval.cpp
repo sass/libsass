@@ -701,10 +701,13 @@ namespace Sass {
     if (result->pstate().file == string::npos)
       result->pstate(c->pstate());
 
-    do {
-      result->is_delayed(result->concrete_type() == Expression::STRING);
-      result = result->perform(this);
-    } while (result->concrete_type() == Expression::NONE);
+
+    if (result->concrete_type() == Expression::NONE)
+    {
+        result->is_delayed(result->concrete_type() == Expression::STRING);
+        result = result->perform(this);
+    }
+    
     return result;
   }
 
