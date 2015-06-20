@@ -128,6 +128,7 @@ namespace Sass {
             string val(valConst->value());
             if (dynamic_cast<String_Quoted*>(valConst)) {
               if (!valConst->quote_mark() && val.empty()) {
+                
                 bPrintExpression = false;
               }
             }
@@ -372,18 +373,24 @@ namespace Sass {
 
   void Output::operator()(String_Quoted* s)
   {
+    TRACEINST(s) << "This should be a quoted string... " << s;
     if (s->quote_mark()) {
+      TRACEINST(s) << "... it even has a quote mark property, sending with quote marks";
       append_token(quote(s->value(), s->quote_mark()), s);
     } else if (!in_comment) {
+      TRACEINST(s) << "... no quote mark(?), sending via string_to_output";
       append_token(string_to_output(s->value()), s);
     } else {
+      TRACEINST(s) << "... no quote mark(?), sending directly (in comment)";
       append_token(s->value(), s);
     }
   }
 
   void Output::operator()(String_Constant* s)
   {
+    TRACEINST(s) << "This should be a constant string... " << s;
     if (String_Quoted* quoted = dynamic_cast<String_Quoted*>(s)) {
+      TRACEINST(s) << "... but dynamic_cast<String_Quoted*> worked";
       return Output::operator()(quoted);
     } else {
       string value(s->value());
@@ -391,8 +398,10 @@ namespace Sass {
         value.erase(std::remove_if(value.begin(), value.end(), ::isspace), value.end());
       }
       if (!in_comment) {
+        TRACEINST(s) << "... sending via string_to_output";
         append_token(string_to_output(value), s);
       } else {
+        TRACEINST(s) << "... sending directly (in comment)";
         append_token(value, s);
       }
     }

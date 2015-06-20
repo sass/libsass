@@ -1381,6 +1381,7 @@ namespace Sass {
 
     if (lex< identifier >()) {
       String_Constant* str = new (ctx.mem) String_Quoted(pstate, lexed);
+      TRACEINST(str) << "We have just created a new instance " << str;
       // Dont' delay this string if it is a name color. Fixes #652.
       str->is_delayed(ctx.names_to_colors.count(unquote(lexed)) == 0);
       return str;
