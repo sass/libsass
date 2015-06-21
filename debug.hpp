@@ -1,6 +1,7 @@
 #ifndef SASS_DEBUG_H
 #define SASS_DEBUG_H
 
+#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 
 enum dbg_lvl_t : uint32_t {
