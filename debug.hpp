@@ -13,7 +13,7 @@ enum dbg_lvl_t : uint32_t {
 	EXTEND_COMPOUND = 16,
 	EXTEND_COMPLEX = 32,
 	LCS = 64,
-  EXTEND_OBJECT = 128,
+	EXTEND_OBJECT = 128,
 	ALL = UINT32_MAX
 };
 
@@ -37,6 +37,11 @@ namespace Sass {
 	TLogLevel messageLevel;
   };
 }
+
+// Visual Studio 2013 does not like __func__
+#if _MSC_VER < 1900
+#define __func__ __FUNCTION__
+#endif
 
 #define TRACE() \
   if (logTRACE > Sass::LibsassLogReportingLevel) ; \
