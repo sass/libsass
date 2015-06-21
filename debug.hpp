@@ -16,32 +16,34 @@ enum dbg_lvl_t : uint32_t {
 	ALL = UINT32_MAX
 };
 
-enum TLogLevel {logINFO, logTRACE};
-static TLogLevel LogReportingLevel = getenv("LIBSASS_TRACE") ? logTRACE : logINFO;
-class Log
-{
-public:
-  Log();
-  virtual ~Log();
-  std::ostringstream& Get(TLogLevel level, void *p, const char *f, const char *filen, int lineno);
-  std::ostringstream& Get(TLogLevel level, const char *f, const char *filen, int lineno);
-public:
-protected:
-  std::ostringstream os;
-private:
-  Log(const Log&);
-  Log& operator =(const Log&);
-private:
-  TLogLevel messageLevel;
-};
+namespace Sass {
+  enum TLogLevel {logINFO, logTRACE};
+  static TLogLevel LibsassLogReportingLevel = getenv("LIBSASS_TRACE") ? logTRACE : logINFO;
+  class Log
+  {
+  public:
+	Log();
+	virtual ~Log();
+	std::ostringstream& Get(TLogLevel level, void *p, const char *f, const char *filen, int lineno);
+	std::ostringstream& Get(TLogLevel level, const char *f, const char *filen, int lineno);
+  public:
+  protected:
+	std::ostringstream os;
+  private:
+	Log(const Log&);
+	Log& operator =(const Log&);
+  private:
+	TLogLevel messageLevel;
+  };
+}
 
 #define TRACE() \
-  if (logTRACE > LogReportingLevel) ; \
-  else Log().Get(logTRACE, __func__, __FILE__, __LINE__)
+  if (logTRACE > Sass::LibsassLogReportingLevel) ; \
+  else Sass::Log().Get(Sass::logTRACE, __func__, __FILE__, __LINE__)
 
 #define TRACEINST(obj) \
-  if (logTRACE > LogReportingLevel) ; \
-  else Log().Get(logTRACE, (obj), __func__, __FILE__, __LINE__)
+  if (logTRACE > Sass::LibsassLogReportingLevel) ; \
+  else Sass::Log().Get(Sass::logTRACE, (obj), __func__, __FILE__, __LINE__)
 
 #ifdef DEBUG
 
