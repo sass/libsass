@@ -120,6 +120,7 @@ SOURCES = \
 	contextualize.cpp \
 	contextualize_eval.cpp \
 	cssize.cpp \
+	debug.cpp \
 	listize.cpp \
 	error_handling.cpp \
 	eval.cpp \
