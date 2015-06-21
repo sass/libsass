@@ -19,7 +19,19 @@ namespace Sass {
   { return sass_make_color(c->r(), c->g(), c->b(), c->a()); }
 
   Sass_Value* To_C::operator()(String_Constant* s)
-  { return sass_make_string(s->value().c_str()); }
+  { 
+    if (s->quote_mark()) {
+      TRACEINST(s) << "We got String_Constant, but we convert quoted value to C" << s;
+      return sass_make_qstring(s->value().c_str());
+    } else {
+      TRACEINST(s) << "Converting unquoted value to C" << s;
+	  return sass_make_string(s->value().c_str());
+    }
+  }
+
+  Sass_Value* To_C::operator()(String_Quoted* s)
+  { TRACEINST(s) << "Converting quoted value to C" << s; 
+    return sass_make_qstring(s->value().c_str()); }
 
   Sass_Value* To_C::operator()(List* l)
   {

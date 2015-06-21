@@ -30,6 +30,7 @@
 
 #endif
 
+#include "debug.hpp"
 #include "util.hpp"
 #include "units.hpp"
 #include "context.hpp"
@@ -1367,16 +1368,16 @@ namespace Sass {
   public:
     String_Constant(ParserState pstate, string val)
     : String(pstate), quote_mark_(0), can_compress_whitespace_(false), value_(read_css_string(val)), hash_(0)
-    { }
+    { TRACEINST(this) << "String_Constant created " << this; }
     String_Constant(ParserState pstate, const char* beg)
     : String(pstate), quote_mark_(0), can_compress_whitespace_(false), value_(read_css_string(string(beg))), hash_(0)
-    { }
+    { TRACEINST(this) << "String_Constant created " << this; }
     String_Constant(ParserState pstate, const char* beg, const char* end)
     : String(pstate), quote_mark_(0), can_compress_whitespace_(false), value_(read_css_string(string(beg, end-beg))), hash_(0)
-    { }
+    { TRACEINST(this) << "String_Constant created " << this; }
     String_Constant(ParserState pstate, const Token& tok)
     : String(pstate), quote_mark_(0), can_compress_whitespace_(false), value_(read_css_string(string(tok.begin, tok.end))), hash_(0)
-    { }
+    { TRACEINST(this) << "String_Constant created " << this; }
     string type() { return "string"; }
     static string type_name() { return "string"; }
 
@@ -1404,6 +1405,16 @@ namespace Sass {
     static char double_quote() { return '"'; }
     static char single_quote() { return '\''; }
 
+    friend std::ostream& operator << (std::ostream& os, String_Constant& sq) {
+      os << "(" << (sq.quote_mark_ ? sq.quote_mark_ : '0') << ",\"" << sq.value_ << "\")";
+      return os;
+    }
+
+    friend std::ostream& operator << (std::ostream& os, String_Constant* sq) {
+      os << "(" << (sq->quote_mark_ ? sq->quote_mark_ : '0') << ",\"" << sq->value_ << "\")";
+      return os;
+    }
+
     ATTACH_OPERATIONS();
   };
 
@@ -1416,6 +1427,7 @@ namespace Sass {
     : String_Constant(pstate, val)
     {
       value_ = unquote(value_, &quote_mark_);
+      TRACEINST(this) << "String_Quoted created " << this;
     }
     ATTACH_OPERATIONS();
   };

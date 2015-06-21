@@ -1,6 +1,7 @@
 #ifndef SASS_DEBUG_H
 #define SASS_DEBUG_H
 
+#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 
 enum dbg_lvl_t : uint32_t {
@@ -12,9 +13,43 @@ enum dbg_lvl_t : uint32_t {
 	EXTEND_COMPOUND = 16,
 	EXTEND_COMPLEX = 32,
 	LCS = 64,
-  EXTEND_OBJECT = 128,
+	EXTEND_OBJECT = 128,
 	ALL = UINT32_MAX
 };
+
+namespace Sass {
+  enum TLogLevel {logINFO, logTRACE};
+  static TLogLevel LibsassLogReportingLevel = getenv("LIBSASS_TRACE") ? logTRACE : logINFO;
+  class Log
+  {
+  public:
+	Log();
+	virtual ~Log();
+	std::ostringstream& Get(TLogLevel level, void *p, const char *f, const char *filen, int lineno);
+	std::ostringstream& Get(TLogLevel level, const char *f, const char *filen, int lineno);
+  public:
+  protected:
+	std::ostringstream os;
+  private:
+	Log(const Log&);
+	Log& operator =(const Log&);
+  private:
+	TLogLevel messageLevel;
+  };
+}
+
+// Visual Studio 2013 does not like __func__
+#if _MSC_VER < 1900
+#define __func__ __FUNCTION__
+#endif
+
+#define TRACE() \
+  if (logTRACE > Sass::LibsassLogReportingLevel) ; \
+  else Sass::Log().Get(Sass::logTRACE, __func__, __FILE__, __LINE__)
+
+#define TRACEINST(obj) \
+  if (logTRACE > Sass::LibsassLogReportingLevel) ; \
+  else Sass::Log().Get(Sass::logTRACE, (obj), __func__, __FILE__, __LINE__)
 
 #ifdef DEBUG
 

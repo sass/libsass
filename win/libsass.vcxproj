@@ -169,6 +169,7 @@
     <ClCompile Include="..\context.cpp" />
     <ClCompile Include="..\contextualize.cpp" />
     <ClCompile Include="..\contextualize_eval.cpp" />
+    <ClCompile Include="..\debug.cpp" />
     <ClCompile Include="..\error_handling.cpp" />
     <ClCompile Include="..\eval.cpp" />
     <ClCompile Include="..\expand.cpp" />

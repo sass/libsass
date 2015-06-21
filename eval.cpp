@@ -734,11 +734,14 @@ namespace Sass {
     }
     else if (value->concrete_type() == Expression::STRING) {
       if (auto str = dynamic_cast<String_Quoted*>(value)) {
+        TRACEINST(str) << "dynamic_cast to String_Quoted worked " << str;
         value = new (ctx.mem) String_Quoted(*str);
       } else if (auto str = dynamic_cast<String_Constant*>(value)) {
         if (str->quote_mark()) {
+          TRACEINST(str) << "dynamic_cast to String_Quoted did not work, but we have quote " << str;
           value = new (ctx.mem) String_Quoted(str->pstate(), str->perform(&to_string));
         } else {
+          TRACEINST(str) << "dynamic_cast to String_Quoted did not work, we are String_Constant " << str;
           value = new (ctx.mem) String_Constant(str->pstate(), unquote(str->value()));
         }
       }
@@ -856,18 +859,26 @@ namespace Sass {
 
   string Eval::interpolation(Expression* s) {
     if (String_Quoted* str_quoted = dynamic_cast<String_Quoted*>(s)) {
+      TRACEINST(str_quoted) << "dynamic_cast to String_Quoted worked " << str_quoted;
       if (str_quoted->quote_mark()) {
         if (str_quoted->quote_mark() == '*' || str_quoted->is_delayed()) {
+          TRACEINST(str_quoted) << "... will do interpolation()";
           return interpolation(new (ctx.mem) String_Constant(*str_quoted));
         } else {
+          TRACEINST(str_quoted) << "... will string_escape()";
           return string_escape(quote(str_quoted->value(), str_quoted->quote_mark()));
         }
       } else {
+        TRACEINST(str_quoted) << "dynamic_cast to String_Quoted failed, will evacuate_escapes()";
         return evacuate_escapes(str_quoted->value());
       }
     } else if (String_Constant* str_constant = dynamic_cast<String_Constant*>(s)) {
+      TRACEINST(str_constant) << "dynamic_cast to String_Constant worked";
       string str = str_constant->value();
-      if (!str_constant->quote_mark()) str = unquote(str);
+      if (!str_constant->quote_mark()) {
+        TRACEINST(str_constant) << "... but still need to unquote()";
+        str = unquote(str);
+      }
       return evacuate_escapes(str);
     } else if (String_Schema* str_schema = dynamic_cast<String_Schema*>(s)) {
       string res = "";
@@ -1011,14 +1022,22 @@ namespace Sass {
     Expression* feature = e->feature();
     feature = (feature ? feature->perform(this) : 0);
     if (feature && dynamic_cast<String_Quoted*>(feature)) {
+      String_Quoted *qfeature = dynamic_cast<String_Quoted*>(feature);
+      TRACEINST(qfeature) << "dynamic_cast to String_Quoted worked " << qfeature;
       feature = new (ctx.mem) String_Constant(feature->pstate(),
                                               dynamic_cast<String_Quoted*>(feature)->value());
+    } else {
+      TRACEINST(feature) << "dynamic_cast to String_Quoted did not work for " << feature;
     }
     Expression* value = e->value();
     value = (value ? value->perform(this) : 0);
     if (value && dynamic_cast<String_Quoted*>(value)) {
+      String_Quoted *qvalue = dynamic_cast<String_Quoted*>(value);
+      TRACEINST(qvalue) << "dynamic_cast to String_Quoted worked " << qvalue;
       value = new (ctx.mem) String_Constant(value->pstate(),
                                             dynamic_cast<String_Quoted*>(value)->value());
+    } else {
+      TRACEINST(value) << "dynamic_cast to String_Quoted did not work for " << value;
     }
     return new (ctx.mem) Media_Query_Expression(e->pstate(),
                                                 feature,
@@ -1358,7 +1377,11 @@ namespace Sass {
         e = new (ctx.mem) Color(pstate, sass_color_get_r(v), sass_color_get_g(v), sass_color_get_b(v), sass_color_get_a(v));
       } break;
       case SASS_STRING: {
-        e = new (ctx.mem) String_Constant(pstate, sass_string_get_value(v));
+        if (sass_string_is_quoted(v))
+          e = new (ctx.mem) String_Quoted(pstate, sass_string_get_value(v));
+        else {
+          e = new (ctx.mem) String_Constant(pstate, sass_string_get_value(v));
+        }
       } break;
       case SASS_LIST: {
         List* l = new (ctx.mem) List(pstate, sass_list_get_length(v), sass_list_get_separator(v) == SASS_COMMA ? List::COMMA : List::SPACE);
