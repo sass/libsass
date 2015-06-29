@@ -14,6 +14,16 @@ extern "C" {
 union Sass_Value;
 
 // Type for Sass values
+enum Sass_Op {
+  SASS_CONCAT,
+  SASS_MODULO,
+  SASS_SUBTRACT,
+  SASS_ADDITION,
+  SASS_DIVISION,
+  SASS_MULTIPLY
+};
+
+// Type for Sass values
 enum Sass_Tag {
   SASS_BOOLEAN,
   SASS_NUMBER,
@@ -110,6 +120,10 @@ ADDAPI union Sass_Value* ADDCALL sass_make_list    (size_t len, enum Sass_Separa
 ADDAPI union Sass_Value* ADDCALL sass_make_map     (size_t len);
 ADDAPI union Sass_Value* ADDCALL sass_make_error   (const char* msg);
 ADDAPI union Sass_Value* ADDCALL sass_make_warning (const char* msg);
+
+// Generic sass value operator function for concat, add, multiply etc
+ADDAPI union Sass_Value* ADDCALL sass_value_op (union Sass_Value* a, union Sass_Value* b, enum Sass_Op opt);
+
 
 // Generic destructor function for all types
 // Will release memory of all associated Sass_Values

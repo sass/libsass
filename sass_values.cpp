@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include "util.hpp"
+#include "position.hpp"
 #include "sass_values.h"
 
 extern "C" {
@@ -15,6 +16,7 @@ extern "C" {
 
   struct Sass_Unknown {
     enum Sass_Tag tag;
+    ParserState   pstate;
   };
 
   struct Sass_Boolean {
@@ -26,6 +28,7 @@ extern "C" {
     enum Sass_Tag tag;
     double        value;
     char*         unit;
+    Number*       num;
   };
 
   struct Sass_Color {
@@ -258,6 +261,52 @@ extern "C" {
     if (v->warning.message == 0) { free(v); return 0; }
     return v;
   }
+
+//  inline exec_op(enum Sass_Op opt,
+
+  // Generic sass value operator function for concat, add, multiply etc
+  // Seems like we cannot easily re-use the high level c++ functions, since we
+  // would need to convert all sass values to AST_Nodes and furthermore pack
+  // them into Binary Expression for eval to evaluate the result (and convert back).
+  // So it seems easier (and more performant to implement on good op function here.
+  union Sass_Value* ADDCALL sass_value_op (union Sass_Value* a, union Sass_Value* b, enum Sass_Op op)
+  {
+    enum Sass_Tag t_a = a->unknown.tag;
+    enum Sass_Tag t_b = b->unknown.tag;
+    if (t_a == t_b) {
+        switch(a->unknown.tag) {
+            case SASS_NULL: {
+                    return sass_make_string("SASS_NULL");
+            }   break;
+            case SASS_BOOLEAN: {
+                    return sass_make_string("SASS_BOOLEAN");
+            }   break;
+            case SASS_NUMBER: {
+                    return sass_make_string("SASS_NUMBER");
+            }   break;
+            case SASS_COLOR: {
+                    return sass_make_string("SASS_COLOR");
+            }   break;
+            case SASS_STRING: {
+                    return sass_make_string("SASS_STRING");
+            }   break;
+            case SASS_LIST: {
+                    return sass_make_string("SASS_LIST");
+            }   break;
+            case SASS_MAP: {
+                    return sass_make_string("SASS_MAP");
+            }   break;
+            case SASS_ERROR: {
+                    return sass_make_string("SASS_ERROR");
+            }   break;
+            case SASS_WARNING: {
+                    return sass_make_string("SASS_WARNING");
+            }   break;
+        }
+    }
+    return sass_make_string("asd");
+  }
+
 
   // will free all associated sass values
   void ADDCALL sass_delete_value(union Sass_Value* val) {
