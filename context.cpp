@@ -60,7 +60,8 @@ namespace Sass {
     c_options               (initializers.c_options()),
     c_compiler              (initializers.c_compiler()),
     source_c_str            (initializers.source_c_str()),
-    sources                 (vector<const char*>()),
+    sources                 (vector<char*>()),
+    strings                 (vector<char*>()),
     plugin_paths            (initializers.plugin_paths()),
     include_paths           (initializers.include_paths()),
     queue                   (vector<Sass_Queued>()),
@@ -150,12 +151,16 @@ namespace Sass {
 
   Context::~Context()
   {
-    // everything that gets put into sources will be freed by us
-    for (size_t n = 0; n < import_stack.size(); ++n) sass_delete_import(import_stack[n]);
+    // make sure we free the source even if not processed!
+    if (sources.size() == 0 && source_c_str) free(source_c_str);
     // sources are allocated by strdup or malloc (overtaken from C code)
-    for (size_t i = 0; i < sources.size(); ++i) free((void*)sources[i]);
-    // clear inner structures (vectors)
-    sources.clear(); import_stack.clear();
+    for (size_t i = 0; i < sources.size(); ++i) free(sources[i]);
+    // free all strings we kept alive during compiler execution
+    for (size_t n = 0; n < strings.size(); ++n) free(strings[n]);
+    // everything that gets put into sources will be freed by us
+    for (size_t m = 0; m < import_stack.size(); ++m) sass_delete_import(import_stack[m]);
+    // clear inner structures (vectors) and input source
+    sources.clear(); import_stack.clear(); source_c_str = 0;
   }
 
   void Context::setup_color_map()
@@ -247,7 +252,7 @@ namespace Sass {
       }
     }
   }
-  void Context::add_source(string load_path, string abs_path, const char* contents)
+  void Context::add_source(string load_path, string abs_path, char* contents)
   {
     sources.push_back(contents);
     included_files.push_back(abs_path);
@@ -319,7 +324,10 @@ namespace Sass {
         0, 0
       );
       import_stack.push_back(import);
-      Parser p(Parser::from_c_str(queue[i].source, *this, ParserState(queue[i].abs_path, queue[i].source, i)));
+      // keep a copy of the path around (for parser states)
+      strings.push_back(sass_strdup(queue[i].abs_path.c_str()));
+      ParserState pstate(strings.back(), queue[i].source, i);
+      Parser p(Parser::from_c_str(queue[i].source, *this, pstate));
       Block* ast = p.parse();
       sass_delete_import(import_stack.back());
       import_stack.pop_back();
@@ -359,7 +367,7 @@ namespace Sass {
     if(is_indented_syntax_src) {
       char * contents = sass2scss(source_c_str, SASS2SCSS_PRETTIFY_1 | SASS2SCSS_KEEP_COMMENT);
       add_source(input_path, input_path, contents);
-      delete [] source_c_str;
+      free(source_c_str);
       return parse_file();
     }
     add_source(input_path, input_path, source_c_str);
