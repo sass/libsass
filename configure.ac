@@ -16,8 +16,10 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([no])])
 
 # Checks for programs.
 AC_PROG_CXX
+AM_PROG_AR
 AC_LANG([C++])
-LT_INIT([dlopen])
+LT_PREREQ([2.4.3])
+LT_INIT([dlopen pic-only])
 
 # Checks for header files.
 AC_CHECK_HEADERS([unistd.h])
