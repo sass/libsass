@@ -442,16 +442,6 @@ namespace Sass {
     return mm;
   }
 
-  // -- only need to define two comparisons, and the rest can be implemented in terms of them
-  bool eq(Expression*, Expression*, Context&, Eval*);
-  bool lt(Expression*, Expression*, Context&);
-  // -- arithmetic on the combinations that matter
-  Expression* op_numbers(Context&, Binary_Expression*, Expression*, Expression*);
-  Expression* op_number_color(Context&, Sass_OP, Expression*, Expression*);
-  Expression* op_color_number(Context&, Sass_OP, Expression*, Expression*);
-  Expression* op_colors(Context&, Sass_OP, Expression*, Expression*);
-  Expression* op_strings(Context&, Sass_OP, Expression*, Expression*);
-
   Expression* Eval::operator()(Binary_Expression* b)
   {
     enum Sass_OP op_type = b->type();
@@ -508,12 +498,12 @@ namespace Sass {
 
     // see if it's a relational expression
     switch(op_type) {
-      case Sass_OP::EQ:  return new (ctx.mem) Boolean(b->pstate(), eq(lhs, rhs, ctx));
-      case Sass_OP::NEQ: return new (ctx.mem) Boolean(b->pstate(), !eq(lhs, rhs, ctx));
-      case Sass_OP::GT:  return new (ctx.mem) Boolean(b->pstate(), !lt(lhs, rhs, ctx) && !eq(lhs, rhs, ctx));
-      case Sass_OP::GTE: return new (ctx.mem) Boolean(b->pstate(), !lt(lhs, rhs, ctx));
-      case Sass_OP::LT:  return new (ctx.mem) Boolean(b->pstate(), lt(lhs, rhs, ctx));
-      case Sass_OP::LTE: return new (ctx.mem) Boolean(b->pstate(), lt(lhs, rhs, ctx) || eq(lhs, rhs, ctx));
+      case Sass_OP::EQ:  return new (ctx.mem) Boolean(b->pstate(), Eval::eq(lhs, rhs, ctx));
+      case Sass_OP::NEQ: return new (ctx.mem) Boolean(b->pstate(), !Eval::eq(lhs, rhs, ctx));
+      case Sass_OP::GT:  return new (ctx.mem) Boolean(b->pstate(), !Eval::lt(lhs, rhs, ctx) && !Eval::eq(lhs, rhs, ctx));
+      case Sass_OP::GTE: return new (ctx.mem) Boolean(b->pstate(), !Eval::lt(lhs, rhs, ctx));
+      case Sass_OP::LT:  return new (ctx.mem) Boolean(b->pstate(), Eval::lt(lhs, rhs, ctx));
+      case Sass_OP::LTE: return new (ctx.mem) Boolean(b->pstate(), Eval::lt(lhs, rhs, ctx) || Eval::eq(lhs, rhs, ctx));
 
       default:                     break;
     }
@@ -1068,7 +1058,7 @@ namespace Sass {
 
   // All the binary helpers.
 
-  bool eq(Expression* lhs, Expression* rhs, Context& ctx)
+  bool Eval::eq(Expression* lhs, Expression* rhs, Context& ctx)
   {
     Expression::Concrete_Type ltype = lhs->concrete_type();
     Expression::Concrete_Type rtype = rhs->concrete_type();
@@ -1132,7 +1122,7 @@ namespace Sass {
     return false;
   }
 
-  bool lt(Expression* lhs, Expression* rhs, Context& ctx)
+  bool Eval::lt(Expression* lhs, Expression* rhs, Context& ctx)
   {
     if (lhs->concrete_type() != Expression::NUMBER ||
         rhs->concrete_type() != Expression::NUMBER)
@@ -1149,7 +1139,7 @@ namespace Sass {
     return l->value() < tmp_r.value();
   }
 
-  Expression* op_numbers(Context& ctx, Binary_Expression* b, Expression* lhs, Expression* rhs)
+  Expression* Eval::op_numbers(Context& ctx, Binary_Expression* b, Expression* lhs, Expression* rhs)
   {
     Number* l = static_cast<Number*>(lhs);
     Number* r = static_cast<Number*>(rhs);
@@ -1203,7 +1193,7 @@ namespace Sass {
     return v;
   }
 
-  Expression* op_number_color(Context& ctx, Sass_OP op, Expression* lhs, Expression* rhs)
+  Expression* Eval::op_number_color(Context& ctx, Sass_OP op, Expression* lhs, Expression* rhs)
   {
     Number* l = static_cast<Number*>(lhs);
     Color* r = static_cast<Color*>(rhs);
@@ -1242,7 +1232,7 @@ namespace Sass {
     return l;
   }
 
-  Expression* op_color_number(Context& ctx, Sass_OP op, Expression* lhs, Expression* rhs)
+  Expression* Eval::op_color_number(Context& ctx, Sass_OP op, Expression* lhs, Expression* rhs)
   {
     Color* l = static_cast<Color*>(lhs);
     Number* r = static_cast<Number*>(rhs);
@@ -1255,7 +1245,7 @@ namespace Sass {
                                l->a());
   }
 
-  Expression* op_colors(Context& ctx, Sass_OP op, Expression* lhs, Expression* rhs)
+  Expression* Eval::op_colors(Context& ctx, Sass_OP op, Expression* lhs, Expression* rhs)
   {
     Color* l = static_cast<Color*>(lhs);
     Color* r = static_cast<Color*>(rhs);
@@ -1273,7 +1263,7 @@ namespace Sass {
                                l->a());
   }
 
-  Expression* op_strings(Context& ctx, Sass_OP op, Expression* lhs, Expression*rhs)
+  Expression* Eval::op_strings(Context& ctx, Sass_OP op, Expression* lhs, Expression*rhs)
   {
     To_String to_string(&ctx);
     Expression::Concrete_Type ltype = lhs->concrete_type();

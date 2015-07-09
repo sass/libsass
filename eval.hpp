@@ -85,6 +85,17 @@ namespace Sass {
     template <typename U>
     Expression* fallback(U x) { return fallback_impl(x); }
 
+    // -- only need to define two comparisons, and the rest can be implemented in terms of them
+    static bool eq(Expression*, Expression*, Context&);
+    static bool lt(Expression*, Expression*, Context&);
+    // -- arithmetic on the combinations that matter
+    static Expression* op_numbers(Context&, Binary_Expression*, Expression*, Expression*);
+    static Expression* op_number_color(Context&, Sass_OP, Expression*, Expression*);
+    static Expression* op_color_number(Context&, Sass_OP, Expression*, Expression*);
+    static Expression* op_colors(Context&, Sass_OP, Expression*, Expression*);
+    static Expression* op_strings(Context&, Sass_OP, Expression*, Expression*);
+
+
   private:
     string interpolation(Expression* s);
 
@@ -92,8 +103,6 @@ namespace Sass {
 
   Expression* cval_to_astnode(Sass_Value* v, Context& ctx, Backtrace* backtrace, ParserState pstate = ParserState("[AST]"));
 
-  bool eq(Expression*, Expression*, Context&);
-  bool lt(Expression*, Expression*, Context&);
 }
 
 #endif
