@@ -2404,7 +2404,7 @@ namespace Sass {
 
   void Parser::error(string msg, Position pos)
   {
-    throw Sass_Error(Sass_Error::syntax, ParserState(path, source, pos.line ? pos : before_token, Offset(0, 0)), msg);
+    throw Sass_Err(Sass_Err::syntax, ParserState(path, source, pos.line ? pos : before_token, Offset(0, 0)), msg);
   }
 
   // print a css parsing error with actual context information from parsed source
