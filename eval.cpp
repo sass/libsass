@@ -13,6 +13,7 @@
 #include "to_string.hpp"
 #include "inspect.hpp"
 #include "environment.hpp"
+#include "color_maps.hpp"
 #include "position.hpp"
 #include "sass_values.h"
 #include "to_c.hpp"
@@ -919,8 +920,8 @@ namespace Sass {
 
   Expression* Eval::operator()(String_Constant* s)
   {
-    if (!s->is_delayed() && ctx.names_to_colors.count(s->value())) {
-      Color* c = new (ctx.mem) Color(*ctx.names_to_colors[s->value()]);
+    if (!s->is_delayed() && names_to_colors.count(s->value())) {
+      Color* c = new (mem()) Color(*names_to_colors.find(s->value())->second);
       c->pstate(s->pstate());
       c->disp(s->value());
       return c;
@@ -1281,23 +1282,29 @@ namespace Sass {
 
     bool l_str_quoted = ((Sass::String*)lhs) && ((Sass::String*)lhs)->sass_fix_1291();
     bool r_str_quoted = ((Sass::String*)rhs) && ((Sass::String*)rhs)->sass_fix_1291();
-    bool l_str_color = ltype == Expression::STRING && ctx.names_to_colors.count(lstr) && !l_str_quoted;
-    bool r_str_color = rtype == Expression::STRING && ctx.names_to_colors.count(rstr) && !r_str_quoted;
+    bool l_str_color = ltype == Expression::STRING && names_to_colors.count(lstr) && !l_str_quoted;
+    bool r_str_color = rtype == Expression::STRING && names_to_colors.count(rstr) && !r_str_quoted;
 
     if (l_str_color && r_str_color) {
-      return op_colors(ctx, op, ctx.names_to_colors[lstr], ctx.names_to_colors[rstr]);
+      Color* c_l = names_to_colors.find(lstr)->second;
+      Color* c_r = names_to_colors.find(rstr)->second;
+      return op_colors(mem, op,c_l, c_r);
     }
     else if (l_str_color && rtype == Expression::COLOR) {
-      return op_colors(ctx, op, ctx.names_to_colors[lstr], rhs);
+      Color* c = names_to_colors.find(lstr)->second;
+      return op_colors(mem, op, c, static_cast<Color*>(rhs));
     }
     else if (l_str_color && rtype == Expression::NUMBER) {
-      return op_color_number(ctx, op, ctx.names_to_colors[lstr], rhs);
+      Color* c = names_to_colors.find(lstr)->second;
+      return op_color_number(mem, op, c, static_cast<Number*>(rhs));
     }
     else if (ltype == Expression::COLOR && r_str_color) {
-      return op_number_color(ctx, op, lhs, ctx.names_to_colors[rstr]);
+      Color* c = names_to_colors.find(rstr)->second;
+      return op_number_color(ctx, mem, op, static_cast<Number*>(lhs), c);
     }
     else if (ltype == Expression::NUMBER && r_str_color) {
-      return op_number_color(ctx, op, lhs, ctx.names_to_colors[rstr]);
+      Color* c = names_to_colors.find(rstr)->second;
+      return op_number_color(ctx, mem, op, static_cast<Number*>(lhs), c);
     }
     if (op == Binary_Expression::MUL) error("invalid operands for multiplication", lhs->pstate());
     if (op == Binary_Expression::MOD) error("invalid operands for modulo", lhs->pstate());
