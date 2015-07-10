@@ -89,11 +89,13 @@ namespace Sass {
     static bool eq(Expression*, Expression*);
     static bool lt(Expression*, Expression*);
     // -- arithmetic on the combinations that matter
-    static Expression* op_numbers(Context&, Binary_Expression*, Expression*, Expression*);
-    static Expression* op_number_color(Context&, enum Sass_OP, Expression*, Expression*);
-    static Expression* op_color_number(Context&, enum Sass_OP, Expression*, Expression*);
-    static Expression* op_colors(Context&, enum Sass_OP, Expression*, Expression*);
-    static Expression* op_strings(Context&, enum Sass_OP, Expression*, Expression*);
+    static Expression* op_numbers(Memory_Manager<AST_Node>&, enum Sass_OP, Number*, Number*);
+    static Expression* op_number_color(Context&, Memory_Manager<AST_Node>&, enum Sass_OP, Number*, Color*);
+    static Expression* op_color_number(Memory_Manager<AST_Node>& mem, enum Sass_OP, Color*, Number*);
+    static Expression* op_colors(Memory_Manager<AST_Node>& mem, enum Sass_OP, Color*, Color*);
+    static Expression* op_strings(Context&, Memory_Manager<AST_Node>& mem, enum Sass_OP, Value*, Value*);
+
+    Memory_Manager<AST_Node>& mem() const;
 
 
   private:
@@ -101,7 +103,7 @@ namespace Sass {
 
   };
 
-  Expression* cval_to_astnode(Sass_Value* v, Context& ctx, Backtrace* backtrace, ParserState pstate = ParserState("[AST]"));
+  Expression* cval_to_astnode(Memory_Manager<AST_Node>& mem, Sass_Value* v, Context& ctx, Backtrace* backtrace, ParserState pstate = ParserState("[AST]"));
 
 }
 
