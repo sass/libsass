@@ -6,8 +6,12 @@
 
 #include <cstdlib>
 #include <cstring>
+#include "ast.hpp"
 #include "util.hpp"
+#include "eval.hpp"
 #include "sass_values.h"
+#include "position.hpp"
+#include "memory_manager.hpp"
 
 extern "C" {
   using namespace std;
@@ -349,6 +353,111 @@ extern "C" {
 
     return 0;
 
+  }
+
+  Value* sass_value_to_expression (Memory_Manager<AST_Node>& mem, const union Sass_Value* val)
+  {
+    switch (sass_value_get_tag(val)) {
+      case SASS_NUMBER:
+        return new (mem) Number(ParserState(0),
+                                sass_number_get_value(val),
+                                sass_number_get_unit(val));
+      break;
+      case SASS_BOOLEAN:
+        return new (mem) Boolean(ParserState(0),
+                                 sass_boolean_get_value(val));
+      break;
+      case SASS_COLOR:
+        return new (mem) Color(ParserState(0),
+                               sass_color_get_r(val),
+                               sass_color_get_g(val),
+                               sass_color_get_b(val),
+                               sass_color_get_a(val));
+      break;
+      case SASS_STRING:
+        return new (mem) String_Quoted(ParserState(0),
+                                       sass_string_get_value(val));
+      break;
+      case SASS_LIST: {
+        List* l = new (mem) List(ParserState(0), sass_list_get_length(val), sass_list_get_separator(val) == SASS_COMMA ? List::COMMA : List::SPACE);
+        for (size_t i = 0, L = sass_list_get_length(val); i < L; ++i) {
+          *l << sass_value_to_expression(mem, sass_list_get_value(val, i));
+        }
+        return l;
+      }
+      break;
+      case SASS_MAP: {
+        Map* m = new (mem) Map(ParserState(0));
+        /*
+        for (size_t i = 0, L = sass_map_get_length(val); i < L; ++i) {
+          m << std::make_pair(
+            sass_value_to_expression(sass_map_get_key(val, i)),
+            sass_value_to_expression(sass_map_get_value(val, i)));
+        }
+        */
+        return m;
+      }
+      break;
+      case SASS_NULL:
+        return new (mem) Null(ParserState(0));
+      break;
+      case SASS_ERROR:
+      break;
+      case SASS_WARNING:
+      break;
+    }
+  }
+
+  union Sass_Value* ADDCALL sass_value_op (enum Sass_OP op, const union Sass_Value* a, const union Sass_Value* b)
+  {
+    try {
+      Sass::Expression* rv = 0;
+      Memory_Manager<AST_Node> mem;
+      Value* lhs = sass_value_to_expression(mem, a);
+      Value* rhs = sass_value_to_expression(mem, b);
+
+      // see if it's a relational expression
+      switch(op) {
+        case Sass_OP::EQ:  return sass_make_boolean(Sass::Eval::eq(lhs, rhs));
+        case Sass_OP::NEQ: return sass_make_boolean(!Sass::Eval::eq(lhs, rhs));
+        case Sass_OP::GT:  return sass_make_boolean(!Sass::Eval::lt(lhs, rhs) && !Sass::Eval::eq(lhs, rhs));
+        case Sass_OP::GTE: return sass_make_boolean(!Sass::Eval::lt(lhs, rhs));
+        case Sass_OP::LT:  return sass_make_boolean(Sass::Eval::lt(lhs, rhs));
+        case Sass_OP::LTE: return sass_make_boolean(Sass::Eval::lt(lhs, rhs) || Sass::Eval::eq(lhs, rhs));
+        default:                     break;
+      }
+
+
+      if (sass_value_is_number(a) && sass_value_is_number(b)) {
+        rv = Sass::Eval::op_numbers(mem, op, static_cast<Number*>(lhs), static_cast<Number*>(rhs));
+      }
+      else if (sass_value_is_number(a) && sass_value_is_color(a)) {
+        rv = Sass::Eval::op_number_color(mem, op, static_cast<Number*>(lhs), static_cast<Color*>(rhs));
+      }
+      else if (sass_value_is_color(a) && sass_value_is_number(b)) {
+        rv = Sass::Eval::op_color_number(mem, op, static_cast<Color*>(lhs), static_cast<Number*>(rhs));
+      }
+      else if (sass_value_is_color(a) && sass_value_is_color(b)) {
+        rv = Sass::Eval::op_colors(mem, op, static_cast<Color*>(lhs), static_cast<Color*>(rhs));
+      }
+
+      if (!rv) return sass_make_error("invalid return value");
+
+      if (rv->concrete_type() == Expression::NUMBER) {
+        Number* res = static_cast<Number*>(rv);
+        return sass_make_number(res->value(), res->unit().c_str());
+      } else if (rv->concrete_type() == Expression::STRING) {
+        String_Quoted* str = static_cast<String_Quoted*>(rv);
+        return sass_make_string(str->value().c_str());
+      } else {
+        return sass_make_error("invalid return type");
+      }
+
+    }
+    catch (Sass_Err& e) { throw; }
+    // pass errors to generic error handler
+    catch (...) { }
+    return sass_make_error("error");
   }
 
 }

@@ -127,6 +127,8 @@ ADDAPI void ADDCALL sass_delete_value (union Sass_Value* val);
 // Make a deep cloned copy of the given sass value
 ADDAPI union Sass_Value* ADDCALL sass_clone_value (const union Sass_Value* val);
 
+ADDAPI union Sass_Value* ADDCALL sass_value_op (enum Sass_OP op, const union Sass_Value* a, const union Sass_Value* b);
+
 
 #ifdef __cplusplus
 } // __cplusplus defined.
