@@ -4,8 +4,6 @@
 #define PATH_SEP ':'
 #endif
 
-#include "color_maps.hpp"
-
 #include <string>
 #include <cstdlib>
 #include <cstring>
@@ -29,6 +27,7 @@
 #include "listize.hpp"
 #include "extend.hpp"
 #include "remove_placeholders.hpp"
+#include "color_maps.hpp"
 #include "functions.hpp"
 #include "backtrace.hpp"
 #include "sass2scss.h"

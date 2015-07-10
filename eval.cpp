@@ -17,6 +17,7 @@
 #include "position.hpp"
 #include "sass_values.h"
 #include "to_c.hpp"
+#include "to_value.hpp"
 #include "context.hpp"
 #include "backtrace.hpp"
 #include "lexer.hpp"
@@ -197,7 +198,10 @@ namespace Sass {
            ++i) {
         it->value(i);
         env->set_local(variable, it);
+        Env fn_env(env);
+        exp.env_stack.push_back(&fn_env);
         val = body->perform(this);
+        exp.env_stack.pop_back();
         if (val) break;
       }
     } else {
@@ -207,7 +211,10 @@ namespace Sass {
            --i) {
         it->value(i);
         env->set_local(variable, it);
+        Env fn_env(env);
+        exp.env_stack.push_back(&fn_env);
         val = body->perform(this);
+        exp.env_stack.pop_back();
         if (val) break;
       }
     }
@@ -410,9 +417,9 @@ namespace Sass {
   {
     if (l->is_expanded()) return l;
     List* ll = new (mem()) List(l->pstate(),
-                                  l->length(),
-                                  l->separator(),
-                                  l->is_arglist());
+                                l->length(),
+                                l->separator(),
+                                l->is_arglist());
     for (size_t i = 0, L = l->length(); i < L; ++i) {
       *ll << (*l)[i]->perform(this);
     }
@@ -516,20 +523,27 @@ namespace Sass {
     Expression::Concrete_Type l_type = lhs->concrete_type();
     Expression::Concrete_Type r_type = rhs->concrete_type();
 
+    int precision = ctx.precision;
+    bool compressed = ctx.output_style == COMPRESSED;
     if (l_type == Expression::NUMBER && r_type == Expression::NUMBER) {
-      return op_numbers(mem(), b->type(), static_cast<Number*>(lhs), static_cast<Number*>(rhs));
+      return op_numbers(mem(), b->type(), dynamic_cast<Number*>(lhs), dynamic_cast<Number*>(rhs), compressed, precision);
     }
     if (l_type == Expression::NUMBER && r_type == Expression::COLOR) {
-      return op_number_color(ctx, mem(), op_type, static_cast<Number*>(lhs), static_cast<Color*>(rhs));
+      return op_number_color(mem(), op_type, dynamic_cast<Number*>(lhs), dynamic_cast<Color*>(rhs), compressed, precision);
     }
     if (l_type == Expression::COLOR && r_type == Expression::NUMBER) {
-      return op_color_number(mem(), op_type, static_cast<Color*>(lhs), static_cast<Number*>(rhs));
+      return op_color_number(mem(), op_type, dynamic_cast<Color*>(lhs), dynamic_cast<Number*>(rhs), compressed, precision);
     }
     if (l_type == Expression::COLOR && r_type == Expression::COLOR) {
-      return op_colors(mem(), op_type, static_cast<Color*>(lhs), static_cast<Color*>(rhs));
+      return op_colors(mem(), op_type, dynamic_cast<Color*>(lhs), dynamic_cast<Color*>(rhs), compressed, precision);
     }
 
-    Expression* ex = op_strings(ctx, mem(), op_type, static_cast<Value*>(lhs), static_cast<Value*>(rhs));
+    To_Value to_value(ctx, mem());
+    Value* vl = lhs->perform(&to_value);
+    Value* vr = rhs->perform(&to_value);
+
+    Expression* ex = op_strings(mem(), op_type, vl, vr, compressed, precision);
+
     if (String_Constant* str = dynamic_cast<String_Constant*>(ex))
     {
       if (str->concrete_type() != Expression::STRING) return ex;
@@ -1144,7 +1158,7 @@ namespace Sass {
     return l->value() < tmp_r.value();
   }
 
-  Expression* Eval::op_numbers(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Number* l, Number* r)
+  Expression* Eval::op_numbers(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Number* l, Number* r, bool compressed, int precision)
   {
     double lv = l->value();
     double rv = r->value();
@@ -1195,7 +1209,7 @@ namespace Sass {
     return v;
   }
 
-  Expression* Eval::op_number_color(Context& ctx, Memory_Manager<AST_Node>& mem, Sass_OP op, Number* l, Color* r)
+  Expression* Eval::op_number_color(Memory_Manager<AST_Node>& mem, Sass_OP op, Number* l, Color* r, bool compressed, int precision)
   {
     // TODO: currently SASS converts colors to standard form when adding to strings;
     // when https://github.com/nex3/sass/issues/363 is added this can be removed to
@@ -1214,12 +1228,9 @@ namespace Sass {
       case Sass_OP::SUB:
       case Sass_OP::DIV: {
         string sep(op == Sass_OP::SUB ? "-" : "/");
-        To_String to_string(&ctx);
-        string color(r->sixtuplet() && (ctx.output_style != COMPRESSED) ?
-                     r->perform(&to_string) :
-                     Util::normalize_sixtuplet(r->perform(&to_string)));
+        string color(r->to_string(compressed||!r->sixtuplet(), precision));
         return new (mem) String_Quoted(l->pstate(),
-                                       l->perform(&to_string)
+                                       l->to_string(compressed, precision)
                                        + sep
                                        + color);
       } break;
@@ -1232,7 +1243,7 @@ namespace Sass {
     return l;
   }
 
-  Expression* Eval::op_color_number(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Color* l, Number* r)
+  Expression* Eval::op_color_number(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Color* l, Number* r, bool compressed, int precision)
   {
     double rv = r->value();
     if (op == Sass_OP::DIV && !rv) error("division by zero", r->pstate());
@@ -1243,7 +1254,7 @@ namespace Sass {
                            l->a());
   }
 
-  Expression* Eval::op_colors(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Color* l, Color* r)
+  Expression* Eval::op_colors(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Color* l, Color* r, bool compressed, int precision)
   {
     if (l->a() != r->a()) {
       error("alpha channels must be equal when combining colors", r->pstate());
@@ -1259,14 +1270,17 @@ namespace Sass {
                            l->a());
   }
 
-  Expression* Eval::op_strings(Context& ctx, Memory_Manager<AST_Node>& mem, enum Sass_OP op, Value* lhs, Value*rhs)
+  Expression* Eval::op_strings(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Value* lhs, Value*rhs, bool compressed, int precision)
   {
-    To_String to_string(&ctx);
+    if (!lhs || !rhs) cerr << "about to crash in op_strings\n";
     Expression::Concrete_Type ltype = lhs->concrete_type();
     Expression::Concrete_Type rtype = rhs->concrete_type();
 
-    string lstr(lhs->perform(&to_string));
-    string rstr(rhs->perform(&to_string));
+    String_Quoted* lqstr = dynamic_cast<String_Quoted*>(lhs);
+    String_Quoted* rqstr = dynamic_cast<String_Quoted*>(rhs);
+
+    string lstr(lqstr ? lqstr->value() : lhs->to_string(compressed, precision));
+    string rstr(rqstr ? rqstr->value() : rhs->to_string(compressed, precision));
 
     bool l_str_quoted = ((Sass::String*)lhs) && ((Sass::String*)lhs)->sass_fix_1291();
     bool r_str_quoted = ((Sass::String*)rhs) && ((Sass::String*)rhs)->sass_fix_1291();
@@ -1276,23 +1290,23 @@ namespace Sass {
     if (l_str_color && r_str_color) {
       Color* c_l = names_to_colors.find(lstr)->second;
       Color* c_r = names_to_colors.find(rstr)->second;
-      return op_colors(mem, op,c_l, c_r);
+      return op_colors(mem, op,c_l, c_r, compressed, precision);
     }
     else if (l_str_color && rtype == Expression::COLOR) {
       Color* c = names_to_colors.find(lstr)->second;
-      return op_colors(mem, op, c, static_cast<Color*>(rhs));
+      return op_colors(mem, op, c, static_cast<Color*>(rhs), compressed, precision);
     }
     else if (l_str_color && rtype == Expression::NUMBER) {
       Color* c = names_to_colors.find(lstr)->second;
-      return op_color_number(mem, op, c, static_cast<Number*>(rhs));
+      return op_color_number(mem, op, c, static_cast<Number*>(rhs), compressed, precision);
     }
     else if (ltype == Expression::COLOR && r_str_color) {
       Color* c = names_to_colors.find(rstr)->second;
-      return op_number_color(ctx, mem, op, static_cast<Number*>(lhs), c);
+      return op_number_color(mem, op, static_cast<Number*>(lhs), c, compressed, precision);
     }
     else if (ltype == Expression::NUMBER && r_str_color) {
       Color* c = names_to_colors.find(rstr)->second;
-      return op_number_color(ctx, mem, op, static_cast<Number*>(lhs), c);
+      return op_number_color(mem, op, static_cast<Number*>(lhs), c, compressed, precision);
     }
     if (op == Sass_OP::MUL) error("invalid operands for multiplication", lhs->pstate());
     if (op == Sass_OP::MOD) error("invalid operands for modulo", lhs->pstate());
