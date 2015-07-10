@@ -90,10 +90,10 @@ namespace Sass {
     static bool lt(Expression*, Expression*);
     // -- arithmetic on the combinations that matter
     static Expression* op_numbers(Context&, Binary_Expression*, Expression*, Expression*);
-    static Expression* op_number_color(Context&, Sass_OP, Expression*, Expression*);
-    static Expression* op_color_number(Context&, Sass_OP, Expression*, Expression*);
-    static Expression* op_colors(Context&, Sass_OP, Expression*, Expression*);
-    static Expression* op_strings(Context&, Sass_OP, Expression*, Expression*);
+    static Expression* op_number_color(Context&, enum Sass_OP, Expression*, Expression*);
+    static Expression* op_color_number(Context&, enum Sass_OP, Expression*, Expression*);
+    static Expression* op_colors(Context&, enum Sass_OP, Expression*, Expression*);
+    static Expression* op_strings(Context&, enum Sass_OP, Expression*, Expression*);
 
 
   private:
