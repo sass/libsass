@@ -1079,66 +1079,9 @@ namespace Sass {
 
   bool Eval::eq(Expression* lhs, Expression* rhs)
   {
-    Expression::Concrete_Type ltype = lhs->concrete_type();
-    Expression::Concrete_Type rtype = rhs->concrete_type();
-    if (ltype != rtype) return false;
-    switch (ltype) {
-
-      case Expression::BOOLEAN: {
-        return static_cast<Boolean*>(lhs)->value() ==
-               static_cast<Boolean*>(rhs)->value();
-      } break;
-
-      case Expression::NUMBER: {
-        Number* l = static_cast<Number*>(lhs);
-        Number* r = static_cast<Number*>(rhs);
-        return (l->value() == r->value()) &&
-               (l->numerator_units() == r->numerator_units()) &&
-               (l->denominator_units() == r->denominator_units());
-      } break;
-
-      case Expression::COLOR: {
-        Color* l = static_cast<Color*>(lhs);
-        Color* r = static_cast<Color*>(rhs);
-        return l->r() == r->r() &&
-               l->g() == r->g() &&
-               l->b() == r->b() &&
-               l->a() == r->a();
-      } break;
-
-      case Expression::STRING: {
-        string slhs = static_cast<String_Quoted*>(lhs)->value();
-        string srhs = static_cast<String_Quoted*>(rhs)->value();
-        return unquote(slhs) == unquote(srhs) &&
-               (!(is_quoted(slhs) || is_quoted(srhs)) || slhs[0] == srhs[0]);
-      } break;
-
-      case Expression::LIST: {
-        List* l = static_cast<List*>(lhs);
-        List* r = static_cast<List*>(rhs);
-        if (l->length() != r->length()) return false;
-        if (l->separator() != r->separator()) return false;
-        for (size_t i = 0, L = l->length(); i < L; ++i) {
-          if (!eq((*l)[i], (*r)[i])) return false;
-        }
-        return true;
-      } break;
-
-      case Expression::MAP: {
-        Map* l = static_cast<Map*>(lhs);
-        Map* r = static_cast<Map*>(rhs);
-        if (l->length() != r->length()) return false;
-        for (auto key : l->keys())
-          if (!eq(l->at(key), r->at(key))) return false;
-        return true;
-      } break;
-      case Expression::NULL_VAL: {
-        return true;
-      } break;
-
-      default: break;
-    }
-    return false;
+    Value* value = dynamic_cast<Value*>(lhs);
+    if (value == 0) return false;
+    return value->operator==(rhs);
   }
 
   bool Eval::lt(Expression* lhs, Expression* rhs)

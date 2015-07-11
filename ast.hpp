@@ -140,6 +140,9 @@ namespace Sass {
           bool d = false, bool e = false, bool i = false, Concrete_Type ct = NONE)
     : Expression(pstate, d, e, i, ct)
     { }
+    virtual bool operator== (Expression& rhs) const = 0;
+    virtual bool operator== (Expression* rhs) const = 0;
+
     virtual string to_string(bool compressed = false, int precision = 5) const = 0;
     virtual string inspect(bool compressed = false, int precision = 5, bool = false, bool = false) const
     { return to_string(compressed, precision); }
@@ -826,22 +829,8 @@ namespace Sass {
     static string type_name() { return "map"; }
     bool is_invisible() const { return empty(); }
 
-    virtual bool operator==(Expression& rhs) const
-    {
-      try
-      {
-        Map& m = dynamic_cast<Map&>(rhs);
-        if (!(m && length() == m.length())) return false;
-        for (auto key : keys())
-          if (!(*at(key) == *m.at(key))) return false;
-        return true;
-      }
-      catch (std::bad_cast&)
-      {
-        return false;
-      }
-      catch (...) { throw; }
-    }
+    virtual bool operator== (Expression& rhs) const;
+    virtual bool operator== (Expression* rhs) const;
 
     virtual size_t hash()
     {
@@ -1232,19 +1221,8 @@ namespace Sass {
     string type() { return "color"; }
     static string type_name() { return "color"; }
 
-    virtual bool operator==(Expression& rhs) const
-    {
-      try
-      {
-        Color& c = (dynamic_cast<Color&>(rhs));
-        return c && r() == c.r() && g() == c.g() && b() == c.b() && a() == c.a();
-      }
-      catch (std::bad_cast&)
-      {
-        return false;
-      }
-      catch (...) { throw; }
-    }
+    virtual bool operator== (Expression& rhs) const;
+    virtual bool operator== (Expression* rhs) const;
 
     virtual size_t hash()
     {
@@ -1273,19 +1251,8 @@ namespace Sass {
     static string type_name() { return "bool"; }
     virtual bool is_false() { return !value_; }
 
-    virtual bool operator==(Expression& rhs) const
-    {
-      try
-      {
-        Boolean& e = dynamic_cast<Boolean&>(rhs);
-        return e && value() == e.value();
-      }
-      catch (std::bad_cast&)
-      {
-        return false;
-      }
-      catch (...) { throw; }
-    }
+    virtual bool operator== (Expression& rhs) const;
+    virtual bool operator== (Expression* rhs) const;
 
     virtual size_t hash()
     {
@@ -1310,6 +1277,8 @@ namespace Sass {
     { concrete_type(STRING); }
     static string type_name() { return "string"; }
     virtual ~String() = 0;
+    virtual bool operator==(Expression& rhs) const = 0;
+    virtual bool operator==(Expression* rhs) const = 0;
     virtual string to_string(bool compressed = false, int precision = 5) const = 0;
     ATTACH_OPERATIONS()
   };
@@ -1329,23 +1298,6 @@ namespace Sass {
     string type() { return "string"; }
     static string type_name() { return "string"; }
 
-    virtual bool operator==(Expression& rhs) const
-    {
-      try
-      {
-        String_Schema& e = dynamic_cast<String_Schema&>(rhs);
-        if (!(e && length() == e.length())) return false;
-        for (size_t i = 0, L = length(); i < L; ++i)
-          if (!((*this)[i] == e[i])) return false;
-        return true;
-      }
-      catch (std::bad_cast&)
-      {
-        return false;
-      }
-      catch (...) { throw; }
-    }
-
     virtual size_t hash()
     {
       if (hash_ > 0) return hash_;
@@ -1356,6 +1308,8 @@ namespace Sass {
       return hash_;
     }
 
+    virtual bool operator==(Expression& rhs) const;
+    virtual bool operator==(Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
 
     ATTACH_OPERATIONS()
@@ -1386,26 +1340,14 @@ namespace Sass {
     string type() { return "string"; }
     static string type_name() { return "string"; }
 
-    virtual bool operator==(Expression& rhs) const
-    {
-      try
-      {
-        String_Constant& e = dynamic_cast<String_Constant&>(rhs);
-        return e && value_ == e.value_;
-      }
-      catch (std::bad_cast&)
-      {
-        return false;
-      }
-      catch (...) { throw; }
-    }
-
     virtual size_t hash()
     {
       if (hash_ == 0) hash_ = std::hash<string>()(value_);
       return hash_;
     }
 
+    virtual bool operator==(Expression& rhs) const;
+    virtual bool operator==(Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
 
     // static char auto_quote() { return '*'; }
@@ -1425,6 +1367,8 @@ namespace Sass {
     {
       value_ = unquote(value_, &quote_mark_);
     }
+    virtual bool operator==(Expression& rhs) const;
+    virtual bool operator==(Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
@@ -1584,10 +1528,8 @@ namespace Sass {
     operator bool() { return false; }
     bool is_false() { return true; }
 
-    virtual bool operator==(Expression& rhs) const
-    {
-      return rhs.concrete_type() == NULL_VAL;
-    }
+    virtual bool operator== (Expression& rhs) const;
+    virtual bool operator== (Expression* rhs) const;
 
     virtual size_t hash()
     {

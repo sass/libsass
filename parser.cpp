@@ -11,6 +11,7 @@
 #include "color_maps.hpp"
 #include "sass_functions.h"
 #include "error_handling.hpp"
+#include "debugger.hpp"
 
 #include <typeinfo>
 #include <tuple>
@@ -517,14 +518,14 @@ namespace Sass {
       ParserState p = pstate;
       lex_css< exactly<':'> >();
       Expression* val = parse_space_list();
-      val->is_delayed(false);
+      // val->is_delayed(false);
       arg = new (ctx.mem) Argument(p, val, name);
     }
     else {
       bool is_arglist = false;
       bool is_keyword = false;
       Expression* val = parse_space_list();
-      val->is_delayed(false);
+      // val->is_delayed(false);
       if (lex_css< exactly< ellipsis > >()) {
         if (val->concrete_type() == Expression::MAP) is_keyword = true;
         else is_arglist = true;
@@ -2399,6 +2400,7 @@ namespace Sass {
         b->right()->is_delayed(false);
       }
     }
+// debug_ast(base);
     return base;
   }
 

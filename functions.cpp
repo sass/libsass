@@ -1580,8 +1580,8 @@ namespace Sass {
 
         bool parentheses = v->concrete_type() == Expression::MAP ||
                            v->concrete_type() == Expression::LIST;
-        To_Value valueize(ctx, ctx.mem);
-        Value* val = v->perform(&valueize);
+        To_Value to_value(ctx, ctx.mem);
+        Value* val = v->perform(&to_value);
         string inspect = val->inspect(false, 5);
         if (inspect.empty() && parentheses) inspect = "()";
         return new (ctx.mem) String_Quoted(pstate, inspect);
