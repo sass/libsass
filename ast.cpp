@@ -1249,6 +1249,26 @@ namespace Sass {
     return res;
   }
 
+  string Map::inspect(bool compressed, int precision, bool a, bool b) const
+  {
+    string res("(");
+    if (empty()) return "()";
+    if (is_invisible()) return "()";
+    bool items_output = false;
+    for (auto key : keys()) {
+      if (key->is_invisible()) continue;
+      if (at(key)->is_invisible()) continue;
+      if (items_output) res += compressed ? "," : ", ";
+      Value* v_key = dynamic_cast<Value*>(key);
+      Value* v_val = dynamic_cast<Value*>(at(key));
+      if (v_key) res += v_key->inspect(compressed, precision, a, true);
+      res += compressed ? ":" : ": ";
+      if (v_val) res += v_val->inspect(compressed, precision, a, true);
+      items_output = true;
+    }
+    return res + ")";
+  }
+
   string List::to_string(bool compressed, int precision) const
   {
     string res("");
@@ -1267,6 +1287,31 @@ namespace Sass {
     }
     return res;
   }
+
+  string List::inspect(bool compressed, int precision, bool a, bool b) const
+  {
+    bool is_comma = separator() == List::Separator::COMMA;
+    bool brace = a || (b && is_comma);
+    if (is_comma) b = true; else a = true;
+    if (empty()) return brace ? "()" : "";
+    if (is_invisible()) return brace ? "()" : "";
+    string res("");
+    if (brace) res += "(";
+    bool items_output = false;
+    string sep = separator() == List::Separator::COMMA ? "," : " ";
+    if (!compressed && sep == ",") sep += " ";
+    for (size_t i = 0, L = size(); i < L; ++i) {
+      Expression* item = (*this)[i];
+      if (item->is_invisible()) continue;
+      if (items_output) res += sep;
+      if (Value* v_val = dynamic_cast<Value*>(item))
+      { res += v_val->inspect(compressed, precision, a, b); }
+      items_output = true;
+    }
+    if (brace) res += ")";
+    return res;
+  }
+
 
   string String_Schema::to_string(bool compressed, int precision) const
   {
@@ -1445,16 +1490,7 @@ namespace Sass {
     // add unit now
     res += unit();
 
-    // check for a valid unit here
-    // includes result for reporting
-    if (numerator_units_.size() > 1 ||
-        denominator_units_.size() > 0 ||
-        (numerator_units_.size() && numerator_units_[0].find_first_of('/') != string::npos) ||
-        (numerator_units_.size() && numerator_units_[0].find_first_of('*') != string::npos)
-    ) {
-      error(res + " isn't a valid CSS value.", pstate_);
-    }
-
+    // and return
     return res;
 
   }

@@ -141,6 +141,8 @@ namespace Sass {
     : Expression(pstate, d, e, i, ct)
     { }
     virtual string to_string(bool compressed = false, int precision = 5) const = 0;
+    virtual string inspect(bool compressed = false, int precision = 5, bool = false, bool = false) const
+    { return to_string(compressed, precision); }
   };
 }
 
@@ -805,6 +807,7 @@ namespace Sass {
     }
 
     virtual string to_string(bool compressed = false, int precision = 5) const;
+    virtual string inspect(bool compressed = false, int precision = 5, bool = false, bool = false) const;
 
     ATTACH_OPERATIONS()
   };
@@ -854,6 +857,7 @@ namespace Sass {
     }
 
     virtual string to_string(bool compressed = false, int precision = 5) const;
+    virtual string inspect(bool compressed = false, int precision = 5, bool = false, bool = false) const;
 
     ATTACH_OPERATIONS()
   };
@@ -1011,6 +1015,8 @@ namespace Sass {
 
       return hash_;
     }
+
+    // virtual string to_string(bool compressed = false, int precision = 5) const { return value_->to_string(compressed, precision); };
 
     ATTACH_OPERATIONS()
   };

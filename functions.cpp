@@ -29,6 +29,8 @@
 #include "wincrypt.h"
 #endif
 
+#include "debugger.hpp"
+
 #define ARG(argname, argtype) get_arg<argtype>(argname, env, sig, pstate, backtrace)
 #define ARGR(argname, argtype, lo, hi) get_arg_r(argname, env, sig, pstate, lo, hi, backtrace)
 #define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, pstate, backtrace, ctx)
@@ -1574,6 +1576,8 @@ namespace Sass {
       } else if (v->concrete_type() == Expression::STRING) {
         return v;
       } else {
+
+
         bool parentheses = v->concrete_type() == Expression::MAP ||
                            v->concrete_type() == Expression::LIST;
         Output_Style old_style;
@@ -1583,6 +1587,14 @@ namespace Sass {
         string inspect = v->perform(&to_string);
         if (inspect.empty() && parentheses) inspect = "()";
         ctx.output_style = old_style;
+
+/*
+
+        Listize listize(ctx);
+        Value* val = v->perform(&listize);
+        // debug_ast(val);
+        string inspect = val->inspect(false, 5);
+*/
         return new (ctx.mem) String_Quoted(pstate, inspect);
 
 
