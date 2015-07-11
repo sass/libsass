@@ -14,20 +14,6 @@ namespace Sass {
   : ctx(ctx)
   {  }
 /*
-  Value* Listize::operator()(List* l)
-  {
-    return l;
-    List* ll = new (ctx.mem) List(l->pstate(),
-                                  l->length(),
-                                  l->separator(),
-                                  l->is_arglist());
-    for (size_t i = 0, L = l->length(); i < L; ++i) {
-      if (!(*l)[i]) continue;
-      auto a = (*l)[i]->perform(this);
-      if (a) *ll << a;
-    }
-    return ll;
-  }
 
 
   Value* Listize::operator()(Binary_Expression* b)
@@ -139,4 +125,5 @@ namespace Sass {
     if (!val) debug_ast(n);
     return val;
   }
+
 }

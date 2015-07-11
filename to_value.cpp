@@ -61,4 +61,10 @@ namespace Sass {
     return n;
   }
 
+  Value* To_Value::operator()(Argument* arg)
+  {
+    if (!arg->name().empty()) return 0;
+    return arg->value()->perform(this);
+  }
+
 };

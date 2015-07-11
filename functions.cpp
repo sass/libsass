@@ -5,6 +5,7 @@
 #include "parser.hpp"
 #include "constants.hpp"
 #include "to_string.hpp"
+#include "to_value.hpp"
 #include "inspect.hpp"
 #include "extend.hpp"
 #include "eval.hpp"
@@ -1577,9 +1578,9 @@ namespace Sass {
         return v;
       } else {
 
-
         bool parentheses = v->concrete_type() == Expression::MAP ||
                            v->concrete_type() == Expression::LIST;
+/*
         Output_Style old_style;
         old_style = ctx.output_style;
         ctx.output_style = NESTED;
@@ -1587,14 +1588,14 @@ namespace Sass {
         string inspect = v->perform(&to_string);
         if (inspect.empty() && parentheses) inspect = "()";
         ctx.output_style = old_style;
-
-/*
-
-        Listize listize(ctx);
-        Value* val = v->perform(&listize);
-        // debug_ast(val);
-        string inspect = val->inspect(false, 5);
 */
+
+
+        To_Value valueize(ctx, ctx.mem);
+        Value* val = v->perform(&valueize);
+        debug_ast(val);
+        string inspect = val->inspect(false, 5);
+        if (inspect.empty() && parentheses) inspect = "()";
         return new (ctx.mem) String_Quoted(pstate, inspect);
 
 

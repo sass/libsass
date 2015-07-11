@@ -37,6 +37,7 @@ namespace Sass {
     virtual ~To_Value() { }
     using Operation<Value*>::operator();
 
+    Value* operator()(Argument*);
     Value* operator()(Boolean*);
     Value* operator()(Number*);
     Value* operator()(Color*);
