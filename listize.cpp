@@ -35,7 +35,7 @@ namespace Sass {
 
   Value* Listize::operator()(Selector_List* sel)
   {
-    List* l = new (ctx.mem) List(sel->pstate(), sel->length(), List::COMMA);
+    List* l = new (ctx.mem) List(sel->pstate(), sel->length(), SASS_COMMA);
     for (size_t i = 0, L = sel->length(); i < L; ++i) {
       if (!(*sel)[i]) continue;
       *l << (*sel)[i]->perform(this);

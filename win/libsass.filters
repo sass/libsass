@@ -123,6 +123,9 @@
     <ClCompile Include="..\util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\values.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\cencode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -294,6 +297,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\util.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\values.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\json.hpp">

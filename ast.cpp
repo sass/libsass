@@ -1407,7 +1407,7 @@ namespace Sass {
     if (empty()) return res;
     if (is_invisible()) return res;
     bool items_output = false;
-    string sep = separator() == List::Separator::COMMA ? "," : " ";
+    string sep = separator() == SASS_COMMA ? "," : " ";
     if (!compressed && sep == ",") sep += " ";
     for (size_t i = 0, L = size(); i < L; ++i) {
       Expression* item = (*this)[i];
@@ -1422,7 +1422,7 @@ namespace Sass {
 
   string List::inspect(bool compressed, int precision, bool a, bool b) const
   {
-    bool is_comma = separator() == List::Separator::COMMA;
+    bool is_comma = separator() == SASS_COMMA;
     bool brace = a || (b && is_comma);
     if (is_comma) b = true; else a = true;
     if (empty()) return brace ? "()" : "";
@@ -1430,7 +1430,7 @@ namespace Sass {
     string res("");
     if (brace) res += "(";
     bool items_output = false;
-    string sep = separator() == List::Separator::COMMA ? "," : " ";
+    string sep = separator() == SASS_COMMA ? "," : " ";
     if (!compressed && sep == ",") sep += " ";
     for (size_t i = 0, L = size(); i < L; ++i) {
       Expression* item = (*this)[i];

@@ -190,6 +190,7 @@ SOURCES = \
 	to_value.cpp \
 	units.cpp \
 	utf8_string.cpp \
+	values.cpp \
 	util.cpp
 
 CSOURCES = cencode.c

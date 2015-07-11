@@ -195,7 +195,7 @@ namespace Sass {
     size_t length() const   { return elements_.size(); }
     bool empty() const      { return elements_.empty(); }
     T last()                { return elements_.back(); }
-    T first()                { return elements_.front(); }
+    T first()               { return elements_.front(); }
     T& operator[](size_t i) { return elements_[i]; }
     const T& operator[](size_t i) const { return elements_[i]; }
     Vectorized& operator<<(T element)
@@ -769,14 +769,12 @@ namespace Sass {
   ///////////////////////////////////////////////////////////////////////
   class List : public Value, public Vectorized<Expression*> {
     void adjust_after_pushing(Expression* e) { is_expanded(false); }
-  public:
-    enum Separator { SPACE, COMMA };
   private:
-    ADD_PROPERTY(Separator, separator)
+    ADD_PROPERTY(enum Sass_Separator, separator)
     ADD_PROPERTY(bool, is_arglist)
   public:
     List(ParserState pstate,
-         size_t size = 0, Separator sep = SPACE, bool argl = false)
+         size_t size = 0, enum Sass_Separator sep = SASS_SPACE, bool argl = false)
     : Value(pstate),
       Vectorized<Expression*>(size),
       separator_(sep), is_arglist_(argl)
@@ -794,7 +792,7 @@ namespace Sass {
     {
       if (hash_ > 0) return hash_;
 
-      hash_ = std::hash<string>()(separator() == COMMA ? "comma" : "space");
+      hash_ = std::hash<string>()(separator() == SASS_COMMA ? "comma" : "space");
       for (size_t i = 0, L = length(); i < L; ++i)
         hash_combine(hash_, (elements()[i])->hash());
 
