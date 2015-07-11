@@ -989,7 +989,7 @@ namespace Sass {
   bool Number::is_unitless()
   { return numerator_units_.empty() && denominator_units_.empty(); }
 
-  void Number::normalize(const string& prefered)
+  void Number::normalize(const string& prefered, bool strict)
   {
 
     // first make sure same units cancel each other out
@@ -1033,7 +1033,7 @@ namespace Sass {
         if (string_to_unit(nom) == UNKNOWN) continue;
         // we now have two convertable units
         // add factor for current conversion
-        factor *= conversion_factor(nom, denom);
+        factor *= conversion_factor(nom, denom, strict);
         // update nominator/denominator exponent
         -- exponents[nom]; ++ exponents[denom];
         // inner loop done
@@ -1065,14 +1065,14 @@ namespace Sass {
 
     // maybe convert to other unit
     // easier implemented on its own
-    try { convert(prefered); }
+    try { convert(prefered, strict); }
     catch (incompatibleUnits& err)
     { error(err.what(), pstate()); }
     catch (...) { throw; }
 
   }
 
-  void Number::convert(const string& prefered)
+  void Number::convert(const string& prefered, bool strict)
   {
     // abort if unit is empty
     if (prefered.empty()) return;
@@ -1107,7 +1107,7 @@ namespace Sass {
       if (string_to_unit(denom) == UNKNOWN) continue;
       // we now have two convertable units
       // add factor for current conversion
-      factor *= conversion_factor(denom, prefered);
+      factor *= conversion_factor(denom, prefered, strict);
       // update nominator/denominator exponent
       ++ exponents[denom]; -- exponents[prefered];
     }
@@ -1128,7 +1128,7 @@ namespace Sass {
       if (string_to_unit(nom) == UNKNOWN) continue;
       // we now have two convertable units
       // add factor for current conversion
-      factor *= conversion_factor(nom, prefered);
+      factor *= conversion_factor(nom, prefered, strict);
       // update nominator/denominator exponent
       -- exponents[nom]; ++ exponents[prefered];
     }
