@@ -542,7 +542,7 @@ namespace Sass {
     Value* vl = lhs->perform(&to_value);
     Value* vr = rhs->perform(&to_value);
 
-    Expression* ex = op_strings(mem(), op_type, vl, vr, compressed, precision);
+    Value* ex = op_strings(mem(), op_type, vl, vr, compressed, precision);
 
     if (String_Constant* str = dynamic_cast<String_Constant*>(ex))
     {
@@ -1079,29 +1079,21 @@ namespace Sass {
 
   bool Eval::eq(Expression* lhs, Expression* rhs)
   {
-    Value* value = dynamic_cast<Value*>(lhs);
-    if (value == 0) return false;
-    return value->operator==(rhs);
+    // use compare operator from ast node
+    return lhs && rhs && *lhs == *rhs;
   }
 
   bool Eval::lt(Expression* lhs, Expression* rhs)
   {
-    if (lhs->concrete_type() != Expression::NUMBER ||
-        rhs->concrete_type() != Expression::NUMBER)
-      error("may only compare numbers", lhs->pstate());
-    Number* l = static_cast<Number*>(lhs);
-    Number* r = static_cast<Number*>(rhs);
-    Number tmp_r(*r);
-    tmp_r.normalize(l->find_convertible_unit());
-    string l_unit(l->unit());
-    string r_unit(tmp_r.unit());
-    if (!l_unit.empty() && !r_unit.empty() && l->unit() != tmp_r.unit()) {
-      error("cannot compare numbers with incompatible units", l->pstate());
-    }
-    return l->value() < tmp_r.value();
+    Number* l = dynamic_cast<Number*>(lhs);
+    Number* r = dynamic_cast<Number*>(rhs);
+    if (!l) error("may only compare numbers", lhs->pstate());
+    if (!r) error("may only compare numbers", rhs->pstate());
+    // use compare operator from ast node
+    return *l < *r;
   }
 
-  Expression* Eval::op_numbers(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Number* l, Number* r, bool compressed, int precision)
+  Value* Eval::op_numbers(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Number* l, Number* r, bool compressed, int precision)
   {
     double lv = l->value();
     double rv = r->value();
@@ -1152,11 +1144,8 @@ namespace Sass {
     return v;
   }
 
-  Expression* Eval::op_number_color(Memory_Manager<AST_Node>& mem, Sass_OP op, Number* l, Color* r, bool compressed, int precision)
+  Value* Eval::op_number_color(Memory_Manager<AST_Node>& mem, Sass_OP op, Number* l, Color* r, bool compressed, int precision)
   {
-    // TODO: currently SASS converts colors to standard form when adding to strings;
-    // when https://github.com/nex3/sass/issues/363 is added this can be removed to
-    // preserve the original value
     r->disp("");
     double lv = l->value();
     switch (op) {
@@ -1186,7 +1175,7 @@ namespace Sass {
     return l;
   }
 
-  Expression* Eval::op_color_number(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Color* l, Number* r, bool compressed, int precision)
+  Value* Eval::op_color_number(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Color* l, Number* r, bool compressed, int precision)
   {
     double rv = r->value();
     if (op == Sass_OP::DIV && !rv) error("division by zero", r->pstate());
@@ -1197,7 +1186,7 @@ namespace Sass {
                            l->a());
   }
 
-  Expression* Eval::op_colors(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Color* l, Color* r, bool compressed, int precision)
+  Value* Eval::op_colors(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Color* l, Color* r, bool compressed, int precision)
   {
     if (l->a() != r->a()) {
       error("alpha channels must be equal when combining colors", r->pstate());
@@ -1213,7 +1202,7 @@ namespace Sass {
                            l->a());
   }
 
-  Expression* Eval::op_strings(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Value* lhs, Value*rhs, bool compressed, int precision)
+  Value* Eval::op_strings(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Value* lhs, Value*rhs, bool compressed, int precision)
   {
     if (!lhs || !rhs) cerr << "about to crash in op_strings\n";
     Expression::Concrete_Type ltype = lhs->concrete_type();

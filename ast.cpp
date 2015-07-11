@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <iostream>
+#include "debugger.hpp"
 
 namespace Sass {
   using namespace std;
@@ -1192,6 +1193,23 @@ namespace Sass {
   bool Number::operator== (Expression& rhs) const
   {
     return operator==(&rhs);
+  }
+
+  bool Number::operator< (Number* rhs) const
+  {
+    Number tmp_r(*rhs);
+    tmp_r.normalize(find_convertible_unit());
+    string l_unit(unit());
+    string r_unit(tmp_r.unit());
+    if (!l_unit.empty() && !r_unit.empty() && unit() != tmp_r.unit()) {
+      error("cannot compare numbers with incompatible units", pstate());
+    }
+    return value() < tmp_r.value();
+  }
+
+  bool Number::operator< (Number& rhs) const
+  {
+    return operator<(&rhs);
   }
 
   bool String_Quoted::operator== (Expression* rhs) const

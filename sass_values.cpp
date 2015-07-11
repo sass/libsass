@@ -406,6 +406,7 @@ extern "C" {
       case SASS_WARNING:
       break;
     }
+    return 0;
   }
 
   union Sass_Value* ADDCALL sass_value_op (enum Sass_OP op, const union Sass_Value* a, const union Sass_Value* b)
