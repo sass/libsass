@@ -10,13 +10,13 @@
 #include "ast.hpp"
 #include "bind.hpp"
 #include "util.hpp"
+#include "to_c.hpp"
 #include "to_string.hpp"
 #include "inspect.hpp"
 #include "environment.hpp"
 #include "color_maps.hpp"
 #include "position.hpp"
 #include "sass_values.h"
-#include "to_c.hpp"
 #include "to_value.hpp"
 #include "context.hpp"
 #include "backtrace.hpp"
@@ -335,7 +335,7 @@ namespace Sass {
       To_C to_c;
       union Sass_Value* c_args = sass_make_list(1, SASS_COMMA);
       sass_list_set_value(c_args, 0, message->perform(&to_c));
-      Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
+      union Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
       sass_delete_value(c_args);
       sass_delete_value(c_val);
       return 0;
@@ -368,7 +368,7 @@ namespace Sass {
       To_C to_c;
       union Sass_Value* c_args = sass_make_list(1, SASS_COMMA);
       sass_list_set_value(c_args, 0, message->perform(&to_c));
-      Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
+      union Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
       sass_delete_value(c_args);
       sass_delete_value(c_val);
       return 0;
@@ -398,7 +398,7 @@ namespace Sass {
       To_C to_c;
       union Sass_Value* c_args = sass_make_list(1, SASS_COMMA);
       sass_list_set_value(c_args, 0, message->perform(&to_c));
-      Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
+      union Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
       sass_delete_value(c_args);
       sass_delete_value(c_val);
       return 0;
@@ -676,7 +676,7 @@ namespace Sass {
         Expression* arg = static_cast<Expression*>(node);
         sass_list_set_value(c_args, i, arg->perform(&to_c));
       }
-      Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
+      union Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
       if (sass_value_get_tag(c_val) == SASS_ERROR) {
         error("error in C function " + c->name() + ": " + sass_error_get_message(c_val), c->pstate(), backtrace());
       } else if (sass_value_get_tag(c_val) == SASS_WARNING) {
@@ -1070,7 +1070,7 @@ namespace Sass {
     return 0;
   }
 
-  inline Expression* Eval::fallback_impl(AST_Node* n)
+  Expression* Eval::fallback_impl(AST_Node* n)
   {
     return static_cast<Expression*>(n);
   }
@@ -1256,7 +1256,7 @@ namespace Sass {
     return str;
   }
 
-  Expression* cval_to_astnode(Memory_Manager<AST_Node>& mem, Sass_Value* v, Context& ctx, Backtrace* backtrace, ParserState pstate)
+  Expression* cval_to_astnode(Memory_Manager<AST_Node>& mem, union Sass_Value* v, Context& ctx, Backtrace* backtrace, ParserState pstate)
   {
     using std::strlen;
     using std::strcpy;

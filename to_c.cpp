@@ -6,7 +6,7 @@
 namespace Sass {
   using namespace std;
 
-  union Sass_Value* To_C::fallback_impl(AST_Node* n)
+  Sass_Value* To_C::fallback_impl(AST_Node* n)
   { return sass_make_null(); }
 
   union Sass_Value* To_C::operator()(Boolean* b)
@@ -51,20 +51,20 @@ namespace Sass {
     return v;
   }
 
-  Sass_Value* To_C::operator()(Arguments* a)
+  union Sass_Value* To_C::operator()(Arguments* a)
   {
-    Sass_Value* v = sass_make_list(a->length(), SASS_COMMA);
+    union Sass_Value* v = sass_make_list(a->length(), SASS_COMMA);
     for (size_t i = 0, L = a->length(); i < L; ++i) {
       sass_list_set_value(v, i, (*a)[i]->perform(this));
     }
     return v;
   }
 
-  Sass_Value* To_C::operator()(Argument* a)
+  union Sass_Value* To_C::operator()(Argument* a)
   { return a->value()->perform(this); }
 
   // not strictly necessary because of the fallback
-  Sass_Value* To_C::operator()(Null* n)
+  union Sass_Value* To_C::operator()(Null* n)
   { return sass_make_null(); }
 
 };

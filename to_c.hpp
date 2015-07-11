@@ -19,15 +19,16 @@ namespace Sass {
   class Arguments;
   class Argument;
 
-  class To_C : public Operation_CRTP<Sass_Value*, To_C> {
-
+  class To_C : public Operation_CRTP<union Sass_Value*, To_C> {
+    // import all the class-specific methods and override as desired
+    using Operation<union Sass_Value*>::operator();
+    // override this to define a catch-all
     union Sass_Value* fallback_impl(AST_Node* n);
 
   public:
 
-    To_C() { }
-    virtual ~To_C() { }
-    using Operation<Sass_Value*>::operator();
+    To_C() { };
+    virtual ~To_C() { };
 
     union Sass_Value* operator()(Boolean*);
     union Sass_Value* operator()(Number*);
@@ -41,7 +42,7 @@ namespace Sass {
     union Sass_Value* operator()(Argument*);
 
     template <typename U>
-    union Sass_Value* fallback(U x) { return fallback_impl(x); }
+    Sass_Value* fallback(U n) { return fallback_impl(n); }
   };
 
 }

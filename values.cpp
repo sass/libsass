@@ -22,14 +22,14 @@ namespace Sass {
     else if (val->concrete_type() == Expression::LIST)
     {
       const List* l = dynamic_cast<const List*>(val);
-      Sass_Value* list = sass_make_list(l->size(), l->separator());
+      union Sass_Value* list = sass_make_list(l->size(), l->separator());
       for (size_t i = 0, L = l->length(); i < L; ++i) sass_list_set_value(list, i, ast_node_to_sass_value((*l)[i]));
       return list;
     }
     else if (val->concrete_type() == Expression::MAP)
     {
       const Map* m = dynamic_cast<const Map*>(val);
-      Sass_Value* map = sass_make_map(m->length());
+      union Sass_Value* map = sass_make_map(m->length());
       size_t i = 0; for (auto key : m->keys()) {
         sass_map_set_key(map, i, ast_node_to_sass_value(key));
         sass_map_set_value(map, i, ast_node_to_sass_value(m->at(key)));
