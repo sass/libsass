@@ -153,7 +153,8 @@ namespace Sass {
       // If the current argument is the rest argument, extract a value for processing
       else if (a->is_rest_argument()) {
         // normal param and rest arg
-        List* arglist = static_cast<List*>(a->value());
+        // List* arglist = new (ctx.mem) List(*dynamic_cast<List*>(a->value()));
+        List* arglist = dynamic_cast<List*>(a->value());
         // empty rest arg - treat all args as default values
         if (!arglist->length()) {
           break;
@@ -172,10 +173,10 @@ namespace Sass {
           ++ia;
         }
       } else if (a->is_keyword_argument()) {
-        Map* argmap = static_cast<Map*>(a->value());
+        Map* argmap = dynamic_cast<Map*>(a->value());
 
         for (auto key : argmap->keys()) {
-          string name = "$" + unquote(static_cast<String_Constant*>(key)->value());
+          string name = "$" + unquote(dynamic_cast<String_Constant*>(key)->value());
 
           if (!param_map.count(name)) {
             stringstream msg;

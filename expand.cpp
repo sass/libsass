@@ -12,11 +12,13 @@
 #include "backtrace.hpp"
 #include "context.hpp"
 #include "parser.hpp"
+#include "debugger.hpp"
 
 namespace Sass {
 
   Expand::Expand(Context& ctx, Env* env, Backtrace* bt)
-  : ctx(ctx),
+  : ovmem(0),
+    ctx(ctx),
     eval(Eval(*this)),
     env_stack(vector<Env*>()),
     block_stack(vector<Block*>()),
@@ -63,22 +65,32 @@ namespace Sass {
   // blocks create new variable scopes
   Statement* Expand::operator()(Block* b)
   {
+    // ovmem = 0;
+    // cerr << "expand block\n";
+    // debug_ast(b);
     // create new local environment
     // set the current env as parent
-    Env env(environment());
     // copy the block object (add items later)
     Block* bb = new (ctx.mem) Block(b->pstate(),
                                     b->length(),
                                     b->is_root());
+    bb->env.parent(environment());
     // setup block and env stack
     this->block_stack.push_back(bb);
-    this->env_stack.push_back(&env);
+    this->env_stack.push_back(&bb->env);
     // operate on block
-    this->append_block(b);
+    for (size_t i = 0, L = b->length(); i < L; ++i) {
+      // debug_ast((*b)[i], " perf: ");
+      Statement* ith = (*b)[i]->perform(this);
+      // debug_ast(ith, " ith: ");
+      if (ith) *bb << ith;
+    }
     // revert block and env stack
     this->block_stack.pop_back();
     this->env_stack.pop_back();
+    // ovmem = oldmem;
     // return copy
+    // cerr << "expanded block\n";
     return bb;
   }
 
@@ -224,15 +236,21 @@ namespace Sass {
         if (env->has_global(var)) {
           Expression* e = dynamic_cast<Expression*>(env->get_global(var));
           if (!e || e->concrete_type() == Expression::NULL_VAL) {
+            Env* oldmem = ovmem; ovmem = 0;
             env->set_global(var, a->value()->perform(&eval));
+            ovmem = oldmem;
           }
         }
         else {
+          Env* oldmem = ovmem; ovmem = 0;
           env->set_global(var, a->value()->perform(&eval));
+          ovmem = oldmem;
         }
       }
       else {
+        Env* oldmem = ovmem; ovmem = 0;
         env->set_global(var, a->value()->perform(&eval));
+        ovmem = oldmem;
       }
     }
     else if (a->is_default()) {
@@ -243,7 +261,10 @@ namespace Sass {
             if (AST_Node* node = cur->get_local(var)) {
               Expression* e = dynamic_cast<Expression*>(node);
               if (!e || e->concrete_type() == Expression::NULL_VAL) {
+                // Env* oldmem = ovmem; ovmem = env;
+        cerr << "do 1\n";
                 cur->set_local(var, a->value()->perform(&eval));
+                // ovmem = oldmem;
               }
             }
             else {
@@ -259,19 +280,30 @@ namespace Sass {
         if (AST_Node* node = env->get_global(var)) {
           Expression* e = dynamic_cast<Expression*>(node);
           if (!e || e->concrete_type() == Expression::NULL_VAL) {
+            Env* oldmem = ovmem; ovmem = 0;
             env->set_global(var, a->value()->perform(&eval));
+            ovmem = oldmem;
           }
         }
       }
       else if (env->is_lexical()) {
+        // Env* oldmem = ovmem; ovmem = env;
+        cerr << "do 2\n";
         env->set_local(var, a->value()->perform(&eval));
+        // ovmem = oldmem;
       }
       else {
+        Env* oldmem = ovmem; ovmem = 0;
+        cerr << "do 3\n";
         env->set_local(var, a->value()->perform(&eval));
+        ovmem = oldmem;
       }
     }
     else {
+      Env* oldmem = ovmem; ovmem = env->lexical_env(var);
+      // if (ovmem == env) ovmem = oldmem ? oldmem : 0;
       env->set_lexical(var, a->value()->perform(&eval));
+      ovmem = oldmem;
     }
     return 0;
   }
@@ -359,15 +391,17 @@ namespace Sass {
     Env* env = environment();
     Number* it = new (env->mem) Number(low->pstate(), start, sass_end->unit());
     AST_Node* old_var = env->has_local(variable) ? env->get_local(variable) : 0;
-    env->set_local(variable, it);
     Block* body = f->block();
+    Env outer(env);
+    outer.set_local(variable, it);
+    env_stack.push_back(&outer);
     if (start < end) {
       if (f->is_inclusive()) ++end;
       for (double i = start;
            i < end;
            ++i) {
         it->value(i);
-        env->set_local(variable, it);
+        outer.set_local(variable, it);
         append_block(body);
       }
     } else {
@@ -376,10 +410,11 @@ namespace Sass {
            i > end;
            --i) {
         it->value(i);
-        env->set_local(variable, it);
+        outer.set_local(variable, it);
         append_block(body);
       }
     }
+    env_stack.pop_back();
     // restore original environment
     if (!old_var) env->del_local(variable);
     else env->set_local(variable, old_var);
@@ -409,9 +444,12 @@ namespace Sass {
     vector<AST_Node*> old_vars(variables.size());
     for (size_t i = 0, L = variables.size(); i < L; ++i) {
       old_vars[i] = env->has_local(variables[i]) ? env->get_local(variables[i]) : 0;
-      env->set_local(variables[i], 0);
+      env->del_local(variables[i]);
     }
     Block* body = e->block();
+    Env inner(env);
+    // outer.set_local(variable, it);
+    // env_stack.push_back(&inner);
 
     if (map) {
       for (auto key : map->keys()) {
@@ -451,6 +489,9 @@ namespace Sass {
         append_block(body);
       }
     }
+
+    // env_stack.pop_back();
+
     // restore original environment
     for (size_t j = 0, K = variables.size(); j < K; ++j) {
       if(!old_vars[j]) env->del_local(variables[j]);
@@ -526,6 +567,7 @@ namespace Sass {
 
   Statement* Expand::operator()(Mixin_Call* c)
   {
+    ovmem = 0;
     Env* env = environment();
     string full_name(c->name() + "[m]");
     if (!env->has(full_name)) {
@@ -550,8 +592,17 @@ namespace Sass {
                                                    Definition::MIXIN);
       thunk->environment(env);
       new_env.local_frame()["@content[m]"] = thunk;
+      // def->environment()->parent(0);
     }
     bind("mixin " + c->name(), params, args, ctx, &new_env, &eval);
+// debug_ast(body, "app: ");
+    body->env.parent(0);
+    if (!body->env.has(full_name)) {
+      // cerr << "RECURSION POSSIBLE\n";
+      // env->print("env: ");
+      // new_env.print("nenv: ");
+      // body->env.print("body: ");
+    }
     append_block(body);
     backtrace_stack.pop_back();
     env_stack.pop_back();
@@ -560,6 +611,7 @@ namespace Sass {
 
   Statement* Expand::operator()(Content* c)
   {
+    ovmem = 0;
     Env* env = environment();
     // convert @content directives into mixin calls to the underlying thunk
     if (!env->has("@content[m]")) return 0;

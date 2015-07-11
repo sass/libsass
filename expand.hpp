@@ -22,6 +22,7 @@ namespace Sass {
   class Expand : public Operation_CRTP<Statement*, Expand> {
   public:
 
+    Env* ovmem;
     Env* environment();
     Context& context();
     Selector_List* selector();

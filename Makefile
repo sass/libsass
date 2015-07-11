@@ -160,7 +160,9 @@ SOURCES = \
 	context.cpp \
 	cssize.cpp \
 	listize.cpp \
+	environment.cpp \
 	error_handling.cpp \
+	memory_manager.cpp \
 	eval.cpp \
 	expand.cpp \
 	extend.cpp \

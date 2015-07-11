@@ -27,6 +27,7 @@ namespace Sass {
     p.position = p.source;
     p.end      = str + strlen(str);
     Block* root = new (ctx.mem) Block(pstate);
+    root->env.parent(&ctx.global);
     p.block_stack.push_back(root);
     root->is_root(true);
     return p;
@@ -39,6 +40,7 @@ namespace Sass {
     p.position = p.source;
     p.end      = end;
     Block* root = new (ctx.mem) Block(pstate);
+    root->env.parent(&ctx.global);
     p.block_stack.push_back(root);
     root->is_root(true);
     return p;
@@ -65,6 +67,7 @@ namespace Sass {
     p.end      = t.end;
     Block* root = new (ctx.mem) Block(pstate);
     p.block_stack.push_back(root);
+    root->env.parent(&ctx.global);
     root->is_root(true);
     return p;
   }
@@ -73,6 +76,7 @@ namespace Sass {
   Block* Parser::parse()
   {
     Block* root = new (ctx.mem) Block(pstate, 0, true);
+    root->env.parent(&ctx.global);
     read_bom();
 
     if (ctx.queue.size() == 1) {

@@ -54,6 +54,7 @@ namespace Sass {
     // Expression* operator()(Custom_Error*);
     Expression* operator()(Variable*);
     Expression* operator()(Textual*);
+    Expression* operator()(Color*);
     Expression* operator()(Number*);
     Expression* operator()(Boolean*);
     Expression* operator()(String_Schema*);

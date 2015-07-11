@@ -279,6 +279,12 @@ namespace Sass {
     }
     const unordered_map<Expression*, Expression*>& pairs() const { return elements_; }
     const vector<Expression*>& keys() const { return list_; }
+
+    unordered_map<Expression*, Expression*>::iterator end() { return elements_.end(); }
+    unordered_map<Expression*, Expression*>::iterator begin() { return elements_.begin(); }
+    unordered_map<Expression*, Expression*>::const_iterator end() const { return elements_.end(); }
+    unordered_map<Expression*, Expression*>::const_iterator begin() const { return elements_.begin(); }
+
   };
   inline Hashed::~Hashed() { }
 
@@ -334,10 +340,15 @@ namespace Sass {
       else                   has_non_hoistable_ = true;
     }
   public:
+    Environment<AST_Node*> env;
     Block(ParserState pstate, size_t s = 0, bool r = false)
     : Statement(pstate),
       Vectorized<Statement*>(s),
-      is_root_(r), is_at_root_(false), has_hoistable_(false), has_non_hoistable_(false)
+      is_root_(r),
+      is_at_root_(false),
+      has_hoistable_(false),
+      has_non_hoistable_(false),
+      env()
     { }
     Block* block() { return this; }
     ATTACH_OPERATIONS()

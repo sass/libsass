@@ -42,6 +42,13 @@ namespace Sass {
   using std::cerr;
   using std::endl;
 
+  void register_function(Context&, Signature sig, Native_Function f, Env* env);
+  void register_function(Context&, Signature sig, Native_Function f, size_t arity, Env* env);
+  void register_overload_stub(Context&, string name, Env* env);
+  void register_built_in_functions(Context&, Env* env);
+  void register_c_functions(Context&, Env* env, Sass_Function_List);
+  void register_c_function(Context&, Env* env, Sass_Function_Entry);
+
   Sass_Queued::Sass_Queued(const string& load_path, const string& abs_path, const char* source)
   {
     this->load_path = load_path;
@@ -54,6 +61,7 @@ namespace Sass {
 
   Context::Context(Context::Data initializers)
   : // Output(this),
+    global(),
     head_imports(0),
     mem(Memory_Manager<AST_Node>()),
     c_options               (initializers.c_options()),
@@ -124,6 +132,9 @@ namespace Sass {
     }
 
     emitter.set_filename(resolve_relative_path(output_path, source_map_file, cwd));
+
+    // register built-in functions on env
+    register_built_in_functions(*this, &global);
 
   }
 
@@ -267,13 +278,6 @@ namespace Sass {
     return add_file(path);
   }
 
-  void register_function(Context&, Signature sig, Native_Function f, Env* env);
-  void register_function(Context&, Signature sig, Native_Function f, size_t arity, Env* env);
-  void register_overload_stub(Context&, string name, Env* env);
-  void register_built_in_functions(Context&, Env* env);
-  void register_c_functions(Context&, Env* env, Sass_Function_List);
-  void register_c_function(Context&, Env* env, Sass_Function_Entry);
-
   char* Context::compile_block(Block* root)
   {
     if (!root) return 0;
@@ -289,6 +293,11 @@ namespace Sass {
 
   Block* Context::parse_file()
   {
+
+    // register custom functions (defined via C-API)
+    for (size_t i = 0, S = c_functions.size(); i < S; ++i)
+    { register_c_function(*this, &global, c_functions[i]); }
+
     Block* root = 0;
     for (size_t i = 0; i < queue.size(); ++i) {
       Sass_Import_Entry import = sass_make_import(
@@ -312,12 +321,6 @@ namespace Sass {
     }
     if (root == 0) return 0;
 
-    Env global; // create root environment
-    // register built-in functions on env
-    register_built_in_functions(*this, &global);
-    // register custom functions (defined via C-API)
-    for (size_t i = 0, S = c_functions.size(); i < S; ++i)
-    { register_c_function(*this, &global, c_functions[i]); }
     // create initial backtrace entry
     Backtrace backtrace(0, ParserState("", 0), "");
     // create crtp visitor objects

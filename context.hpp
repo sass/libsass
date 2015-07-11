@@ -11,12 +11,12 @@
 #include "ast_fwd_decl.hpp"
 #include "kwd_arg_macros.hpp"
 #include "memory_manager.hpp"
-#include "environment.hpp"
 #include "source_map.hpp"
 #include "subset_map.hpp"
 #include "output.hpp"
 #include "plugins.hpp"
 #include "sass_functions.h"
+#include "environment.hpp"
 
 struct Sass_Function;
 
@@ -32,6 +32,7 @@ namespace Sass {
 
   class Context {
   public:
+    Environment<AST_Node*> global;
     size_t head_imports;
     Memory_Manager<AST_Node> mem;
 
