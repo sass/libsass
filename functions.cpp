@@ -1593,7 +1593,6 @@ namespace Sass {
 
         To_Value valueize(ctx, ctx.mem);
         Value* val = v->perform(&valueize);
-        debug_ast(val);
         string inspect = val->inspect(false, 5);
         if (inspect.empty() && parentheses) inspect = "()";
         return new (ctx.mem) String_Quoted(pstate, inspect);
