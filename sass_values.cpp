@@ -427,27 +427,26 @@ extern "C" {
         default:                     break;
       }
 
-
       if (sass_value_is_number(a) && sass_value_is_number(b)) {
-        rv = Sass::Eval::op_numbers(mem, op, static_cast<Number*>(lhs), static_cast<Number*>(rhs));
+        rv = Sass::Eval::op_numbers(mem, op, dynamic_cast<Number*>(lhs), dynamic_cast<Number*>(rhs));
       }
       else if (sass_value_is_number(a) && sass_value_is_color(a)) {
-        rv = Sass::Eval::op_number_color(mem, op, static_cast<Number*>(lhs), static_cast<Color*>(rhs));
+        rv = Sass::Eval::op_number_color(mem, op, dynamic_cast<Number*>(lhs), dynamic_cast<Color*>(rhs));
       }
       else if (sass_value_is_color(a) && sass_value_is_number(b)) {
-        rv = Sass::Eval::op_color_number(mem, op, static_cast<Color*>(lhs), static_cast<Number*>(rhs));
+        rv = Sass::Eval::op_color_number(mem, op, dynamic_cast<Color*>(lhs), dynamic_cast<Number*>(rhs));
       }
       else if (sass_value_is_color(a) && sass_value_is_color(b)) {
-        rv = Sass::Eval::op_colors(mem, op, static_cast<Color*>(lhs), static_cast<Color*>(rhs));
+        rv = Sass::Eval::op_colors(mem, op, dynamic_cast<Color*>(lhs), dynamic_cast<Color*>(rhs));
       }
 
       if (!rv) return sass_make_error("invalid return value");
 
       if (rv->concrete_type() == Expression::NUMBER) {
-        Number* res = static_cast<Number*>(rv);
+        Number* res = dynamic_cast<Number*>(rv);
         return sass_make_number(res->value(), res->unit().c_str());
       } else if (rv->concrete_type() == Expression::STRING) {
-        String_Quoted* str = static_cast<String_Quoted*>(rv);
+        String_Quoted* str = dynamic_cast<String_Quoted*>(rv);
         return sass_make_string(str->value().c_str());
       } else {
         return sass_make_error("invalid return type");

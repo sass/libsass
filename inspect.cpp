@@ -462,15 +462,6 @@ namespace Sass {
     // use values to_string facility
     bool compressed = ctx->output_style == COMPRESSED;
     string res = n->to_string(compressed, ctx->precision);
-    // check for a valid unit here
-    // includes result for reporting
-    if (n->numerator_units().size() > 1 ||
-        n->denominator_units().size() > 0 ||
-        (n->numerator_units().size() && n->numerator_units()[0].find_first_of('/') != string::npos) ||
-        (n->numerator_units().size() && n->numerator_units()[0].find_first_of('*') != string::npos)
-    ) {
-      error(res + " isn't a valid CSS value.", n->pstate());
-    }
     // output the final token
     append_token(res, n);
   }

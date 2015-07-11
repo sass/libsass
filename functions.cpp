@@ -1580,17 +1580,6 @@ namespace Sass {
 
         bool parentheses = v->concrete_type() == Expression::MAP ||
                            v->concrete_type() == Expression::LIST;
-/*
-        Output_Style old_style;
-        old_style = ctx.output_style;
-        ctx.output_style = NESTED;
-        To_String to_string(&ctx, false);
-        string inspect = v->perform(&to_string);
-        if (inspect.empty() && parentheses) inspect = "()";
-        ctx.output_style = old_style;
-*/
-
-
         To_Value valueize(ctx, ctx.mem);
         Value* val = v->perform(&valueize);
         string inspect = val->inspect(false, 5);
