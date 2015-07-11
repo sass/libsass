@@ -96,13 +96,11 @@ namespace Sass {
       break;
       case SASS_MAP: {
         Map* m = new (mem) Map(ParserState("[C-VALUE]"));
-        /*
         for (size_t i = 0, L = sass_map_get_length(val); i < L; ++i) {
-          m << std::make_pair(
-            sass_value_to_ast_node(sass_map_get_key(val, i)),
-            sass_value_to_ast_node(sass_map_get_value(val, i)));
+          *m << std::make_pair(
+            sass_value_to_ast_node(mem, sass_map_get_key(val, i)),
+            sass_value_to_ast_node(mem, sass_map_get_value(val, i)));
         }
-        */
         return m;
       }
       break;
