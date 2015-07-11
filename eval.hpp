@@ -50,6 +50,8 @@ namespace Sass {
     Expression* operator()(Unary_Expression*);
     Expression* operator()(Function_Call*);
     Expression* operator()(Function_Call_Schema*);
+    // Expression* operator()(Custom_Warning*);
+    // Expression* operator()(Custom_Error*);
     Expression* operator()(Variable*);
     Expression* operator()(Textual*);
     Expression* operator()(Number*);

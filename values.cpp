@@ -65,27 +65,27 @@ namespace Sass {
   {
     switch (sass_value_get_tag(val)) {
       case SASS_NUMBER:
-        return new (mem) Number(ParserState("[SASS-VALUE]"),
+        return new (mem) Number(ParserState("[C-VALUE]"),
                                 sass_number_get_value(val),
                                 sass_number_get_unit(val));
       break;
       case SASS_BOOLEAN:
-        return new (mem) Boolean(ParserState("[SASS-VALUE]"),
+        return new (mem) Boolean(ParserState("[C-VALUE]"),
                                  sass_boolean_get_value(val));
       break;
       case SASS_COLOR:
-        return new (mem) Color(ParserState("[SASS-VALUE]"),
+        return new (mem) Color(ParserState("[C-VALUE]"),
                                sass_color_get_r(val),
                                sass_color_get_g(val),
                                sass_color_get_b(val),
                                sass_color_get_a(val));
       break;
       case SASS_STRING:
-        return new (mem) String_Quoted(ParserState("[SASS-VALUE]"),
+        return new (mem) String_Quoted(ParserState("[C-VALUE]"),
                                        sass_string_get_value(val));
       break;
       case SASS_LIST: {
-        List* l = new (mem) List(ParserState("[SASS-VALUE]"),
+        List* l = new (mem) List(ParserState("[C-VALUE]"),
                                  sass_list_get_length(val),
                                  sass_list_get_separator(val));
         for (size_t i = 0, L = sass_list_get_length(val); i < L; ++i) {
@@ -95,7 +95,7 @@ namespace Sass {
       }
       break;
       case SASS_MAP: {
-        Map* m = new (mem) Map(ParserState("[SASS-VALUE]"));
+        Map* m = new (mem) Map(ParserState("[C-VALUE]"));
         /*
         for (size_t i = 0, L = sass_map_get_length(val); i < L; ++i) {
           m << std::make_pair(
@@ -107,11 +107,15 @@ namespace Sass {
       }
       break;
       case SASS_NULL:
-        return new (mem) Null(ParserState("[SASS-VALUE]"));
+        return new (mem) Null(ParserState("[C-VALUE]"));
       break;
       case SASS_ERROR:
+        return new (mem) Custom_Error(ParserState("[C-VALUE]"),
+                                      sass_error_get_message(val));
       break;
       case SASS_WARNING:
+        return new (mem) Custom_Warning(ParserState("[C-VALUE]"),
+                                        sass_warning_get_message(val));
       break;
     }
     return 0;

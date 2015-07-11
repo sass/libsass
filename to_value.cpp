@@ -18,6 +18,16 @@ namespace Sass {
     return b;
   }
 
+  Value* To_Value::operator()(Custom_Error* e)
+  {
+    return e;
+  }
+
+  Value* To_Value::operator()(Custom_Warning* w)
+  {
+    return w;
+  }
+
   Value* To_Value::operator()(Number* n)
   {
     return n;
