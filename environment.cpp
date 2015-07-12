@@ -4,11 +4,11 @@
 namespace Sass {
 
   template <typename T>
-  Environment<T>::Environment() : local_frame_(unordered_map<string, T>()), parent_(0) { }
+  Environment<T>::Environment() : local_frame_(map<string, T>()), parent_(0) { }
   template <typename T>
-  Environment<T>::Environment(Environment<T>* env) : local_frame_(unordered_map<string, T>()), parent_(env) { }
+  Environment<T>::Environment(Environment<T>* env) : local_frame_(map<string, T>()), parent_(env) { }
   template <typename T>
-  Environment<T>::Environment(Environment<T>& env) : local_frame_(unordered_map<string, T>()), parent_(&env) { }
+  Environment<T>::Environment(Environment<T>& env) : local_frame_(map<string, T>()), parent_(&env) { }
 
   template <typename T>
   Environment<T>* Environment<T>::global_env()
@@ -136,7 +136,7 @@ namespace Sass {
   // scope operates on the current frame
 
   template <typename T>
-  unordered_map<string, T>& Environment<T>::local_frame() {
+  map<string, T>& Environment<T>::local_frame() {
     return local_frame_;
   }
 
@@ -160,6 +160,12 @@ namespace Sass {
         }
       }
     }
+    local_frame_[key] = val;
+  }
+
+  template <typename T>
+  void Environment<T>::update_local(const string& key, const T val)
+  {
     local_frame_[key] = val;
   }
 
@@ -189,7 +195,7 @@ namespace Sass {
       indent = parent_->print(prefix) + 1;
     }
     cerr << prefix << string(indent, ' ') << "== " << this << endl;
-    for (typename unordered_map<string, T>::iterator i = local_frame_.begin(); i != local_frame_.end(); ++i) {
+    for (typename map<string, T>::iterator i = local_frame_.begin(); i != local_frame_.end(); ++i) {
       if (!ends_with(i->first, "[f]") && !ends_with(i->first, "[f]4") && !ends_with(i->first, "[f]2")) {
         cerr << prefix << string(indent, ' ') << i->first << " "  << i->second;
         if (Value* val = dynamic_cast<Value*>(i->second)) {

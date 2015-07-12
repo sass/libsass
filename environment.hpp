@@ -3,7 +3,7 @@
 
 #include <string>
 #include <iostream>
-#include <unordered_map>
+#include <map>
 
 #include "ast_fwd_decl.hpp"
 #include "ast_def_macros.hpp"
@@ -11,14 +11,14 @@
 
 namespace Sass {
   using std::string;
-  using std::unordered_map;
+  using std::map;
   using std::cerr;
   using std::endl;
 
   template <typename T>
   class Environment {
-    // TODO: test with unordered_map
-    unordered_map<string, T> local_frame_;
+    // TODO: test with map
+    map<string, T> local_frame_;
     ADD_PROPERTY(Environment*, parent)
 
   public:
@@ -43,7 +43,7 @@ namespace Sass {
 
     // scope operates on the current frame
 
-    unordered_map<string, T>& local_frame();
+    map<string, T>& local_frame();
 
     bool has_local(const string& key) const;
 
@@ -70,6 +70,7 @@ namespace Sass {
 
     // set variable on the current frame
     void set_local(const string& key, T val);
+    void update_local(const string& key, const T val);
 
     // see if we have a lexical we could update
     // either update already existing lexical value

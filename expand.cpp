@@ -401,7 +401,7 @@ namespace Sass {
            i < end;
            ++i) {
         it->value(i);
-        outer.set_local(variable, it);
+        outer.update_local(variable, it);
         append_block(body);
       }
     } else {
@@ -410,7 +410,7 @@ namespace Sass {
            i > end;
            --i) {
         it->value(i);
-        outer.set_local(variable, it);
+        outer.update_local(variable, it);
         append_block(body);
       }
     }
