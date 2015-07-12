@@ -2,6 +2,7 @@
 #define SASS_MEMORY_MANAGER_H
 
 #include <vector>
+#include <memory>
 #include <typeinfo>
 #include <iostream>
 #include <stdio.h>

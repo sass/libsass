@@ -59,7 +59,7 @@ namespace Sass {
     }
     else if (List* l = dynamic_cast<List*>(np)) {
       for (size_t i = 0, L = l->length(); i < L; ++i) {
-        if (has((*l)[i])) destroy((*l)[i]);
+       // if (has((*l)[i])) destroy((*l)[i]);
       }
     }
     nodes.erase(find(nodes.begin(), nodes.end(), np));

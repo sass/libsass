@@ -384,16 +384,19 @@ extern "C" {
       }
 
       if (sass_value_is_number(a) && sass_value_is_number(b)) {
-        rv = Eval::op_numbers(mem, op, dynamic_cast<Number*>(lhs), dynamic_cast<Number*>(rhs));
+        rv = Eval::op_numbers(mem, op, *dynamic_cast<const Number*>(lhs), *dynamic_cast<const Number*>(rhs));
       }
       else if (sass_value_is_number(a) && sass_value_is_color(a)) {
-        rv = Eval::op_number_color(mem, op, dynamic_cast<Number*>(lhs), dynamic_cast<Color*>(rhs));
+        rv = Eval::op_number_color(mem, op, *dynamic_cast<const Number*>(lhs), *dynamic_cast<const Color*>(rhs));
       }
       else if (sass_value_is_color(a) && sass_value_is_number(b)) {
-        rv = Eval::op_color_number(mem, op, dynamic_cast<Color*>(lhs), dynamic_cast<Number*>(rhs));
+        rv = Eval::op_color_number(mem, op, *dynamic_cast<const Color*>(lhs), *dynamic_cast<const Number*>(rhs));
       }
       else if (sass_value_is_color(a) && sass_value_is_color(b)) {
-        rv = Eval::op_colors(mem, op, dynamic_cast<Color*>(lhs), dynamic_cast<Color*>(rhs));
+        rv = Eval::op_colors(mem, op, *dynamic_cast<const Color*>(lhs), *dynamic_cast<const Color*>(rhs));
+      }
+      else /* convert other stuff to string and apply operation */ {
+        rv = Eval::op_strings(mem, op, *dynamic_cast<Value*>(lhs), *dynamic_cast<Value*>(rhs));
       }
 
       if (!rv) return sass_make_error("invalid return value");

@@ -83,6 +83,7 @@ namespace Sass {
     Position pos() { return pstate(); }
     ATTACH_OPERATIONS()
   };
+  typedef shared_ptr<AST_Node> AST_Node_Ptr;
   inline AST_Node::~AST_Node() { }
 
 
@@ -1189,6 +1190,8 @@ namespace Sass {
     bool            zero()              { return zero_; }
     vector<string>& numerator_units()   { return numerator_units_; }
     vector<string>& denominator_units() { return denominator_units_; }
+    const vector<string>& numerator_units() const   { return numerator_units_; }
+    const vector<string>& denominator_units() const { return denominator_units_; }
     string type() { return "number"; }
     static string type_name() { return "number"; }
     string unit() const;
@@ -1214,6 +1217,7 @@ namespace Sass {
 
     ATTACH_OPERATIONS()
   };
+  typedef shared_ptr<Number> Number_Ptr;
 
   //////////
   // Colors.
@@ -1307,6 +1311,7 @@ namespace Sass {
 
     ATTACH_OPERATIONS()
   };
+  typedef shared_ptr<Boolean> Boolean_Ptr;
 
   ////////////////////////////////////////////////////////////////////////
   // Abstract base class for Sass string values. Includes interpolated and
