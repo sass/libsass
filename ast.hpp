@@ -1500,7 +1500,7 @@ namespace Sass {
     {
       To_String to_string;
       bool with = feature() && unquote(feature()->perform(&to_string)).compare("with") == 0;
-      List* l = static_cast<List*>(value());
+      List* l = dynamic_cast<List*>(value());
       string v;
 
       if (with)
@@ -1541,7 +1541,7 @@ namespace Sass {
     bool exclude_node(Statement* s) {
       if (s->statement_type() == Statement::DIRECTIVE)
       {
-        return expression()->exclude(static_cast<At_Rule*>(s)->keyword().erase(0, 1));
+        return expression()->exclude(dynamic_cast<At_Rule*>(s)->keyword().erase(0, 1));
       }
       if (s->statement_type() == Statement::MEDIA)
       {
@@ -1555,7 +1555,7 @@ namespace Sass {
       {
         return expression()->exclude("supports");
       }
-      if (static_cast<At_Rule*>(s)->is_keyframes())
+      if (dynamic_cast<At_Rule*>(s)->is_keyframes())
       {
         return expression()->exclude("keyframes");
       }
@@ -2154,7 +2154,7 @@ namespace Sass {
 
   inline bool Ruleset::is_invisible() const {
     bool is_invisible = true;
-    Selector_List* sl = static_cast<Selector_List*>(selector());
+    Selector_List* sl = dynamic_cast<Selector_List*>(selector());
     for (size_t i = 0, L = sl->length(); i < L && is_invisible; ++i)
       is_invisible &= (*sl)[i]->has_placeholder();
     return is_invisible;

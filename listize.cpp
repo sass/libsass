@@ -16,7 +16,7 @@ namespace Sass {
 /*
 
 
-  Value* Listize::operator()(Binary_Expression* b)
+  Expression* Listize::operator()(Binary_Expression* b)
   {
     string sep("/");
     To_String to_string(&ctx);
@@ -25,7 +25,7 @@ namespace Sass {
     return new (ctx.mem) String_Quoted(b->pstate(), lstr + sep + rstr);
   }
 
-  Value* Listize::operator()(Argument* arg)
+  Expression* Listize::operator()(Argument* arg)
   {
     return arg->value()->perform(this);
   }
@@ -33,7 +33,7 @@ namespace Sass {
 */
 
 
-  Value* Listize::operator()(Selector_List* sel)
+  Expression* Listize::operator()(Selector_List* sel)
   {
     List* l = new (ctx.mem) List(sel->pstate(), sel->length(), SASS_COMMA);
     for (size_t i = 0, L = sel->length(); i < L; ++i) {
@@ -43,7 +43,7 @@ namespace Sass {
     return l;
   }
 
-  Value* Listize::operator()(Compound_Selector* sel)
+  Expression* Listize::operator()(Compound_Selector* sel)
   {
     To_String to_string;
     string str;
@@ -54,14 +54,14 @@ namespace Sass {
     return new (ctx.mem) String_Quoted(sel->pstate(), str);
   }
 
-  Value* Listize::operator()(Complex_Selector* sel)
+  Expression* Listize::operator()(Complex_Selector* sel)
   {
     List* l = new (ctx.mem) List(sel->pstate(), 2);
 
     Compound_Selector* head = sel->head();
     if (head && !head->is_empty_reference())
     {
-      Value* hh = head->perform(this);
+      Expression* hh = head->perform(this);
       if (hh) *l << hh;
     }
 
@@ -89,39 +89,39 @@ namespace Sass {
     Complex_Selector* tail = sel->tail();
     if (tail)
     {
-      Value* tt = tail->perform(this);
+      Expression* tt = tail->perform(this);
       if (tt && tt->concrete_type() == Expression::LIST)
-      { *l += static_cast<List*>(tt); }
-      else if (tt) *l << static_cast<List*>(tt);
+      { *l += dynamic_cast<List*>(tt); }
+      else if (tt) *l << dynamic_cast<List*>(tt);
     }
     if (l->length() == 0) return 0;
     return l;
   }
 
 /*
-  Value* Listize::operator()(Parent_Selector* sel)
+  Expression* Listize::operator()(Parent_Selector* sel)
   {
     return 0;
   }
-  Value* Listize::operator()(Value* val)
+  Expression* Listize::operator()(Expression* val)
   {
     return val;
   }
 */
 
-  Value* Listize::operator()(Type_Selector* sel)
+  Expression* Listize::operator()(Type_Selector* sel)
   {
     return new (ctx.mem) String_Quoted(sel->pstate(), sel->ns_name());
   }
 
-  Value* Listize::operator()(Selector_Qualifier* sel)
+  Expression* Listize::operator()(Selector_Qualifier* sel)
   {
     return new (ctx.mem) String_Quoted(sel->pstate(), sel->ns_name());
   }
 
-  Value* Listize::fallback_impl(AST_Node* n)
+  Expression* Listize::fallback_impl(AST_Node* n)
   {
-    Value* val = static_cast<Value*>(n);
+    Expression* val = dynamic_cast<Expression*>(n);
     if (!val) debug_ast(n);
     return val;
   }

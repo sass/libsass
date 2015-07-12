@@ -172,7 +172,7 @@ namespace Sass {
     if (typeid(*rhs_0) == typeid(Type_Selector))
     {
       // if rhs is universal, just return this tagname + rhs's qualifiers
-      if (static_cast<Type_Selector*>(rhs_0)->name() == "*")
+      if (dynamic_cast<Type_Selector*>(rhs_0)->name() == "*")
       {
         Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
         (*cpy) << this;
@@ -181,7 +181,7 @@ namespace Sass {
         return cpy;
       }
       // if rhs is another tag name and it matches this, return rhs
-      else if (static_cast<Type_Selector*>(rhs_0)->name() == name())
+      else if (dynamic_cast<Type_Selector*>(rhs_0)->name() == name())
       { return new (ctx.mem) Compound_Selector(*rhs); }
       // else the tag names don't match; return nil
       else
@@ -202,8 +202,8 @@ namespace Sass {
       {
         Simple_Selector* rhs_i = (*rhs)[i];
         if (typeid(*rhs_i) == typeid(Selector_Qualifier) &&
-            static_cast<Selector_Qualifier*>(rhs_i)->name()[0] == '#' &&
-            static_cast<Selector_Qualifier*>(rhs_i)->name() != name())
+            dynamic_cast<Selector_Qualifier*>(rhs_i)->name()[0] == '#' &&
+            dynamic_cast<Selector_Qualifier*>(rhs_i)->name() != name())
           return 0;
       }
     }
@@ -219,8 +219,8 @@ namespace Sass {
       {
         Simple_Selector* rhs_i = (*rhs)[i];
         if (typeid(*rhs_i) == typeid(Pseudo_Selector) &&
-            static_cast<Pseudo_Selector*>(rhs_i)->is_pseudo_element() &&
-            static_cast<Pseudo_Selector*>(rhs_i)->name() != name())
+            dynamic_cast<Pseudo_Selector*>(rhs_i)->is_pseudo_element() &&
+            dynamic_cast<Pseudo_Selector*>(rhs_i)->name() != name())
         { return 0; }
       }
     }

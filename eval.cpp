@@ -193,8 +193,8 @@ namespace Sass {
     if (high->concrete_type() != Expression::NUMBER) {
       error("upper bound of `@for` directive must be numeric", high->pstate());
     }
-    Number* sass_start = static_cast<Number*>(low);
-    Number* sass_end = static_cast<Number*>(high);
+    Number* sass_start = dynamic_cast<Number*>(low);
+    Number* sass_end = dynamic_cast<Number*>(high);
     // check if units are valid for sequence
     if (sass_start->unit() != sass_end->unit()) {
       stringstream msg; msg << "Incompatible units: '"
@@ -251,14 +251,14 @@ namespace Sass {
     List* list = 0;
     Map* map = 0;
     if (expr->concrete_type() == Expression::MAP) {
-      map = static_cast<Map*>(expr);
+      map = dynamic_cast<Map*>(expr);
     }
     else if (expr->concrete_type() != Expression::LIST) {
       list = new (mem()) List(expr->pstate(), 1, SASS_COMMA);
       *list << expr;
     }
     else {
-      list = static_cast<List*>(expr);
+      list = dynamic_cast<List*>(expr);
     }
     // remember variables and then reset them
     vector<AST_Node*> old_vars(variables.size());
@@ -295,7 +295,7 @@ namespace Sass {
           *variable << (*list)[i];
         }
         else {
-          variable = static_cast<List*>((*list)[i]);
+          variable = dynamic_cast<List*>((*list)[i]);
         }
         for (size_t j = 0, K = variables.size(); j < K; ++j) {
           if (j < variable->length()) {
@@ -343,7 +343,7 @@ namespace Sass {
     // try to use generic function
     if (env->has("@warn[f]")) {
 
-      Definition* def = static_cast<Definition*>((*env)["@warn[f]"]);
+      Definition* def = dynamic_cast<Definition*>((*env)["@warn[f]"]);
       // Block*          body   = def->block();
       // Native_Function func   = def->native_function();
       Sass_Function_Entry c_function = def->c_function();
@@ -376,7 +376,7 @@ namespace Sass {
     // try to use generic function
     if (env->has("@error[f]")) {
 
-      Definition* def = static_cast<Definition*>((*env)["@error[f]"]);
+      Definition* def = dynamic_cast<Definition*>((*env)["@error[f]"]);
       // Block*          body   = def->block();
       // Native_Function func   = def->native_function();
       Sass_Function_Entry c_function = def->c_function();
@@ -406,7 +406,7 @@ namespace Sass {
     // try to use generic function
     if (env->has("@debug[f]")) {
 
-      Definition* def = static_cast<Definition*>((*env)["@debug[f]"]);
+      Definition* def = dynamic_cast<Definition*>((*env)["@debug[f]"]);
       // Block*          body   = def->block();
       // Native_Function func   = def->native_function();
       Sass_Function_Entry c_function = def->c_function();
@@ -593,7 +593,7 @@ namespace Sass {
       return result;
     }
     else if (operand->concrete_type() == Expression::NUMBER) {
-      Number* result = new (mem()) Number(*static_cast<Number*>(operand));
+      Number* result = new (mem()) Number(*dynamic_cast<Number*>(operand));
       result->value(u->type() == Unary_Expression::MINUS
                     ? -result->value()
                     :  result->value());
@@ -629,7 +629,7 @@ namespace Sass {
     string full_name(name + "[f]");
     Arguments* args = c->arguments();
     if (full_name != "if[f]") {
-      args = static_cast<Arguments*>(args->perform(this));
+      args = dynamic_cast<Arguments*>(args->perform(this));
     }
 
     Env* env = environment();
@@ -648,7 +648,7 @@ namespace Sass {
       }
     }
 
-    Definition* def = static_cast<Definition*>((*env)[full_name]);
+    Definition* def = dynamic_cast<Definition*>((*env)[full_name]);
 
     if (def->is_overload_stub()) {
       stringstream ss;
@@ -657,7 +657,7 @@ namespace Sass {
       full_name = ss.str();
       string resolved_name(full_name);
       if (!env->has(resolved_name)) error("overloaded function `" + string(c->name()) + "` given wrong number of arguments", c->pstate());
-      def = static_cast<Definition*>((*env)[resolved_name]);
+      def = dynamic_cast<Definition*>((*env)[resolved_name]);
     }
 
     Expression*     result = c;
@@ -704,7 +704,7 @@ namespace Sass {
       for(size_t i = 0; i < params[0].length(); i++) {
         string key = params[0][i]->name();
         AST_Node* node = fn_env.get_local(key);
-        Expression* arg = static_cast<Expression*>(node);
+        Expression* arg = dynamic_cast<Expression*>(node);
         sass_list_set_value(c_args, i, arg->perform(&to_c));
       }
       union Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
@@ -747,15 +747,15 @@ namespace Sass {
     string name(v->name());
     Expression* value = 0;
     Env* env = environment();
-    if (env->has(name)) value = static_cast<Expression*>((*env)[name]);
+    if (env->has(name)) value = dynamic_cast<Expression*>((*env)[name]);
     else error("Undefined variable: \"" + v->name() + "\".", v->pstate());
     // cerr << "name: " << v->name() << "; type: " << typeid(*value).name() << "; value: " << value->perform(&to_string) << endl;
-    if (typeid(*value) == typeid(Argument)) value = static_cast<Argument*>(value)->value();
+    if (typeid(*value) == typeid(Argument)) value = dynamic_cast<Argument*>(value)->value();
 
     // behave according to as ruby sass (add leading zero)
     if (value->concrete_type() == Expression::NUMBER) {
-      value = new (ctx.mem) Number(*static_cast<Number*>(value));
-      static_cast<Number*>(value)->zero(true);
+      value = new (ctx.mem) Number(*dynamic_cast<Number*>(value));
+      dynamic_cast<Number*>(value)->zero(true);
     }
     else if (value->concrete_type() == Expression::STRING) {
       if (auto str = dynamic_cast<String_Quoted*>(value)) {
@@ -771,10 +771,10 @@ namespace Sass {
       value = dynamic_cast<Map*>(value)->perform(this);
     }
     else if (value->concrete_type() == Expression::BOOLEAN) {
-      value = new (ctx.mem) Boolean(*static_cast<Boolean*>(value));
+      value = new (ctx.mem) Boolean(*dynamic_cast<Boolean*>(value));
     }
     else if (value->concrete_type() == Expression::COLOR) {
-      value = new (ctx.mem) Color(*static_cast<Color*>(value));
+      value = new (ctx.mem) Color(*dynamic_cast<Color*>(value));
     }
     else if (value->concrete_type() == Expression::NULL_VAL) {
       value = new (ctx.mem) Null(value->pstate());
@@ -921,7 +921,7 @@ namespace Sass {
     } else if (Variable* var = dynamic_cast<Variable*>(s)) {
       string name(var->name());
       if (!env->has(name)) error("Undefined variable: \"" + var->name() + "\".", var->pstate());
-      Expression* value = static_cast<Expression*>((*env)[name]);
+      Expression* value = dynamic_cast<Expression*>((*env)[name]);
       return evacuate_quotes(interpolation(value));
     } else if (dynamic_cast<Binary_Expression*>(s)) {
       Expression* ex = s->perform(this);
@@ -985,7 +985,7 @@ namespace Sass {
     Supports_Query* qq = new (ctx.mem) Supports_Query(q->pstate(),
                                                     q->length());
     for (size_t i = 0, L = q->length(); i < L; ++i) {
-      *qq << static_cast<Supports_Condition*>((*q)[i]->perform(this));
+      *qq << dynamic_cast<Supports_Condition*>((*q)[i]->perform(this));
     }
     return qq;
   }
@@ -1002,7 +1002,7 @@ namespace Sass {
                                                  c->operand(),
                                                  c->is_root());
     for (size_t i = 0, L = c->length(); i < L; ++i) {
-      *cc << static_cast<Supports_Condition*>((*c)[i]->perform(this));
+      *cc << dynamic_cast<Supports_Condition*>((*c)[i]->perform(this));
     }
     return cc;
   }
@@ -1014,7 +1014,7 @@ namespace Sass {
     Expression* value = e->value();
     value = (value ? value->perform(this) : 0);
     Expression* ee = new (ctx.mem) At_Root_Expression(e->pstate(),
-                                                      static_cast<String*>(feature),
+                                                      dynamic_cast<String*>(feature),
                                                       value,
                                                       e->is_interpolated());
     return ee;
@@ -1024,14 +1024,14 @@ namespace Sass {
   {
     To_String to_string(&ctx);
     String* t = q->media_type();
-    t = static_cast<String*>(t ? t->perform(this) : 0);
+    t = dynamic_cast<String*>(t ? t->perform(this) : 0);
     Media_Query* qq = new (ctx.mem) Media_Query(q->pstate(),
                                                 t,
                                                 q->length(),
                                                 q->is_negated(),
                                                 q->is_restricted());
     for (size_t i = 0, L = q->length(); i < L; ++i) {
-      *qq << static_cast<Media_Query_Expression*>((*q)[i]->perform(this));
+      *qq << dynamic_cast<Media_Query_Expression*>((*q)[i]->perform(this));
     }
     return qq;
   }
@@ -1096,7 +1096,7 @@ namespace Sass {
   {
     Arguments* aa = new (ctx.mem) Arguments(a->pstate());
     for (size_t i = 0, L = a->length(); i < L; ++i) {
-      *aa << static_cast<Argument*>((*a)[i]->perform(this));
+      *aa << dynamic_cast<Argument*>((*a)[i]->perform(this));
     }
     return aa;
   }
@@ -1108,7 +1108,7 @@ namespace Sass {
 
   Expression* Eval::fallback_impl(AST_Node* n)
   {
-    return static_cast<Expression*>(n);
+    return dynamic_cast<Expression*>(n);
   }
 
   // All the binary helpers.
@@ -1261,21 +1261,21 @@ namespace Sass {
     }
     else if (l_str_color && rtype == Expression::COLOR) {
       const Color* c_l = names_to_colors.find(lstr)->second;
-      const Color* c_r = static_cast<const Color*>(&rhs);
+      const Color* c_r = dynamic_cast<const Color*>(&rhs);
       return op_colors(mem, op, *c_l, *c_r, compressed, precision);
     }
     else if (l_str_color && rtype == Expression::NUMBER) {
       const Color* c_l = names_to_colors.find(lstr)->second;
-      const Number* n_r = static_cast<const Number*>(&rhs);
+      const Number* n_r = dynamic_cast<const Number*>(&rhs);
       return op_color_number(mem, op, *c_l, *n_r, compressed, precision);
     }
     else if (ltype == Expression::COLOR && r_str_color) {
-      const Number* n_l = static_cast<const Number*>(&lhs);
+      const Number* n_l = dynamic_cast<const Number*>(&lhs);
       const Color* c_r = names_to_colors.find(rstr)->second;
       return op_number_color(mem, op, *n_l, *c_r, compressed, precision);
     }
     else if (ltype == Expression::NUMBER && r_str_color) {
-      const Number* n_l = static_cast<const Number*>(&lhs);
+      const Number* n_l = dynamic_cast<const Number*>(&lhs);
       const Color* c_r = names_to_colors.find(rstr)->second;
       return op_number_color(mem, op, *n_l, *c_r, compressed, precision);
     }
@@ -1510,7 +1510,7 @@ namespace Sass {
   Attribute_Selector* Eval::operator()(Attribute_Selector* s)
   {
     String* attr = s->value();
-    if (attr) { attr = static_cast<String*>(attr->perform(this)); }
+    if (attr) { attr = dynamic_cast<String*>(attr->perform(this)); }
     Attribute_Selector* ss = new (ctx.mem) Attribute_Selector(*s);
     ss->value(attr);
     return ss;

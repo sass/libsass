@@ -15,29 +15,29 @@ namespace Sass {
   typedef Environment<AST_Node*> Env;
   struct Backtrace;
 
-  class Listize : public Operation_CRTP<Value*, Listize> {
+  class Listize : public Operation_CRTP<Expression*, Listize> {
 
     Context&            ctx;
 
-    Value* fallback_impl(AST_Node* n);
+    Expression* fallback_impl(AST_Node* n);
 
   public:
     Listize(Context&);
     virtual ~Listize() { }
 
-    using Operation<Value*>::operator();
+    using Operation<Expression*>::operator();
 
-    Value* operator()(Selector_List*);
-    Value* operator()(Complex_Selector*);
-    Value* operator()(Compound_Selector*);
-    //Value* operator()(Parent_Selector*);
-    Value* operator()(Type_Selector*);
-    Value* operator()(Selector_Qualifier*);
+    Expression* operator()(Selector_List*);
+    Expression* operator()(Complex_Selector*);
+    Expression* operator()(Compound_Selector*);
+    //Expression* operator()(Parent_Selector*);
+    Expression* operator()(Type_Selector*);
+    Expression* operator()(Selector_Qualifier*);
 
-    // Value* operator()(Binary_Expression*);
+    // Expression* operator()(Binary_Expression*);
 
     template <typename U>
-    Value* fallback(U x) { return fallback_impl(x); }
+    Expression* fallback(U x) { return fallback_impl(x); }
   };
 
 }

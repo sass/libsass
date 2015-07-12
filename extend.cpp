@@ -1929,7 +1929,7 @@ namespace Sass {
   static void extendObjectWithSelectorAndBlock(ObjectType* pObject, Context& ctx, ExtensionSubsetMap& subset_map) {
     To_String to_string(&ctx);
 
-    DEBUG_PRINTLN(EXTEND_OBJECT, "FOUND SELECTOR: " << static_cast<Selector_List*>(pObject->selector())->perform(&to_string))
+    DEBUG_PRINTLN(EXTEND_OBJECT, "FOUND SELECTOR: " << dynamic_cast<Selector_List*>(pObject->selector())->perform(&to_string))
 
     // Ruby sass seems to filter nodes that don't have any content well before we get here. I'm not sure the repercussions
     // of doing so, so for now, let's just not extend things that won't be output later.
@@ -1939,10 +1939,10 @@ namespace Sass {
     }
 
     bool extendedSomething = false;
-    Selector_List* pNewSelectorList = Extend::extendSelectorList(static_cast<Selector_List*>(pObject->selector()), ctx, subset_map, false, extendedSomething);
+    Selector_List* pNewSelectorList = Extend::extendSelectorList(dynamic_cast<Selector_List*>(pObject->selector()), ctx, subset_map, false, extendedSomething);
 
     if (extendedSomething && pNewSelectorList) {
-      DEBUG_PRINTLN(EXTEND_OBJECT, "EXTEND ORIGINAL SELECTORS: " << static_cast<Selector_List*>(pObject->selector())->perform(&to_string))
+      DEBUG_PRINTLN(EXTEND_OBJECT, "EXTEND ORIGINAL SELECTORS: " << dynamic_cast<Selector_List*>(pObject->selector())->perform(&to_string))
       DEBUG_PRINTLN(EXTEND_OBJECT, "EXTEND SETTING NEW SELECTORS: " << pNewSelectorList->perform(&to_string))
       pObject->selector(pNewSelectorList);
     } else {

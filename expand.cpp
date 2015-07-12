@@ -102,7 +102,7 @@ namespace Sass {
       Keyframe_Rule* k = new (ctx.mem) Keyframe_Rule(r->pstate(), r->block()->perform(this)->block());
       if (r->selector()) {
         selector_stack.push_back(0);
-        k->selector(static_cast<Selector_List*>(r->selector()->perform(&eval)));
+        k->selector(dynamic_cast<Selector_List*>(r->selector()->perform(&eval)));
         selector_stack.pop_back();
       }
       return k;
@@ -130,7 +130,7 @@ namespace Sass {
 
     for (size_t i = 0, L = expanded_block->length(); i < L; ++i) {
       Statement* stm = (*expanded_block)[i];
-      if (Declaration* dec = static_cast<Declaration*>(stm)) {
+      if (Declaration* dec = dynamic_cast<Declaration*>(stm)) {
         String_Schema* combined_prop = new (ctx.mem) String_Schema(p->pstate());
         if (!property_stack.empty()) {
           *combined_prop << property_stack.back()
@@ -160,7 +160,7 @@ namespace Sass {
   {
     Expression* queries = f->queries()->perform(&eval);
     Supports_Block* ff = new (ctx.mem) Supports_Block(f->pstate(),
-                                                    static_cast<Supports_Query*>(queries),
+                                                    dynamic_cast<Supports_Query*>(queries),
                                                     f->block()->perform(this)->block());
     // ff->selector(selector());
     return ff;
@@ -172,7 +172,7 @@ namespace Sass {
     Expression* mq = m->media_queries()->perform(&eval);
     mq = Parser::from_c_str(mq->perform(&to_string).c_str(), ctx, mq->pstate()).parse_media_queries();
     Media_Block* mm = new (ctx.mem) Media_Block(m->pstate(),
-                                                static_cast<List*>(mq),
+                                                dynamic_cast<List*>(mq),
                                                 m->block()->perform(this)->block(),
                                                 0);
     mm->tabs(m->tabs());
@@ -189,7 +189,7 @@ namespace Sass {
     Block* bb = ab ? ab->perform(this)->block() : 0;
     At_Root_Block* aa = new (ctx.mem) At_Root_Block(a->pstate(),
                                                     bb,
-                                                    static_cast<At_Root_Expression*>(ae));
+                                                    dynamic_cast<At_Root_Expression*>(ae));
     // aa->block()->is_root(true);
     return aa;
   }
@@ -216,7 +216,7 @@ namespace Sass {
   Statement* Expand::operator()(Declaration* d)
   {
     String* old_p = d->property();
-    String* new_p = static_cast<String*>(old_p->perform(&eval));
+    String* new_p = dynamic_cast<String*>(old_p->perform(&eval));
     Expression* value = d->value()->perform(&eval);
     if (!value || (value->is_invisible() && !d->is_important())) return 0;
     Declaration* decl = new (ctx.mem) Declaration(d->pstate(),
@@ -348,7 +348,7 @@ namespace Sass {
   Statement* Expand::operator()(Comment* c)
   {
     // TODO: eval the text, once we're parsing/storing it as a String_Schema
-    return new (ctx.mem) Comment(c->pstate(), static_cast<String*>(c->text()->perform(&eval)), c->is_important());
+    return new (ctx.mem) Comment(c->pstate(), dynamic_cast<String*>(c->text()->perform(&eval)), c->is_important());
   }
 
   Statement* Expand::operator()(If* i)
@@ -376,8 +376,8 @@ namespace Sass {
     if (high->concrete_type() != Expression::NUMBER) {
       error("upper bound of `@for` directive must be numeric", high->pstate(), backtrace());
     }
-    Number* sass_start = static_cast<Number*>(low);
-    Number* sass_end = static_cast<Number*>(high);
+    Number* sass_start = dynamic_cast<Number*>(low);
+    Number* sass_end = dynamic_cast<Number*>(high);
     // check if units are valid for sequence
     if (sass_start->unit() != sass_end->unit()) {
       stringstream msg; msg << "Incompatible units: '"
@@ -430,14 +430,14 @@ namespace Sass {
     List* list = 0;
     Map* map = 0;
     if (expr->concrete_type() == Expression::MAP) {
-      map = static_cast<Map*>(expr);
+      map = dynamic_cast<Map*>(expr);
     }
     else if (expr->concrete_type() != Expression::LIST) {
       list = new (ctx.mem) List(expr->pstate(), 1, SASS_COMMA);
       *list << expr;
     }
     else {
-      list = static_cast<List*>(expr);
+      list = dynamic_cast<List*>(expr);
     }
     // remember variables and then reset them
     Env* env = environment();
@@ -476,7 +476,7 @@ namespace Sass {
           *variable << (*list)[i];
         }
         else {
-          variable = static_cast<List*>((*list)[i]);
+          variable = dynamic_cast<List*>((*list)[i]);
         }
         for (size_t j = 0, K = variables.size(); j < K; ++j) {
           if (j < variable->length()) {
@@ -519,13 +519,13 @@ namespace Sass {
   Statement* Expand::operator()(Extension* e)
   {
     To_String to_string(&ctx);
-    Selector_List* extender = static_cast<Selector_List*>(selector());
+    Selector_List* extender = dynamic_cast<Selector_List*>(selector());
     if (!extender) return 0;
     selector_stack.push_back(0);
     // extender->remove_parent_selectors();
 
-    Selector_List* selector_list = static_cast<Selector_List*>(e->selector());
-    Selector_List* contextualized = static_cast<Selector_List*>(selector_list->perform(&eval));
+    Selector_List* selector_list = dynamic_cast<Selector_List*>(e->selector()->perform(&eval));
+    Selector_List* contextualized = dynamic_cast<Selector_List*>(selector_list->perform(&eval));
     // contextualized->remove_parent_selectors();
     for (auto complex_sel : contextualized->elements()) {
       Complex_Selector* c = complex_sel;
@@ -573,11 +573,11 @@ namespace Sass {
     if (!env->has(full_name)) {
       error("no mixin named " + c->name(), c->pstate(), backtrace());
     }
-    Definition* def = static_cast<Definition*>((*env)[full_name]);
+    Definition* def = dynamic_cast<Definition*>((*env)[full_name]);
     Block* body = def->block();
     Parameters* params = def->parameters();
 
-    Arguments* args = static_cast<Arguments*>(c->arguments()
+    Arguments* args = dynamic_cast<Arguments*>(c->arguments()
                                                ->perform(&eval));
     Backtrace new_bt(backtrace(), c->pstate(), ", in mixin `" + c->name() + "`");
     backtrace_stack.push_back(&new_bt);

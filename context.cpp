@@ -133,6 +133,10 @@ namespace Sass {
 
     emitter.set_filename(resolve_relative_path(output_path, source_map_file, cwd));
 
+    Number_Ptr num_ptr(new Number (ParserState(""), 2, "px"));
+    cerr << num_ptr->value();
+
+
     // register built-in functions on env
     register_built_in_functions(*this, &global);
 

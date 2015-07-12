@@ -1342,11 +1342,11 @@ namespace Sass {
       value->is_delayed(false);
       // make sure wrapped lists and division expressions are non-delayed within parentheses
       if (value->concrete_type() == Expression::LIST) {
-        List* l = static_cast<List*>(value);
+        List* l = dynamic_cast<List*>(value);
         if (!l->empty()) (*l)[0]->is_delayed(false);
       } else if (typeid(*value) == typeid(Binary_Expression)) {
-        Binary_Expression* b = static_cast<Binary_Expression*>(value);
-        Binary_Expression* lhs = static_cast<Binary_Expression*>(b->left());
+        Binary_Expression* b = dynamic_cast<Binary_Expression*>(value);
+        Binary_Expression* lhs = dynamic_cast<Binary_Expression*>(b->left());
         if (lhs && lhs->type() == Sass_OP::DIV) lhs->is_delayed(false);
       }
       return value;
@@ -1830,7 +1830,7 @@ namespace Sass {
     Expression* list = parse_list();
     list->is_delayed(false);
     if (list->concrete_type() == Expression::LIST) {
-      List* l = static_cast<List*>(list);
+      List* l = dynamic_cast<List*>(list);
       for (size_t i = 0, L = l->length(); i < L; ++i) {
         (*l)[i]->is_delayed(false);
       }
@@ -2079,7 +2079,7 @@ namespace Sass {
     List* value = new (ctx.mem) List(declaration->value()->pstate(), 1);
 
     if (declaration->value()->concrete_type() == Expression::LIST) {
-        value = static_cast<List*>(declaration->value());
+        value = dynamic_cast<List*>(declaration->value());
     }
     else *value << declaration->value();
 
@@ -2379,7 +2379,7 @@ namespace Sass {
   {
     for (size_t i = 0, S = operands.size(); i < S; ++i) {
       base = new (ctx.mem) Binary_Expression(pstate, op, base, operands[i]);
-      Binary_Expression* b = static_cast<Binary_Expression*>(base);
+      Binary_Expression* b = dynamic_cast<Binary_Expression*>(base);
       if (op == Sass_OP::DIV && b->left()->is_delayed() && b->right()->is_delayed()) {
         base->is_delayed(true);
       }
@@ -2395,7 +2395,7 @@ namespace Sass {
   {
     for (size_t i = 0, S = operands.size(); i < S; ++i) {
       base = new (ctx.mem) Binary_Expression(base->pstate(), ops[i], base, operands[i]);
-      Binary_Expression* b = static_cast<Binary_Expression*>(base);
+      Binary_Expression* b = dynamic_cast<Binary_Expression*>(base);
       if (ops[i] == Sass_OP::DIV && b->left()->is_delayed() && b->right()->is_delayed()) {
         base->is_delayed(true);
       }

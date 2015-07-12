@@ -18,7 +18,7 @@ namespace Sass {
 
     void Remove_Placeholders::operator()(Ruleset* r) {
         // Create a new selector group without placeholders
-        Selector_List* sl = static_cast<Selector_List*>(r->selector());
+        Selector_List* sl = dynamic_cast<Selector_List*>(r->selector());
 
         if (sl) {
             Selector_List* new_sl = new (ctx.mem) Selector_List(sl->pstate());

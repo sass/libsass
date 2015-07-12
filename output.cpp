@@ -147,9 +147,9 @@ namespace Sass {
         bool bPrintExpression = true;
         // Check print conditions
         if (typeid(*stm) == typeid(Declaration)) {
-          Declaration* dec = static_cast<Declaration*>(stm);
+          Declaration* dec = dynamic_cast<Declaration*>(stm);
           if (dec->value()->concrete_type() == Expression::STRING) {
-            String_Constant* valConst = static_cast<String_Constant*>(dec->value());
+            String_Constant* valConst = dynamic_cast<String_Constant*>(dec->value());
             string val(valConst->value());
             if (auto qstr = dynamic_cast<String_Quoted*>(valConst)) {
               if (!qstr->quote_mark() && val.empty()) {
@@ -158,7 +158,7 @@ namespace Sass {
             }
           }
           else if (dec->value()->concrete_type() == Expression::LIST) {
-            List* list = static_cast<List*>(dec->value());
+            List* list = dynamic_cast<List*>(dec->value());
             bool all_invisible = true;
             for (size_t list_i = 0, list_L = list->length(); list_i < list_L; ++list_i) {
               Expression* item = (*list)[list_i];

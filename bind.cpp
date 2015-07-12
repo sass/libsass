@@ -100,9 +100,9 @@ namespace Sass {
           // expand keyword arguments into their parameters
           List* arglist = new (ctx.mem) List(p->pstate(), 0, SASS_COMMA, true);
           env->local_frame()[p->name()] = arglist;
-          Map* argmap = static_cast<Map*>(a->value());
+          Map* argmap = dynamic_cast<Map*>(a->value());
           for (auto key : argmap->keys()) {
-            string name = unquote(static_cast<String_Constant*>(key)->value());
+            string name = unquote(dynamic_cast<String_Constant*>(key)->value());
             (*arglist) << new (ctx.mem) Argument(key->pstate(),
                                                  argmap->at(key),
                                                  name,
