@@ -6,8 +6,13 @@
 
 #include <cstdlib>
 #include <cstring>
+#include "ast.hpp"
 #include "util.hpp"
+#include "eval.hpp"
+#include "values.hpp"
 #include "sass_values.h"
+#include "position.hpp"
+#include "memory_manager.hpp"
 
 extern "C" {
   using namespace std;
@@ -156,7 +161,7 @@ extern "C" {
 
   union Sass_Value* ADDCALL sass_make_boolean(bool val)
   {
-    Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
+    union Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
     if (v == 0) return 0;
     v->boolean.tag = SASS_BOOLEAN;
     v->boolean.value = val;
@@ -165,7 +170,7 @@ extern "C" {
 
   union Sass_Value* ADDCALL sass_make_number(double val, const char* unit)
   {
-    Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
+    union Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
     if (v == 0) return 0;
     v->number.tag = SASS_NUMBER;
     v->number.value = val;
@@ -176,7 +181,7 @@ extern "C" {
 
   union Sass_Value* ADDCALL sass_make_color(double r, double g, double b, double a)
   {
-    Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
+    union Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
     if (v == 0) return 0;
     v->color.tag = SASS_COLOR;
     v->color.r = r;
@@ -188,7 +193,7 @@ extern "C" {
 
   union Sass_Value* ADDCALL sass_make_string(const char* val)
   {
-    Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
+    union Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
     if (v == 0) return 0;
     v->string.quoted = false;
     v->string.tag = SASS_STRING;
@@ -199,7 +204,7 @@ extern "C" {
 
   union Sass_Value* ADDCALL sass_make_qstring(const char* val)
   {
-    Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
+    union Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
     if (v == 0) return 0;
     v->string.quoted = true;
     v->string.tag = SASS_STRING;
@@ -210,7 +215,7 @@ extern "C" {
 
   union Sass_Value* ADDCALL sass_make_list(size_t len, enum Sass_Separator sep)
   {
-    Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
+    union Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
     if (v == 0) return 0;
     v->list.tag = SASS_LIST;
     v->list.length = len;
@@ -222,7 +227,7 @@ extern "C" {
 
   union Sass_Value* ADDCALL sass_make_map(size_t len)
   {
-    Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
+    union Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
     if (v == 0) return 0;
     v->map.tag = SASS_MAP;
     v->map.length = len;
@@ -233,7 +238,7 @@ extern "C" {
 
   union Sass_Value* ADDCALL sass_make_null(void)
   {
-    Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
+    union Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
     if (v == 0) return 0;
     v->null.tag = SASS_NULL;
     return v;
@@ -241,7 +246,7 @@ extern "C" {
 
   union Sass_Value* ADDCALL sass_make_error(const char* msg)
   {
-    Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
+    union Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
     if (v == 0) return 0;
     v->error.tag = SASS_ERROR;
     v->error.message = msg ? sass_strdup(msg) : 0;
@@ -251,7 +256,7 @@ extern "C" {
 
   union Sass_Value* ADDCALL sass_make_warning(const char* msg)
   {
-    Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
+    union Sass_Value* v = (Sass_Value*) calloc(1, sizeof(Sass_Value));
     if (v == 0) return 0;
     v->warning.tag = SASS_WARNING;
     v->warning.message = msg ? sass_strdup(msg) : 0;
@@ -349,6 +354,60 @@ extern "C" {
 
     return 0;
 
+  }
+
+  union Sass_Value* ADDCALL sass_value_stringify (const union Sass_Value* v, bool compressed, int precision)
+  {
+    Memory_Manager<AST_Node> mem;
+    Value* val = sass_value_to_ast_node(mem, v);
+    string str(val->to_string(compressed, precision));
+    return sass_make_qstring(str.c_str());
+  }
+
+  union Sass_Value* ADDCALL sass_value_op (enum Sass_OP op, const union Sass_Value* a, const union Sass_Value* b)
+  {
+    try {
+      Sass::Expression* rv = 0;
+      Memory_Manager<AST_Node> mem;
+      Value* lhs = sass_value_to_ast_node(mem, a);
+      Value* rhs = sass_value_to_ast_node(mem, b);
+
+      // see if it's a relational expression
+      switch(op) {
+        case Sass_OP::EQ:  return sass_make_boolean(Eval::eq(lhs, rhs));
+        case Sass_OP::NEQ: return sass_make_boolean(!Eval::eq(lhs, rhs));
+        case Sass_OP::GT:  return sass_make_boolean(!Eval::lt(lhs, rhs) && !Eval::eq(lhs, rhs));
+        case Sass_OP::GTE: return sass_make_boolean(!Eval::lt(lhs, rhs));
+        case Sass_OP::LT:  return sass_make_boolean(Eval::lt(lhs, rhs));
+        case Sass_OP::LTE: return sass_make_boolean(Eval::lt(lhs, rhs) || Eval::eq(lhs, rhs));
+        default:           break;
+      }
+
+      if (sass_value_is_number(a) && sass_value_is_number(b)) {
+        rv = Eval::op_numbers(mem, op, *dynamic_cast<const Number*>(lhs), *dynamic_cast<const Number*>(rhs));
+      }
+      else if (sass_value_is_number(a) && sass_value_is_color(a)) {
+        rv = Eval::op_number_color(mem, op, *dynamic_cast<const Number*>(lhs), *dynamic_cast<const Color*>(rhs));
+      }
+      else if (sass_value_is_color(a) && sass_value_is_number(b)) {
+        rv = Eval::op_color_number(mem, op, *dynamic_cast<const Color*>(lhs), *dynamic_cast<const Number*>(rhs));
+      }
+      else if (sass_value_is_color(a) && sass_value_is_color(b)) {
+        rv = Eval::op_colors(mem, op, *dynamic_cast<const Color*>(lhs), *dynamic_cast<const Color*>(rhs));
+      }
+      else /* convert other stuff to string and apply operation */ {
+        rv = Eval::op_strings(mem, op, *dynamic_cast<Value*>(lhs), *dynamic_cast<Value*>(rhs));
+      }
+
+      if (!rv) return sass_make_error("invalid return value");
+
+      return ast_node_to_sass_value(rv);
+
+    }
+    catch (Sass_Err&) { throw; }
+    // pass errors to generic error handler
+    catch (...) { }
+    return sass_make_error("error");
   }
 
 }

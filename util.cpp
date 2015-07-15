@@ -527,7 +527,7 @@ namespace Sass {
 
       Block* b = r->block();
 
-      bool hasSelectors = static_cast<Selector_List*>(r->selector())->length() > 0;
+      bool hasSelectors = dynamic_cast<Selector_List*>(r->selector())->length() > 0;
 
       if (!hasSelectors) {
         return false;

@@ -30,7 +30,11 @@ namespace Sass {
     Expression* operator()(Selector_List*);
     Expression* operator()(Complex_Selector*);
     Expression* operator()(Compound_Selector*);
-    Expression* operator()(Parent_Selector*);
+    //Expression* operator()(Parent_Selector*);
+    Expression* operator()(Type_Selector*);
+    Expression* operator()(Selector_Qualifier*);
+
+    // Expression* operator()(Binary_Expression*);
 
     template <typename U>
     Expression* fallback(U x) { return fallback_impl(x); }

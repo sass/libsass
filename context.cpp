@@ -27,12 +27,13 @@
 #include "listize.hpp"
 #include "extend.hpp"
 #include "remove_placeholders.hpp"
-#include "color_names.hpp"
+#include "color_maps.hpp"
 #include "functions.hpp"
 #include "backtrace.hpp"
 #include "sass2scss.h"
 #include "prelexer.hpp"
 #include "emitter.hpp"
+#include "debugger.hpp"
 
 namespace Sass {
   using namespace Constants;
@@ -40,6 +41,13 @@ namespace Sass {
   using namespace Sass;
   using std::cerr;
   using std::endl;
+
+  void register_function(Context&, Signature sig, Native_Function f, Env* env);
+  void register_function(Context&, Signature sig, Native_Function f, size_t arity, Env* env);
+  void register_overload_stub(Context&, string name, Env* env);
+  void register_built_in_functions(Context&, Env* env);
+  void register_c_functions(Context&, Env* env, Sass_Function_List);
+  void register_c_function(Context&, Env* env, Sass_Function_Entry);
 
   Sass_Queued::Sass_Queued(const string& load_path, const string& abs_path, const char* source)
   {
@@ -53,6 +61,7 @@ namespace Sass {
 
   Context::Context(Context::Data initializers)
   : // Output(this),
+    global(),
     head_imports(0),
     mem(Memory_Manager<AST_Node>()),
     c_options               (initializers.c_options()),
@@ -80,8 +89,6 @@ namespace Sass {
     source_map_contents     (initializers.source_map_contents()),
     omit_source_map_url     (initializers.omit_source_map_url()),
     is_indented_syntax_src  (initializers.is_indented_syntax_src()),
-    names_to_colors         (map<string, Color*>()),
-    colors_to_names         (map<int, string>()),
     precision               (initializers.precision()),
     plugins(),
     subset_map              (Subset_Map<string, pair<Complex_Selector*, Compound_Selector*> >())
@@ -99,8 +106,6 @@ namespace Sass {
     // collect_include_paths(initializers.include_paths_array());
     collect_plugin_paths(initializers.plugin_paths_c_str());
     // collect_plugin_paths(initializers.plugin_paths_array());
-
-    setup_color_map();
 
     for (size_t i = 0, S = plugin_paths.size(); i < S; ++i) {
       plugins.load_plugins(plugin_paths[i]);
@@ -127,6 +132,13 @@ namespace Sass {
     }
 
     emitter.set_filename(resolve_relative_path(output_path, source_map_file, cwd));
+
+    Number_Ptr num_ptr(new Number (ParserState(""), 2, "px"));
+    cerr << num_ptr->value();
+
+
+    // register built-in functions on env
+    register_built_in_functions(*this, &global);
 
   }
 
@@ -159,28 +171,6 @@ namespace Sass {
     for (size_t m = 0; m < import_stack.size(); ++m) sass_delete_import(import_stack[m]);
     // clear inner structures (vectors) and input source
     sources.clear(); import_stack.clear(); source_c_str = 0;
-  }
-
-  void Context::setup_color_map()
-  {
-    size_t i = 0;
-    while (color_names[i]) {
-      string name(color_names[i]);
-      Color* value = new (mem) Color(ParserState("[COLOR TABLE]"),
-                                     color_values[i*4],
-                                     color_values[i*4+1],
-                                     color_values[i*4+2],
-                                     color_values[i*4+3]);
-      names_to_colors[name] = value;
-      // only map fully opaque colors
-      if (color_values[i*4+3] >= 1) {
-        int numval = static_cast<int>(color_values[i*4])*0x10000;
-        numval += static_cast<int>(color_values[i*4+1])*0x100;
-        numval += static_cast<int>(color_values[i*4+2]);
-        colors_to_names[numval] = name;
-      }
-      ++i;
-    }
   }
 
   void Context::collect_include_paths(const char* paths_str)
@@ -292,13 +282,6 @@ namespace Sass {
     return add_file(path);
   }
 
-  void register_function(Context&, Signature sig, Native_Function f, Env* env);
-  void register_function(Context&, Signature sig, Native_Function f, size_t arity, Env* env);
-  void register_overload_stub(Context&, string name, Env* env);
-  void register_built_in_functions(Context&, Env* env);
-  void register_c_functions(Context&, Env* env, Sass_Function_List);
-  void register_c_function(Context&, Env* env, Sass_Function_Entry);
-
   char* Context::compile_block(Block* root)
   {
     if (!root) return 0;
@@ -314,6 +297,11 @@ namespace Sass {
 
   Block* Context::parse_file()
   {
+
+    // register custom functions (defined via C-API)
+    for (size_t i = 0, S = c_functions.size(); i < S; ++i)
+    { register_c_function(*this, &global, c_functions[i]); }
+
     Block* root = 0;
     for (size_t i = 0; i < queue.size(); ++i) {
       Sass_Import_Entry import = sass_make_import(
@@ -337,12 +325,6 @@ namespace Sass {
     }
     if (root == 0) return 0;
 
-    Env global; // create root environment
-    // register built-in functions on env
-    register_built_in_functions(*this, &global);
-    // register custom functions (defined via C-API)
-    for (size_t i = 0, S = c_functions.size(); i < S; ++i)
-    { register_c_function(*this, &global, c_functions[i]); }
     // create initial backtrace entry
     Backtrace backtrace(0, ParserState("", 0), "");
     // create crtp visitor objects
@@ -579,6 +561,5 @@ namespace Sass {
     def->environment(env);
     (*env)[def->name() + "[f]"] = def;
   }
-
 
 }

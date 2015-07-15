@@ -53,9 +53,9 @@ namespace Sass {
       Statement* s = (*r->block())[i];
       if (s->statement_type() != Statement::BUBBLE) directive_exists = true;
       else {
-        s = static_cast<Bubble*>(s)->node();
+        s = dynamic_cast<Bubble*>(s)->node();
         if (s->statement_type() != Statement::DIRECTIVE) directive_exists = false;
-        else directive_exists = (static_cast<At_Rule*>(s)->keyword() == rr->keyword());
+        else directive_exists = (dynamic_cast<At_Rule*>(s)->keyword() == rr->keyword());
       }
 
     }
@@ -63,7 +63,7 @@ namespace Sass {
     Block* result = new (ctx.mem) Block(rr->pstate());
     if (!(directive_exists || rr->is_keyframes()))
     {
-      At_Rule* empty_node = static_cast<At_Rule*>(rr);
+      At_Rule* empty_node = dynamic_cast<At_Rule*>(rr);
       empty_node->block(new (ctx.mem) Block(rr->block() ? rr->block()->pstate() : rr->pstate()));
       *result << empty_node;
     }
@@ -206,7 +206,7 @@ namespace Sass {
   Statement* Cssize::bubble(At_Rule* m)
   {
     Block* bb = new (ctx.mem) Block(this->parent()->pstate());
-    Has_Block* new_rule = static_cast<Has_Block*>(shallow_copy(this->parent()));
+    Has_Block* new_rule = dynamic_cast<Has_Block*>(shallow_copy(this->parent()));
     new_rule->block(bb);
     new_rule->tabs(this->parent()->tabs());
 
@@ -230,7 +230,7 @@ namespace Sass {
   Statement* Cssize::bubble(At_Root_Block* m)
   {
     Block* bb = new (ctx.mem) Block(this->parent()->pstate());
-    Has_Block* new_rule = static_cast<Has_Block*>(shallow_copy(this->parent()));
+    Has_Block* new_rule = dynamic_cast<Has_Block*>(shallow_copy(this->parent()));
     new_rule->block(bb);
     new_rule->tabs(this->parent()->tabs());
 
@@ -249,7 +249,7 @@ namespace Sass {
 
   Statement* Cssize::bubble(Supports_Block* m)
   {
-    Ruleset* parent = static_cast<Ruleset*>(shallow_copy(this->parent()));
+    Ruleset* parent = dynamic_cast<Ruleset*>(shallow_copy(this->parent()));
 
     Block* bb = new (ctx.mem) Block(parent->block()->pstate());
     Ruleset* new_rule = new (ctx.mem) Ruleset(parent->pstate(),
@@ -275,7 +275,7 @@ namespace Sass {
 
   Statement* Cssize::bubble(Media_Block* m)
   {
-    Ruleset* parent = static_cast<Ruleset*>(shallow_copy(this->parent()));
+    Ruleset* parent = dynamic_cast<Ruleset*>(shallow_copy(this->parent()));
 
     Block* bb = new (ctx.mem) Block(parent->block()->pstate());
     Ruleset* new_rule = new (ctx.mem) Ruleset(parent->pstate(),
@@ -352,19 +352,19 @@ namespace Sass {
     switch (s->statement_type())
     {
       case Statement::RULESET:
-        return new (ctx.mem) Ruleset(*static_cast<Ruleset*>(s));
+        return new (ctx.mem) Ruleset(*dynamic_cast<Ruleset*>(s));
       case Statement::MEDIA:
-        return new (ctx.mem) Media_Block(*static_cast<Media_Block*>(s));
+        return new (ctx.mem) Media_Block(*dynamic_cast<Media_Block*>(s));
       case Statement::BUBBLE:
-        return new (ctx.mem) Bubble(*static_cast<Bubble*>(s));
+        return new (ctx.mem) Bubble(*dynamic_cast<Bubble*>(s));
       case Statement::DIRECTIVE:
-        return new (ctx.mem) At_Rule(*static_cast<At_Rule*>(s));
+        return new (ctx.mem) At_Rule(*dynamic_cast<At_Rule*>(s));
       case Statement::SUPPORTS:
-        return new (ctx.mem) Supports_Block(*static_cast<Supports_Block*>(s));
+        return new (ctx.mem) Supports_Block(*dynamic_cast<Supports_Block*>(s));
       case Statement::ATROOT:
-        return new (ctx.mem) At_Root_Block(*static_cast<At_Root_Block*>(s));
+        return new (ctx.mem) At_Root_Block(*dynamic_cast<At_Root_Block*>(s));
       case Statement::KEYFRAMERULE:
-        return new (ctx.mem) Keyframe_Rule(*static_cast<Keyframe_Rule*>(s));
+        return new (ctx.mem) Keyframe_Rule(*dynamic_cast<Keyframe_Rule*>(s));
       case Statement::NONE:
       default:
         error("unknown internal error; please contact the LibSass maintainers", s->pstate(), backtrace);
@@ -391,10 +391,10 @@ namespace Sass {
           *previous_parent->block() += slice;
         }
         else {
-          previous_parent = static_cast<Has_Block*>(shallow_copy(parent));
+          previous_parent = dynamic_cast<Has_Block*>(shallow_copy(parent));
           previous_parent->tabs(parent->tabs());
 
-          Has_Block* new_parent = static_cast<Has_Block*>(shallow_copy(parent));
+          Has_Block* new_parent = dynamic_cast<Has_Block*>(shallow_copy(parent));
           new_parent->block(slice);
           new_parent->tabs(parent->tabs());
 
@@ -410,20 +410,20 @@ namespace Sass {
       for (size_t j = 0, K = slice->length(); j < K; ++j)
       {
         Statement* ss = 0;
-        Bubble* b = static_cast<Bubble*>((*slice)[j]);
+        Bubble* b = dynamic_cast<Bubble*>((*slice)[j]);
 
         if (!parent ||
             parent->statement_type() != Statement::MEDIA ||
             b->node()->statement_type() != Statement::MEDIA ||
-            static_cast<Media_Block*>(b->node())->media_queries() == static_cast<Media_Block*>(parent)->media_queries())
+            dynamic_cast<Media_Block*>(b->node())->media_queries() == dynamic_cast<Media_Block*>(parent)->media_queries())
         {
           ss = b->node();
         }
         else
         {
-          List* mq = merge_media_queries(static_cast<Media_Block*>(b->node()), static_cast<Media_Block*>(parent));
+          List* mq = merge_media_queries(dynamic_cast<Media_Block*>(b->node()), dynamic_cast<Media_Block*>(parent));
           if (!mq->length()) continue;
-          static_cast<Media_Block*>(b->node())->media_queries(mq);
+          dynamic_cast<Media_Block*>(b->node())->media_queries(mq);
           ss = b->node();
         }
 
@@ -456,7 +456,7 @@ namespace Sass {
 
   Statement* Cssize::fallback_impl(AST_Node* n)
   {
-    return static_cast<Statement*>(n);
+    return dynamic_cast<Statement*>(n);
   }
 
   void Cssize::append_block(Block* b)
@@ -480,12 +480,12 @@ namespace Sass {
   {
     List* qq = new (ctx.mem) List(m1->media_queries()->pstate(),
                                   m1->media_queries()->length(),
-                                  List::COMMA);
+                                  SASS_COMMA);
 
     for (size_t i = 0, L = m1->media_queries()->length(); i < L; i++) {
       for (size_t j = 0, K = m2->media_queries()->length(); j < K; j++) {
-        Media_Query* mq1 = static_cast<Media_Query*>((*m1->media_queries())[i]);
-        Media_Query* mq2 = static_cast<Media_Query*>((*m2->media_queries())[j]);
+        Media_Query* mq1 = dynamic_cast<Media_Query*>((*m1->media_queries())[i]);
+        Media_Query* mq2 = dynamic_cast<Media_Query*>((*m2->media_queries())[j]);
         Media_Query* mq = merge_media_query(mq1, mq2);
 
         if (mq) *qq << mq;

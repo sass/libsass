@@ -36,7 +36,13 @@
     <ClCompile Include="..\context.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\environment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\error_handling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\memory_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\eval.cpp">
@@ -111,6 +117,9 @@
     <ClCompile Include="..\to_string.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\to_value.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\units.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -118,6 +127,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\values.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\cencode.c">
@@ -272,6 +284,9 @@
     <ClInclude Include="..\to_c.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\to_value.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\to_string.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -288,6 +303,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\util.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\values.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\json.hpp">

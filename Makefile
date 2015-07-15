@@ -160,7 +160,9 @@ SOURCES = \
 	context.cpp \
 	cssize.cpp \
 	listize.cpp \
+	environment.cpp \
 	error_handling.cpp \
+	memory_manager.cpp \
 	eval.cpp \
 	expand.cpp \
 	extend.cpp \
@@ -187,8 +189,10 @@ SOURCES = \
 	source_map.cpp \
 	to_c.cpp \
 	to_string.cpp \
+	to_value.cpp \
 	units.cpp \
 	utf8_string.cpp \
+	values.cpp \
 	util.cpp
 
 CSOURCES = cencode.c

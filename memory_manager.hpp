@@ -2,7 +2,11 @@
 #define SASS_MEMORY_MANAGER_H
 
 #include <vector>
+#include <memory>
+#include <typeinfo>
 #include <iostream>
+#include <stdio.h>
+#include <string.h>
 
 namespace Sass {
   using namespace std;
@@ -18,39 +22,29 @@ namespace Sass {
     vector<T*> nodes;
 
   public:
-    Memory_Manager(size_t size = 0) : nodes(vector<T*>())
-    { nodes.reserve(size); }
+    Memory_Manager(size_t size = 0);
+    ~Memory_Manager();
 
-    ~Memory_Manager()
-    {
-      for (size_t i = 0, S = nodes.size(); i < S; ++i) {
-        // cout << "deleting " << typeid(*nodes[i]).name() << endl;
-        delete nodes[i];
-      }
-    }
+    bool has(T* np);
+    void remove(T* np);
+    void destroy(T* np);
+    T* operator()(T* np);
 
-    T* operator()(T* np)
-    {
-      nodes.push_back(np);
-      // cout << "registering " << typeid(*np).name() << endl;
-      return np;
-    }
-
-    void remove(T* np)
-    {
-      nodes.erase(find(nodes.begin(), nodes.end(), np));
-    }
   };
 }
 
 template <typename T>
-inline void* operator new(size_t size, Sass::Memory_Manager<T>& mem_mgr)
-{ return mem_mgr(static_cast<T*>(operator new(size))); }
+inline void* operator new(size_t size, Sass::Memory_Manager<T>& mem)
+{
+  T* val = static_cast<T*>(operator new(size));
+  memset( (void*) val, 0, size );
+  return mem(val);
+}
 
 template <typename T>
-inline void operator delete(void *np, Sass::Memory_Manager<T>& mem_mgr)
+inline void operator delete(void *np, Sass::Memory_Manager<T>& mem)
 {
-  mem_mgr.remove(reinterpret_cast<T*>(np));
+  mem.remove(reinterpret_cast<T*>(np));
   operator delete(np);
 }
 

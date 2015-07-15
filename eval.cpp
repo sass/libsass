@@ -10,18 +10,22 @@
 #include "ast.hpp"
 #include "bind.hpp"
 #include "util.hpp"
+#include "to_c.hpp"
 #include "to_string.hpp"
 #include "inspect.hpp"
 #include "environment.hpp"
+#include "color_maps.hpp"
 #include "position.hpp"
 #include "sass_values.h"
-#include "to_c.hpp"
+#include "to_value.hpp"
 #include "context.hpp"
 #include "backtrace.hpp"
 #include "lexer.hpp"
 #include "prelexer.hpp"
 #include "parser.hpp"
 #include "expand.hpp"
+#include "sass_values.h"
+#include "debugger.hpp"
 
 namespace Sass {
   using namespace std;
@@ -32,7 +36,7 @@ namespace Sass {
   inline double div(double x, double y) { return x / y; } // x/0 checked by caller
   inline double mod(double x, double y) { return abs(fmod(x, y)); } // x/0 checked by caller
   typedef double (*bop)(double, double);
-  bop ops[Binary_Expression::NUM_OPS] = {
+  bop ops[Sass_OP::NUM_OPS] = {
     0, 0, // and, or
     0, 0, 0, 0, 0, 0, // eq, neq, gt, gte, lt, lte
     add, sub, mul, div, mod
@@ -65,13 +69,21 @@ namespace Sass {
     return exp.backtrace();
   }
 
+  Memory_Manager<AST_Node>& Eval::mem() const
+  {
+    return exp.ovmem ? exp.ovmem->mem : ctx.mem;
+  }
+
   Expression* Eval::operator()(Block* b)
   {
     Expression* val = 0;
+    // cerr << "in eval block\n";
+    // debug_ast(b);
     for (size_t i = 0, L = b->length(); i < L; ++i) {
       val = (*b)[i]->perform(this);
       if (val) return val;
     }
+    // cerr << "out eval block\n";
     return val;
   }
 
@@ -84,15 +96,21 @@ namespace Sass {
         if (env->has_global(var)) {
           Expression* e = dynamic_cast<Expression*>(env->get_global(var));
           if (!e || e->concrete_type() == Expression::NULL_VAL) {
+            Env* oldmem = exp.ovmem; exp.ovmem = 0;
             env->set_global(var, a->value()->perform(this));
+            exp.ovmem = oldmem;
           }
         }
         else {
+          Env* oldmem = exp.ovmem; exp.ovmem = 0;
           env->set_global(var, a->value()->perform(this));
+          exp.ovmem = oldmem;
         }
       }
       else {
+        Env* oldmem = exp.ovmem; exp.ovmem = 0;
         env->set_global(var, a->value()->perform(this));
+        exp.ovmem = oldmem;
       }
     }
     else if (a->is_default()) {
@@ -103,7 +121,9 @@ namespace Sass {
             if (AST_Node* node = cur->get_local(var)) {
               Expression* e = dynamic_cast<Expression*>(node);
               if (!e || e->concrete_type() == Expression::NULL_VAL) {
+                Env* oldmem = exp.ovmem; exp.ovmem = env;
                 cur->set_local(var, a->value()->perform(this));
+                exp.ovmem = oldmem;
               }
             }
             else {
@@ -119,19 +139,27 @@ namespace Sass {
         if (AST_Node* node = env->get_global(var)) {
           Expression* e = dynamic_cast<Expression*>(node);
           if (!e || e->concrete_type() == Expression::NULL_VAL) {
+            Env* oldmem = exp.ovmem; exp.ovmem = 0;
             env->set_global(var, a->value()->perform(this));
+            exp.ovmem = oldmem;
           }
         }
       }
       else if (env->is_lexical()) {
+        Env* oldmem = exp.ovmem; exp.ovmem = env;
         env->set_local(var, a->value()->perform(this));
+        exp.ovmem = oldmem;
       }
       else {
+        Env* oldmem = exp.ovmem; exp.ovmem = env;
         env->set_local(var, a->value()->perform(this));
+        exp.ovmem = oldmem;
       }
     }
     else {
+      Env* oldmem = exp.ovmem; exp.ovmem = env->lexical_env(var);
       env->set_lexical(var, a->value()->perform(this));
+      exp.ovmem = oldmem;
     }
     return 0;
   }
@@ -142,7 +170,7 @@ namespace Sass {
     Env env(exp.environment());
     exp.env_stack.push_back(&env);
     if (*i->predicate()->perform(this)) {
-      rv = i->consequent()->perform(this);
+      rv = i->block()->perform(this);
     }
     else {
       Block* alt = i->alternative();
@@ -165,8 +193,8 @@ namespace Sass {
     if (high->concrete_type() != Expression::NUMBER) {
       error("upper bound of `@for` directive must be numeric", high->pstate());
     }
-    Number* sass_start = static_cast<Number*>(low);
-    Number* sass_end = static_cast<Number*>(high);
+    Number* sass_start = dynamic_cast<Number*>(low);
+    Number* sass_end = dynamic_cast<Number*>(high);
     // check if units are valid for sequence
     if (sass_start->unit() != sass_end->unit()) {
       stringstream msg; msg << "Incompatible units: '"
@@ -180,8 +208,10 @@ namespace Sass {
     Env* env = exp.environment();
     Number* it = new (env->mem) Number(low->pstate(), start, sass_end->unit());
     AST_Node* old_var = env->has_local(variable) ? env->get_local(variable) : 0;
-    env->set_local(variable, it);
     Block* body = f->block();
+    Env inner(env);
+    env->set_local(variable, it);
+    exp.env_stack.push_back(&inner);
     Expression* val = 0;
     if (start < end) {
       if (f->is_inclusive()) ++end;
@@ -204,6 +234,7 @@ namespace Sass {
         if (val) break;
       }
     }
+    exp.env_stack.pop_back();
     // restore original environment
     if (!old_var) env->del_local(variable);
     else env->set_local(variable, old_var);
@@ -220,14 +251,14 @@ namespace Sass {
     List* list = 0;
     Map* map = 0;
     if (expr->concrete_type() == Expression::MAP) {
-      map = static_cast<Map*>(expr);
+      map = dynamic_cast<Map*>(expr);
     }
     else if (expr->concrete_type() != Expression::LIST) {
-      list = new (ctx.mem) List(expr->pstate(), 1, List::COMMA);
+      list = new (mem()) List(expr->pstate(), 1, SASS_COMMA);
       *list << expr;
     }
     else {
-      list = static_cast<List*>(expr);
+      list = dynamic_cast<List*>(expr);
     }
     // remember variables and then reset them
     vector<AST_Node*> old_vars(variables.size());
@@ -243,7 +274,7 @@ namespace Sass {
         Expression* value = map->at(key);
 
         if (variables.size() == 1) {
-          List* variable = new (ctx.mem) List(map->pstate(), 2, List::SPACE);
+          List* variable = new (ctx.mem) List(map->pstate(), 2, SASS_SPACE);
           *variable << key;
           *variable << value;
           env->set_local(variables[0], variable);
@@ -260,18 +291,18 @@ namespace Sass {
       for (size_t i = 0, L = list->length(); i < L; ++i) {
         List* variable = 0;
         if ((*list)[i]->concrete_type() != Expression::LIST || variables.size() == 1) {
-          variable = new (ctx.mem) List((*list)[i]->pstate(), 1, List::COMMA);
+          variable = new (mem()) List((*list)[i]->pstate(), 1, SASS_COMMA);
           *variable << (*list)[i];
         }
         else {
-          variable = static_cast<List*>((*list)[i]);
+          variable = dynamic_cast<List*>((*list)[i]);
         }
         for (size_t j = 0, K = variables.size(); j < K; ++j) {
           if (j < variable->length()) {
             env->set_local(variables[j], (*variable)[j]);
           }
           else {
-            env->set_local(variables[j], new (ctx.mem) Null(expr->pstate()));
+            env->set_local(variables[j], new (mem()) Null(expr->pstate()));
           }
           val = body->perform(this);
           if (val) break;
@@ -312,7 +343,7 @@ namespace Sass {
     // try to use generic function
     if (env->has("@warn[f]")) {
 
-      Definition* def = static_cast<Definition*>((*env)["@warn[f]"]);
+      Definition* def = dynamic_cast<Definition*>((*env)["@warn[f]"]);
       // Block*          body   = def->block();
       // Native_Function func   = def->native_function();
       Sass_Function_Entry c_function = def->c_function();
@@ -321,7 +352,7 @@ namespace Sass {
       To_C to_c;
       union Sass_Value* c_args = sass_make_list(1, SASS_COMMA);
       sass_list_set_value(c_args, 0, message->perform(&to_c));
-      Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
+      union Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
       sass_delete_value(c_args);
       sass_delete_value(c_val);
       return 0;
@@ -345,7 +376,7 @@ namespace Sass {
     // try to use generic function
     if (env->has("@error[f]")) {
 
-      Definition* def = static_cast<Definition*>((*env)["@error[f]"]);
+      Definition* def = dynamic_cast<Definition*>((*env)["@error[f]"]);
       // Block*          body   = def->block();
       // Native_Function func   = def->native_function();
       Sass_Function_Entry c_function = def->c_function();
@@ -354,7 +385,7 @@ namespace Sass {
       To_C to_c;
       union Sass_Value* c_args = sass_make_list(1, SASS_COMMA);
       sass_list_set_value(c_args, 0, message->perform(&to_c));
-      Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
+      union Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
       sass_delete_value(c_args);
       sass_delete_value(c_val);
       return 0;
@@ -375,7 +406,7 @@ namespace Sass {
     // try to use generic function
     if (env->has("@debug[f]")) {
 
-      Definition* def = static_cast<Definition*>((*env)["@debug[f]"]);
+      Definition* def = dynamic_cast<Definition*>((*env)["@debug[f]"]);
       // Block*          body   = def->block();
       // Native_Function func   = def->native_function();
       Sass_Function_Entry c_function = def->c_function();
@@ -384,7 +415,7 @@ namespace Sass {
       To_C to_c;
       union Sass_Value* c_args = sass_make_list(1, SASS_COMMA);
       sass_list_set_value(c_args, 0, message->perform(&to_c));
-      Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
+      union Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
       sass_delete_value(c_args);
       sass_delete_value(c_val);
       return 0;
@@ -401,11 +432,11 @@ namespace Sass {
 
   Expression* Eval::operator()(List* l)
   {
-    if (l->is_expanded()) return l;
-    List* ll = new (ctx.mem) List(l->pstate(),
-                                  l->length(),
-                                  l->separator(),
-                                  l->is_arglist());
+    // if (l->is_expanded()) return l;
+    List* ll = new (mem()) List(l->pstate(),
+                                l->length(),
+                                l->separator(),
+                                l->is_arglist());
     for (size_t i = 0, L = l->length(); i < L; ++i) {
       *ll << (*l)[i]->perform(this);
     }
@@ -415,7 +446,7 @@ namespace Sass {
 
   Expression* Eval::operator()(Map* m)
   {
-    if (m->is_expanded()) return m;
+    // if (m->is_expanded()) return m;
 
     // make sure we're not starting with duplicate keys.
     // the duplicate key state will have been set in the parser phase.
@@ -424,10 +455,13 @@ namespace Sass {
       error("Duplicate key \"" + m->get_duplicate_key()->perform(&to_string) + "\" in map " + m->perform(&to_string) + ".", m->pstate());
     }
 
-    Map* mm = new (ctx.mem) Map(m->pstate(),
+    Map* mm = new (mem()) Map(m->pstate(),
                                   m->length());
+
     for (auto key : m->keys()) {
-      *mm << std::make_pair(key->perform(this), m->at(key)->perform(this));;
+      Expression* ex_key = key->perform(this);
+      Expression* ex_val = m->at(key)->perform(this);
+      *mm << std::make_pair(ex_key, ex_val);
     }
 
     // check the evaluated keys aren't duplicates.
@@ -440,48 +474,45 @@ namespace Sass {
     return mm;
   }
 
-  // -- only need to define two comparisons, and the rest can be implemented in terms of them
-  bool eq(Expression*, Expression*, Context&, Eval*);
-  bool lt(Expression*, Expression*, Context&);
-  // -- arithmetic on the combinations that matter
-  Expression* op_numbers(Context&, Binary_Expression*, Expression*, Expression*);
-  Expression* op_number_color(Context&, Binary_Expression::Type, Expression*, Expression*);
-  Expression* op_color_number(Context&, Binary_Expression::Type, Expression*, Expression*);
-  Expression* op_colors(Context&, Binary_Expression::Type, Expression*, Expression*);
-  Expression* op_strings(Context&, Binary_Expression::Type, Expression*, Expression*);
-
   Expression* Eval::operator()(Binary_Expression* b)
   {
-    Binary_Expression::Type op_type = b->type();
+    enum Sass_OP op_type = b->type();
     // don't eval delayed expressions (the '/' when used as a separator)
-    if (op_type == Binary_Expression::DIV && b->is_delayed()) return b;
+    if (op_type == Sass_OP::DIV && b->is_delayed()) return b;
     b->is_delayed(false);
     // if one of the operands is a '/' then make sure it's evaluated
+
+    if (op_type == Sass_OP::AND) {
+      Expression* lhs = b->left()->perform(this);
+      lhs->is_delayed(false);
+      while (typeid(*lhs) == typeid(Binary_Expression)) lhs = lhs->perform(this);
+      return *lhs ? b->right()->perform(this) : lhs;
+    }
+    else if (op_type == Sass_OP::OR) {
+      Expression* lhs = b->left()->perform(this);
+      lhs->is_delayed(false);
+      while (typeid(*lhs) == typeid(Binary_Expression)) lhs = lhs->perform(this);
+      return *lhs ? lhs : b->right()->perform(this);
+    }
+
+    Env local(environment());
+    auto oldmem = exp.ovmem;
+    exp.ovmem = &local;
     Expression* lhs = b->left()->perform(this);
     lhs->is_delayed(false);
     while (typeid(*lhs) == typeid(Binary_Expression)) lhs = lhs->perform(this);
+    exp.ovmem = oldmem;
 
-    switch (op_type) {
-      case Binary_Expression::AND:
-        return *lhs ? b->right()->perform(this) : lhs;
-        break;
-
-      case Binary_Expression::OR:
-        return *lhs ? lhs : b->right()->perform(this);
-        break;
-
-      default:
-        break;
-    }
     // not a logical connective, so go ahead and eval the rhs
+    exp.ovmem = &local;
     Expression* rhs = b->right()->perform(this);
     // maybe fully evaluate structure
-    if (op_type == Binary_Expression::EQ ||
-        op_type == Binary_Expression::NEQ ||
-        op_type == Binary_Expression::GT ||
-        op_type == Binary_Expression::GTE ||
-        op_type == Binary_Expression::LT ||
-        op_type == Binary_Expression::LTE)
+    if (op_type == Sass_OP::EQ ||
+        op_type == Sass_OP::NEQ ||
+        op_type == Sass_OP::GT ||
+        op_type == Sass_OP::GTE ||
+        op_type == Sass_OP::LT ||
+        op_type == Sass_OP::LTE)
     {
       rhs->is_expanded(false);
       rhs->set_delayed(false);
@@ -492,9 +523,10 @@ namespace Sass {
       // rhs->set_delayed(false);
       // rhs = rhs->perform(this);
     }
+    exp.ovmem = oldmem;
 
     // upgrade string to number if possible (issue #948)
-    if (op_type == Binary_Expression::DIV || op_type == Binary_Expression::MUL) {
+    if (op_type == Sass_OP::DIV || op_type == Sass_OP::MUL) {
       if (String_Constant* str = dynamic_cast<String_Constant*>(rhs)) {
         const char* start = str->value().c_str();
         if (Prelexer::sequence < Prelexer::number >(start) != 0) {
@@ -506,12 +538,12 @@ namespace Sass {
 
     // see if it's a relational expression
     switch(op_type) {
-      case Binary_Expression::EQ:  return new (ctx.mem) Boolean(b->pstate(), eq(lhs, rhs, ctx));
-      case Binary_Expression::NEQ: return new (ctx.mem) Boolean(b->pstate(), !eq(lhs, rhs, ctx));
-      case Binary_Expression::GT:  return new (ctx.mem) Boolean(b->pstate(), !lt(lhs, rhs, ctx) && !eq(lhs, rhs, ctx));
-      case Binary_Expression::GTE: return new (ctx.mem) Boolean(b->pstate(), !lt(lhs, rhs, ctx));
-      case Binary_Expression::LT:  return new (ctx.mem) Boolean(b->pstate(), lt(lhs, rhs, ctx));
-      case Binary_Expression::LTE: return new (ctx.mem) Boolean(b->pstate(), lt(lhs, rhs, ctx) || eq(lhs, rhs, ctx));
+      case Sass_OP::EQ:  return new (mem()) Boolean(b->pstate(), Eval::eq(lhs, rhs));
+      case Sass_OP::NEQ: return new (mem()) Boolean(b->pstate(), !Eval::eq(lhs, rhs));
+      case Sass_OP::GT:  return new (mem()) Boolean(b->pstate(), !Eval::lt(lhs, rhs) && !Eval::eq(lhs, rhs));
+      case Sass_OP::GTE: return new (mem()) Boolean(b->pstate(), !Eval::lt(lhs, rhs));
+      case Sass_OP::LT:  return new (mem()) Boolean(b->pstate(), Eval::lt(lhs, rhs));
+      case Sass_OP::LTE: return new (mem()) Boolean(b->pstate(), Eval::lt(lhs, rhs) || Eval::eq(lhs, rhs));
 
       default:                     break;
     }
@@ -519,20 +551,27 @@ namespace Sass {
     Expression::Concrete_Type l_type = lhs->concrete_type();
     Expression::Concrete_Type r_type = rhs->concrete_type();
 
+    int precision = ctx.precision;
+    bool compressed = ctx.output_style == COMPRESSED;
     if (l_type == Expression::NUMBER && r_type == Expression::NUMBER) {
-      return op_numbers(ctx, b, lhs, rhs);
+      return op_numbers(mem(), b->type(), *dynamic_cast<const Number*>(lhs), *dynamic_cast<const Number*>(rhs), compressed, precision);
     }
     if (l_type == Expression::NUMBER && r_type == Expression::COLOR) {
-      return op_number_color(ctx, op_type, lhs, rhs);
+      return op_number_color(mem(), op_type, *dynamic_cast<const Number*>(lhs), *dynamic_cast<const Color*>(rhs), compressed, precision);
     }
     if (l_type == Expression::COLOR && r_type == Expression::NUMBER) {
-      return op_color_number(ctx, op_type, lhs, rhs);
+      return op_color_number(mem(), op_type, *dynamic_cast<const Color*>(lhs), *dynamic_cast<const Number*>(rhs), compressed, precision);
     }
     if (l_type == Expression::COLOR && r_type == Expression::COLOR) {
-      return op_colors(ctx, op_type, lhs, rhs);
+      return op_colors(mem(), op_type, *dynamic_cast<const Color*>(lhs), *dynamic_cast<const Color*>(rhs), compressed, precision);
     }
 
-    Expression* ex = op_strings(ctx, op_type, lhs, rhs);
+    To_Value to_value(ctx, mem());
+    Value* vl = lhs->perform(&to_value);
+    Value* vr = rhs->perform(&to_value);
+
+    Value* ex = op_strings(mem(), op_type, *vl, *vr, compressed, precision);
+
     if (String_Constant* str = dynamic_cast<String_Constant*>(ex))
     {
       if (str->concrete_type() != Expression::STRING) return ex;
@@ -549,12 +588,12 @@ namespace Sass {
   {
     Expression* operand = u->operand()->perform(this);
     if (u->type() == Unary_Expression::NOT) {
-      Boolean* result = new (ctx.mem) Boolean(u->pstate(), (bool)*operand);
+      Boolean* result = new (mem()) Boolean(u->pstate(), (bool)*operand);
       result->value(!result->value());
       return result;
     }
     else if (operand->concrete_type() == Expression::NUMBER) {
-      Number* result = new (ctx.mem) Number(*static_cast<Number*>(operand));
+      Number* result = new (mem()) Number(*dynamic_cast<Number*>(operand));
       result->value(u->type() == Unary_Expression::MINUS
                     ? -result->value()
                     :  result->value());
@@ -565,9 +604,12 @@ namespace Sass {
       // Special cases: +/- variables which evaluate to null ouput just +/-,
       // but +/- null itself outputs the string
       if (operand->concrete_type() == Expression::NULL_VAL && typeid(*(u->operand())) == typeid(Variable)) {
-        u->operand(new (ctx.mem) String_Quoted(u->pstate(), ""));
+        u->operand(new (mem()) String_Quoted(u->pstate(), ""));
       }
-      else u->operand(operand);
+      else {
+        u = new (mem()) Unary_Expression(*u);
+        u->operand(operand);
+      }
       String_Constant* result = new (ctx.mem) String_Quoted(u->pstate(),
                                                               u->perform(&to_string));
       return result;
@@ -587,7 +629,7 @@ namespace Sass {
     string full_name(name + "[f]");
     Arguments* args = c->arguments();
     if (full_name != "if[f]") {
-      args = static_cast<Arguments*>(args->perform(this));
+      args = dynamic_cast<Arguments*>(args->perform(this));
     }
 
     Env* env = environment();
@@ -606,7 +648,7 @@ namespace Sass {
       }
     }
 
-    Definition* def = static_cast<Definition*>((*env)[full_name]);
+    Definition* def = dynamic_cast<Definition*>((*env)[full_name]);
 
     if (def->is_overload_stub()) {
       stringstream ss;
@@ -615,7 +657,7 @@ namespace Sass {
       full_name = ss.str();
       string resolved_name(full_name);
       if (!env->has(resolved_name)) error("overloaded function `" + string(c->name()) + "` given wrong number of arguments", c->pstate());
-      def = static_cast<Definition*>((*env)[resolved_name]);
+      def = dynamic_cast<Definition*>((*env)[resolved_name]);
     }
 
     Expression*     result = c;
@@ -662,16 +704,16 @@ namespace Sass {
       for(size_t i = 0; i < params[0].length(); i++) {
         string key = params[0][i]->name();
         AST_Node* node = fn_env.get_local(key);
-        Expression* arg = static_cast<Expression*>(node);
+        Expression* arg = dynamic_cast<Expression*>(node);
         sass_list_set_value(c_args, i, arg->perform(&to_c));
       }
-      Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
+      union Sass_Value* c_val = c_func(c_args, c_function, ctx.c_options);
       if (sass_value_get_tag(c_val) == SASS_ERROR) {
         error("error in C function " + c->name() + ": " + sass_error_get_message(c_val), c->pstate(), backtrace());
       } else if (sass_value_get_tag(c_val) == SASS_WARNING) {
         error("warning in C function " + c->name() + ": " + sass_warning_get_message(c_val), c->pstate(), backtrace());
       }
-      result = cval_to_astnode(c_val, ctx, backtrace(), c->pstate());
+      result = cval_to_astnode(ctx.mem, c_val, ctx, backtrace(), c->pstate());
 
       exp.backtrace_stack.pop_back();
       sass_delete_value(c_args);
@@ -705,15 +747,15 @@ namespace Sass {
     string name(v->name());
     Expression* value = 0;
     Env* env = environment();
-    if (env->has(name)) value = static_cast<Expression*>((*env)[name]);
+    if (env->has(name)) value = dynamic_cast<Expression*>((*env)[name]);
     else error("Undefined variable: \"" + v->name() + "\".", v->pstate());
     // cerr << "name: " << v->name() << "; type: " << typeid(*value).name() << "; value: " << value->perform(&to_string) << endl;
-    if (typeid(*value) == typeid(Argument)) value = static_cast<Argument*>(value)->value();
+    if (typeid(*value) == typeid(Argument)) value = dynamic_cast<Argument*>(value)->value();
 
     // behave according to as ruby sass (add leading zero)
     if (value->concrete_type() == Expression::NUMBER) {
-      value = new (ctx.mem) Number(*static_cast<Number*>(value));
-      static_cast<Number*>(value)->zero(true);
+      value = new (ctx.mem) Number(*dynamic_cast<Number*>(value));
+      dynamic_cast<Number*>(value)->zero(true);
     }
     else if (value->concrete_type() == Expression::STRING) {
       if (auto str = dynamic_cast<String_Quoted*>(value)) {
@@ -723,16 +765,16 @@ namespace Sass {
       }
     }
     else if (value->concrete_type() == Expression::LIST) {
-      value = new (ctx.mem) List(*static_cast<List*>(value));
+      value = dynamic_cast<List*>(value)->perform(this);
     }
     else if (value->concrete_type() == Expression::MAP) {
-      value = new (ctx.mem) Map(*static_cast<Map*>(value));
+      value = dynamic_cast<Map*>(value)->perform(this);
     }
     else if (value->concrete_type() == Expression::BOOLEAN) {
-      value = new (ctx.mem) Boolean(*static_cast<Boolean*>(value));
+      value = new (ctx.mem) Boolean(*dynamic_cast<Boolean*>(value));
     }
     else if (value->concrete_type() == Expression::COLOR) {
-      value = new (ctx.mem) Color(*static_cast<Color*>(value));
+      value = new (ctx.mem) Color(*dynamic_cast<Color*>(value));
     }
     else if (value->concrete_type() == Expression::NULL_VAL) {
       value = new (ctx.mem) Null(value->pstate());
@@ -740,7 +782,7 @@ namespace Sass {
     else if (value->concrete_type() == Expression::SELECTOR) {
       value = value->perform(this)->perform(&listize);
     }
-
+// debug_ast(value);
     // cerr << "\ttype is now: " << typeid(*value).name() << endl << endl;
     return value;
   }
@@ -762,26 +804,26 @@ namespace Sass {
     switch (t->type())
     {
       case Textual::NUMBER:
-        result = new (ctx.mem) Number(t->pstate(),
+        result = new (mem()) Number(t->pstate(),
                                       sass_atof(num.c_str()),
                                       "",
                                       zero);
         break;
       case Textual::PERCENTAGE:
-        result = new (ctx.mem) Number(t->pstate(),
+        result = new (mem()) Number(t->pstate(),
                                       sass_atof(num.c_str()),
                                       "%",
                                       zero);
         break;
       case Textual::DIMENSION:
-        result = new (ctx.mem) Number(t->pstate(),
+        result = new (mem()) Number(t->pstate(),
                                       sass_atof(num.c_str()),
                                       Token(number(text.c_str())),
                                       zero);
         break;
       case Textual::HEX: {
         if (t->value().substr(0, 1) != "#") {
-          result = new (ctx.mem) String_Quoted(t->pstate(), t->value());
+          result = new (mem()) String_Quoted(t->pstate(), t->value());
           break;
         }
         string hext(t->value().substr(1)); // chop off the '#'
@@ -789,7 +831,7 @@ namespace Sass {
           string r(hext.substr(0,2));
           string g(hext.substr(2,2));
           string b(hext.substr(4,2));
-          result = new (ctx.mem) Color(t->pstate(),
+          result = new (mem()) Color(t->pstate(),
                                        static_cast<double>(strtol(r.c_str(), NULL, 16)),
                                        static_cast<double>(strtol(g.c_str(), NULL, 16)),
                                        static_cast<double>(strtol(b.c_str(), NULL, 16)),
@@ -797,7 +839,7 @@ namespace Sass {
                                        t->value());
         }
         else {
-          result = new (ctx.mem) Color(t->pstate(),
+          result = new (mem()) Color(t->pstate(),
                                        static_cast<double>(strtol(string(2,hext[0]).c_str(), NULL, 16)),
                                        static_cast<double>(strtol(string(2,hext[1]).c_str(), NULL, 16)),
                                        static_cast<double>(strtol(string(2,hext[2]).c_str(), NULL, 16)),
@@ -811,12 +853,12 @@ namespace Sass {
 
   Expression* Eval::operator()(Number* n)
   {
-    return n;
+    return new (ctx.mem) Number(*n);
   }
 
   Expression* Eval::operator()(Boolean* b)
   {
-    return b;
+    return new (ctx.mem) Boolean(*b);
   }
 
   char is_quoted(string str)
@@ -867,7 +909,7 @@ namespace Sass {
       }
     } else if (List* list = dynamic_cast<List*>(s)) {
       string acc = ""; // ToDo: different output styles
-      string sep = list->separator() == List::Separator::COMMA ? "," : " ";
+      string sep = list->separator() == SASS_COMMA ? "," : " ";
       if (ctx.output_style != COMPRESSED && sep == ",") sep += " ";
       bool initial = false;
       for(auto item : list->elements()) {
@@ -879,7 +921,7 @@ namespace Sass {
     } else if (Variable* var = dynamic_cast<Variable*>(s)) {
       string name(var->name());
       if (!env->has(name)) error("Undefined variable: \"" + var->name() + "\".", var->pstate());
-      Expression* value = static_cast<Expression*>((*env)[name]);
+      Expression* value = dynamic_cast<Expression*>((*env)[name]);
       return evacuate_quotes(interpolation(value));
     } else if (dynamic_cast<Binary_Expression*>(s)) {
       Expression* ex = s->perform(this);
@@ -907,7 +949,7 @@ namespace Sass {
     for (size_t i = 0, L = s->length(); i < L; ++i) {
       if ((*s)[i]) acc += interpolation((*s)[i]);
     }
-    String_Quoted* str = new (ctx.mem) String_Quoted(s->pstate(), acc);
+    String_Quoted* str = new (mem()) String_Quoted(s->pstate(), acc);
     if (!str->quote_mark()) {
       str->value(string_unescape(str->value()));
     } else if (str->quote_mark()) {
@@ -919,18 +961,23 @@ namespace Sass {
 
   Expression* Eval::operator()(String_Constant* s)
   {
-    if (!s->is_delayed() && ctx.names_to_colors.count(s->value())) {
-      Color* c = new (ctx.mem) Color(*ctx.names_to_colors[s->value()]);
+    if (!s->is_delayed() && names_to_colors.count(s->value())) {
+      Color* c = new (mem()) Color(*names_to_colors.find(s->value())->second);
       c->pstate(s->pstate());
       c->disp(s->value());
       return c;
     }
-    return s;
+    return new (mem()) String_Constant(*s);
   }
 
   Expression* Eval::operator()(String_Quoted* s)
   {
-    return s;
+    return new (mem()) String_Quoted(*s);
+  }
+
+  Expression* Eval::operator()(Color* c)
+  {
+    return new (ctx.mem) Color(*c);
   }
 
   Expression* Eval::operator()(Supports_Query* q)
@@ -938,7 +985,7 @@ namespace Sass {
     Supports_Query* qq = new (ctx.mem) Supports_Query(q->pstate(),
                                                     q->length());
     for (size_t i = 0, L = q->length(); i < L; ++i) {
-      *qq << static_cast<Supports_Condition*>((*q)[i]->perform(this));
+      *qq << dynamic_cast<Supports_Condition*>((*q)[i]->perform(this));
     }
     return qq;
   }
@@ -955,7 +1002,7 @@ namespace Sass {
                                                  c->operand(),
                                                  c->is_root());
     for (size_t i = 0, L = c->length(); i < L; ++i) {
-      *cc << static_cast<Supports_Condition*>((*c)[i]->perform(this));
+      *cc << dynamic_cast<Supports_Condition*>((*c)[i]->perform(this));
     }
     return cc;
   }
@@ -967,7 +1014,7 @@ namespace Sass {
     Expression* value = e->value();
     value = (value ? value->perform(this) : 0);
     Expression* ee = new (ctx.mem) At_Root_Expression(e->pstate(),
-                                                      static_cast<String*>(feature),
+                                                      dynamic_cast<String*>(feature),
                                                       value,
                                                       e->is_interpolated());
     return ee;
@@ -977,14 +1024,14 @@ namespace Sass {
   {
     To_String to_string(&ctx);
     String* t = q->media_type();
-    t = static_cast<String*>(t ? t->perform(this) : 0);
+    t = dynamic_cast<String*>(t ? t->perform(this) : 0);
     Media_Query* qq = new (ctx.mem) Media_Query(q->pstate(),
                                                 t,
                                                 q->length(),
                                                 q->is_negated(),
                                                 q->is_restricted());
     for (size_t i = 0, L = q->length(); i < L; ++i) {
-      *qq << static_cast<Media_Query_Expression*>((*q)[i]->perform(this));
+      *qq << dynamic_cast<Media_Query_Expression*>((*q)[i]->perform(this));
     }
     return qq;
   }
@@ -1030,9 +1077,9 @@ namespace Sass {
         is_keyword_argument = true;
       }
       else if(val->concrete_type() != Expression::LIST) {
-        List* wrapper = new (ctx.mem) List(val->pstate(),
+        List* wrapper = new (mem()) List(val->pstate(),
                                            0,
-                                           List::COMMA,
+                                           SASS_COMMA,
                                            true);
         *wrapper << val;
         val = wrapper;
@@ -1049,7 +1096,7 @@ namespace Sass {
   {
     Arguments* aa = new (ctx.mem) Arguments(a->pstate());
     for (size_t i = 0, L = a->length(); i < L; ++i) {
-      *aa << static_cast<Argument*>((*a)[i]->perform(this));
+      *aa << dynamic_cast<Argument*>((*a)[i]->perform(this));
     }
     return aa;
   }
@@ -1059,139 +1106,72 @@ namespace Sass {
     return 0;
   }
 
-  inline Expression* Eval::fallback_impl(AST_Node* n)
+  Expression* Eval::fallback_impl(AST_Node* n)
   {
-    return static_cast<Expression*>(n);
+    return dynamic_cast<Expression*>(n);
   }
 
   // All the binary helpers.
 
-  bool eq(Expression* lhs, Expression* rhs, Context& ctx)
+  bool Eval::eq(Expression* lhs, Expression* rhs)
   {
-    Expression::Concrete_Type ltype = lhs->concrete_type();
-    Expression::Concrete_Type rtype = rhs->concrete_type();
-    if (ltype != rtype) return false;
-    switch (ltype) {
-
-      case Expression::BOOLEAN: {
-        return static_cast<Boolean*>(lhs)->value() ==
-               static_cast<Boolean*>(rhs)->value();
-      } break;
-
-      case Expression::NUMBER: {
-        Number* l = static_cast<Number*>(lhs);
-        Number* r = static_cast<Number*>(rhs);
-        return (l->value() == r->value()) &&
-               (l->numerator_units() == r->numerator_units()) &&
-               (l->denominator_units() == r->denominator_units());
-      } break;
-
-      case Expression::COLOR: {
-        Color* l = static_cast<Color*>(lhs);
-        Color* r = static_cast<Color*>(rhs);
-        return l->r() == r->r() &&
-               l->g() == r->g() &&
-               l->b() == r->b() &&
-               l->a() == r->a();
-      } break;
-
-      case Expression::STRING: {
-        string slhs = static_cast<String_Quoted*>(lhs)->value();
-        string srhs = static_cast<String_Quoted*>(rhs)->value();
-        return unquote(slhs) == unquote(srhs) &&
-               (!(is_quoted(slhs) || is_quoted(srhs)) || slhs[0] == srhs[0]);
-      } break;
-
-      case Expression::LIST: {
-        List* l = static_cast<List*>(lhs);
-        List* r = static_cast<List*>(rhs);
-        if (l->length() != r->length()) return false;
-        if (l->separator() != r->separator()) return false;
-        for (size_t i = 0, L = l->length(); i < L; ++i) {
-          if (!eq((*l)[i], (*r)[i], ctx)) return false;
-        }
-        return true;
-      } break;
-
-      case Expression::MAP: {
-        Map* l = static_cast<Map*>(lhs);
-        Map* r = static_cast<Map*>(rhs);
-        if (l->length() != r->length()) return false;
-        for (auto key : l->keys())
-          if (!eq(l->at(key), r->at(key), ctx)) return false;
-        return true;
-      } break;
-      case Expression::NULL_VAL: {
-        return true;
-      } break;
-
-      default: break;
-    }
-    return false;
+    // use compare operator from ast node
+    return lhs && rhs && *lhs == *rhs;
   }
 
-  bool lt(Expression* lhs, Expression* rhs, Context& ctx)
+  bool Eval::lt(Expression* lhs, Expression* rhs)
   {
-    if (lhs->concrete_type() != Expression::NUMBER ||
-        rhs->concrete_type() != Expression::NUMBER)
-      error("may only compare numbers", lhs->pstate());
-    Number* l = static_cast<Number*>(lhs);
-    Number* r = static_cast<Number*>(rhs);
-    Number tmp_r(*r);
-    tmp_r.normalize(l->find_convertible_unit());
-    string l_unit(l->unit());
-    string r_unit(tmp_r.unit());
-    if (!l_unit.empty() && !r_unit.empty() && l->unit() != tmp_r.unit()) {
-      error("cannot compare numbers with incompatible units", l->pstate());
-    }
-    return l->value() < tmp_r.value();
+    Number* l = dynamic_cast<Number*>(lhs);
+    Number* r = dynamic_cast<Number*>(rhs);
+    if (!l) error("may only compare numbers", lhs->pstate());
+    if (!r) error("may only compare numbers", rhs->pstate());
+    // use compare operator from ast node
+    return *l < *r;
   }
 
-  Expression* op_numbers(Context& ctx, Binary_Expression* b, Expression* lhs, Expression* rhs)
+  Value* Eval::op_numbers(Memory_Manager<AST_Node>& mem, enum Sass_OP op, const Number& l, const Number& r, bool compressed, int precision)
   {
-    Number* l = static_cast<Number*>(lhs);
-    Number* r = static_cast<Number*>(rhs);
-    double lv = l->value();
-    double rv = r->value();
-    Binary_Expression::Type op = b->type();
-    if (op == Binary_Expression::DIV && !rv) {
-      return new (ctx.mem) String_Quoted(l->pstate(), "Infinity");
+    double lv = l.value();
+    double rv = r.value();
+    if (op == Sass_OP::DIV && !rv) {
+      return new (mem) String_Quoted(l.pstate(), "Infinity");
     }
-    if (op == Binary_Expression::MOD && !rv) {
-      error("division by zero", r->pstate());
+    if (op == Sass_OP::MOD && !rv) {
+      error("division by zero", r.pstate());
     }
 
-    Number tmp(*r);
-    tmp.normalize(l->find_convertible_unit());
-    string l_unit(l->unit());
+    Number tmp(r);
+    bool strict = op != MUL && op != DIV;
+    tmp.normalize(l.find_convertible_unit(), strict);
+    string l_unit(l.unit());
     string r_unit(tmp.unit());
     if (l_unit != r_unit && !l_unit.empty() && !r_unit.empty() &&
-        (op == Binary_Expression::ADD || op == Binary_Expression::SUB)) {
-      error("Incompatible units: '"+r_unit+"' and '"+l_unit+"'.", l->pstate());
+        (op == Sass_OP::ADD || op == Sass_OP::SUB)) {
+      error("Incompatible units: '"+r_unit+"' and '"+l_unit+"'.", l.pstate());
     }
-    Number* v = new (ctx.mem) Number(*l);
-    v->pstate(b->pstate());
-    if (l_unit.empty() && (op == Binary_Expression::ADD || op == Binary_Expression::SUB || op == Binary_Expression::MOD)) {
-      v->numerator_units() = r->numerator_units();
-      v->denominator_units() = r->denominator_units();
+    Number* v = new (mem) Number(l);
+    v->pstate(l.pstate());
+    if (l_unit.empty() && (op == Sass_OP::ADD || op == Sass_OP::SUB || op == Sass_OP::MOD)) {
+      v->numerator_units() = r.numerator_units();
+      v->denominator_units() = r.denominator_units();
     }
 
-    if (op == Binary_Expression::MUL) {
+    if (op == Sass_OP::MUL) {
       v->value(ops[op](lv, rv));
-      for (size_t i = 0, S = r->numerator_units().size(); i < S; ++i) {
-        v->numerator_units().push_back(r->numerator_units()[i]);
+      for (size_t i = 0, S = r.numerator_units().size(); i < S; ++i) {
+        v->numerator_units().push_back(r.numerator_units()[i]);
       }
-      for (size_t i = 0, S = r->denominator_units().size(); i < S; ++i) {
-        v->denominator_units().push_back(r->denominator_units()[i]);
+      for (size_t i = 0, S = r.denominator_units().size(); i < S; ++i) {
+        v->denominator_units().push_back(r.denominator_units()[i]);
       }
     }
-    else if (op == Binary_Expression::DIV) {
+    else if (op == Sass_OP::DIV) {
       v->value(ops[op](lv, rv));
-      for (size_t i = 0, S = r->numerator_units().size(); i < S; ++i) {
-        v->denominator_units().push_back(r->numerator_units()[i]);
+      for (size_t i = 0, S = r.numerator_units().size(); i < S; ++i) {
+        v->denominator_units().push_back(r.numerator_units()[i]);
       }
-      for (size_t i = 0, S = r->denominator_units().size(); i < S; ++i) {
-        v->numerator_units().push_back(r->denominator_units()[i]);
+      for (size_t i = 0, S = r.denominator_units().size(); i < S; ++i) {
+        v->numerator_units().push_back(r.denominator_units()[i]);
       }
     } else {
       v->value(ops[op](lv, tmp.value()));
@@ -1200,161 +1180,161 @@ namespace Sass {
     return v;
   }
 
-  Expression* op_number_color(Context& ctx, Binary_Expression::Type op, Expression* lhs, Expression* rhs)
+  Value* Eval::op_number_color(Memory_Manager<AST_Node>& mem, Sass_OP op, const Number& l, const Color& rh, bool compressed, int precision)
   {
-    Number* l = static_cast<Number*>(lhs);
-    Color* r = static_cast<Color*>(rhs);
-    // TODO: currently SASS converts colors to standard form when adding to strings;
-    // when https://github.com/nex3/sass/issues/363 is added this can be removed to
-    // preserve the original value
-    r->disp("");
-    double lv = l->value();
+    Color r(rh);
+    r.disp("");
+    double lv = l.value();
     switch (op) {
-      case Binary_Expression::ADD:
-      case Binary_Expression::MUL: {
-        return new (ctx.mem) Color(l->pstate(),
-                                   ops[op](lv, r->r()),
-                                   ops[op](lv, r->g()),
-                                   ops[op](lv, r->b()),
-                                   r->a());
+      case Sass_OP::ADD:
+      case Sass_OP::MUL: {
+        return new (mem) Color(l.pstate(),
+                               ops[op](lv, r.r()),
+                               ops[op](lv, r.g()),
+                               ops[op](lv, r.b()),
+                               r.a());
       } break;
-      case Binary_Expression::SUB:
-      case Binary_Expression::DIV: {
-        string sep(op == Binary_Expression::SUB ? "-" : "/");
-        To_String to_string(&ctx);
-        string color(r->sixtuplet() && (ctx.output_style != COMPRESSED) ?
-                     r->perform(&to_string) :
-                     Util::normalize_sixtuplet(r->perform(&to_string)));
-        return new (ctx.mem) String_Quoted(l->pstate(),
-                                             l->perform(&to_string)
-                                             + sep
-                                             + color);
+      case Sass_OP::SUB:
+      case Sass_OP::DIV: {
+        string sep(op == Sass_OP::SUB ? "-" : "/");
+        string color(r.to_string(compressed||!r.sixtuplet(), precision));
+        return new (mem) String_Quoted(l.pstate(),
+                                       l.to_string(compressed, precision)
+                                       + sep
+                                       + color);
       } break;
-      case Binary_Expression::MOD: {
-        error("cannot divide a number by a color", r->pstate());
+      case Sass_OP::MOD: {
+        error("cannot divide a number by a color", r.pstate());
       } break;
       default: break; // caller should ensure that we don't get here
     }
     // unreachable
-    return l;
+    return new (mem) Color(rh);
   }
 
-  Expression* op_color_number(Context& ctx, Binary_Expression::Type op, Expression* lhs, Expression* rhs)
+  Value* Eval::op_color_number(Memory_Manager<AST_Node>& mem, enum Sass_OP op, const Color& l, const Number& r, bool compressed, int precision)
   {
-    Color* l = static_cast<Color*>(lhs);
-    Number* r = static_cast<Number*>(rhs);
-    double rv = r->value();
-    if (op == Binary_Expression::DIV && !rv) error("division by zero", r->pstate());
-    return new (ctx.mem) Color(l->pstate(),
-                               ops[op](l->r(), rv),
-                               ops[op](l->g(), rv),
-                               ops[op](l->b(), rv),
-                               l->a());
+    double rv = r.value();
+    if (op == Sass_OP::DIV && !rv) error("division by zero", r.pstate());
+    return new (mem) Color(l.pstate(),
+                           ops[op](l.r(), rv),
+                           ops[op](l.g(), rv),
+                           ops[op](l.b(), rv),
+                           l.a());
   }
 
-  Expression* op_colors(Context& ctx, Binary_Expression::Type op, Expression* lhs, Expression* rhs)
+  Value* Eval::op_colors(Memory_Manager<AST_Node>& mem, enum Sass_OP op, const Color& l, const Color& r, bool compressed, int precision)
   {
-    Color* l = static_cast<Color*>(lhs);
-    Color* r = static_cast<Color*>(rhs);
-    if (l->a() != r->a()) {
-      error("alpha channels must be equal when combining colors", r->pstate());
+    if (l.a() != r.a()) {
+      error("alpha channels must be equal when combining colors", r.pstate());
     }
-    if ((op == Binary_Expression::DIV || op == Binary_Expression::MOD) &&
-        (!r->r() || !r->g() ||!r->b())) {
-      error("division by zero", r->pstate());
+    if (op == Sass_OP::DIV && (!r.r() || !r.g() ||!r.b())) {
+      error("division by zero", r.pstate());
     }
-    return new (ctx.mem) Color(l->pstate(),
-                               ops[op](l->r(), r->r()),
-                               ops[op](l->g(), r->g()),
-                               ops[op](l->b(), r->b()),
-                               l->a());
+    return new (mem) Color(l.pstate(),
+                           ops[op](l.r(), r.r()),
+                           ops[op](l.g(), r.g()),
+                           ops[op](l.b(), r.b()),
+                           l.a());
   }
 
-  Expression* op_strings(Context& ctx, Binary_Expression::Type op, Expression* lhs, Expression*rhs)
+  Value* Eval::op_strings(Memory_Manager<AST_Node>& mem, enum Sass_OP op, Value& lhs, Value& rhs, bool compressed, int precision)
   {
-    To_String to_string(&ctx);
-    Expression::Concrete_Type ltype = lhs->concrete_type();
-    Expression::Concrete_Type rtype = rhs->concrete_type();
+    Expression::Concrete_Type ltype = lhs.concrete_type();
+    Expression::Concrete_Type rtype = rhs.concrete_type();
 
-    string lstr(lhs->perform(&to_string));
-    string rstr(rhs->perform(&to_string));
+    String_Quoted* lqstr = dynamic_cast<String_Quoted*>(&lhs);
+    String_Quoted* rqstr = dynamic_cast<String_Quoted*>(&rhs);
 
-    bool l_str_quoted = ((Sass::String*)lhs) && ((Sass::String*)lhs)->sass_fix_1291();
-    bool r_str_quoted = ((Sass::String*)rhs) && ((Sass::String*)rhs)->sass_fix_1291();
-    bool l_str_color = ltype == Expression::STRING && ctx.names_to_colors.count(lstr) && !l_str_quoted;
-    bool r_str_color = rtype == Expression::STRING && ctx.names_to_colors.count(rstr) && !r_str_quoted;
+    string lstr(lqstr ? lqstr->value() : lhs.to_string(compressed, precision));
+    string rstr(rqstr ? rqstr->value() : rhs.to_string(compressed, precision));
+
+    bool l_str_quoted = ((Sass::String*)&lhs) && ((Sass::String*)&lhs)->sass_fix_1291();
+    bool r_str_quoted = ((Sass::String*)&rhs) && ((Sass::String*)&rhs)->sass_fix_1291();
+    bool l_str_color = ltype == Expression::STRING && names_to_colors.count(lstr) && !l_str_quoted;
+    bool r_str_color = rtype == Expression::STRING && names_to_colors.count(rstr) && !r_str_quoted;
 
     if (l_str_color && r_str_color) {
-      return op_colors(ctx, op, ctx.names_to_colors[lstr], ctx.names_to_colors[rstr]);
+      const Color* c_l = names_to_colors.find(lstr)->second;
+      const Color* c_r = names_to_colors.find(rstr)->second;
+      return op_colors(mem, op,*c_l, *c_r, compressed, precision);
     }
     else if (l_str_color && rtype == Expression::COLOR) {
-      return op_colors(ctx, op, ctx.names_to_colors[lstr], rhs);
+      const Color* c_l = names_to_colors.find(lstr)->second;
+      const Color* c_r = dynamic_cast<const Color*>(&rhs);
+      return op_colors(mem, op, *c_l, *c_r, compressed, precision);
     }
     else if (l_str_color && rtype == Expression::NUMBER) {
-      return op_color_number(ctx, op, ctx.names_to_colors[lstr], rhs);
+      const Color* c_l = names_to_colors.find(lstr)->second;
+      const Number* n_r = dynamic_cast<const Number*>(&rhs);
+      return op_color_number(mem, op, *c_l, *n_r, compressed, precision);
     }
     else if (ltype == Expression::COLOR && r_str_color) {
-      return op_number_color(ctx, op, lhs, ctx.names_to_colors[rstr]);
+      const Number* n_l = dynamic_cast<const Number*>(&lhs);
+      const Color* c_r = names_to_colors.find(rstr)->second;
+      return op_number_color(mem, op, *n_l, *c_r, compressed, precision);
     }
     else if (ltype == Expression::NUMBER && r_str_color) {
-      return op_number_color(ctx, op, lhs, ctx.names_to_colors[rstr]);
+      const Number* n_l = dynamic_cast<const Number*>(&lhs);
+      const Color* c_r = names_to_colors.find(rstr)->second;
+      return op_number_color(mem, op, *n_l, *c_r, compressed, precision);
     }
-    if (op == Binary_Expression::MUL) error("invalid operands for multiplication", lhs->pstate());
-    if (op == Binary_Expression::MOD) error("invalid operands for modulo", lhs->pstate());
+    if (op == Sass_OP::MUL) error("invalid operands for multiplication", lhs.pstate());
+    if (op == Sass_OP::MOD) error("invalid operands for modulo", lhs.pstate());
     string sep;
     switch (op) {
-      case Binary_Expression::SUB: sep = "-"; break;
-      case Binary_Expression::DIV: sep = "/"; break;
+      case Sass_OP::SUB: sep = "-"; break;
+      case Sass_OP::DIV: sep = "/"; break;
       default:                         break;
     }
-    if (ltype == Expression::NULL_VAL) error("invalid null operation: \"null plus "+quote(unquote(rstr), '"')+"\".", lhs->pstate());
-    if (rtype == Expression::NULL_VAL) error("invalid null operation: \""+quote(unquote(lstr), '"')+" plus null\".", lhs->pstate());
+    if (ltype == Expression::NULL_VAL) error("invalid null operation: \"null plus "+quote(unquote(rstr), '"')+"\".", lhs.pstate());
+    if (rtype == Expression::NULL_VAL) error("invalid null operation: \""+quote(unquote(lstr), '"')+" plus null\".", rhs.pstate());
     string result((lstr) + sep + (rstr));
-    String_Quoted* str = new (ctx.mem) String_Quoted(lhs->pstate(), result);
+    String_Quoted* str = new (mem) String_Quoted(lhs.pstate(), result);
     str->quote_mark(0);
     return str;
   }
 
-  Expression* cval_to_astnode(Sass_Value* v, Context& ctx, Backtrace* backtrace, ParserState pstate)
+  Expression* cval_to_astnode(Memory_Manager<AST_Node>& mem, union Sass_Value* v, Context& ctx, Backtrace* backtrace, ParserState pstate)
   {
     using std::strlen;
     using std::strcpy;
     Expression* e = 0;
     switch (sass_value_get_tag(v)) {
       case SASS_BOOLEAN: {
-        e = new (ctx.mem) Boolean(pstate, !!sass_boolean_get_value(v));
+        e = new (mem) Boolean(pstate, !!sass_boolean_get_value(v));
       } break;
       case SASS_NUMBER: {
-        e = new (ctx.mem) Number(pstate, sass_number_get_value(v), sass_number_get_unit(v));
+        e = new (mem) Number(pstate, sass_number_get_value(v), sass_number_get_unit(v));
       } break;
       case SASS_COLOR: {
-        e = new (ctx.mem) Color(pstate, sass_color_get_r(v), sass_color_get_g(v), sass_color_get_b(v), sass_color_get_a(v));
+        e = new (mem) Color(pstate, sass_color_get_r(v), sass_color_get_g(v), sass_color_get_b(v), sass_color_get_a(v));
       } break;
       case SASS_STRING: {
         if (sass_string_is_quoted(v))
-          e = new (ctx.mem) String_Quoted(pstate, sass_string_get_value(v));
+          e = new (mem) String_Quoted(pstate, sass_string_get_value(v));
         else {
-          e = new (ctx.mem) String_Constant(pstate, sass_string_get_value(v));
+          e = new (mem) String_Constant(pstate, sass_string_get_value(v));
         }
       } break;
       case SASS_LIST: {
-        List* l = new (ctx.mem) List(pstate, sass_list_get_length(v), sass_list_get_separator(v) == SASS_COMMA ? List::COMMA : List::SPACE);
+        List* l = new (mem) List(pstate, sass_list_get_length(v), sass_list_get_separator(v));
         for (size_t i = 0, L = sass_list_get_length(v); i < L; ++i) {
-          *l << cval_to_astnode(sass_list_get_value(v, i), ctx, backtrace, pstate);
+          *l << cval_to_astnode(mem, sass_list_get_value(v, i), ctx, backtrace, pstate);
         }
         e = l;
       } break;
       case SASS_MAP: {
-        Map* m = new (ctx.mem) Map(pstate);
+        Map* m = new (mem) Map(pstate);
         for (size_t i = 0, L = sass_map_get_length(v); i < L; ++i) {
           *m << std::make_pair(
-            cval_to_astnode(sass_map_get_key(v, i), ctx, backtrace, pstate),
-            cval_to_astnode(sass_map_get_value(v, i), ctx, backtrace, pstate));
+            cval_to_astnode(mem, sass_map_get_key(v, i), ctx, backtrace, pstate),
+            cval_to_astnode(mem, sass_map_get_value(v, i), ctx, backtrace, pstate));
         }
         e = m;
       } break;
       case SASS_NULL: {
-        e = new (ctx.mem) Null(pstate);
+        e = new (mem) Null(pstate);
       } break;
       case SASS_ERROR: {
         error("Error in C function: " + string(sass_error_get_message(v)), pstate, backtrace);
@@ -1530,7 +1510,7 @@ namespace Sass {
   Attribute_Selector* Eval::operator()(Attribute_Selector* s)
   {
     String* attr = s->value();
-    if (attr) { attr = static_cast<String*>(attr->perform(this)); }
+    if (attr) { attr = dynamic_cast<String*>(attr->perform(this)); }
     Attribute_Selector* ss = new (ctx.mem) Attribute_Selector(*s);
     ss->value(attr);
     return ss;

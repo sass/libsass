@@ -8,8 +8,10 @@
 #include "constants.hpp"
 #include "util.hpp"
 #include "prelexer.hpp"
+#include "color_maps.hpp"
 #include "sass_functions.h"
 #include "error_handling.hpp"
+#include "debugger.hpp"
 
 #include <typeinfo>
 #include <tuple>
@@ -25,6 +27,7 @@ namespace Sass {
     p.position = p.source;
     p.end      = str + strlen(str);
     Block* root = new (ctx.mem) Block(pstate);
+    root->env.parent(&ctx.global);
     p.block_stack.push_back(root);
     root->is_root(true);
     return p;
@@ -37,6 +40,7 @@ namespace Sass {
     p.position = p.source;
     p.end      = end;
     Block* root = new (ctx.mem) Block(pstate);
+    root->env.parent(&ctx.global);
     p.block_stack.push_back(root);
     root->is_root(true);
     return p;
@@ -63,6 +67,7 @@ namespace Sass {
     p.end      = t.end;
     Block* root = new (ctx.mem) Block(pstate);
     p.block_stack.push_back(root);
+    root->env.parent(&ctx.global);
     root->is_root(true);
     return p;
   }
@@ -71,6 +76,7 @@ namespace Sass {
   Block* Parser::parse()
   {
     Block* root = new (ctx.mem) Block(pstate, 0, true);
+    root->env.parent(&ctx.global);
     read_bom();
 
     if (ctx.queue.size() == 1) {
@@ -516,14 +522,14 @@ namespace Sass {
       ParserState p = pstate;
       lex_css< exactly<':'> >();
       Expression* val = parse_space_list();
-      val->is_delayed(false);
+      // val->is_delayed(false);
       arg = new (ctx.mem) Argument(p, val, name);
     }
     else {
       bool is_arglist = false;
       bool is_keyword = false;
       Expression* val = parse_space_list();
-      val->is_delayed(false);
+      // val->is_delayed(false);
       if (lex_css< exactly< ellipsis > >()) {
         if (val->concrete_type() == Expression::MAP) is_keyword = true;
         else is_arglist = true;
@@ -1048,8 +1054,8 @@ namespace Sass {
     Map* map = new (ctx.mem) Map(pstate, 1);
     if (String_Quoted* str = dynamic_cast<String_Quoted*>(key)) {
       if (!str->quote_mark() && !str->is_delayed()) {
-        if (ctx.names_to_colors.count(str->value())) {
-          Color* c = new (ctx.mem) Color(*ctx.names_to_colors[str->value()]);
+        if (names_to_colors.count(str->value())) {
+          Color* c = new (ctx.mem) Color(*names_to_colors.find(str->value())->second);
           c->pstate(str->pstate());
           c->disp(str->value());
           key = c;
@@ -1076,8 +1082,8 @@ namespace Sass {
       Expression* key = parse_list();
       if (String_Quoted* str = dynamic_cast<String_Quoted*>(key)) {
         if (!str->quote_mark() && !str->is_delayed()) {
-          if (ctx.names_to_colors.count(str->value())) {
-            Color* c = new (ctx.mem) Color(*ctx.names_to_colors[str->value()]);
+          if (names_to_colors.count(str->value())) {
+            Color* c = new (ctx.mem) Color(*names_to_colors.find(str->value())->second);
             c->pstate(str->pstate());
             c->disp(str->value());
             key = c;
@@ -1133,7 +1139,7 @@ namespace Sass {
     if (!peek_css< exactly<','> >(position)) return list;
 
     // if we got so far, we actually do have a comma list
-    List* comma_list = new (ctx.mem) List(pstate, 2, List::COMMA);
+    List* comma_list = new (ctx.mem) List(pstate, 2, SASS_COMMA);
     // wrap the first expression
     (*comma_list) << list;
 
@@ -1178,7 +1184,7 @@ namespace Sass {
         > >(position)
     ) { return disj1; }
 
-    List* space_list = new (ctx.mem) List(pstate, 2, List::SPACE);
+    List* space_list = new (ctx.mem) List(pstate, 2, SASS_SPACE);
     (*space_list) << disj1;
 
     while (!(peek_css< alternatives <
@@ -1214,7 +1220,7 @@ namespace Sass {
     // if it's a singleton, return it directly
     if (operands.size() == 0) return conj;
     // fold all operands into one binary expression
-    return fold_operands(conj, operands, Binary_Expression::OR);
+    return fold_operands(conj, operands, Sass_OP::OR);
   }
   // EO parse_disjunction
 
@@ -1230,7 +1236,7 @@ namespace Sass {
     // if it's a singleton, return it directly
     if (operands.size() == 0) return rel;
     // fold all operands into one binary expression
-    return fold_operands(rel, operands, Binary_Expression::AND);
+    return fold_operands(rel, operands, Sass_OP::AND);
   }
   // EO parse_conjunction
 
@@ -1250,15 +1256,15 @@ namespace Sass {
           > >(position)))
     { return lhs; }
     // parse the operator
-    Binary_Expression::Type op
-    = lex<kwd_eq>()  ? Binary_Expression::EQ
-    : lex<kwd_neq>() ? Binary_Expression::NEQ
-    : lex<kwd_gte>() ? Binary_Expression::GTE
-    : lex<kwd_lte>() ? Binary_Expression::LTE
-    : lex<kwd_gt>()  ? Binary_Expression::GT
-    : lex<kwd_lt>()  ? Binary_Expression::LT
+    enum Sass_OP op
+    = lex<kwd_eq>()  ? Sass_OP::EQ
+    : lex<kwd_neq>() ? Sass_OP::NEQ
+    : lex<kwd_gte>() ? Sass_OP::GTE
+    : lex<kwd_lte>() ? Sass_OP::LTE
+    : lex<kwd_gt>()  ? Sass_OP::GT
+    : lex<kwd_lt>()  ? Sass_OP::LT
     // we checked the possibilites on top of fn
-    :                  Binary_Expression::EQ;
+    :                  Sass_OP::EQ;
     // parse the right hand side expression
     Expression* rhs = parse_expression();
     // return binary expression with a left and a right hand side
@@ -1283,9 +1289,9 @@ namespace Sass {
     { return lhs; }
 
     vector<Expression*> operands;
-    vector<Binary_Expression::Type> operators;
+    vector<Sass_OP> operators;
     while (lex< exactly<'+'> >() || lex< sequence< negate< digit >, exactly<'-'> > >()) {
-      operators.push_back(lexed.to_string() == "+" ? Binary_Expression::ADD : Binary_Expression::SUB);
+      operators.push_back(lexed.to_string() == "+" ? Sass_OP::ADD : Sass_OP::SUB);
       operands.push_back(parse_operators());
     }
 
@@ -1306,13 +1312,13 @@ namespace Sass {
     if (!peek_css< class_char< static_ops > >()) return factor;
     // parse more factors and operators
     vector<Expression*> operands; // factors
-    vector<Binary_Expression::Type> operators; // ops
+    vector<Sass_OP> operators; // ops
     // lex operations to apply to lhs
     while (lex_css< class_char< static_ops > >()) {
       switch(*lexed.begin) {
-        case '*': operators.push_back(Binary_Expression::MUL); break;
-        case '/': operators.push_back(Binary_Expression::DIV); break;
-        case '%': operators.push_back(Binary_Expression::MOD); break;
+        case '*': operators.push_back(Sass_OP::MUL); break;
+        case '/': operators.push_back(Sass_OP::DIV); break;
+        case '%': operators.push_back(Sass_OP::MOD); break;
         default: throw runtime_error("unknown static op parsed"); break;
       }
       operands.push_back(parse_factor());
@@ -1336,12 +1342,12 @@ namespace Sass {
       value->is_delayed(false);
       // make sure wrapped lists and division expressions are non-delayed within parentheses
       if (value->concrete_type() == Expression::LIST) {
-        List* l = static_cast<List*>(value);
+        List* l = dynamic_cast<List*>(value);
         if (!l->empty()) (*l)[0]->is_delayed(false);
       } else if (typeid(*value) == typeid(Binary_Expression)) {
-        Binary_Expression* b = static_cast<Binary_Expression*>(value);
-        Binary_Expression* lhs = static_cast<Binary_Expression*>(b->left());
-        if (lhs && lhs->type() == Binary_Expression::DIV) lhs->is_delayed(false);
+        Binary_Expression* b = dynamic_cast<Binary_Expression*>(value);
+        Binary_Expression* lhs = dynamic_cast<Binary_Expression*>(b->left());
+        if (lhs && lhs->type() == Sass_OP::DIV) lhs->is_delayed(false);
       }
       return value;
     }
@@ -1753,7 +1759,7 @@ namespace Sass {
     ParserState if_source_position = pstate;
     Expression* predicate = parse_list();
     predicate->is_delayed(false);
-    Block* consequent = parse_block();
+    Block* block = parse_block();
     Block* alternative = 0;
 
     if (lex< elseif_directive >()) {
@@ -1763,7 +1769,7 @@ namespace Sass {
     else if (lex< kwd_else_directive >()) {
       alternative = parse_block();
     }
-    return new (ctx.mem) If(if_source_position, predicate, consequent, alternative);
+    return new (ctx.mem) If(if_source_position, predicate, block, alternative);
   }
 
   For* Parser::parse_for_directive()
@@ -1824,7 +1830,7 @@ namespace Sass {
     Expression* list = parse_list();
     list->is_delayed(false);
     if (list->concrete_type() == Expression::LIST) {
-      List* l = static_cast<List*>(list);
+      List* l = dynamic_cast<List*>(list);
       for (size_t i = 0, L = l->length(); i < L; ++i) {
         (*l)[i]->is_delayed(false);
       }
@@ -1861,7 +1867,7 @@ namespace Sass {
 
   List* Parser::parse_media_queries()
   {
-    List* media_queries = new (ctx.mem) List(pstate, 0, List::COMMA);
+    List* media_queries = new (ctx.mem) List(pstate, 0, SASS_COMMA);
     if (!peek< exactly<'{'> >()) (*media_queries) << parse_media_query();
     while (lex< exactly<','> >()) (*media_queries) << parse_media_query();
     return media_queries;
@@ -2073,7 +2079,7 @@ namespace Sass {
     List* value = new (ctx.mem) List(declaration->value()->pstate(), 1);
 
     if (declaration->value()->concrete_type() == Expression::LIST) {
-        value = static_cast<List*>(declaration->value());
+        value = dynamic_cast<List*>(declaration->value());
     }
     else *value << declaration->value();
 
@@ -2147,6 +2153,11 @@ namespace Sass {
             // match `/deep/` selector (pass-trough)
             // there is no functionality for it yet
             re_reference_selector,
+            sequence <
+              exactly <'/'>,
+              identifier,
+              exactly <'/'>
+            >,
             // match selector ops /[*&%,()\[\]]/
             class_char < selector_lookahead_ops >,
             // match selector combinators /[>+~]/
@@ -2364,12 +2375,12 @@ namespace Sass {
   }
 
 
-  Expression* Parser::fold_operands(Expression* base, vector<Expression*>& operands, Binary_Expression::Type op)
+  Expression* Parser::fold_operands(Expression* base, vector<Expression*>& operands, enum Sass_OP op)
   {
     for (size_t i = 0, S = operands.size(); i < S; ++i) {
       base = new (ctx.mem) Binary_Expression(pstate, op, base, operands[i]);
-      Binary_Expression* b = static_cast<Binary_Expression*>(base);
-      if (op == Binary_Expression::DIV && b->left()->is_delayed() && b->right()->is_delayed()) {
+      Binary_Expression* b = dynamic_cast<Binary_Expression*>(base);
+      if (op == Sass_OP::DIV && b->left()->is_delayed() && b->right()->is_delayed()) {
         base->is_delayed(true);
       }
       else {
@@ -2380,12 +2391,12 @@ namespace Sass {
     return base;
   }
 
-  Expression* Parser::fold_operands(Expression* base, vector<Expression*>& operands, vector<Binary_Expression::Type>& ops)
+  Expression* Parser::fold_operands(Expression* base, vector<Expression*>& operands, vector<enum Sass_OP>& ops)
   {
     for (size_t i = 0, S = operands.size(); i < S; ++i) {
       base = new (ctx.mem) Binary_Expression(base->pstate(), ops[i], base, operands[i]);
-      Binary_Expression* b = static_cast<Binary_Expression*>(base);
-      if (ops[i] == Binary_Expression::DIV && b->left()->is_delayed() && b->right()->is_delayed()) {
+      Binary_Expression* b = dynamic_cast<Binary_Expression*>(base);
+      if (ops[i] == Sass_OP::DIV && b->left()->is_delayed() && b->right()->is_delayed()) {
         base->is_delayed(true);
       }
       else {
@@ -2393,12 +2404,13 @@ namespace Sass {
         b->right()->is_delayed(false);
       }
     }
+// debug_ast(base);
     return base;
   }
 
   void Parser::error(string msg, Position pos)
   {
-    throw Sass_Error(Sass_Error::syntax, ParserState(path, source, pos.line ? pos : before_token, Offset(0, 0)), msg);
+    throw Sass_Err(Sass_Err::syntax, ParserState(path, source, pos.line ? pos : before_token, Offset(0, 0)), msg);
   }
 
   // print a css parsing error with actual context information from parsed source

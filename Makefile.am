@@ -31,13 +31,12 @@ lib_LTLIBRARIES = libsass.la
 
 libsass_la_SOURCES = \
 	ast_fwd_decl.hpp ast_def_macros.hpp \
-	kwd_arg_macros.hpp memory_manager.hpp \
+	kwd_arg_macros.hpp token.hpp \
 	position.cpp position.hpp \
 	operation.hpp \
 	subset_map.hpp mapping.hpp \
 	color_names.hpp backtrace.hpp \
 	cencode.c b64/cencode.h b64/encode.h \
-	token.hpp environment.hpp \
 	paths.hpp debug.hpp \
 	utf8.h utf8/core.h \
 	utf8/checked.h utf8/unchecked.h \
@@ -46,7 +45,9 @@ libsass_la_SOURCES = \
 	bind.cpp bind.hpp \
 	constants.cpp constants.hpp \
 	context.cpp context.hpp \
+	environment.cpp environment.hpp \
 	error_handling.cpp error_handling.hpp \
+	memory_manager.cpp memory_manager.hpp \
 	eval.cpp eval.hpp \
 	expand.cpp expand.hpp \
 	extend.cpp extend.hpp \
@@ -74,8 +75,10 @@ libsass_la_SOURCES = \
 	source_map.cpp source_map.hpp \
 	to_c.cpp to_c.hpp \
 	to_string.cpp to_string.hpp \
+	to_value.cpp to_value.hpp \
 	units.cpp units.hpp \
 	utf8_string.cpp utf8_string.hpp \
+	values.cpp values.hpp \
 	util.cpp util.hpp
 
 libsass_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined -version-info 0:9:0

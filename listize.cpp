@@ -6,16 +6,36 @@
 #include "context.hpp"
 #include "backtrace.hpp"
 #include "error_handling.hpp"
+#include "debugger.hpp"
 
 namespace Sass {
 
   Listize::Listize(Context& ctx)
   : ctx(ctx)
   {  }
+/*
+
+
+  Expression* Listize::operator()(Binary_Expression* b)
+  {
+    string sep("/");
+    To_String to_string(&ctx);
+    string lstr(b->left()->perform(&to_string));
+    string rstr(b->right()->perform(&to_string));
+    return new (ctx.mem) String_Quoted(b->pstate(), lstr + sep + rstr);
+  }
+
+  Expression* Listize::operator()(Argument* arg)
+  {
+    return arg->value()->perform(this);
+  }
+
+*/
+
 
   Expression* Listize::operator()(Selector_List* sel)
   {
-    List* l = new (ctx.mem) List(sel->pstate(), sel->length(), List::COMMA);
+    List* l = new (ctx.mem) List(sel->pstate(), sel->length(), SASS_COMMA);
     for (size_t i = 0, L = sel->length(); i < L; ++i) {
       if (!(*sel)[i]) continue;
       *l << (*sel)[i]->perform(this);
@@ -71,20 +91,39 @@ namespace Sass {
     {
       Expression* tt = tail->perform(this);
       if (tt && tt->concrete_type() == Expression::LIST)
-      { *l += static_cast<List*>(tt); }
-      else if (tt) *l << static_cast<List*>(tt);
+      { *l += dynamic_cast<List*>(tt); }
+      else if (tt) *l << dynamic_cast<List*>(tt);
     }
     if (l->length() == 0) return 0;
     return l;
   }
 
+/*
   Expression* Listize::operator()(Parent_Selector* sel)
   {
     return 0;
   }
+  Expression* Listize::operator()(Expression* val)
+  {
+    return val;
+  }
+*/
+
+  Expression* Listize::operator()(Type_Selector* sel)
+  {
+    return new (ctx.mem) String_Quoted(sel->pstate(), sel->ns_name());
+  }
+
+  Expression* Listize::operator()(Selector_Qualifier* sel)
+  {
+    return new (ctx.mem) String_Quoted(sel->pstate(), sel->ns_name());
+  }
 
   Expression* Listize::fallback_impl(AST_Node* n)
   {
-    return static_cast<Expression*>(n);
+    Expression* val = dynamic_cast<Expression*>(n);
+    if (!val) debug_ast(n);
+    return val;
   }
+
 }

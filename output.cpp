@@ -18,6 +18,24 @@ namespace Sass {
     return n->perform(this);
   }
 
+  void Output::operator()(Number* n)
+  {
+    // use values to_string facility
+    bool compressed = ctx->output_style == COMPRESSED;
+    string res = n->to_string(compressed, ctx->precision);
+    // check for a valid unit here
+    // includes result for reporting
+    if (n->numerator_units().size() > 1 ||
+        n->denominator_units().size() > 0 ||
+        (n->numerator_units().size() && n->numerator_units()[0].find_first_of('/') != string::npos) ||
+        (n->numerator_units().size() && n->numerator_units()[0].find_first_of('*') != string::npos)
+    ) {
+      error(res + " isn't a valid CSS value.", n->pstate());
+    }
+    // output the final token
+    append_token(res, n);
+  }
+
   void Output::operator()(Import* imp)
   {
     top_nodes.push_back(imp);
@@ -129,9 +147,9 @@ namespace Sass {
         bool bPrintExpression = true;
         // Check print conditions
         if (typeid(*stm) == typeid(Declaration)) {
-          Declaration* dec = static_cast<Declaration*>(stm);
+          Declaration* dec = dynamic_cast<Declaration*>(stm);
           if (dec->value()->concrete_type() == Expression::STRING) {
-            String_Constant* valConst = static_cast<String_Constant*>(dec->value());
+            String_Constant* valConst = dynamic_cast<String_Constant*>(dec->value());
             string val(valConst->value());
             if (auto qstr = dynamic_cast<String_Quoted*>(valConst)) {
               if (!qstr->quote_mark() && val.empty()) {
@@ -140,7 +158,7 @@ namespace Sass {
             }
           }
           else if (dec->value()->concrete_type() == Expression::LIST) {
-            List* list = static_cast<List*>(dec->value());
+            List* list = dynamic_cast<List*>(dec->value());
             bool all_invisible = true;
             for (size_t list_i = 0, list_L = list->length(); list_i < list_L; ++list_i) {
               Expression* item = (*list)[list_i];

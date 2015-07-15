@@ -12,11 +12,13 @@
 #include "backtrace.hpp"
 #include "context.hpp"
 #include "parser.hpp"
+#include "debugger.hpp"
 
 namespace Sass {
 
   Expand::Expand(Context& ctx, Env* env, Backtrace* bt)
-  : ctx(ctx),
+  : ovmem(0),
+    ctx(ctx),
     eval(Eval(*this)),
     env_stack(vector<Env*>()),
     block_stack(vector<Block*>()),
@@ -63,22 +65,32 @@ namespace Sass {
   // blocks create new variable scopes
   Statement* Expand::operator()(Block* b)
   {
+    // ovmem = 0;
+    // cerr << "expand block\n";
+    // debug_ast(b);
     // create new local environment
     // set the current env as parent
-    Env env(environment());
     // copy the block object (add items later)
     Block* bb = new (ctx.mem) Block(b->pstate(),
                                     b->length(),
                                     b->is_root());
+    bb->env.parent(environment());
     // setup block and env stack
     this->block_stack.push_back(bb);
-    this->env_stack.push_back(&env);
+    this->env_stack.push_back(&bb->env);
     // operate on block
-    this->append_block(b);
+    for (size_t i = 0, L = b->length(); i < L; ++i) {
+      // debug_ast((*b)[i], " perf: ");
+      Statement* ith = (*b)[i]->perform(this);
+      // debug_ast(ith, " ith: ");
+      if (ith) *bb << ith;
+    }
     // revert block and env stack
     this->block_stack.pop_back();
     this->env_stack.pop_back();
+    // ovmem = oldmem;
     // return copy
+    // cerr << "expanded block\n";
     return bb;
   }
 
@@ -90,7 +102,7 @@ namespace Sass {
       Keyframe_Rule* k = new (ctx.mem) Keyframe_Rule(r->pstate(), r->block()->perform(this)->block());
       if (r->selector()) {
         selector_stack.push_back(0);
-        k->selector(static_cast<Selector_List*>(r->selector()->perform(&eval)));
+        k->selector(dynamic_cast<Selector_List*>(r->selector()->perform(&eval)));
         selector_stack.pop_back();
       }
       return k;
@@ -118,7 +130,7 @@ namespace Sass {
 
     for (size_t i = 0, L = expanded_block->length(); i < L; ++i) {
       Statement* stm = (*expanded_block)[i];
-      if (Declaration* dec = static_cast<Declaration*>(stm)) {
+      if (Declaration* dec = dynamic_cast<Declaration*>(stm)) {
         String_Schema* combined_prop = new (ctx.mem) String_Schema(p->pstate());
         if (!property_stack.empty()) {
           *combined_prop << property_stack.back()
@@ -148,7 +160,7 @@ namespace Sass {
   {
     Expression* queries = f->queries()->perform(&eval);
     Supports_Block* ff = new (ctx.mem) Supports_Block(f->pstate(),
-                                                    static_cast<Supports_Query*>(queries),
+                                                    dynamic_cast<Supports_Query*>(queries),
                                                     f->block()->perform(this)->block());
     // ff->selector(selector());
     return ff;
@@ -160,7 +172,7 @@ namespace Sass {
     Expression* mq = m->media_queries()->perform(&eval);
     mq = Parser::from_c_str(mq->perform(&to_string).c_str(), ctx, mq->pstate()).parse_media_queries();
     Media_Block* mm = new (ctx.mem) Media_Block(m->pstate(),
-                                                static_cast<List*>(mq),
+                                                dynamic_cast<List*>(mq),
                                                 m->block()->perform(this)->block(),
                                                 0);
     mm->tabs(m->tabs());
@@ -177,7 +189,7 @@ namespace Sass {
     Block* bb = ab ? ab->perform(this)->block() : 0;
     At_Root_Block* aa = new (ctx.mem) At_Root_Block(a->pstate(),
                                                     bb,
-                                                    static_cast<At_Root_Expression*>(ae));
+                                                    dynamic_cast<At_Root_Expression*>(ae));
     // aa->block()->is_root(true);
     return aa;
   }
@@ -204,7 +216,7 @@ namespace Sass {
   Statement* Expand::operator()(Declaration* d)
   {
     String* old_p = d->property();
-    String* new_p = static_cast<String*>(old_p->perform(&eval));
+    String* new_p = dynamic_cast<String*>(old_p->perform(&eval));
     Expression* value = d->value()->perform(&eval);
     if (!value || (value->is_invisible() && !d->is_important())) return 0;
     Declaration* decl = new (ctx.mem) Declaration(d->pstate(),
@@ -224,15 +236,21 @@ namespace Sass {
         if (env->has_global(var)) {
           Expression* e = dynamic_cast<Expression*>(env->get_global(var));
           if (!e || e->concrete_type() == Expression::NULL_VAL) {
+            Env* oldmem = ovmem; ovmem = 0;
             env->set_global(var, a->value()->perform(&eval));
+            ovmem = oldmem;
           }
         }
         else {
+          Env* oldmem = ovmem; ovmem = 0;
           env->set_global(var, a->value()->perform(&eval));
+          ovmem = oldmem;
         }
       }
       else {
+        Env* oldmem = ovmem; ovmem = 0;
         env->set_global(var, a->value()->perform(&eval));
+        ovmem = oldmem;
       }
     }
     else if (a->is_default()) {
@@ -243,7 +261,10 @@ namespace Sass {
             if (AST_Node* node = cur->get_local(var)) {
               Expression* e = dynamic_cast<Expression*>(node);
               if (!e || e->concrete_type() == Expression::NULL_VAL) {
+                // Env* oldmem = ovmem; ovmem = env;
+        cerr << "do 1\n";
                 cur->set_local(var, a->value()->perform(&eval));
+                // ovmem = oldmem;
               }
             }
             else {
@@ -259,19 +280,30 @@ namespace Sass {
         if (AST_Node* node = env->get_global(var)) {
           Expression* e = dynamic_cast<Expression*>(node);
           if (!e || e->concrete_type() == Expression::NULL_VAL) {
+            Env* oldmem = ovmem; ovmem = 0;
             env->set_global(var, a->value()->perform(&eval));
+            ovmem = oldmem;
           }
         }
       }
       else if (env->is_lexical()) {
+        // Env* oldmem = ovmem; ovmem = env;
+        cerr << "do 2\n";
         env->set_local(var, a->value()->perform(&eval));
+        // ovmem = oldmem;
       }
       else {
+        Env* oldmem = ovmem; ovmem = 0;
+        cerr << "do 3\n";
         env->set_local(var, a->value()->perform(&eval));
+        ovmem = oldmem;
       }
     }
     else {
+      Env* oldmem = ovmem; ovmem = env->lexical_env(var);
+      // if (ovmem == env) ovmem = oldmem ? oldmem : 0;
       env->set_lexical(var, a->value()->perform(&eval));
+      ovmem = oldmem;
     }
     return 0;
   }
@@ -316,13 +348,13 @@ namespace Sass {
   Statement* Expand::operator()(Comment* c)
   {
     // TODO: eval the text, once we're parsing/storing it as a String_Schema
-    return new (ctx.mem) Comment(c->pstate(), static_cast<String*>(c->text()->perform(&eval)), c->is_important());
+    return new (ctx.mem) Comment(c->pstate(), dynamic_cast<String*>(c->text()->perform(&eval)), c->is_important());
   }
 
   Statement* Expand::operator()(If* i)
   {
     if (*i->predicate()->perform(&eval)) {
-      append_block(i->consequent());
+      append_block(i->block());
     }
     else {
       Block* alt = i->alternative();
@@ -344,8 +376,8 @@ namespace Sass {
     if (high->concrete_type() != Expression::NUMBER) {
       error("upper bound of `@for` directive must be numeric", high->pstate(), backtrace());
     }
-    Number* sass_start = static_cast<Number*>(low);
-    Number* sass_end = static_cast<Number*>(high);
+    Number* sass_start = dynamic_cast<Number*>(low);
+    Number* sass_end = dynamic_cast<Number*>(high);
     // check if units are valid for sequence
     if (sass_start->unit() != sass_end->unit()) {
       stringstream msg; msg << "Incompatible units: '"
@@ -359,15 +391,17 @@ namespace Sass {
     Env* env = environment();
     Number* it = new (env->mem) Number(low->pstate(), start, sass_end->unit());
     AST_Node* old_var = env->has_local(variable) ? env->get_local(variable) : 0;
-    env->set_local(variable, it);
     Block* body = f->block();
+    Env outer(env);
+    outer.set_local(variable, it);
+    env_stack.push_back(&outer);
     if (start < end) {
       if (f->is_inclusive()) ++end;
       for (double i = start;
            i < end;
            ++i) {
         it->value(i);
-        env->set_local(variable, it);
+        outer.update_local(variable, it);
         append_block(body);
       }
     } else {
@@ -376,10 +410,11 @@ namespace Sass {
            i > end;
            --i) {
         it->value(i);
-        env->set_local(variable, it);
+        outer.update_local(variable, it);
         append_block(body);
       }
     }
+    env_stack.pop_back();
     // restore original environment
     if (!old_var) env->del_local(variable);
     else env->set_local(variable, old_var);
@@ -395,23 +430,26 @@ namespace Sass {
     List* list = 0;
     Map* map = 0;
     if (expr->concrete_type() == Expression::MAP) {
-      map = static_cast<Map*>(expr);
+      map = dynamic_cast<Map*>(expr);
     }
     else if (expr->concrete_type() != Expression::LIST) {
-      list = new (ctx.mem) List(expr->pstate(), 1, List::COMMA);
+      list = new (ctx.mem) List(expr->pstate(), 1, SASS_COMMA);
       *list << expr;
     }
     else {
-      list = static_cast<List*>(expr);
+      list = dynamic_cast<List*>(expr);
     }
     // remember variables and then reset them
     Env* env = environment();
     vector<AST_Node*> old_vars(variables.size());
     for (size_t i = 0, L = variables.size(); i < L; ++i) {
       old_vars[i] = env->has_local(variables[i]) ? env->get_local(variables[i]) : 0;
-      env->set_local(variables[i], 0);
+      env->del_local(variables[i]);
     }
     Block* body = e->block();
+    Env inner(env);
+    // outer.set_local(variable, it);
+    // env_stack.push_back(&inner);
 
     if (map) {
       for (auto key : map->keys()) {
@@ -419,7 +457,7 @@ namespace Sass {
         Expression* v = map->at(key)->perform(&eval);
 
         if (variables.size() == 1) {
-          List* variable = new (ctx.mem) List(map->pstate(), 2, List::SPACE);
+          List* variable = new (ctx.mem) List(map->pstate(), 2, SASS_SPACE);
           *variable << k;
           *variable << v;
           env->set_local(variables[0], variable);
@@ -434,11 +472,11 @@ namespace Sass {
       for (size_t i = 0, L = list->length(); i < L; ++i) {
         List* variable = 0;
         if ((*list)[i]->concrete_type() != Expression::LIST  || variables.size() == 1) {
-          variable = new (ctx.mem) List((*list)[i]->pstate(), 1, List::COMMA);
+          variable = new (ctx.mem) List((*list)[i]->pstate(), 1, SASS_COMMA);
           *variable << (*list)[i];
         }
         else {
-          variable = static_cast<List*>((*list)[i]);
+          variable = dynamic_cast<List*>((*list)[i]);
         }
         for (size_t j = 0, K = variables.size(); j < K; ++j) {
           if (j < variable->length()) {
@@ -451,6 +489,9 @@ namespace Sass {
         append_block(body);
       }
     }
+
+    // env_stack.pop_back();
+
     // restore original environment
     for (size_t j = 0, K = variables.size(); j < K; ++j) {
       if(!old_vars[j]) env->del_local(variables[j]);
@@ -478,13 +519,13 @@ namespace Sass {
   Statement* Expand::operator()(Extension* e)
   {
     To_String to_string(&ctx);
-    Selector_List* extender = static_cast<Selector_List*>(selector());
+    Selector_List* extender = dynamic_cast<Selector_List*>(selector());
     if (!extender) return 0;
     selector_stack.push_back(0);
     // extender->remove_parent_selectors();
 
-    Selector_List* selector_list = static_cast<Selector_List*>(e->selector());
-    Selector_List* contextualized = static_cast<Selector_List*>(selector_list->perform(&eval));
+    Selector_List* selector_list = dynamic_cast<Selector_List*>(e->selector()->perform(&eval));
+    Selector_List* contextualized = dynamic_cast<Selector_List*>(selector_list->perform(&eval));
     // contextualized->remove_parent_selectors();
     for (auto complex_sel : contextualized->elements()) {
       Complex_Selector* c = complex_sel;
@@ -526,16 +567,17 @@ namespace Sass {
 
   Statement* Expand::operator()(Mixin_Call* c)
   {
+    ovmem = 0;
     Env* env = environment();
     string full_name(c->name() + "[m]");
     if (!env->has(full_name)) {
       error("no mixin named " + c->name(), c->pstate(), backtrace());
     }
-    Definition* def = static_cast<Definition*>((*env)[full_name]);
+    Definition* def = dynamic_cast<Definition*>((*env)[full_name]);
     Block* body = def->block();
     Parameters* params = def->parameters();
 
-    Arguments* args = static_cast<Arguments*>(c->arguments()
+    Arguments* args = dynamic_cast<Arguments*>(c->arguments()
                                                ->perform(&eval));
     Backtrace new_bt(backtrace(), c->pstate(), ", in mixin `" + c->name() + "`");
     backtrace_stack.push_back(&new_bt);
@@ -550,8 +592,17 @@ namespace Sass {
                                                    Definition::MIXIN);
       thunk->environment(env);
       new_env.local_frame()["@content[m]"] = thunk;
+      // def->environment()->parent(0);
     }
     bind("mixin " + c->name(), params, args, ctx, &new_env, &eval);
+// debug_ast(body, "app: ");
+    body->env.parent(0);
+    if (!body->env.has(full_name)) {
+      // cerr << "RECURSION POSSIBLE\n";
+      // env->print("env: ");
+      // new_env.print("nenv: ");
+      // body->env.print("body: ");
+    }
     append_block(body);
     backtrace_stack.pop_back();
     env_stack.pop_back();
@@ -560,6 +611,7 @@ namespace Sass {
 
   Statement* Expand::operator()(Content* c)
   {
+    ovmem = 0;
     Env* env = environment();
     // convert @content directives into mixin calls to the underlying thunk
     if (!env->has("@content[m]")) return 0;

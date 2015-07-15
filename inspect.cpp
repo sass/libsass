@@ -9,6 +9,7 @@
 #include "inspect.hpp"
 #include "context.hpp"
 #include "listize.hpp"
+#include "color_maps.hpp"
 #include "utf8/checked.h"
 
 namespace Sass {
@@ -242,7 +243,7 @@ namespace Sass {
     append_token("@if", cond);
     append_mandatory_space();
     cond->predicate()->perform(this);
-    cond->consequent()->perform(this);
+    cond->block()->perform(this);
     if (cond->alternative()) {
       append_optional_linefeed();
       append_indentation();
@@ -362,7 +363,7 @@ namespace Sass {
 
   void Inspect::operator()(List* list)
   {
-    string sep(list->separator() == List::SPACE ? " " : ",");
+    string sep(list->separator() == SASS_SPACE ? " " : ",");
     if (output_style() != COMPRESSED && sep == ",") sep += " ";
     else if (in_media_block && sep != " ") sep += " "; // verified
     if (list->empty()) return;
@@ -371,14 +372,14 @@ namespace Sass {
     bool was_space_array = in_space_array;
     bool was_comma_array = in_comma_array;
     if (!in_declaration && (
-        (list->separator() == List::SPACE && in_space_array) ||
-        (list->separator() == List::COMMA && in_comma_array)
+        (list->separator() == SASS_SPACE && in_space_array) ||
+        (list->separator() == SASS_COMMA && in_comma_array)
     )) {
       append_string("(");
     }
 
-    if (list->separator() == List::SPACE) in_space_array = true;
-    else if (list->separator() == List::COMMA) in_comma_array = true;
+    if (list->separator() == SASS_SPACE) in_space_array = true;
+    else if (list->separator() == SASS_COMMA) in_comma_array = true;
 
     for (size_t i = 0, L = list->size(); i < L; ++i) {
       Expression* list_item = (*list)[i];
@@ -397,8 +398,8 @@ namespace Sass {
     in_comma_array = was_comma_array;
     in_space_array = was_space_array;
     if (!in_declaration && (
-        (list->separator() == List::SPACE && in_space_array) ||
-        (list->separator() == List::COMMA && in_comma_array)
+        (list->separator() == SASS_SPACE && in_space_array) ||
+        (list->separator() == SASS_COMMA && in_comma_array)
     )) {
       append_string(")");
     }
@@ -409,19 +410,19 @@ namespace Sass {
   {
     expr->left()->perform(this);
     switch (expr->type()) {
-      case Binary_Expression::AND: append_string(" and "); break;
-      case Binary_Expression::OR:  append_string(" or ");  break;
-      case Binary_Expression::EQ:  append_string(" == ");  break;
-      case Binary_Expression::NEQ: append_string(" != ");  break;
-      case Binary_Expression::GT:  append_string(" > ");   break;
-      case Binary_Expression::GTE: append_string(" >= ");  break;
-      case Binary_Expression::LT:  append_string(" < ");   break;
-      case Binary_Expression::LTE: append_string(" <= ");  break;
-      case Binary_Expression::ADD: append_string(" + ");   break;
-      case Binary_Expression::SUB: append_string(" - ");   break;
-      case Binary_Expression::MUL: append_string(" * ");   break;
-      case Binary_Expression::DIV: append_string("/");     break;
-      case Binary_Expression::MOD: append_string(" % ");   break;
+      case Sass_OP::AND: append_string(" and "); break;
+      case Sass_OP::OR:  append_string(" or ");  break;
+      case Sass_OP::EQ:  append_string(" == ");  break;
+      case Sass_OP::NEQ: append_string(" != ");  break;
+      case Sass_OP::GT:  append_string(" > ");   break;
+      case Sass_OP::GTE: append_string(" >= ");  break;
+      case Sass_OP::LT:  append_string(" < ");   break;
+      case Sass_OP::LTE: append_string(" <= ");  break;
+      case Sass_OP::ADD: append_string(" + ");   break;
+      case Sass_OP::SUB: append_string(" - ");   break;
+      case Sass_OP::MUL: append_string(" * ");   break;
+      case Sass_OP::DIV: append_string("/");     break;
+      case Sass_OP::MOD: append_string(" % ");   break;
       default: break; // shouldn't get here
     }
     expr->right()->perform(this);
@@ -458,191 +459,35 @@ namespace Sass {
 
   void Inspect::operator()(Number* n)
   {
-
-    string res;
-
-    // init stuff
-    n->normalize();
-    int precision = 5;
-    double value = n->value();
-    // get option from optional context
-    if (ctx) precision = ctx->precision;
-
-    // check if the fractional part of the value equals to zero
-    // neat trick from http://stackoverflow.com/a/1521682/1550314
-    // double int_part; bool is_int = modf(value, &int_part) == 0.0;
-
-    // this all cannot be done with one run only, since fixed
-    // output differs from normal output and regular output
-    // can contain scientific notation which we do not want!
-
-    // first sample
-    stringstream ss;
-    ss.precision(12);
-    ss << value;
-
-    // check if we got scientific notation in result
-    if (ss.str().find_first_of("e") != string::npos) {
-      ss.clear(); ss.str(string());
-      ss.precision(max(12, precision));
-      ss << fixed << value;
-    }
-
-    string tmp = ss.str();
-    size_t pos_point = tmp.find_first_of(".,");
-    size_t pos_fract = tmp.find_last_not_of("0");
-    bool is_int = pos_point == pos_fract ||
-                  pos_point == string::npos;
-
-    // reset stream for another run
-    ss.clear(); ss.str(string());
-
-    // take a shortcut for integers
-    if (is_int)
-    {
-      ss.precision(0);
-      ss << fixed << value;
-      res = string(ss.str());
-    }
-    // process floats
-    else
-    {
-      // do we have have too much precision?
-      if (pos_fract < precision + pos_point)
-      { precision = pos_fract - pos_point; }
-      // round value again
-      ss.precision(precision);
-      ss << fixed << value;
-      res = string(ss.str());
-      // maybe we truncated up to decimal point
-      size_t pos = res.find_last_not_of("0");
-      bool at_dec_point = res[pos] == '.' ||
-                          res[pos] == ',';
-      // don't leave a blank point
-      if (at_dec_point) ++ pos;
-      res.resize (pos + 1);
-    }
-
-    // some final cosmetics
-    if (res == "-0.0") res.erase(0, 1);
-    else if (res == "-0") res.erase(0, 1);
-
-    // add unit now
-    res += n->unit();
-
-    // check for a valid unit here
-    // includes result for reporting
-    if (n->numerator_units().size() > 1 ||
-        n->denominator_units().size() > 0 ||
-        (n->numerator_units().size() && n->numerator_units()[0].find_first_of('/') != string::npos) ||
-        (n->numerator_units().size() && n->numerator_units()[0].find_first_of('*') != string::npos)
-    ) {
-      error(res + " isn't a valid CSS value.", n->pstate());
-    }
-
+    // use values to_string facility
+    bool compressed = ctx->output_style == COMPRESSED;
+    string res = n->to_string(compressed, ctx->precision);
     // output the final token
     append_token(res, n);
-
-  }
-
-  // helper function for serializing colors
-  template <size_t range>
-  static double cap_channel(double c) {
-    if      (c > range) return range;
-    else if (c < 0)     return 0;
-    else                return c;
   }
 
   void Inspect::operator()(Color* c)
   {
-    stringstream ss;
-
-    // check if we prefer short hex colors
-    bool want_short = output_style() == COMPRESSED;
-
-    // original color name
-    // maybe an unknown token
-    string name = c->disp();
-
-    // resolved color
-    string res_name = name;
-
-    double r = round(cap_channel<0xff>(c->r()));
-    double g = round(cap_channel<0xff>(c->g()));
-    double b = round(cap_channel<0xff>(c->b()));
-    double a = cap_channel<1>   (c->a());
-
-    // get color from given name (if one was given at all)
-    if (name != "" && ctx && ctx->names_to_colors.count(name)) {
-      Color* n = ctx->names_to_colors[name];
-      r = round(cap_channel<0xff>(n->r()));
-      g = round(cap_channel<0xff>(n->g()));
-      b = round(cap_channel<0xff>(n->b()));
-      a = cap_channel<1>   (n->a());
-    }
-    // otherwise get the possible resolved color name
-    else {
-      int numval = static_cast<int>(r) * 0x10000 + static_cast<int>(g) * 0x100 + static_cast<int>(b);
-      if (ctx && ctx->colors_to_names.count(numval))
-        res_name = ctx->colors_to_names[numval];
-    }
-
-    stringstream hexlet;
-    hexlet << '#' << setw(1) << setfill('0');
-    // create a short color hexlet if there is any need for it
-    if (want_short && is_color_doublet(r, g, b) && a == 1) {
-      hexlet << hex << setw(1) << (static_cast<unsigned long>(r) >> 4);
-      hexlet << hex << setw(1) << (static_cast<unsigned long>(g) >> 4);
-      hexlet << hex << setw(1) << (static_cast<unsigned long>(b) >> 4);
-    } else {
-      hexlet << hex << setw(2) << static_cast<unsigned long>(r);
-      hexlet << hex << setw(2) << static_cast<unsigned long>(g);
-      hexlet << hex << setw(2) << static_cast<unsigned long>(b);
-    }
-
-    if (want_short && !c->is_delayed()) name = "";
-
-    // retain the originally specified color definition if unchanged
-    if (name != "") {
-      ss << name;
-    }
-    else if (r == 0 && g == 0 && b == 0 && a == 0) {
-        ss << "transparent";
-    }
-    else if (a >= 1) {
-      if (res_name != "") {
-        if (want_short && hexlet.str().size() < res_name.size()) {
-          ss << hexlet.str();
-        } else {
-          ss << res_name;
-        }
-      }
-      else {
-        ss << hexlet.str();
-      }
-    }
-    else {
-      ss << "rgba(";
-      ss << static_cast<unsigned long>(r) << ",";
-      if (output_style() != COMPRESSED) ss << " ";
-      ss << static_cast<unsigned long>(g) << ",";
-      if (output_style() != COMPRESSED) ss << " ";
-      ss << static_cast<unsigned long>(b) << ",";
-      if (output_style() != COMPRESSED) ss << " ";
-      ss << a << ')';
-    }
-    append_token(ss.str(), c);
+    // use values to_string facility
+    bool compressed = ctx->output_style == COMPRESSED;
+    string res = c->to_string(compressed, ctx->precision);
+    // output the final token
+    append_token(res, c);
   }
 
   void Inspect::operator()(Boolean* b)
   {
-    append_token(b->value() ? "true" : "false", b);
+    // use values to_string facility
+    bool compressed = ctx->output_style == COMPRESSED;
+    string res = b->to_string(compressed, ctx->precision);
+    // output the final token
+    append_token(res, b);
   }
 
   void Inspect::operator()(String_Schema* ss)
   {
-    // Evaluation should turn these into String_Constants, so this method is
-    // only for inspection purposes.
+    // Evaluation should turn these into String_Constants,
+    // so this method is only for inspection purposes.
     for (size_t i = 0, L = ss->length(); i < L; ++i) {
       if ((*ss)[i]->is_interpolant()) append_string("#{");
       (*ss)[i]->perform(this);
@@ -652,16 +497,24 @@ namespace Sass {
 
   void Inspect::operator()(String_Constant* s)
   {
-    append_token(s->value(), s);
+    // get options from optional? context
+    int precision = ctx ? ctx->precision : 5;
+    bool compressed = ctx ? ctx->output_style == COMPRESSED : false;
+    // use values to_string facility
+    string res(s->to_string(compressed, precision));
+    // output the final token
+    append_token(res, s);
   }
 
   void Inspect::operator()(String_Quoted* s)
   {
-    if (s->quote_mark()) {
-      append_token(quote(s->value(), s->quote_mark(), true), s);
-    } else {
-      append_token(s->value(), s);
-    }
+    // get options from optional? context
+    int precision = ctx ? ctx->precision : 5;
+    bool compressed = ctx ? ctx->output_style == COMPRESSED : false;
+    // use values to_string facility
+    string res(s->to_string(compressed, precision));
+    // output the final token
+    append_token(res, s);
   }
 
   void Inspect::operator()(Supports_Query* fq)
@@ -753,7 +606,11 @@ namespace Sass {
 
   void Inspect::operator()(Null* n)
   {
-    append_token("null", n);
+    // use values to_string facility
+    bool compressed = ctx->output_style == COMPRESSED;
+    string res = n->to_string(compressed, ctx->precision);
+    // output the final token
+    append_token(res, n);
   }
 
   // parameters and arguments
@@ -793,7 +650,7 @@ namespace Sass {
       return;
     }
     if (a->value()->concrete_type() == Expression::STRING) {
-      String_Constant* s = static_cast<String_Constant*>(a->value());
+      String_Constant* s = dynamic_cast<String_Constant*>(a->value());
       s->perform(this);
     } else a->value()->perform(this);
     if (a->is_rest_argument()) {
