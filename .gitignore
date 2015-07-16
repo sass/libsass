@@ -14,6 +14,22 @@ VERSION
 
 GNUmakefile.in
 GNUmakefile
+sass.sln
+/*.cmake
+/*/*.cmake
+/*.vcxproj
+/*/*.vcxproj
+/*.vcxproj.filters
+/*/*.vcxproj.filters
+DartConfiguration.tcl
+Win32
+Win64
+*.dir
+libraryinfo.h
+CMakeFiles
+CMakeCache.txt
+
+Makefile.in
 /aclocal.m4
 /autom4te.cache/
 /src/config.h
@@ -57,7 +73,7 @@ tester
 tester.exe
 build/
 config.h.in*
-lib/pkgconfig/
+/lib
 
 bin/*
 .deps/
