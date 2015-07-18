@@ -106,6 +106,8 @@ namespace Sass {
     extern Signature selector_extend_sig;
     extern Signature selector_replace_sig;
     extern Signature selector_unify_sig;
+    extern Signature selector_is_eq_sig;
+    extern Signature selector_is_lt_sig;
     extern Signature is_superselector_sig;
     extern Signature simple_selectors_sig;
     extern Signature selector_parse_sig;
@@ -188,6 +190,8 @@ namespace Sass {
     BUILT_IN(selector_extend);
     BUILT_IN(selector_replace);
     BUILT_IN(selector_unify);
+    BUILT_IN(selector_is_eq);
+    BUILT_IN(selector_is_lt);
     BUILT_IN(is_superselector);
     BUILT_IN(simple_selectors);
     BUILT_IN(selector_parse);
