@@ -18,6 +18,8 @@ namespace Sass {
 
     void fallback_impl(AST_Node* n);
 
+    bool strip_newlines;
+
   public:
 
     Inspect(Emitter emi);

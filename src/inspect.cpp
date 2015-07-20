@@ -16,7 +16,8 @@ namespace Sass {
   using namespace std;
 
   Inspect::Inspect(Emitter emi)
-  : Emitter(emi)
+  : Emitter(emi),
+    strip_newlines(false)
   { }
   Inspect::~Inspect() { }
 
@@ -437,6 +438,7 @@ namespace Sass {
 
   void Inspect::operator()(Function_Call* call)
   {
+    LOCAL_FLAG(strip_newlines, true);
     append_token(call->name(), call);
     call->arguments()->perform(this);
   }
@@ -513,6 +515,18 @@ namespace Sass {
     bool compressed = ctx ? ctx->output_style == COMPRESSED : false;
     // use values to_string facility
     string res(s->to_string(compressed, precision));
+    // special case for statements
+    // mostly we don't want linefeeds
+    if (strip_newlines) {
+      string cpy("");
+      for (size_t i = 0, L = res.length(); i < L; ++i) {
+        // access +1 is save, since we checked `i` to not be EOF
+        if (res[i] == '\r' && res[i+1] == '\n') { cpy += ' '; ++ i; }
+        else if (res[i] == '\r' || res[i] == '\n') { cpy += ' '; }
+        else cpy += res[i];
+      }
+      res = cpy;
+    }
     // output the final token
     append_token(res, s);
   }
