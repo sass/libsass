@@ -1,10 +1,8 @@
-#include "sass.h"
 #include "values.hpp"
 
 #include <stdint.h>
 
 namespace Sass {
-  using namespace std;
 
   // convert value from C++ side to C-API
   union Sass_Value* ast_node_to_sass_value (const Expression* val)

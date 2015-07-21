@@ -1,13 +1,13 @@
 #ifndef SASS_EMITTER_H
 #define SASS_EMITTER_H
 
-#include <string>
+#include "sass.hpp"
 #include "source_map.hpp"
 #include "ast_fwd_decl.hpp"
 
 namespace Sass {
+
   class Context;
-  using namespace std;
 
   class Emitter {
 

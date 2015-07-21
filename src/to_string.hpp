@@ -1,12 +1,10 @@
 #ifndef SASS_TO_STRING_H
 #define SASS_TO_STRING_H
 
-#include <string>
-
+#include "sass.hpp"
 #include "operation.hpp"
 
 namespace Sass {
-  using namespace std;
 
   class Context;
   class Null;

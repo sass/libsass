@@ -6,13 +6,14 @@
 
 #include <cstdlib>
 #include <cstring>
+#include "sass.hpp"
 #include "util.hpp"
 #include "eval.hpp"
 #include "values.hpp"
 #include "sass_values.h"
 
 extern "C" {
-  using namespace std;
+
   using namespace Sass;
 
   struct Sass_Unknown {

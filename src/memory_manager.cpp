@@ -1,8 +1,8 @@
 #include "ast.hpp"
+#include "sass.hpp"
 #include "memory_manager.hpp"
 
 namespace Sass {
-  using namespace std;
 
   template <typename T>
   Memory_Manager<T>::Memory_Manager(size_t size)
@@ -18,7 +18,7 @@ namespace Sass {
   Memory_Manager<T>::~Memory_Manager()
   {
     // release memory for all controlled nodes
-    // avoid calling erase for every single node 
+    // avoid calling erase for every single node
     for (size_t i = 0, S = nodes.size(); i < S; ++i) {
       deallocate(nodes[i]);
     }

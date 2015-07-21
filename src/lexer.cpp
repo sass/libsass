@@ -2,12 +2,12 @@
 #include <cstddef>
 #include <iostream>
 #include <iomanip>
+#include "sass.hpp"
 #include "lexer.hpp"
 #include "constants.hpp"
 
 
 namespace Sass {
-  using namespace Constants;
 
   namespace Prelexer {
 

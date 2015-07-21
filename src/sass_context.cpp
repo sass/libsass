@@ -8,6 +8,7 @@
 
 #include <cstring>
 #include <stdexcept>
+#include "sass.hpp"
 #include "file.hpp"
 #include "json.hpp"
 #include "util.hpp"
@@ -18,8 +19,9 @@
 #include "error_handling.hpp"
 
 extern "C" {
-  using namespace std;
+
   using namespace Sass;
+  using std::bad_alloc;
 
   // Input behaviours
   enum Sass_Input_Style {

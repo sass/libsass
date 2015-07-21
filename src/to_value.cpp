@@ -1,10 +1,9 @@
 #include "ast.hpp"
-#include "sass_values.h"
 #include "to_value.hpp"
 #include "to_string.hpp"
+#include "sass_values.h"
 
 namespace Sass {
-  using namespace std;
 
   Value* To_Value::fallback_impl(AST_Node* n)
   {

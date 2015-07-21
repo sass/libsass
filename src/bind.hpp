@@ -1,7 +1,6 @@
 #ifndef SASS_BIND_H
 #define SASS_BIND_H
 
-#include <string>
 #include "environment.hpp"
 
 namespace Sass {

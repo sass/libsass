@@ -25,6 +25,9 @@
 #include <set>
 
 #ifdef __MINGW32__
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include "windows.h"
 #include "wincrypt.h"
 #endif
@@ -34,8 +37,6 @@
 #define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, pstate, backtrace, ctx)
 
 namespace Sass {
-  using std::stringstream;
-  using std::endl;
 
   Definition* make_native_function(Signature sig, Native_Function func, Context& ctx)
   {
@@ -184,7 +185,7 @@ namespace Sass {
       return seed;
     }
     #else
-    static random_device rd;
+    static std::random_device rd;
     uint64_t GetSeed()
     {
       return rd();
@@ -195,7 +196,7 @@ namespace Sass {
     // random_device degrades sharply once the entropy pool
     // is exhausted. For practical use, random_device is
     // generally only used to seed a PRNG such as mt19937.
-    static mt19937 rand(static_cast<unsigned int>(GetSeed()));
+    static std::mt19937 rand(static_cast<unsigned int>(GetSeed()));
 
     // features
     static set<string> features {
@@ -1104,12 +1105,12 @@ namespace Sass {
       Number* l = dynamic_cast<Number*>(env["$limit"]);
       if (l) {
         if (trunc(l->value()) != l->value() || l->value() == 0) error("argument $limit of `" + string(sig) + "` must be a positive integer", pstate);
-        uniform_real_distribution<> distributor(1, l->value() + 1);
+        std::uniform_real_distribution<> distributor(1, l->value() + 1);
         uint_fast32_t distributed = static_cast<uint_fast32_t>(distributor(rand));
         return new (ctx.mem) Number(pstate, (double)distributed);
       }
       else {
-        uniform_real_distribution<> distributor(0, 1);
+        std::uniform_real_distribution<> distributor(0, 1);
         double distributed = static_cast<double>(distributor(rand));
         return new (ctx.mem) Number(pstate, distributed);
      }
@@ -1822,9 +1823,9 @@ namespace Sass {
     BUILT_IN(unique_id)
     {
       std::stringstream ss;
-      uniform_real_distribution<> distributor(0, 4294967296); // 16^8
+      std::uniform_real_distribution<> distributor(0, 4294967296); // 16^8
       uint_fast32_t distributed = static_cast<uint_fast32_t>(distributor(rand));
-      ss << "u" << setfill('0') << setw(8) << std::hex << distributed;
+      ss << "u" << std::setfill('0') << std::setw(8) << std::hex << distributed;
       return new (ctx.mem) String_Quoted(pstate, ss.str());
     }
 

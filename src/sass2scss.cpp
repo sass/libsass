@@ -26,9 +26,6 @@
 // our own header
 #include "sass2scss.h"
 
-// using std::string
-using namespace std;
-
 // add namespace for c++
 namespace Sass
 {

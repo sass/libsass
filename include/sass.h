@@ -1,5 +1,5 @@
-#ifndef SASS_H
-#define SASS_H
+#ifndef SASS_C_H
+#define SASS_C_H
 
 // #define DEBUG 1
 

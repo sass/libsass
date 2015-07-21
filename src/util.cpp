@@ -485,7 +485,6 @@ namespace Sass {
   }
 
   namespace Util {
-    using std::string;
 
     string normalize_underscores(const string& str) {
       string normalized = str;

@@ -1,19 +1,17 @@
 #ifndef SASS_ENVIRONMENT_H
 #define SASS_ENVIRONMENT_H
 
-#include <string>
 #include <iostream>
 #include <map>
 
+#include "sass.hpp"
 #include "ast_fwd_decl.hpp"
 #include "ast_def_macros.hpp"
 #include "memory_manager.hpp"
 
 namespace Sass {
-  using std::string;
+
   using std::map;
-  using std::cerr;
-  using std::endl;
 
   template <typename T>
   class Environment {

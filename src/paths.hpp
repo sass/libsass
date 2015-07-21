@@ -1,17 +1,13 @@
 #ifndef SASS_PATHS_H
 #define SASS_PATHS_H
 
-#include <string>
-#include <vector>
-#include <sstream>
 #include <iostream>
-
-using namespace std;
+#include "sass.hpp"
 
 template<typename T>
-string vector_to_string(vector<T> v)
+std::string vector_to_string(std::vector<T> v)
 {
-  stringstream buffer;
+  std::stringstream buffer;
   buffer << "[";
 
   if (!v.empty())
@@ -31,8 +27,6 @@ string vector_to_string(vector<T> v)
 }
 
 namespace Sass {
-
-  using namespace std;
 
   template<typename T>
   vector<vector<T> > paths(vector<vector<T> > strata, size_t from_end = 0)

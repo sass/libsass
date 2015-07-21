@@ -9,7 +9,6 @@
 #include "to_string.hpp"
 
 namespace Sass {
-  using namespace std;
 
   To_String::To_String(Context* ctx, bool in_declaration)
   : ctx(ctx), in_declaration(in_declaration) { }

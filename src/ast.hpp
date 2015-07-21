@@ -3,9 +3,6 @@
 
 #include <set>
 #include <deque>
-#include <vector>
-#include <string>
-#include <sstream>
 #include <iostream>
 #include <typeinfo>
 #include <algorithm>
@@ -30,6 +27,7 @@
 
 #endif
 
+#include "sass.hpp"
 #include "util.hpp"
 #include "units.hpp"
 #include "context.hpp"
@@ -52,7 +50,6 @@
 #include "sass_functions.h"
 
 namespace Sass {
-  using namespace std;
 
   // from boost (functional/hash):
   // http://www.boost.org/doc/libs/1_35_0/doc/html/hash/combine.html
@@ -173,7 +170,12 @@ namespace std {
 }
 
 namespace Sass {
-  using namespace std;
+
+  using std::deque;
+  using std::make_pair;
+  using std::istringstream;
+  using std::ostringstream;
+  using std::unordered_map;
 
   /////////////////////////////////////////////////////////////////////////////
   // Mixin class for AST nodes that should behave like vectors. Uses the

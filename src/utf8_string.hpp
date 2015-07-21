@@ -7,6 +7,9 @@
 namespace Sass {
   namespace UTF_8 {
 
+    using std::wstring;
+
+
     // naming conventions:
     // offset: raw byte offset (0 based)
     // position: code point offset (0 based)

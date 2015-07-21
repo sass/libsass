@@ -12,7 +12,6 @@
 #define VECTOR_UNSHIFT(vec, ins) vec.insert(vec.begin(), ins.begin(), ins.end())
 
 namespace Sass {
-  using std::vector;
 
   class Context;
   class OutputBuffer;

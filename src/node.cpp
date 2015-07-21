@@ -5,6 +5,7 @@
 
 namespace Sass {
 
+  using std::make_shared;
 
   Node Node::createCombinator(const Complex_Selector::Combinator& combinator) {
     NodeDequePtr null;
