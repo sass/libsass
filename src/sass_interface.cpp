@@ -12,6 +12,7 @@
 #include <sstream>
 #include <iostream>
 
+#include "sass.hpp"
 #include "util.hpp"
 #include "context.hpp"
 #include "inspect.hpp"
@@ -20,7 +21,9 @@
 
 
 extern "C" {
-  using namespace std;
+
+  using namespace Sass;
+  using std::bad_alloc;
 
   sass_context* sass_new_context()
   { return (sass_context*) calloc(1, sizeof(sass_context)); }
@@ -95,7 +98,6 @@ extern "C" {
 
   int sass_compile(sass_context* c_ctx)
   {
-    using namespace Sass;
     try {
       string input_path = safe_str(c_ctx->input_path);
       int lastindex = static_cast<int>(input_path.find_last_of("."));

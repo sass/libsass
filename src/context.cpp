@@ -34,11 +34,10 @@
 #include "emitter.hpp"
 
 namespace Sass {
-  using namespace Constants;
-  using namespace File;
-  using namespace Sass;
-  using std::cerr;
-  using std::endl;
+
+  using std::unordered_map;
+  using File::make_canonical_path;
+  using File::resolve_relative_path;
 
   Sass_Queued::Sass_Queued(const string& load_path, const string& abs_path, const char* source)
   {

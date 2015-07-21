@@ -1,8 +1,7 @@
 #ifndef SASS_PLUGINS_H
 #define SASS_PLUGINS_H
 
-#include <string>
-#include <vector>
+#include "sass.hpp"
 #include "utf8_string.hpp"
 #include "sass_functions.h"
 
@@ -26,8 +25,6 @@
 #endif
 
 namespace Sass {
-
-  using namespace std;
 
   class Plugins {
 

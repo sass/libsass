@@ -1,12 +1,12 @@
 #ifndef SASS_TO_C_H
 #define SASS_TO_C_H
 
+#include "sass.hpp"
 #include "ast_fwd_decl.hpp"
 #include "operation.hpp"
 #include "sass_values.h"
 
 namespace Sass {
-  using namespace std;
 
   class To_C : public Operation_CRTP<union Sass_Value*, To_C> {
     // import all the class-specific methods and override as desired

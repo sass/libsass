@@ -3,13 +3,10 @@
 
 #include <map>
 #include <set>
-#include <vector>
 #include <algorithm>
 #include <iterator>
 #include <iostream>
-#include <sstream>
-
-// using namespace std;
+#include "sass.hpp"
 
 // template<typename T>
 // string vector_to_string(vector<T> v)
@@ -56,7 +53,9 @@
 // }
 
 namespace Sass {
-  using namespace std;
+
+  using std::set;
+  using std::pair;
 
   template<typename F, typename S, typename T>
   struct triple {

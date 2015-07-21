@@ -20,8 +20,7 @@ struct Lookahead {
 };
 
 namespace Sass {
-  using std::string;
-  using std::vector;
+
   using std::map;
   using namespace Prelexer;
 

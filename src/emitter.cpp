@@ -5,7 +5,6 @@
 #include "utf8_string.hpp"
 
 namespace Sass {
-  using namespace std;
 
   Emitter::Emitter(Context* ctx)
   : wbuf(),

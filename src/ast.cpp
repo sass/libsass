@@ -1,4 +1,5 @@
 #include "ast.hpp"
+#include "sass.hpp"
 #include "context.hpp"
 #include "node.hpp"
 #include "extend.hpp"
@@ -10,7 +11,6 @@
 #include <iostream>
 
 namespace Sass {
-  using namespace std;
 
   static Null sass_null(Sass::Null(ParserState("null")));
 
@@ -1747,6 +1747,10 @@ namespace Sass {
 
   string Color::to_string(bool compressed, int precision) const
   {
+    using std::hex;
+    using std::setw;
+    using std::setfill;
+
     stringstream ss;
 
     // original color name
@@ -1846,8 +1850,8 @@ namespace Sass {
     // check if we got scientific notation in result
     if (ss.str().find_first_of("e") != string::npos) {
       ss.clear(); ss.str(string());
-      ss.precision(max(12, precision));
-      ss << fixed << value_;
+      ss.precision(std::max(12, precision));
+      ss << std::fixed << value_;
     }
 
     string tmp = ss.str();
@@ -1863,7 +1867,7 @@ namespace Sass {
     if (is_int)
     {
       ss.precision(0);
-      ss << fixed << value_;
+      ss << std::fixed << value_;
       res = string(ss.str());
     }
     // process floats
@@ -1874,7 +1878,7 @@ namespace Sass {
       { precision = pos_fract - pos_point; }
       // round value again
       ss.precision(precision);
-      ss << fixed << value_;
+      ss << std::fixed << value_;
       res = string(ss.str());
       // maybe we truncated up to decimal point
       size_t pos = res.find_last_not_of("0");

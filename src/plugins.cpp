@@ -1,4 +1,7 @@
 #ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #else
 #include <sys/types.h>
@@ -14,6 +17,8 @@
 #define npos string::npos
 
 namespace Sass {
+
+  using std::wstring;
 
   Plugins::Plugins(void) { }
   Plugins::~Plugins(void) { }

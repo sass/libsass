@@ -9,7 +9,7 @@
 
 
 namespace Sass {
-  // using namespace Lexer;
+
   using namespace Constants;
 
   namespace Prelexer {

@@ -13,7 +13,6 @@
 #include "utf8/checked.h"
 
 namespace Sass {
-  using namespace std;
 
   Inspect::Inspect(Emitter emi)
   : Emitter(emi)

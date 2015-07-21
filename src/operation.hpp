@@ -4,10 +4,10 @@
 #include <iostream>
 #include <typeinfo>
 
+#include "sass.hpp"
 #include "ast_fwd_decl.hpp"
 
 namespace Sass {
-  using namespace std;
 
   template<typename T>
   class Operation {

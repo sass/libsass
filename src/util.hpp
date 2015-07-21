@@ -2,15 +2,13 @@
 #define SASS_UTIL_H
 
 #include <cstdio>
-#include <vector>
-#include <string>
+#include "sass.hpp"
 #include <assert.h>
 #include "ast_fwd_decl.hpp"
 
 #define SASS_ASSERT(cond, msg) assert(cond && msg)
 
 namespace Sass {
-  using namespace std;
 
   char* sass_strdup(const char* str);
   double sass_atof(const char* str);

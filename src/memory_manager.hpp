@@ -1,11 +1,9 @@
 #ifndef SASS_MEMORY_MANAGER_H
 #define SASS_MEMORY_MANAGER_H
 
-#include <vector>
-#include <iostream>
+#include "sass.hpp"
 
 namespace Sass {
-  using namespace std;
   /////////////////////////////////////////////////////////////////////////////
   // A class for tracking allocations of AST_Node objects. The intended usage
   // is something like: Some_Node* n = new (mem_mgr) Some_Node(...);

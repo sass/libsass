@@ -1,16 +1,13 @@
 #ifndef SASS_OUTPUT_H
 #define SASS_OUTPUT_H
 
-#include <string>
-#include <vector>
-
+#include "sass.hpp"
 #include "util.hpp"
 #include "inspect.hpp"
 #include "operation.hpp"
 
 namespace Sass {
   class Context;
-  using namespace std;
 
   // Refactor to make it generic to find linefeed (look behind)
   inline bool ends_with(std::string const & value, std::string const & ending)
