@@ -331,7 +331,11 @@ namespace Sass {
           // allocate an extra byte for the null char
           contents = (char*) malloc((size+1)*sizeof(char));
           file.seekg(0, ios::beg);
-          file.read(contents, size);
+          while (1) {
+            file.read(contents, size);
+            if (errno == EINTR) continue;
+            break;
+          }
           contents[size] = '\0';
           file.close();
         }
