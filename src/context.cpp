@@ -145,15 +145,29 @@ namespace Sass {
   Context::~Context()
   {
     // make sure we free the source even if not processed!
-    if (sources.size() == 0 && source_c_str) free(source_c_str);
+    if (sources.size() == 0 && source_c_str) 
+		free(source_c_str);
+
     // sources are allocated by strdup or malloc (overtaken from C code)
-    for (size_t i = 0; i < sources.size(); ++i) free(sources[i]);
+	if ( !sources.empty() )
+		for (char* src : sources ) 
+			if (src != nullptr)
+				free(src);
+
     // free all strings we kept alive during compiler execution
-    for (size_t n = 0; n < strings.size(); ++n) free(strings[n]);
+	if ( !strings.empty() )
+		for (char* str : strings ) 
+			if (str != nullptr)
+				free(str);
+
     // everything that gets put into sources will be freed by us
-    for (size_t m = 0; m < import_stack.size(); ++m) sass_delete_import(import_stack[m]);
+    for (size_t m = 0; m < import_stack.size(); ++m) 
+		sass_delete_import(import_stack[m]);
+
     // clear inner structures (vectors) and input source
-    sources.clear(); import_stack.clear(); source_c_str = 0;
+    sources.clear(); 
+	import_stack.clear(); 
+	source_c_str = 0;
   }
 
   void Context::collect_include_paths(const char* paths_str)

@@ -32,16 +32,21 @@ extern "C" {
 
   static void copy_strings(const std::vector<std::string>& strings, char*** array, int skip = 0) {
     int num = static_cast<int>(strings.size());
-    char** arr = (char**) malloc(sizeof(char*) * (num + 1));
+	
+	if (char** arr = (char**)malloc(sizeof(char*)* (num + 1))) {
+		for (int i = skip; i < num; i++) {
+			arr[i - skip] = (char*)malloc(sizeof(char)* (strings[i].size() + 1));
+			std::copy(strings[i].begin(), strings[i].end(), arr[i - skip]);
+			if (arr && arr[i - skip]) {
+				arr[i - skip][strings[i].size()] = '\0';
+			}
+		}
 
-    for(int i = skip; i < num; i++) {
-      arr[i-skip] = (char*) malloc(sizeof(char) * (strings[i].size() + 1));
-      std::copy(strings[i].begin(), strings[i].end(), arr[i-skip]);
-      arr[i-skip][strings[i].size()] = '\0';
-    }
+		if (arr)
+			arr[num - skip] = 0;
 
-    arr[num-skip] = 0;
-    *array = arr;
+		*array = arr;
+	}
   }
 
   static void free_string_array(char ** arr) {
