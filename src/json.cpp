@@ -112,11 +112,17 @@ static void sb_grow(SB *sb, int need)
     alloc *= 2;
   } while (alloc < length + need);
 
-  sb->start = (char*) realloc(sb->start, alloc + 1);
-  if (sb->start == NULL)
-    out_of_memory();
-  sb->cur = sb->start + length;
-  sb->end = sb->start + alloc;
+  char* old_start = sb->start;
+  if ((sb->start = (char*)realloc(old_start, alloc + 1)) == NULL)
+  {
+	  free(old_start);
+	  out_of_memory();
+  }
+  else
+  {
+	  sb->cur = sb->start + length;
+	  sb->end = sb->start + alloc;
+  }
 }
 
 static void sb_put(SB *sb, const char *bytes, int count)
