@@ -627,11 +627,6 @@ namespace Sass {
     return 0;
   }
 
-  const char* color_to_name(const double key)
-  {
-    return color_to_name((int)key);
-  }
-
   const char* color_to_name(const Color& c)
   {
     int key = (int)(c.r() * 0x10000
