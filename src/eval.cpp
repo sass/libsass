@@ -514,7 +514,7 @@ namespace Sass {
     Expression::Concrete_Type l_type = lhs->concrete_type();
     Expression::Concrete_Type r_type = rhs->concrete_type();
 
-    int precision = ctx.precision;
+    int precision = (int)ctx.precision;
     bool compressed = ctx.output_style == COMPRESSED;
     if (l_type == Expression::NUMBER && r_type == Expression::NUMBER) {
       const Number* l_n = dynamic_cast<const Number*>(lhs);
@@ -716,38 +716,43 @@ namespace Sass {
     if (env->has(name)) value = static_cast<Expression*>((*env)[name]);
     else error("Undefined variable: \"" + v->name() + "\".", v->pstate());
     // cerr << "name: " << v->name() << "; type: " << typeid(*value).name() << "; value: " << value->perform(&to_string) << endl;
-    if (typeid(*value) == typeid(Argument)) value = static_cast<Argument*>(value)->value();
 
-    // behave according to as ruby sass (add leading zero)
-    if (value->concrete_type() == Expression::NUMBER) {
-      value = new (ctx.mem) Number(*static_cast<Number*>(value));
-      static_cast<Number*>(value)->zero(true);
-    }
-    else if (value->concrete_type() == Expression::STRING) {
-      if (auto str = dynamic_cast<String_Quoted*>(value)) {
-        value = new (ctx.mem) String_Quoted(*str);
-      } else if (auto str = dynamic_cast<String_Constant*>(value)) {
-        value = new (ctx.mem) String_Quoted(str->pstate(), str->perform(&to_string));
-      }
-    }
-    else if (value->concrete_type() == Expression::LIST) {
-      value = new (ctx.mem) List(*static_cast<List*>(value));
-    }
-    else if (value->concrete_type() == Expression::MAP) {
-      value = new (ctx.mem) Map(*static_cast<Map*>(value));
-    }
-    else if (value->concrete_type() == Expression::BOOLEAN) {
-      value = new (ctx.mem) Boolean(*static_cast<Boolean*>(value));
-    }
-    else if (value->concrete_type() == Expression::COLOR) {
-      value = new (ctx.mem) Color(*static_cast<Color*>(value));
-    }
-    else if (value->concrete_type() == Expression::NULL_VAL) {
-      value = new (ctx.mem) Null(value->pstate());
-    }
-    else if (value->concrete_type() == Expression::SELECTOR) {
-      value = value->perform(this)->perform(&listize);
-    }
+	if (value != nullptr)
+	{
+		if (typeid(*value) == typeid(Argument)) value = static_cast<Argument*>(value)->value();
+
+		// behave according to as ruby sass (add leading zero)
+		if (value->concrete_type() == Expression::NUMBER) {
+			value = new (ctx.mem) Number(*static_cast<Number*>(value));
+			static_cast<Number*>(value)->zero(true);
+		}
+		else if (value->concrete_type() == Expression::STRING) {
+			if (auto str = dynamic_cast<String_Quoted*>(value)) {
+				value = new (ctx.mem) String_Quoted(*str);
+			}
+			else if (auto str = dynamic_cast<String_Constant*>(value)) {
+				value = new (ctx.mem) String_Quoted(str->pstate(), str->perform(&to_string));
+			}
+		}
+		else if (value->concrete_type() == Expression::LIST) {
+			value = new (ctx.mem) List(*static_cast<List*>(value));
+		}
+		else if (value->concrete_type() == Expression::MAP) {
+			value = new (ctx.mem) Map(*static_cast<Map*>(value));
+		}
+		else if (value->concrete_type() == Expression::BOOLEAN) {
+			value = new (ctx.mem) Boolean(*static_cast<Boolean*>(value));
+		}
+		else if (value->concrete_type() == Expression::COLOR) {
+			value = new (ctx.mem) Color(*static_cast<Color*>(value));
+		}
+		else if (value->concrete_type() == Expression::NULL_VAL) {
+			value = new (ctx.mem) Null(value->pstate());
+		}
+		else if (value->concrete_type() == Expression::SELECTOR) {
+			value = value->perform(this)->perform(&listize);
+		}
+	}
 
     // cerr << "\ttype is now: " << typeid(*value).name() << endl << endl;
     return value;
@@ -1100,6 +1105,9 @@ namespace Sass {
 
   bool Eval::lt(Expression* lhs, Expression* rhs)
   {
+	  if (lhs == nullptr || rhs == nullptr)
+		  return false; // ????
+
     Number* l = dynamic_cast<Number*>(lhs);
     Number* r = dynamic_cast<Number*>(rhs);
     if (!l) error("may only compare numbers", lhs->pstate());

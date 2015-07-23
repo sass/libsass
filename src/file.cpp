@@ -307,14 +307,21 @@ namespace Sass {
         HANDLE hFile = CreateFileW(wpath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
         if (hFile == INVALID_HANDLE_VALUE) return 0;
         DWORD dwFileLength = GetFileSize(hFile, NULL);
-        if (dwFileLength == INVALID_FILE_SIZE) return 0;
+		if (dwFileLength == INVALID_FILE_SIZE) {
+			CloseHandle(hFile);
+			return 0;
+		}
+
+		char* contents = nullptr;
         // allocate an extra byte for the null char
         pBuffer = (BYTE*)malloc((dwFileLength+1)*sizeof(BYTE));
-        ReadFile(hFile, pBuffer, dwFileLength, &dwBytes, NULL);
-        pBuffer[dwFileLength] = '\0';
-        CloseHandle(hFile);
-        // just convert from unsigned char*
-        char* contents = (char*) pBuffer;
+		if (ReadFile(hFile, pBuffer, dwFileLength, &dwBytes, NULL) == TRUE) {
+			pBuffer[dwFileLength] = '\0';
+			CloseHandle(hFile);
+
+			// just convert from unsigned char*
+			contents = (char*)pBuffer;
+		}
       #else
         struct stat st;
         if (stat(path.c_str(), &st) == -1 || S_ISDIR(st.st_mode)) return 0;
