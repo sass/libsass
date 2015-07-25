@@ -629,9 +629,9 @@ namespace Sass {
 
   const char* color_to_name(const Color& c)
   {
-    int key = c.r() * 0x10000
+    int key = (int)(c.r() * 0x10000
               + c.g() * 0x100
-              + c.b();
+              + c.b());
     return color_to_name(key);
   }
 
