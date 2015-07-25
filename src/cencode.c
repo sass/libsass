@@ -27,7 +27,6 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 	const char* const plaintextend = plaintext_in + length_in;
 	char* codechar = code_out;
 	char result;
-	char fragment;
 
 	result = state_in->result;
 
@@ -35,6 +34,8 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 	{
 		while (1)
 		{
+			char fragment;
+
 	case step_A:
 			if (plainchar == plaintextend)
 			{
