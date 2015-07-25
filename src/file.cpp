@@ -312,16 +312,16 @@ namespace Sass {
 			return 0;
 		}
 
-		char* contents = nullptr;
+		
         // allocate an extra byte for the null char
         pBuffer = (BYTE*)malloc((dwFileLength+1)*sizeof(BYTE));
-		if (ReadFile(hFile, pBuffer, dwFileLength, &dwBytes, NULL) == TRUE) {
-			pBuffer[dwFileLength] = '\0';
-			CloseHandle(hFile);
+		if (!pBuffer) throw bad_alloc();
+		if (ReadFile(hFile, pBuffer, dwFileLength, &dwBytes, NULL) != TRUE) throw runtime_error("Reading file failed!");
+		pBuffer[dwFileLength] = '\0';
+		CloseHandle(hFile);
 
-			// just convert from unsigned char*
-			contents = (char*)pBuffer;
-		}
+		// just convert from unsigned char*
+		char* contents = (char*)pBuffer;
       #else
         struct stat st;
         if (stat(path.c_str(), &st) == -1 || S_ISDIR(st.st_mode)) return 0;

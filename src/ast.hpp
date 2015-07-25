@@ -1010,6 +1010,7 @@ namespace Sass {
       try
       {
         const Argument* m = dynamic_cast<const Argument*>(&rhs);
+		if (m == nullptr) throw bad_cast();
         if (!(m && name() == m->name())) return false;
         return *value() == *m->value();
       }
