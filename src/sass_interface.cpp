@@ -23,7 +23,7 @@ extern "C" {
   using namespace std;
 
   sass_context* sass_new_context()
-  { return (sass_context*) calloc(1, sizeof(sass_context)); }
+  { return static_cast<sass_context*>(calloc(1, sizeof(sass_context))); }
 
   // helper for safe access to c_ctx
   static const char* safe_str (const char* str) {
@@ -38,8 +38,8 @@ extern "C" {
 	  size_t dest_len = sizeof(char) * (strings[i].size() + 1);
       arr[i-skip] = (char*) malloc(dest_len);
 	  if (!arr[i - skip]) throw bad_alloc();
-#ifdef _WIN32
-	  strings[i]._Copy_s(arr[i - skip], dest_len, strings[i].size());
+#ifdef _MSC_VER
+	  strings[i]._Copy_s(arr[i - skip], strings[i].size(), strings[i].size());
 #else
 	  strings[i].copy(arr[i - skip], strings[i].size());
 #endif
@@ -76,7 +76,7 @@ extern "C" {
   }
 
   sass_file_context* sass_new_file_context()
-  { return (sass_file_context*) calloc(1, sizeof(sass_file_context)); }
+  { return static_cast<sass_file_context*>(calloc(1, sizeof(sass_file_context))); }
 
   void sass_free_file_context(sass_file_context* ctx)
   {
@@ -91,7 +91,7 @@ extern "C" {
   }
 
   sass_folder_context* sass_new_folder_context()
-  { return (sass_folder_context*) calloc(1, sizeof(sass_folder_context)); }
+  { return static_cast<sass_folder_context*>(calloc(1, sizeof(sass_folder_context))); }
 
   void sass_free_folder_context(sass_folder_context* ctx)
   {
