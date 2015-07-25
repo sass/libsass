@@ -109,7 +109,7 @@ namespace Sass {
       KWD_ARG(Data, bool,            source_map_contents)
     };
 
-    Context(Data);
+    explicit Context(Data);
     ~Context();
     static string get_cwd();
 

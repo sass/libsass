@@ -395,7 +395,11 @@ extern "C" {
       size_t imp_size = 0; while (imp) { imp_size ++; imp = imp->next; }
       // create char* array to hold all paths plus null terminator
       const char** plugin_paths = (const char**) calloc(imp_size + 1, sizeof(char*));
-      if (plugin_paths == 0) throw(bad_alloc());
+	  if (plugin_paths == 0) {
+		  free(include_paths);
+		  throw(bad_alloc());
+	  }
+
       // reset iterator
       imp = c_ctx->plugin_paths;
       // copy over the paths
@@ -507,8 +511,8 @@ extern "C" {
     try {
 
       // get input/output path from options
-      string input_path = safe_str(c_ctx->input_path);
-      string output_path = safe_str(c_ctx->output_path);
+      //string input_path = safe_str(c_ctx->input_path);
+      //string output_path = safe_str(c_ctx->output_path);
 
       // parsed root block
       Block* root = 0;

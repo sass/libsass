@@ -24,7 +24,7 @@ namespace Sass {
   public:
     Memory_Manager<AST_Node> mem;
     Environment();
-    Environment(Environment* env);
+    explicit Environment(Environment* env);
     Environment(Environment& env);
 
     // link parent to create a stack
