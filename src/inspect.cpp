@@ -608,7 +608,7 @@ namespace Sass {
   {
     // use values to_string facility
     bool compressed = ctx->output_style == COMPRESSED;
-    string res = n->to_string(compressed, (int)ctx->precision);
+    string res = n->to_string(compressed, (int)(ctx->precision));
     // output the final token
     append_token(res, n);
   }

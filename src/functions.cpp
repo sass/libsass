@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#pragma warning(disable : 4503)
+#endif
+
 #include "functions.hpp"
 #include "ast.hpp"
 #include "context.hpp"
@@ -952,7 +956,7 @@ namespace Sass {
         size_t size = utf8::distance(str.begin(), str.end());
         if (end_at <= size * -1.0) { end_at += size; }
         if (end_at < 0) { end_at += size + 1; }
-		if (end_at > size) { end_at = (double)size; }
+        if (end_at > size) { end_at = (double)size; }
         if (start_at < 0) { start_at += size + 1; }
         else if (start_at == 0) { ++ start_at; }
 

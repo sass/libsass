@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#pragma warning(disable : 4503)
+#endif
+
 #ifdef _WIN32
 #define PATH_SEP ';'
 #else
