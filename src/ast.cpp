@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#pragma warning(disable : 4503)
+#endif
+
 #include "ast.hpp"
 #include "context.hpp"
 #include "node.hpp"
@@ -1771,7 +1775,7 @@ namespace Sass {
     }
     // otherwise get the possible resolved color name
     else {
-      int numval = r * 0x10000 + g * 0x100 + b;
+      int numval = (int)(r * 0x10000 + g * 0x100 + b);
       if (color_to_name(numval))
         res_name = color_to_name(numval);
     }
@@ -1871,7 +1875,7 @@ namespace Sass {
     {
       // do we have have too much precision?
       if (pos_fract < precision + pos_point)
-      { precision = pos_fract - pos_point; }
+      { precision = (int)(pos_fract - pos_point); }
       // round value again
       ss.precision(precision);
       ss << fixed << value_;

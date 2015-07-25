@@ -35,9 +35,14 @@ extern "C" {
     char** arr = (char**) malloc(sizeof(char*) * (num + 1));
 
     for(int i = skip; i < num; i++) {
-      arr[i-skip] = (char*) malloc(sizeof(char) * (strings[i].size() + 1));
-      std::copy(strings[i].begin(), strings[i].end(), arr[i-skip]);
-      arr[i-skip][strings[i].size()] = '\0';
+	  size_t dest_len = sizeof(char) * (strings[i].size() + 1);
+      arr[i-skip] = (char*) malloc(dest_len);
+#ifdef _WIN32
+	  strings[i]._Copy_s(arr[i - skip], dest_len, strings[i].size());
+#else
+	  strings[i].copy(arr[i - skip], strings[i].size());
+#endif
+	  arr[i-skip][strings[i].size()] = '\0';
     }
 
     arr[num-skip] = 0;
