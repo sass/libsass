@@ -22,8 +22,9 @@ namespace base64
 		base64_encodestate _state;
 		int _buffersize;
 
-		encoder(int buffersize_in = BUFFERSIZE)
-		: _buffersize(buffersize_in)
+		explicit encoder(int buffersize_in = BUFFERSIZE)
+			:	_state{ step_A, 0, 0 },
+				_buffersize(buffersize_in)
 		{}
 
 		int encode(char value_in)

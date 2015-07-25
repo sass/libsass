@@ -22,7 +22,7 @@ namespace Sass {
   public:
     vector<size_t> source_index;
     SourceMap();
-    SourceMap(const string& file);
+    explicit SourceMap(const string& file);
 
     void setFile(const string& str) {
       file = str;

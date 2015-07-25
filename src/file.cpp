@@ -267,7 +267,7 @@ namespace Sass {
     }
 
     // helper function to resolve a filename
-    string find_file(const string& file, const vector<string> paths)
+    string find_file(const string& file, const vector<string>& paths)
     {
       // search in every include path for a match
       for (size_t i = 0, S = paths.size(); i < S; ++i)

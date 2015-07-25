@@ -18,7 +18,7 @@ namespace Sass {
     vector<T*> nodes;
 
   public:
-    Memory_Manager(size_t size = 0);
+    explicit Memory_Manager(size_t size = 0);
     ~Memory_Manager();
 
     bool has(T* np);

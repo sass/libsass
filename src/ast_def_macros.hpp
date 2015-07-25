@@ -8,7 +8,7 @@ class LocalOption {
     T* var; // pointer to original variable
     T orig; // copy of the original option
   public:
-    LocalOption(T& var)
+    explicit LocalOption(T& var)
     {
       this->var = &var;
       this->orig = var;

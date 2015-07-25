@@ -25,7 +25,7 @@ namespace Sass {
 
   public:
     // change to Emitter
-    Output(Context* ctx);
+    explicit Output(Context* ctx);
     virtual ~Output();
 
   protected:

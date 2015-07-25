@@ -753,7 +753,7 @@ namespace Sass
 		// The sentry object performs various tasks,
 		// such as thread synchronization and updating the stream state.
 
-		std::istream::sentry se(is, true);
+		//std::istream::sentry se(is, true);
 		std::streambuf* sb = is.rdbuf();
 
 		for(;;) {
@@ -777,7 +777,7 @@ namespace Sass
 	}
 
 	// the main converter function for c++
-	char* sass2scss (const string sass, const int options)
+	char* sass2scss (const string& sass, const int options)
 	{
 
 		// local variables
