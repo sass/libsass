@@ -194,30 +194,31 @@ extern "C" {
     if (arr == 0) throw(bad_alloc());
 
     for(int i = 0; i < num; i++) {
-	  size_t dest_len = sizeof(char) * (strings[i].size() + 1);
+    size_t dest_len = sizeof(char) * (strings[i].size() + 1);
       arr[i] = (char*) malloc(dest_len);
+
 #ifdef _MSC_VER
-// MS Code analysis gives this warning: 
-// Reading invalid data from 'arr':  the readable size is 'sizeof(char *)*((num+1))' bytes, but '16' bytes may be read.  
+// MS Code analysis gives this warning:
+// Reading invalid data from 'arr':  the readable size is 'sizeof(char *)*((num+1))' bytes, but '16' bytes may be read.
 // False positive(?)
 #pragma warning(suppress: 6385)
 #endif
       if (arr[i] == 0) throw(bad_alloc());
 #ifdef _MSC_VER
-	  strings[i]._Copy_s(arr[i], strings[i].size(), strings[i].size());
+        strings[i]._Copy_s(arr[i], strings[i].size(), strings[i].size());
 #else
-	  strings[i].copy(arr[i], strings[i].size());
+        strings[i].copy(arr[i], strings[i].size());
 #endif
-	  arr[i][strings[i].size()] = '\0';
-    }
+        arr[i][strings[i].size()] = '\0';
+      }
 
 #ifdef _MSC_VER
-// MS Code analysis gives this warning: 
+// MS Code analysis gives this warning:
 // Buffer overrun while writing to 'arr':  the writable size is 'sizeof(char *)*((num+1))' bytes, but 'num' bytes might be written.
 // False positive(?)
 #pragma warning(suppress: 6386)
 #endif
-	arr[num] = 0;
+  arr[num] = 0;
     *array = arr;
   }
 
@@ -395,10 +396,10 @@ extern "C" {
       size_t imp_size = 0; while (imp) { imp_size ++; imp = imp->next; }
       // create char* array to hold all paths plus null terminator
       const char** plugin_paths = (const char**) calloc(imp_size + 1, sizeof(char*));
-	  if (plugin_paths == 0) {
-		  free(include_paths);
-		  throw(bad_alloc());
-	  }
+    if (plugin_paths == 0) {
+      free(include_paths);
+      throw(bad_alloc());
+    }
 
       // reset iterator
       imp = c_ctx->plugin_paths;
