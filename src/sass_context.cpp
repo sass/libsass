@@ -194,10 +194,15 @@ extern "C" {
     if (arr == 0) throw(bad_alloc());
 
     for(int i = 0; i < num; i++) {
-      arr[i] = (char*) malloc(sizeof(char) * (strings[i].size() + 1));
+	  size_t dest_len = sizeof(char) * (strings[i].size() + 1);
+      arr[i] = (char*) malloc(dest_len);
       if (arr[i] == 0) throw(bad_alloc());
-      std::copy(strings[i].begin(), strings[i].end(), arr[i]);
-      arr[i][strings[i].size()] = '\0';
+#ifdef _WIN32
+	  strings[i]._Copy_s(arr[i], dest_len, strings[i].size());
+#else
+	  strings[i].copy(arr[i], strings[i].size());
+#endif
+	  arr[i][strings[i].size()] = '\0';
     }
 
     arr[num] = 0;
@@ -227,8 +232,8 @@ extern "C" {
       JsonNode* json_err = json_mkobject();
       json_append_member(json_err, "status", json_mknumber(1));
       json_append_member(json_err, "file", json_mkstring(e.pstate.path));
-      json_append_member(json_err, "line", json_mknumber(e.pstate.line+1));
-      json_append_member(json_err, "column", json_mknumber(e.pstate.column+1));
+      json_append_member(json_err, "line", json_mknumber((double)(e.pstate.line+1)));
+      json_append_member(json_err, "column", json_mknumber((double)(e.pstate.column+1)));
       json_append_member(json_err, "message", json_mkstring(e.message.c_str()));
       string rel_path(Sass::File::resolve_relative_path(e.pstate.path, cwd, cwd));
 
