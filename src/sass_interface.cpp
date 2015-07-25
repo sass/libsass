@@ -33,10 +33,11 @@ extern "C" {
   static void copy_strings(const std::vector<std::string>& strings, char*** array, int skip = 0) {
     int num = static_cast<int>(strings.size());
     char** arr = (char**) malloc(sizeof(char*) * (num + 1));
-
+	if (!arr) throw bad_alloc();
     for(int i = skip; i < num; i++) {
 	  size_t dest_len = sizeof(char) * (strings[i].size() + 1);
       arr[i-skip] = (char*) malloc(dest_len);
+	  if (!arr[i - skip]) throw bad_alloc();
 #ifdef _WIN32
 	  strings[i]._Copy_s(arr[i - skip], dest_len, strings[i].size());
 #else

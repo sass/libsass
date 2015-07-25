@@ -452,6 +452,7 @@ namespace Sass {
     b->is_delayed(false);
     // if one of the operands is a '/' then make sure it's evaluated
     Expression* lhs = b->left()->perform(this);
+	if (lhs == nullptr) throw runtime_error("Eval binary expression failed for Left hand part!");
     lhs->is_delayed(false);
     while (typeid(*lhs) == typeid(Binary_Expression)) lhs = lhs->perform(this);
 
@@ -469,6 +470,8 @@ namespace Sass {
     }
     // not a logical connective, so go ahead and eval the rhs
     Expression* rhs = b->right()->perform(this);
+	if (rhs == nullptr) throw runtime_error("Eval binary expression failed for Right hand part!");
+
     // maybe fully evaluate structure
     if (op_type == Sass_OP::EQ ||
         op_type == Sass_OP::NEQ ||
