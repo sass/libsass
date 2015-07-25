@@ -23,7 +23,7 @@ namespace base64
 		int _buffersize;
 
 		explicit encoder(int buffersize_in = BUFFERSIZE)
-			:	_state{ step_A, 0, 0 },
+			:	_state(base64_encodestate{ step_A, 0, 0 }),
 				_buffersize(buffersize_in)
 		{}
 
