@@ -999,7 +999,7 @@ namespace Sass {
     if (!lex_css< one_plus< exactly<':'> > >()) error("property \"" + property + "\" must be followed by a ':'", pstate);
     if (peek_css< exactly<';'> >()) error("style declaration must contain a value", pstate);
     if (peek_css< exactly<'{'> >()) is_indented = false; // don't indent if value is empty
-    if (peek_css< static_value >()) {
+	if (peek_css< static_value >() && prop) {
       return new (ctx.mem) Declaration(prop->pstate(), prop, parse_static_value()/*, lex<kwd_important>()*/);
     }
     else {
@@ -1021,9 +1021,16 @@ namespace Sass {
         }
       }
 
-      auto decl = new (ctx.mem) Declaration(prop->pstate(), prop, value/*, lex<kwd_important>()*/);
-      decl->is_indented(is_indented);
-      return decl;
+	  if (prop != nullptr)
+	  {
+		  auto decl = new (ctx.mem) Declaration(prop->pstate(), prop, value/*, lex<kwd_important>()*/);
+		  decl->is_indented(is_indented);
+		  return decl;
+	  }
+	  else
+	  {
+		  return nullptr;
+	  }
     }
   }
 
@@ -1985,10 +1992,12 @@ namespace Sass {
     // parse something declaration like
     Declaration* declaration = parse_declaration();
     if (!declaration) error("@supports condition expected declaration", pstate);
-    cond = new (ctx.mem) Supports_Condition(declaration->pstate(),
-                                        1,
-                                        declaration->property(),
-                                        declaration->value());
+	else {
+		cond = new (ctx.mem) Supports_Condition(declaration->pstate(),
+			1,
+			declaration->property(),
+			declaration->value());
+	}
     // ToDo: maybe we need an additional error condition?
     return cond;
   }

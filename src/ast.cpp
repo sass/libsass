@@ -36,7 +36,7 @@ namespace Sass {
   bool Compound_Selector::operator< (const Compound_Selector& rhs) const
   {
     size_t L = std::min(length(), rhs.length());
-    for (size_t i = 0; i < L && i < L; ++i)
+    for (size_t i = 0; i < L; ++i)
     {
       Simple_Selector* l = (*this)[i];
       Simple_Selector* r = rhs[i];
@@ -680,7 +680,7 @@ namespace Sass {
       if (!l) ++i;
       if (!r) ++n;
       // do the check now
-      else if (*l != *r)
+      else if (l && *l != *r)
       { return false; }
       // advance now
       ++i; ++n;
@@ -727,7 +727,7 @@ namespace Sass {
       if (lhs_tail->combinator() != rhs_tail->combinator()) return false;
       if (lhs_tail->head() && !rhs_tail->head()) return false;
       if (!lhs_tail->head() && rhs_tail->head()) return false;
-      if (lhs_tail->head() && lhs_tail->head()) {
+      if (lhs_tail->head() ) {
         if (!lhs_tail->head()->is_superselector_of(rhs_tail->head())) return false;
       }
     }
@@ -1142,32 +1142,32 @@ namespace Sass {
     To_String to_string;
 
     Selector_List* extender = this;
-    for (auto complex_sel : extendee->elements()) {
-      Complex_Selector* c = complex_sel;
+	for (auto complex_sel : extendee->elements()) {
+		
+		if ( Complex_Selector* c = complex_sel ) {
+			// Ignore any parent selectors, until we find the first non Selector_Reference head
+			Compound_Selector* compound_sel = c->head();
+			Complex_Selector* pIter = complex_sel;
+			while (pIter) {
+				Compound_Selector* pHead = pIter->head();
+				if (pHead && dynamic_cast<Parent_Selector*>(pHead->elements()[0]) == NULL) {
+					compound_sel = pHead;
+					break;
+				}
 
+				pIter = pIter->tail();
+			}
 
-      // Ignore any parent selectors, until we find the first non Selector_Reference head
-      Compound_Selector* compound_sel = c->head();
-      Complex_Selector* pIter = complex_sel;
-      while (pIter) {
-        Compound_Selector* pHead = pIter->head();
-        if (pHead && dynamic_cast<Parent_Selector*>(pHead->elements()[0]) == NULL) {
-          compound_sel = pHead;
-          break;
-        }
+			if ( pIter && (!pIter->head() || pIter->tail()) ) {
+				error("nested selectors may not be extended", c->pstate());
+			}
 
-        pIter = pIter->tail();
-      }
+			compound_sel->is_optional(extendee->is_optional());
 
-      if (!pIter->head() || pIter->tail()) {
-        error("nested selectors may not be extended", c->pstate());
-      }
-
-      compound_sel->is_optional(extendee->is_optional());
-
-      for (size_t i = 0, L = extender->length(); i < L; ++i) {
-        extends.put(compound_sel->to_str_vec(), make_pair((*extender)[i], compound_sel));
-      }
+			for (size_t i = 0, L = extender->length(); i < L; ++i) {
+				extends.put(compound_sel->to_str_vec(), make_pair((*extender)[i], compound_sel));
+			}
+		}
     }
   };
 
@@ -1687,6 +1687,7 @@ namespace Sass {
     if (is_invisible()) return res;
     bool items_output = false;
     for (auto key : keys()) {
+	  if (key==nullptr) continue; // Or should we throw?
       if (key->is_invisible()) continue;
       if (at(key)->is_invisible()) continue;
       if (items_output) res += compressed ? "," : ", ";
@@ -1709,12 +1710,15 @@ namespace Sass {
     string sep = separator() == SASS_COMMA ? "," : " ";
     if (!compressed && sep == ",") sep += " ";
     for (size_t i = 0, L = size(); i < L; ++i) {
-      Expression* item = (*this)[i];
-      if (item->is_invisible()) continue;
-      if (items_output) res += sep;
-      if (Value* v_val = dynamic_cast<Value*>(item))
-      { res += v_val->to_string(compressed, precision); }
-      items_output = true;
+		if (Expression* item = (*this)[i]) {
+			if (item->is_invisible()) continue;
+			if (items_output) res += sep;
+			if (Value* v_val = dynamic_cast<Value*>(item))
+			{
+				res += v_val->to_string(compressed, precision);
+			}
+			items_output = true;
+		}
     }
     return res;
   }
