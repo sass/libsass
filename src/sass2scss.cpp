@@ -753,7 +753,7 @@ namespace Sass
 		// The sentry object performs various tasks,
 		// such as thread synchronization and updating the stream state.
 
-		std::istream::sentry se(is, true);
+		//std::istream::sentry se(is, true);
 		std::streambuf* sb = is.rdbuf();
 
 		for(;;) {
