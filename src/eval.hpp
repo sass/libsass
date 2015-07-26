@@ -22,7 +22,7 @@ namespace Sass {
     Expand&  exp;
     Context& ctx;
     Listize  listize;
-    Eval(Expand& exp);
+    explicit Eval(Expand& exp);
     virtual ~Eval();
 
     Env* environment();

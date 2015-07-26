@@ -1374,12 +1374,11 @@ namespace Sass {
     Signature map_remove_sig = "map-remove($map, $keys...)";
     BUILT_IN(map_remove)
     {
-      bool remove;
       Map* m = ARGM("$map", Map, ctx);
       List* arglist = ARG("$keys", List);
       Map* result = new (ctx.mem) Map(pstate, 1);
       for (auto key : m->keys()) {
-        remove = false;
+        bool remove = false;
         for (size_t j = 0, K = arglist->length(); j < K && !remove; ++j) {
           remove = Eval::eq(key, arglist->value_at_index(j));
         }
@@ -1412,7 +1411,7 @@ namespace Sass {
       Expression* v = ARG("$value", Expression);
       if (v->concrete_type() == Expression::STRING) {
         To_String to_string(&ctx);
-        string str(v->perform(&to_string));
+        v->perform(&to_string);
       }
       return new (ctx.mem) String_Quoted(pstate, ARG("$value", Expression)->type());
     }
