@@ -1381,8 +1381,8 @@ namespace Sass {
   protected:
     size_t hash_;
   public:
-    String_Constant(ParserState pstate, string val)
-    : String(pstate), quote_mark_(0), can_compress_whitespace_(false), value_(read_css_string(val)), hash_(0)
+    String_Constant(ParserState pstate, string val, bool norm = true)
+    : String(pstate), quote_mark_(0), can_compress_whitespace_(false), value_(norm ? read_css_string(val) : val), hash_(0)
     { }
     String_Constant(ParserState pstate, const char* beg)
     : String(pstate), quote_mark_(0), can_compress_whitespace_(false), value_(read_css_string(string(beg))), hash_(0)
@@ -1419,10 +1419,10 @@ namespace Sass {
   ////////////////////////////////////////////////////////
   class String_Quoted : public String_Constant {
   public:
-    String_Quoted(ParserState pstate, string val)
-    : String_Constant(pstate, val)
+    String_Quoted(ParserState pstate, string val, bool norm = true)
+    : String_Constant(pstate, val, norm)
     {
-      value_ = unquote(value_, &quote_mark_);
+      value_ = unquote(value_, &quote_mark_, norm);
     }
     virtual bool operator==(const Expression& rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;

@@ -977,7 +977,7 @@ namespace Sass {
     Block* block = block_stack.back();
     while (lex< block_comment >()) {
       bool is_important = lexed.begin[2] == '!';
-      String*  contents = parse_interpolated_chunk(lexed);
+      String*  contents = parse_interpolated_chunk(lexed, true, false);
       (*block) << new (ctx.mem) Comment(pstate, contents, is_important);
     }
   }
@@ -1448,13 +1448,13 @@ namespace Sass {
 
   // this parses interpolation inside other strings
   // means the result should later be quoted again
-  String* Parser::parse_interpolated_chunk(Token chunk, bool constant)
+  String* Parser::parse_interpolated_chunk(Token chunk, bool constant, bool norm)
   {
     const char* i = chunk.begin;
     // see if there any interpolants
     const char* p = find_first_in_interval< exactly<hash_lbrace> >(i, chunk.end);
     if (!p) {
-      String_Quoted* str_quoted = new (ctx.mem) String_Quoted(pstate, string(i, chunk.end));
+      String_Quoted* str_quoted = new (ctx.mem) String_Quoted(pstate, string(i, chunk.end), norm);
       if (!constant && str_quoted->quote_mark()) str_quoted->quote_mark('*');
       str_quoted->is_delayed(true);
       return str_quoted;
@@ -1466,7 +1466,7 @@ namespace Sass {
       if (p) {
         if (i < p) {
           // accumulate the preceding segment if it's nonempty
-          (*schema) << new (ctx.mem) String_Constant(pstate, string(i, p));
+          (*schema) << new (ctx.mem) String_Constant(pstate, string(i, p), norm);
         }
         // we need to skip anything inside strings
         // create a new target in parser/prelexer
@@ -1488,7 +1488,7 @@ namespace Sass {
       }
       else { // no interpolants left; add the last segment if nonempty
         // check if we need quotes here (was not sure after merge)
-        if (i < chunk.end) (*schema) << new (ctx.mem) String_Constant(pstate, string(i, chunk.end));
+        if (i < chunk.end) (*schema) << new (ctx.mem) String_Constant(pstate, string(i, chunk.end), norm);
         break;
       }
       ++ i;
