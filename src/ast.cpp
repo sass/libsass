@@ -537,8 +537,7 @@ namespace Sass {
           if (wrapped->name() == wrapped_r->name()) {
           if (wrapped->is_superselector_of(wrapped_r)) {
              continue;
-             rset.insert(lhs->perform(&to_string));
-
+             //rset.insert(lhs->perform(&to_string));
           }}
         }
       }
@@ -572,7 +571,7 @@ namespace Sass {
     //for (auto l : lset) { cerr << "l: " << l << endl; }
     //for (auto r : rset) { cerr << "r: " << r << endl; }
 
-    if (lset.size() == 0) return true;
+    if (lset.empty()) return true;
     // return true if rset contains all the elements of lset
     return includes(rset.begin(), rset.end(), lset.begin(), lset.end());
 
@@ -648,8 +647,8 @@ namespace Sass {
     Node node = Extend::subweave(lhsNode, rhsNode, ctx);
     Selector_List* result = new (ctx.mem) Selector_List(pstate());
     NodeDequePtr col = node.collection(); // move from collection to list
-    for (NodeDeque::iterator it = col->begin(), end = col->end(); it != end; it++)
-    { (*result) << nodeToComplexSelector(Node::naiveTrim(*it, ctx), ctx); }
+    for (Sass::Node& n : *col)
+    { (*result) << nodeToComplexSelector(Node::naiveTrim(n, ctx), ctx); }
 
     // only return if list has some entries
     return result->length() ? result : 0;
@@ -821,6 +820,7 @@ namespace Sass {
   {
     // create a new complex selector to return a processed copy
     return this;
+	/*
     Complex_Selector* ss = new (ctx.mem) Complex_Selector(this->pstate());
     //ss->has_line_feed(this->has_line_feed());
     ss->combinator(this->combinator());
@@ -839,6 +839,7 @@ namespace Sass {
     }
     // return copy
     return ss;
+	*/
   }
 
   Selector_List* Selector_List::parentize(Context& ctx)
@@ -1254,11 +1255,11 @@ namespace Sass {
     denominator_units_(vector<string>()),
     hash_(0)
   {
-    size_t l = 0, r = 0;
     if (!u.empty()) {
-      bool nominator = true;
+		size_t l = 0;
+		bool nominator = true;
       while (true) {
-        r = u.find_first_of("*/", l);
+        size_t r = u.find_first_of("*/", l);
         string unit(u.substr(l, r == string::npos ? r : r - l));
         if (nominator) numerator_units_.push_back(unit);
         else denominator_units_.push_back(unit);

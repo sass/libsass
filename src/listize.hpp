@@ -22,7 +22,7 @@ namespace Sass {
     Expression* fallback_impl(AST_Node* n);
 
   public:
-    Listize(Context&);
+    explicit Listize(Context&);
     virtual ~Listize() { }
 
     using Operation<Expression*>::operator();

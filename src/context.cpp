@@ -45,10 +45,8 @@ namespace Sass {
   using std::endl;
 
   Sass_Queued::Sass_Queued(const string& load_path, const string& abs_path, const char* source)
+	  : load_path(load_path), abs_path(abs_path), source(source)
   {
-    this->load_path = load_path;
-    this->abs_path = abs_path;
-    this->source = source;
   }
 
   inline bool sort_importers (const Sass_Importer_Entry& i, const Sass_Importer_Entry& j)

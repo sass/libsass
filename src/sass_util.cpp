@@ -117,10 +117,7 @@ namespace Sass {
     Node flattened = Node::createCollection();
     if (arr.got_line_feed) flattened.got_line_feed = true;
 
-    for (NodeDeque::iterator iter = arr.collection()->begin(), iterEnd = arr.collection()->end();
-    	iter != iterEnd; iter++) {
-    	Node& e = *iter;
-
+    for (Sass::Node& e : *arr.collection()) {
       // e has the lf set
       if (e.isCollection()) {
 
