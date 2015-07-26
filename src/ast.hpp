@@ -1631,6 +1631,7 @@ namespace Sass {
       }
     }
     ATTACH_OPERATIONS()
+    ~Parameter() { if (default_value_) delete default_value_; }
   };
 
   /////////////////////////////////////////////////////////////////////////
