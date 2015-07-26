@@ -51,8 +51,7 @@ namespace Sass {
   Node Node::clone(Context& ctx) const {
     NodeDequePtr pNewCollection = make_shared<NodeDeque>();
     if (mpCollection) {
-      for (NodeDeque::iterator iter = mpCollection->begin(), iterEnd = mpCollection->end(); iter != iterEnd; iter++) {
-        Node& toClone = *iter;
+      for (const Sass::Node& toClone : *mpCollection) {
         pNewCollection->push_back(toClone.clone(ctx));
       }
     }
@@ -66,9 +65,7 @@ namespace Sass {
   bool Node::contains(const Node& potentialChild, bool simpleSelectorOrderDependent) const {
   	bool found = false;
 
-    for (NodeDeque::iterator iter = mpCollection->begin(), iterEnd = mpCollection->end(); iter != iterEnd; iter++) {
-      Node& toTest = *iter;
-
+    for (const Sass::Node& toTest : *mpCollection) {
       if (nodesEqual(toTest, potentialChild, simpleSelectorOrderDependent)) {
         found = true;
         break;
@@ -108,7 +105,7 @@ namespace Sass {
       }
 
       for (NodeDeque::iterator lhsIter = lhs.collection()->begin(), lhsIterEnd = lhs.collection()->end(),
-           rhsIter = rhs.collection()->begin(); lhsIter != lhsIterEnd; lhsIter++, rhsIter++) {
+           rhsIter = rhs.collection()->begin(); lhsIter != lhsIterEnd; ++lhsIter, ++rhsIter) {
 
         if (!nodesEqual(*lhsIter, *rhsIter, simpleSelectorOrderDependent)) {
           return false;
@@ -235,7 +232,7 @@ namespace Sass {
 
     NodeDeque& childNodes = *toConvert.collection();
 
-    string noPath("");
+    //string noPath("");
     Position noPosition(-1, -1, -1);
     Complex_Selector* pFirst = new (ctx.mem) Complex_Selector(ParserState("[NODE]"), Complex_Selector::ANCESTOR_OF, NULL, NULL);
 
@@ -244,7 +241,7 @@ namespace Sass {
     if (toConvert.isSelector()) pFirst->has_line_feed(toConvert.got_line_feed);
     if (toConvert.isCombinator()) pFirst->has_line_feed(toConvert.got_line_feed);
 
-    for (NodeDeque::iterator childIter = childNodes.begin(), childIterEnd = childNodes.end(); childIter != childIterEnd; childIter++) {
+    for (NodeDeque::iterator childIter = childNodes.begin(), childIterEnd = childNodes.end(); childIter != childIterEnd; ++childIter) {
 
       Node& child = *childIter;
 

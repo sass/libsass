@@ -72,7 +72,7 @@ namespace Sass {
   class incompatibleUnits: public exception
   {
     public:
-      const char* msg;
+      std::string msg;
       incompatibleUnits(SassUnit a, SassUnit b)
       : exception()
       {
@@ -80,11 +80,12 @@ namespace Sass {
         ss << "Incompatible units: ";
         ss << "'" << unit_to_string(a) << "' and ";
         ss << "'" << unit_to_string(b) << "'";
-        msg = ss.str().c_str();
+
+        msg =  ss.str();
       }
       virtual const char* what() const throw()
       {
-        return msg;
+        return msg.c_str();
       }
   };
 

@@ -21,7 +21,7 @@ namespace Sass {
         void fallback_impl(AST_Node* n) {}
 
     public:
-        Remove_Placeholders(Context&);
+        explicit Remove_Placeholders(Context&);
         virtual ~Remove_Placeholders() { }
 
         using Operation<void>::operator();
