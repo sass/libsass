@@ -1856,5 +1856,10 @@ namespace Sass {
     return message();
   }
 
+  Definition::~Definition()
+  {
+    delete parameters_;
+  }
+
 }
 

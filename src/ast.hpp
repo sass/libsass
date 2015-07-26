@@ -225,7 +225,13 @@ namespace Sass {
 
   };
   template <typename T>
-  inline Vectorized<T>::~Vectorized() { }
+  Vectorized<T>::~Vectorized() {
+    typename vector<T>::const_iterator it = elements_.begin();
+    while(it != elements_.end()) {
+      T item = *it++;  
+      delete item;
+    }
+  }
 
   /////////////////////////////////////////////////////////////////////////////
   // Mixin class for AST nodes that should behave like a hash table. Uses an
@@ -763,6 +769,7 @@ namespace Sass {
       signature_(sig)
     { }
     ATTACH_OPERATIONS()
+    ~Definition();
   };
 
   //////////////////////////////////////
