@@ -20,7 +20,7 @@ namespace Sass {
     // release memory for all controlled nodes
     // avoid calling erase for every single node 
     for (size_t i = 0, S = nodes.size(); i < S; ++i) {
-      deallocate(nodes[i]);
+      // deallocate(nodes[i]);
     }
     // just in case
     nodes.clear();
