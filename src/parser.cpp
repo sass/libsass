@@ -15,9 +15,21 @@
 #include <typeinfo>
 #include <tuple>
 
+#include <stdio.h>
+
 namespace Sass {
   using namespace std;
   using namespace Constants;
+
+  Parser::~Parser()
+  {
+    fprintf(stderr, "Parser(%p) goes out of scope\n", this);
+    for(vector<Block*>::iterator i = block_stack.begin(); i != block_stack.end(); ) {
+      Block *b = *i;
+      ++i;
+      ctx.mem.destroy(b);
+    }
+  }
 
   Parser Parser::from_c_str(const char* str, Context& ctx, ParserState pstate)
   {

@@ -54,6 +54,8 @@ namespace Sass {
       source(0), position(0), end(0), before_token(pstate), after_token(pstate), pstate(pstate), indentation(0)
     { in_at_root = false; stack.push_back(nothing); }
 
+    ~Parser();
+
     // static Parser from_string(const string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
     static Parser from_c_str(const char* src, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
     static Parser from_c_str(const char* beg, const char* end, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
