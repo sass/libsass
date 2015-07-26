@@ -1,8 +1,6 @@
 #include "ast.hpp"
 #include "environment.hpp"
 
-#include <stdio.h>
-
 namespace Sass {
 
   template <typename T>
@@ -15,7 +13,6 @@ namespace Sass {
   template <typename T>
   Environment<T>::~Environment()
   {
-     fprintf(stderr, "Environment(%p): removing: ", this); 
      typename std::map<std::string, T>::iterator it = local_frame_.begin();
      while(it != local_frame_.end()) {
        std::string key = it->first;
@@ -23,9 +20,7 @@ namespace Sass {
        ++it;
        local_frame_.erase(key);
        delete val;
-       fprintf(stderr, "X");
      }
-     fprintf(stderr, " done.\n");
   }
 
   // link parent to create a stack
