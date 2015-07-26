@@ -1,14 +1,11 @@
 #ifndef SASS_BACKTRACE_H
 #define SASS_BACKTRACE_H
 
-#include <sstream>
-
+#include "sass.hpp"
 #include "file.hpp"
 #include "position.hpp"
 
 namespace Sass {
-
-  using namespace std;
 
   struct Backtrace {
 

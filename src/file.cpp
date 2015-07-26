@@ -18,6 +18,9 @@
 #include "sass2scss.h"
 
 #ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #endif
 
@@ -31,7 +34,8 @@
 
 namespace Sass {
   namespace File {
-    using namespace std;
+
+    using std::wstring;
 
     // return the current directory
     // always with forward slashes
@@ -84,7 +88,7 @@ namespace Sass {
         size_t pos_w = string::npos;
       #endif
       if (pos_p != string::npos && pos_w != string::npos) {
-        pos = max(pos_p, pos_w);
+        pos = std::max(pos_p, pos_w);
       }
       else if (pos_p != string::npos) {
         pos = pos_p;
@@ -188,7 +192,7 @@ namespace Sass {
       string stripped_base = "";
 
       size_t index = 0;
-      size_t minSize = min(absolute_uri.size(), absolute_base.size());
+      size_t minSize = std::min(absolute_uri.size(), absolute_base.size());
       for (size_t i = 0; i < minSize; ++i) {
         #ifdef FS_CASE_SENSITIVE
           if (absolute_uri[i] != absolute_base[i]) break;
@@ -299,6 +303,8 @@ namespace Sass {
     // will auto convert .sass files
     char* read_file(const string& path)
     {
+      using std::ios;
+      using std::ifstream;
       #ifdef _WIN32
         BYTE* pBuffer;
         DWORD dwBytes;
@@ -325,7 +331,11 @@ namespace Sass {
           // allocate an extra byte for the null char
           contents = (char*) malloc((size+1)*sizeof(char));
           file.seekg(0, ios::beg);
-          file.read(contents, size);
+          while (1) {
+            file.read(contents, size);
+            if (errno == EINTR) continue;
+            break;
+          }
           contents[size] = '\0';
           file.close();
         }

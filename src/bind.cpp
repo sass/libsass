@@ -1,5 +1,6 @@
 #include "bind.hpp"
 #include "ast.hpp"
+#include "sass.hpp"
 #include "context.hpp"
 #include "eval.hpp"
 #include <map>
@@ -8,7 +9,6 @@
 #include "to_string.hpp"
 
 namespace Sass {
-  using namespace std;
 
   void bind(string callee, Parameters* ps, Arguments* as, Context& ctx, Env* env, Eval* eval)
   {

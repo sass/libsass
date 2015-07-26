@@ -1,12 +1,12 @@
 #ifndef SASS_FILE_H
 #define SASS_FILE_H
 
-#include <string>
-#include <vector>
+#include "sass.hpp"
 
 namespace Sass {
-  using namespace std;
+
   class Context;
+
   namespace File {
 
     // return the current directory

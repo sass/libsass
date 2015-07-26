@@ -376,7 +376,7 @@ namespace Sass {
         if (comparator(x[i], y[j], pCompareOut)) {
           c[i][j] = c[i - 1][j - 1] + 1;
         } else {
-          c[i][j] = max(c[i][j - 1], c[i - 1][j]);
+          c[i][j] = std::max(c[i][j - 1], c[i - 1][j]);
         }
       }
     }
@@ -529,7 +529,7 @@ namespace Sass {
 
         for (SourcesSet::iterator sourcesSetIterator = sources.begin(), sourcesSetIteratorEnd = sources.end(); sourcesSetIterator != sourcesSetIteratorEnd; ++sourcesSetIterator) {
           const Complex_Selector* const pCurrentSelector = *sourcesSetIterator;
-          maxSpecificity = max(maxSpecificity, pCurrentSelector->specificity());
+          maxSpecificity = std::max(maxSpecificity, pCurrentSelector->specificity());
         }
 
         DEBUG_PRINTLN(TRIM, "MAX SPECIFICITY: " << maxSpecificity)

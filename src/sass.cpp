@@ -1,14 +1,13 @@
 #include <cstdlib>
 #include <cstring>
-#include <vector>
-#include <sstream>
 
 #include "sass.h"
 #include "file.hpp"
 #include "util.hpp"
+#include "sass.hpp"
 
 extern "C" {
-  using namespace std;
+
   using namespace Sass;
   using namespace File;
 

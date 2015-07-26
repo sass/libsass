@@ -1,4 +1,7 @@
 #ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #else
 #include <sys/types.h>
@@ -12,6 +15,8 @@
 #include "plugins.hpp"
 
 namespace Sass {
+
+  using std::wstring;
 
   Plugins::Plugins(void) { }
   Plugins::~Plugins(void) { }

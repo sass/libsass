@@ -10,9 +10,7 @@
 
 namespace Sass {
 
-
-  using namespace std;
-
+  using std::shared_ptr;
 
   class Context;
 

@@ -1,15 +1,12 @@
 #ifndef SASS_POSITION_H
 #define SASS_POSITION_H
 
-#include <string>
 #include <cstring>
 #include <cstdlib>
 #include <sstream>
-#include <iostream>
+#include "sass.hpp"
 
 namespace Sass {
-
-  using namespace std;
 
   class Offset {
 

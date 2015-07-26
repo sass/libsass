@@ -1,13 +1,12 @@
 #ifndef SASS_CONTEXT_H
 #define SASS_CONTEXT_H
 
-#include <string>
-#include <vector>
 #include <map>
 
 #define BUFFERSIZE 255
 #include "b64/encode.h"
 
+#include "sass.hpp"
 #include "ast_fwd_decl.hpp"
 #include "kwd_arg_macros.hpp"
 #include "memory_manager.hpp"
@@ -21,7 +20,7 @@
 struct Sass_Function;
 
 namespace Sass {
-  using namespace std;
+
   struct Sass_Queued {
     string abs_path;
     string load_path;

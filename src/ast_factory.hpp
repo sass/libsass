@@ -6,7 +6,6 @@
 #include "ast.hpp"
 
 namespace Sass {
-  using namespace std;
 
   class AST_Factory {
     vector<AST_Node*> nodes;

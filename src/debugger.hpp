@@ -1,13 +1,30 @@
 #ifndef SASS_DEBUGGER_H
 #define SASS_DEBUGGER_H
 
-#include <string>
-#include <sstream>
 #include "node.hpp"
 #include "ast_fwd_decl.hpp"
 
-using namespace std;
-using namespace Sass;
+/*
+inline void debug_extenstion_map(Sass::ExtensionSubsetMap* map, string ind = "")
+{
+  if (ind == "") cerr << "#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+  for(auto const &it : map->values()) {
+    debug_ast(it.first, ind + "first: ");
+    debug_ast(it.second, ind + "second: ");
+  }
+  if (ind == "") cerr << "#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+}
+
+inline void debug_subset_entries(SubsetMapEntries* entries, string ind = "")
+{
+  if (ind == "") cerr << "#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+  for(auto const &pair : *entries) {
+    debug_ast(pair.first, ind + "first: ");
+    debug_ast(pair.second, ind + "second: ");
+  }
+  if (ind == "") cerr << "#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+}
+*/
 
 inline string str_replace(std::string str, const std::string& oldStr, const std::string& newStr)
 {
@@ -46,6 +63,8 @@ inline string pstate_source_position(AST_Node* node)
 
 inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
 {
+  using std::string;
+  using namespace Sass;
   if (node == 0) return;
   if (ind == "") cerr << "####################################################################\n";
   if (dynamic_cast<Bubble*>(node)) {

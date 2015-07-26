@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+#include "sass.hpp"
 #include "parser.hpp"
 #include "file.hpp"
 #include "inspect.hpp"
@@ -16,7 +17,7 @@
 #include <tuple>
 
 namespace Sass {
-  using namespace std;
+
   using namespace Constants;
 
   Parser Parser::from_c_str(const char* str, Context& ctx, ParserState pstate)

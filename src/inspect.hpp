@@ -1,15 +1,13 @@
 #ifndef SASS_INSPECT_H
 #define SASS_INSPECT_H
 
-#include <string>
-
+#include "sass.hpp"
 #include "position.hpp"
 #include "operation.hpp"
 #include "emitter.hpp"
 
 namespace Sass {
   class Context;
-  using namespace std;
 
   class Inspect : public Operation_CRTP<void, Inspect>, public Emitter {
   protected:

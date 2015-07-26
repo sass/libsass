@@ -11,7 +11,6 @@
 #include "environment.hpp"
 
 namespace Sass {
-  using namespace std;
 
   class Listize;
   class Context;

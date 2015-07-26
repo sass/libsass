@@ -5,12 +5,13 @@
 #endif
 
 #include <cstring>
+#include "sass.hpp"
 #include "util.hpp"
 #include "context.hpp"
 #include "sass_functions.h"
 
 extern "C" {
-  using namespace std;
+
   using namespace Sass;
 
   // Struct to hold custom function callback

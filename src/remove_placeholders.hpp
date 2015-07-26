@@ -10,8 +10,6 @@
 
 namespace Sass {
 
-    using namespace std;
-
     class Context;
 
     class Remove_Placeholders : public Operation_CRTP<void, Remove_Placeholders> {
