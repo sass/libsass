@@ -26,6 +26,7 @@ namespace Sass {
     Environment();
     Environment(Environment* env);
     Environment(Environment& env);
+    ~Environment();
 
     // link parent to create a stack
     void link(Environment& env);
