@@ -23,12 +23,14 @@ namespace Sass {
 
   Parser::~Parser()
   {
-    fprintf(stderr, "Parser(%p) goes out of scope\n", this);
+    fprintf(stderr, "Parser(%p) goes out of scope: ", this);
     for(vector<Block*>::iterator i = block_stack.begin(); i != block_stack.end(); ) {
       Block *b = *i;
       ++i;
       ctx.mem.destroy(b);
+      fprintf(stderr, "X");
     }
+    fprintf(stderr, " done\n");
   }
 
   Parser Parser::from_c_str(const char* str, Context& ctx, ParserState pstate)
