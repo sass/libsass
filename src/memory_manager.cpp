@@ -20,19 +20,11 @@ namespace Sass {
     // release memory for all controlled nodes
     // avoid calling erase for every single node 
     for (size_t i = 0, S = nodes.size(); i < S; ++i) {
+      
       deallocate(nodes[i]);
     }
     // just in case
     nodes.clear();
-  }
-
-  template <typename T>
-  T* Memory_Manager<T>::operator()(T* np)
-  {
-    // add to pool
-    nodes.push_back(np);
-    // return resource
-    return np;
   }
 
   template <typename T>
@@ -45,7 +37,10 @@ namespace Sass {
   template <typename T>
   T* Memory_Manager<T>::allocate(size_t size)
   {
-    return static_cast<T*>(operator new(size));
+    T *np;
+    np = static_cast<T*>(operator new(size));
+    nodes.push_back(np);
+    return np;
   }
 
   template <typename T>
