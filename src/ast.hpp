@@ -143,7 +143,6 @@ namespace Sass {
     : Expression(pstate, d, e, i, ct)
     { }
     virtual bool operator== (const Expression& rhs) const = 0;
-    virtual bool operator== (const Expression* rhs) const = 0;
     virtual string to_string(bool compressed = false, int precision = 5) const = 0;
   };
 }
@@ -307,7 +306,21 @@ namespace Sass {
       SUPPORTS,
       ATROOT,
       BUBBLE,
-      KEYFRAMERULE
+      KEYFRAMERULE,
+      DECLARATION,
+      ASSIGNMENT,
+      IMPORT_STUB,
+      IMPORT,
+      COMMENT,
+      WARNING,
+      RETURN,
+      EXTEND,
+      ERROR,
+      DEBUG,
+      WHILE,
+      EACH,
+      FOR,
+      IF
     };
   private:
     ADD_PROPERTY(Block*, block)
@@ -497,7 +510,7 @@ namespace Sass {
     Declaration(ParserState pstate,
                 String* prop, Expression* val, bool i = false)
     : Statement(pstate), property_(prop), value_(val), is_important_(i), is_indented_(false)
-    { }
+    { statement_type(DECLARATION); }
     ATTACH_OPERATIONS()
   };
 
@@ -515,7 +528,7 @@ namespace Sass {
                bool is_default = false,
                bool is_global = false)
     : Statement(pstate), variable_(var), value_(val), is_default_(is_default), is_global_(is_global)
-    { }
+    { statement_type(ASSIGNMENT); }
     ATTACH_OPERATIONS()
   };
 
@@ -533,7 +546,7 @@ namespace Sass {
       files_(vector<string>()),
       urls_(vector<Expression*>()),
       media_queries_(0)
-    { }
+    { statement_type(IMPORT); }
     vector<string>&      files()    { return files_; }
     vector<Expression*>& urls()     { return urls_; }
     ATTACH_OPERATIONS()
@@ -544,7 +557,7 @@ namespace Sass {
   public:
     Import_Stub(ParserState pstate, string f)
     : Statement(pstate), file_name_(f)
-    { }
+    { statement_type(IMPORT_STUB); }
     ATTACH_OPERATIONS()
   };
 
@@ -556,7 +569,7 @@ namespace Sass {
   public:
     Warning(ParserState pstate, Expression* msg)
     : Statement(pstate), message_(msg)
-    { }
+    { statement_type(WARNING); }
     ATTACH_OPERATIONS()
   };
 
@@ -568,7 +581,7 @@ namespace Sass {
   public:
     Error(ParserState pstate, Expression* msg)
     : Statement(pstate), message_(msg)
-    { }
+    { statement_type(ERROR); }
     ATTACH_OPERATIONS()
   };
 
@@ -580,7 +593,7 @@ namespace Sass {
   public:
     Debug(ParserState pstate, Expression* val)
     : Statement(pstate), value_(val)
-    { }
+    { statement_type(DEBUG); }
     ATTACH_OPERATIONS()
   };
 
@@ -593,7 +606,7 @@ namespace Sass {
   public:
     Comment(ParserState pstate, String* txt, bool is_important)
     : Statement(pstate), text_(txt), is_important_(is_important)
-    { }
+    { statement_type(COMMENT); }
     ATTACH_OPERATIONS()
   };
 
@@ -606,7 +619,7 @@ namespace Sass {
   public:
     If(ParserState pstate, Expression* pred, Block* con, Block* alt = 0)
     : Has_Block(pstate, con), predicate_(pred), alternative_(alt)
-    { }
+    { statement_type(IF); }
     ATTACH_OPERATIONS()
   };
 
@@ -623,7 +636,7 @@ namespace Sass {
         string var, Expression* lo, Expression* hi, Block* b, bool inc)
     : Has_Block(pstate, b),
       variable_(var), lower_bound_(lo), upper_bound_(hi), is_inclusive_(inc)
-    { }
+    { statement_type(FOR); }
     ATTACH_OPERATIONS()
   };
 
@@ -636,7 +649,7 @@ namespace Sass {
   public:
     Each(ParserState pstate, vector<string> vars, Expression* lst, Block* b)
     : Has_Block(pstate, b), variables_(vars), list_(lst)
-    { }
+    { statement_type(EACH); }
     ATTACH_OPERATIONS()
   };
 
@@ -648,7 +661,7 @@ namespace Sass {
   public:
     While(ParserState pstate, Expression* pred, Block* b)
     : Has_Block(pstate, b), predicate_(pred)
-    { }
+    { statement_type(WHILE); }
     ATTACH_OPERATIONS()
   };
 
@@ -660,7 +673,7 @@ namespace Sass {
   public:
     Return(ParserState pstate, Expression* val)
     : Statement(pstate), value_(val)
-    { }
+    { statement_type(RETURN); }
     ATTACH_OPERATIONS()
   };
 
@@ -672,7 +685,7 @@ namespace Sass {
   public:
     Extension(ParserState pstate, Selector* s)
     : Statement(pstate), selector_(s)
-    { }
+    { statement_type(EXTEND); }
     ATTACH_OPERATIONS()
   };
 
@@ -819,7 +832,6 @@ namespace Sass {
     }
 
     virtual bool operator== (const Expression& rhs) const;
-    virtual bool operator== (const Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
 
     ATTACH_OPERATIONS()
@@ -853,7 +865,6 @@ namespace Sass {
     }
 
     virtual bool operator== (const Expression& rhs) const;
-    virtual bool operator== (const Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
 
     ATTACH_OPERATIONS()
@@ -1200,8 +1211,8 @@ namespace Sass {
     string unit() const;
 
     bool is_unitless();
-    void convert(const string& unit = "");
-    void normalize(const string& unit = "");
+    void convert(const string& unit = "", bool strict = false);
+    void normalize(const string& unit = "", bool strict = false);
     // useful for making one number compatible with another
     string find_convertible_unit() const;
 
@@ -1214,9 +1225,7 @@ namespace Sass {
     }
 
     virtual bool operator< (const Number& rhs) const;
-    virtual bool operator< (const Number* rhs) const;
     virtual bool operator== (const Expression& rhs) const;
-    virtual bool operator== (const Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
 
     ATTACH_OPERATIONS()
@@ -1253,7 +1262,6 @@ namespace Sass {
     }
 
     virtual bool operator== (const Expression& rhs) const;
-    virtual bool operator== (const Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
 
     ATTACH_OPERATIONS()
@@ -1269,7 +1277,6 @@ namespace Sass {
     : Value(pstate), message_(msg)
     { concrete_type(C_ERROR); }
     virtual bool operator== (const Expression& rhs) const;
-    virtual bool operator== (const Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
@@ -1284,7 +1291,6 @@ namespace Sass {
     : Value(pstate), message_(msg)
     { concrete_type(C_WARNING); }
     virtual bool operator== (const Expression& rhs) const;
-    virtual bool operator== (const Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
@@ -1314,7 +1320,6 @@ namespace Sass {
     }
 
     virtual bool operator== (const Expression& rhs) const;
-    virtual bool operator== (const Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
 
     ATTACH_OPERATIONS()
@@ -1333,7 +1338,6 @@ namespace Sass {
     static string type_name() { return "string"; }
     virtual ~String() = 0;
     virtual bool operator==(const Expression& rhs) const = 0;
-    virtual bool operator==(const Expression* rhs) const = 0;
     virtual string to_string(bool compressed = false, int precision = 5) const = 0;
     ATTACH_OPERATIONS()
   };
@@ -1363,7 +1367,6 @@ namespace Sass {
     }
 
     virtual bool operator==(const Expression& rhs) const;
-    virtual bool operator==(const Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
 
     ATTACH_OPERATIONS()
@@ -1403,7 +1406,6 @@ namespace Sass {
     }
 
     virtual bool operator==(const Expression& rhs) const;
-    virtual bool operator==(const Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
 
     // static char auto_quote() { return '*'; }
@@ -1424,7 +1426,6 @@ namespace Sass {
       value_ = unquote(value_, &quote_mark_);
     }
     virtual bool operator==(const Expression& rhs) const;
-    virtual bool operator==(const Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
@@ -1590,7 +1591,6 @@ namespace Sass {
     }
 
     virtual bool operator== (const Expression& rhs) const;
-    virtual bool operator== (const Expression* rhs) const;
     virtual string to_string(bool compressed = false, int precision = 5) const;
 
     ATTACH_OPERATIONS()

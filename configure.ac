@@ -99,7 +99,7 @@ the --with-sass-spec-dir=<dir> argument.
 
   # TODO: Remove this when automake requirements are 1.12+
   AC_MSG_CHECKING([whether we can use TAP mode])
-  tmp=`$AWK '/TEST_LOG_DRIVER/' $srcdir/Makefile.in`
+  tmp=`$AWK '/TEST_LOG_DRIVER/' $srcdir/GNUmakefile.in`
   if test "x$tmp" != "x"; then
     use_tap=yes
   else
@@ -137,5 +137,5 @@ AC_SUBST(PACKAGE_VERSION)
 
 AC_MSG_NOTICE([Building libsass ($VERSION)])
 
-AC_CONFIG_FILES([GNUmakefile src/Makefile src/support/libsass.pc])
+AC_CONFIG_FILES([GNUmakefile src/GNUmakefile src/support/libsass.pc])
 AC_OUTPUT

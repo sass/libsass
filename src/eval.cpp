@@ -887,9 +887,11 @@ namespace Sass {
       if (ctx.output_style != COMPRESSED && sep == ",") sep += " ";
       bool initial = false;
       for(auto item : list->elements()) {
-        if (initial) acc += sep;
-        acc += interpolation(item);
-        initial = true;
+        if (item->concrete_type() != Expression::NULL_VAL) {
+          if (initial) acc += sep;
+          acc += interpolation(item);
+          initial = true;
+        }
       }
       return evacuate_quotes(acc);
     } else if (Variable* var = dynamic_cast<Variable*>(s)) {
@@ -1129,7 +1131,8 @@ namespace Sass {
     }
 
     Number tmp(r);
-    tmp.normalize(l.find_convertible_unit());
+    bool strict = op != Sass_OP::MUL && op != Sass_OP::DIV;
+    tmp.normalize(l.find_convertible_unit(), strict);
     string l_unit(l.unit());
     string r_unit(tmp.unit());
     if (l_unit != r_unit && !l_unit.empty() && !r_unit.empty() &&

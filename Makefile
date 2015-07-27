@@ -118,8 +118,10 @@ ifeq ($(UNAME),Darwin)
 endif
 
 ifneq (MinGW,$(UNAME))
-	LDFLAGS += -ldl
-	LDLIBS += -ldl
+	ifneq (FreeBSD,$(UNAME))
+		LDFLAGS += -ldl
+		LDLIBS += -ldl
+	endif
 endif
 
 ifneq ($(BUILD),shared)
@@ -244,7 +246,8 @@ $(DESTDIR)$(PREFIX)/lib: $(DESTDIR)$(PREFIX)
 $(DESTDIR)$(PREFIX)/include: $(DESTDIR)$(PREFIX)
 	$(MKDIR) $(DESTDIR)$(PREFIX)/include
 
-$(DESTDIR)$(PREFIX)/include/%.h: include/%.h
+$(DESTDIR)$(PREFIX)/include/%.h: include/%.h \
+                                 $(DESTDIR)$(PREFIX)/include
 	$(INSTALL) -v -m0644 "$<" "$@"
 
 install-headers: $(DESTDIR)$(PREFIX)/include/sass.h \
