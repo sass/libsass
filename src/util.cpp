@@ -317,7 +317,7 @@ namespace Sass {
     return quote_mark;
   }
 
-  string unquote(const string& s, char* qd)
+  string unquote(const string& s, char* qd, bool norm)
   {
 
     // not enough room for quotes

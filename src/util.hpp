@@ -25,7 +25,7 @@ namespace Sass {
   string normalize_wspace(const string& str);
 
   string quote(const string&, char q = 0, bool keep_linefeed_whitespace = false);
-  string unquote(const string&, char* q = 0);
+  string unquote(const string&, char* q = 0, bool norm = true);
   char detect_best_quotemark(const char* s, char qm = '"');
 
   bool is_hex_doublet(double n);
