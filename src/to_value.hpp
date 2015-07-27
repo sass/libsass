@@ -1,12 +1,12 @@
 #ifndef SASS_TO_VALUE_H
 #define SASS_TO_VALUE_H
 
+#include "sass.hpp"
 #include "operation.hpp"
 #include "sass_values.h"
 #include "ast_fwd_decl.hpp"
 
 namespace Sass {
-  using namespace std;
 
   class To_Value : public Operation_CRTP<Value*, To_Value> {
 

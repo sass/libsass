@@ -2,15 +2,9 @@
 #define SASS_UNITS_H
 
 #include <cmath>
-#include <string>
-#include <sstream>
-
-#ifdef __sun
-#undef SEC
-#endif
+#include "sass.hpp"
 
 namespace Sass {
-  using namespace std;
 
   const double PI = acos(-1);
 
@@ -69,7 +63,7 @@ namespace Sass {
   // throws incompatibleUnits exceptions
   double conversion_factor(const string&, const string&, bool = true);
 
-  class incompatibleUnits: public exception
+  class incompatibleUnits: public std::exception
   {
     public:
       const char* msg;

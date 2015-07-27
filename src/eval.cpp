@@ -26,7 +26,6 @@
 #include "color_maps.hpp"
 
 namespace Sass {
-  using namespace std;
 
   inline double add(double x, double y) { return x + y; }
   inline double sub(double x, double y) { return x - y; }

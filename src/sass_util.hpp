@@ -11,9 +11,6 @@
 namespace Sass {
 
 
-  using namespace std;
-
-
   /*
    This is for ports of functions in the Sass:Util module.
    */
@@ -119,7 +116,7 @@ namespace Sass {
         if (comparator(xChildren[i], yChildren[j], compareOut)) {
           c[i][j] = c[i - 1][j - 1] + 1;
         } else {
-          c[i][j] = max(c[i][j - 1], c[i - 1][j]);
+          c[i][j] = std::max(c[i][j - 1], c[i - 1][j]);
         }
       }
     }

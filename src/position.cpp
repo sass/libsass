@@ -2,8 +2,6 @@
 
 namespace Sass {
 
-  using namespace std;
-
   Offset::Offset(const char* string)
   : line(0), column(0)
   {

@@ -11,7 +11,6 @@
 #include "subset_map.hpp"
 
 namespace Sass {
-  using namespace std;
 
   class Context;
   class Node;

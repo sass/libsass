@@ -2,12 +2,12 @@
 #define SASS_EVAL_H
 
 #include <iostream>
+#include "sass.hpp"
 #include "context.hpp"
 #include "listize.hpp"
 #include "operation.hpp"
 
 namespace Sass {
-  using namespace std;
 
   class Expand;
   class Context;

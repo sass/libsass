@@ -32,12 +32,13 @@
 #define SASS2SCSS_VERSION "1.0.3"
 #endif
 
-// using std::string
-using namespace std;
-
 // add namespace for c++
 namespace Sass
 {
+
+	using std::stack;
+	using std::string;
+	using std::stringstream;
 
 	// pretty print options
 	const int SASS2SCSS_PRETTIFY_0 = 0;

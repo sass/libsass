@@ -1,12 +1,9 @@
 #ifndef SASS_ERROR_HANDLING_H
 #define SASS_ERROR_HANDLING_H
 
-#include <string>
-
 #include "position.hpp"
 
 namespace Sass {
-  using namespace std;
 
   struct Backtrace;
 

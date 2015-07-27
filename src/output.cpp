@@ -3,7 +3,6 @@
 #include "to_string.hpp"
 
 namespace Sass {
-  using namespace std;
 
   Output::Output(Context* ctx)
   : Inspect(Emitter(ctx)),
