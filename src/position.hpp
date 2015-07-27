@@ -14,8 +14,8 @@ namespace Sass {
   class Offset {
 
     public: // c-tor
-      Offset(const char* string);
-      Offset(const string& text);
+      explicit Offset(const char* string);
+      explicit Offset(const string& text);
       Offset(const size_t line, const size_t column);
 
       // return new position, incremented by the given string
@@ -47,7 +47,7 @@ namespace Sass {
   class Position : public Offset {
 
     public: // c-tor
-      Position(const size_t file); // line(0), column(0)
+      explicit Position(const size_t file); // line(0), column(0)
       Position(const size_t file, const Offset& offset);
       Position(const size_t line, const size_t column); // file(-1)
       Position(const size_t file, const size_t line, const size_t column);
@@ -81,7 +81,7 @@ namespace Sass {
     : prefix(0), begin(0), end(0) { }
     Token(const char* b, const char* e)
     : prefix(b), begin(b), end(e) { }
-    Token(const char* str)
+    explicit Token(const char* str)
     : prefix(str), begin(str), end(str + strlen(str)) { }
     Token(const char* p, const char* b, const char* e)
     : prefix(p), begin(b), end(e) { }

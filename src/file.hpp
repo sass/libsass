@@ -45,7 +45,7 @@ namespace Sass {
     string resolve_file(const string& file);
 
     // helper function to resolve a filename
-    string find_file(const string& file, const vector<string> paths);
+    string find_file(const string& file, const vector<string>& paths);
     // inc paths can be directly passed from C code
     string find_file(const string& file, const char** paths);
 

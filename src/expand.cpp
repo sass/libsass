@@ -131,12 +131,15 @@ namespace Sass {
         dec->property(combined_prop);
         *block_stack.back() << dec;
       }
-      else if (typeid(*stm) == typeid(Comment)) {
-        // drop comments in propsets
-      }
-      else {
-        error("contents of namespaced properties must result in style declarations only", stm->pstate(), backtrace());
-      }
+	  else if (stm != nullptr)
+	  {
+		  if ( typeid(*stm) == typeid(Comment) ) {
+			  // drop comments in propsets
+		  }
+		  else {
+			  error("contents of namespaced properties must result in style declarations only", stm->pstate(), backtrace());
+		  }
+	  }
     }
 
     property_stack.pop_back();

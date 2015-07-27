@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#pragma warning(disable : 4503)
+#endif
+
 #include "functions.hpp"
 #include "ast.hpp"
 #include "context.hpp"
@@ -864,7 +868,7 @@ namespace Sass {
       // other errors will be re-thrown
       catch (...) { handle_utf8_error(pstate, backtrace); }
       // return something even if we had an error (-1)
-      return new (ctx.mem) Number(pstate, len);
+      return new (ctx.mem) Number(pstate, (double)len);
     }
 
     Signature str_insert_sig = "str-insert($string, $insert, $index)";
@@ -935,7 +939,7 @@ namespace Sass {
       // other errors will be re-thrown
       catch (...) { handle_utf8_error(pstate, backtrace); }
       // return something even if we had an error (-1)
-      return new (ctx.mem) Number(pstate, index);
+      return new (ctx.mem) Number(pstate, (double)index);
     }
 
     Signature str_slice_sig = "str-slice($string, $start-at, $end-at:-1)";
@@ -952,7 +956,7 @@ namespace Sass {
         size_t size = utf8::distance(str.begin(), str.end());
         if (end_at <= size * -1.0) { end_at += size; }
         if (end_at < 0) { end_at += size + 1; }
-        if (end_at > size) { end_at = size; }
+        if (end_at > size) { end_at = (double)size; }
         if (start_at < 0) { start_at += size + 1; }
         else if (start_at == 0) { ++ start_at; }
 
@@ -1126,13 +1130,13 @@ namespace Sass {
       if (v->concrete_type() == Expression::MAP) {
         Map* map = dynamic_cast<Map*>(env["$list"]);
         return new (ctx.mem) Number(pstate,
-                                    map ? map->length() : 1);
+			(double)(map ? map->length() : 1));
       }
       if (v->concrete_type() == Expression::SELECTOR) {
         if (Compound_Selector* h = dynamic_cast<Compound_Selector*>(v)) {
-          return new (ctx.mem) Number(pstate, h->length());
+          return new (ctx.mem) Number(pstate, (double)h->length());
         } else if (Selector_List* ls = dynamic_cast<Selector_List*>(v)) {
-          return new (ctx.mem) Number(pstate, ls->length());
+          return new (ctx.mem) Number(pstate, (double)ls->length());
         } else {
           return new (ctx.mem) Number(pstate, 1);
         }
@@ -1140,7 +1144,7 @@ namespace Sass {
 
       List* list = dynamic_cast<List*>(env["$list"]);
       return new (ctx.mem) Number(pstate,
-                                  list ? list->size() : 1);
+                                  (double)(list ? list->size() : 1));
     }
 
     Signature nth_sig = "nth($list, $n)";
@@ -1202,7 +1206,7 @@ namespace Sass {
         *l << ARG("$list", Expression);
       }
       for (size_t i = 0, L = l->length(); i < L; ++i) {
-        if (Eval::eq(l->value_at_index(i), v)) return new (ctx.mem) Number(pstate, i+1);
+        if (Eval::eq(l->value_at_index(i), v)) return new (ctx.mem) Number(pstate, (double)(i+1));
       }
       return new (ctx.mem) Null(pstate);
     }
@@ -1370,12 +1374,11 @@ namespace Sass {
     Signature map_remove_sig = "map-remove($map, $keys...)";
     BUILT_IN(map_remove)
     {
-      bool remove;
       Map* m = ARGM("$map", Map, ctx);
       List* arglist = ARG("$keys", List);
       Map* result = new (ctx.mem) Map(pstate, 1);
       for (auto key : m->keys()) {
-        remove = false;
+        bool remove = false;
         for (size_t j = 0, K = arglist->length(); j < K && !remove; ++j) {
           remove = Eval::eq(key, arglist->value_at_index(j));
         }
@@ -1408,7 +1411,7 @@ namespace Sass {
       Expression* v = ARG("$value", Expression);
       if (v->concrete_type() == Expression::STRING) {
         To_String to_string(&ctx);
-        string str(v->perform(&to_string));
+        v->perform(&to_string);
       }
       return new (ctx.mem) String_Quoted(pstate, ARG("$value", Expression)->type());
     }
