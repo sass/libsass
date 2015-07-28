@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#pragma warning(disable : 4503)
+#endif
+
 #include "ast.hpp"
 #include "context.hpp"
 #include "node.hpp"
@@ -533,8 +537,7 @@ namespace Sass {
           if (wrapped->name() == wrapped_r->name()) {
           if (wrapped->is_superselector_of(wrapped_r)) {
              continue;
-             rset.insert(lhs->perform(&to_string));
-
+             //rset.insert(lhs->perform(&to_string));
           }}
         }
       }
@@ -644,8 +647,8 @@ namespace Sass {
     Node node = Extend::subweave(lhsNode, rhsNode, ctx);
     Selector_List* result = new (ctx.mem) Selector_List(pstate());
     NodeDequePtr col = node.collection(); // move from collection to list
-    for (NodeDeque::iterator it = col->begin(), end = col->end(); it != end; it++)
-    { (*result) << nodeToComplexSelector(Node::naiveTrim(*it, ctx), ctx); }
+    for (Sass::Node& n : *col)
+    { (*result) << nodeToComplexSelector(Node::naiveTrim(n, ctx), ctx); }
 
     // only return if list has some entries
     return result->length() ? result : 0;
@@ -676,7 +679,7 @@ namespace Sass {
       if (!l) ++i;
       if (!r) ++n;
       // do the check now
-      else if (*l != *r)
+      else if (l && *l != *r)
       { return false; }
       // advance now
       ++i; ++n;
@@ -723,7 +726,7 @@ namespace Sass {
       if (lhs_tail->combinator() != rhs_tail->combinator()) return false;
       if (lhs_tail->head() && !rhs_tail->head()) return false;
       if (!lhs_tail->head() && rhs_tail->head()) return false;
-      if (lhs_tail->head() && lhs_tail->head()) {
+      if (lhs_tail->head() ) {
         if (!lhs_tail->head()->is_superselector_of(rhs_tail->head())) return false;
       }
     }
@@ -817,6 +820,7 @@ namespace Sass {
   {
     // create a new complex selector to return a processed copy
     return this;
+	/*
     Complex_Selector* ss = new (ctx.mem) Complex_Selector(this->pstate());
     //ss->has_line_feed(this->has_line_feed());
     ss->combinator(this->combinator());
@@ -835,6 +839,7 @@ namespace Sass {
     }
     // return copy
     return ss;
+	*/
   }
 
   Selector_List* Selector_List::parentize(Context& ctx)
@@ -1138,32 +1143,32 @@ namespace Sass {
     To_String to_string;
 
     Selector_List* extender = this;
-    for (auto complex_sel : extendee->elements()) {
-      Complex_Selector* c = complex_sel;
+	for (auto complex_sel : extendee->elements()) {
+		
+		if ( Complex_Selector* c = complex_sel ) {
+			// Ignore any parent selectors, until we find the first non Selector_Reference head
+			Compound_Selector* compound_sel = c->head();
+			Complex_Selector* pIter = complex_sel;
+			while (pIter) {
+				Compound_Selector* pHead = pIter->head();
+				if (pHead && dynamic_cast<Parent_Selector*>(pHead->elements()[0]) == NULL) {
+					compound_sel = pHead;
+					break;
+				}
 
+				pIter = pIter->tail();
+			}
 
-      // Ignore any parent selectors, until we find the first non Selector_Reference head
-      Compound_Selector* compound_sel = c->head();
-      Complex_Selector* pIter = complex_sel;
-      while (pIter) {
-        Compound_Selector* pHead = pIter->head();
-        if (pHead && dynamic_cast<Parent_Selector*>(pHead->elements()[0]) == NULL) {
-          compound_sel = pHead;
-          break;
-        }
+			if ( pIter && (!pIter->head() || pIter->tail()) ) {
+				error("nested selectors may not be extended", c->pstate());
+			}
 
-        pIter = pIter->tail();
-      }
+			compound_sel->is_optional(extendee->is_optional());
 
-      if (!pIter->head() || pIter->tail()) {
-        error("nested selectors may not be extended", c->pstate());
-      }
-
-      compound_sel->is_optional(extendee->is_optional());
-
-      for (size_t i = 0, L = extender->length(); i < L; ++i) {
-        extends.put(compound_sel->to_str_vec(), make_pair((*extender)[i], compound_sel));
-      }
+			for (size_t i = 0, L = extender->length(); i < L; ++i) {
+				extends.put(compound_sel->to_str_vec(), make_pair((*extender)[i], compound_sel));
+			}
+		}
     }
   };
 
@@ -1250,11 +1255,11 @@ namespace Sass {
     denominator_units_(vector<string>()),
     hash_(0)
   {
-    size_t l = 0, r = 0;
     if (!u.empty()) {
-      bool nominator = true;
+		size_t l = 0;
+		bool nominator = true;
       while (true) {
-        r = u.find_first_of("*/", l);
+        size_t r = u.find_first_of("*/", l);
         string unit(u.substr(l, r == string::npos ? r : r - l));
         if (!unit.empty()) {
           if (nominator) numerator_units_.push_back(unit);
@@ -1629,6 +1634,7 @@ namespace Sass {
     if (is_invisible()) return res;
     bool items_output = false;
     for (auto key : keys()) {
+	  if (key==nullptr) continue; // Or should we throw?
       if (key->is_invisible()) continue;
       if (at(key)->is_invisible()) continue;
       if (items_output) res += compressed ? "," : ", ";
@@ -1651,12 +1657,15 @@ namespace Sass {
     string sep = separator() == SASS_COMMA ? "," : " ";
     if (!compressed && sep == ",") sep += " ";
     for (size_t i = 0, L = size(); i < L; ++i) {
-      Expression* item = (*this)[i];
-      if (item->is_invisible()) continue;
-      if (items_output) res += sep;
-      if (Value* v_val = dynamic_cast<Value*>(item))
-      { res += v_val->to_string(compressed, precision); }
-      items_output = true;
+		if (Expression* item = (*this)[i]) {
+			if (item->is_invisible()) continue;
+			if (items_output) res += sep;
+			if (Value* v_val = dynamic_cast<Value*>(item))
+			{
+				res += v_val->to_string(compressed, precision);
+			}
+			items_output = true;
+		}
     }
     return res;
   }
@@ -1717,7 +1726,7 @@ namespace Sass {
     }
     // otherwise get the possible resolved color name
     else {
-      double numval = r * 0x10000 + g * 0x100 + b;
+      int numval = (int)(r * 0x10000 + g * 0x100 + b);
       if (color_to_name(numval))
         res_name = color_to_name(numval);
     }
@@ -1817,7 +1826,7 @@ namespace Sass {
     {
       // do we have have too much precision?
       if (pos_fract < precision + pos_point)
-      { precision = pos_fract - pos_point; }
+      { precision = (int)(pos_fract - pos_point); }
       // round value again
       ss.precision(precision);
       ss << fixed << value_;

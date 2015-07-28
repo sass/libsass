@@ -593,28 +593,29 @@ namespace Sass {
 
       bool hasDeclarations = false;
       bool hasPrintableChildBlocks = false;
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        if (!stm->is_hoistable()) {
-          // If a statement isn't hoistable, the selectors apply to it. If there are no selectors (a selector list of length 0),
-          // then those statements aren't considered printable. That means there was a placeholder that was removed. If the selector
-          // is NULL, then that means there was never a wrapping selector and it is printable (think of a top level media block with
-          // a declaration in it).
-        }
-        else if (typeid(*stm) == typeid(Declaration) || typeid(*stm) == typeid(At_Rule)) {
-          hasDeclarations = true;
-        }
-        else if (dynamic_cast<Has_Block*>(stm)) {
-          Block* pChildBlock = ((Has_Block*)stm)->block();
-          if (isPrintable(pChildBlock, style)) {
-            hasPrintableChildBlocks = true;
-          }
-        }
+	  for (size_t i = 0, L = b->length(); i < L; ++i) {
+		  if (Statement* stm = (*b)[i]) {
+			  if (!stm->is_hoistable()) {
+				  // If a statement isn't hoistable, the selectors apply to it. If there are no selectors (a selector list of length 0),
+				  // then those statements aren't considered printable. That means there was a placeholder that was removed. If the selector
+				  // is NULL, then that means there was never a wrapping selector and it is printable (think of a top level media block with
+				  // a declaration in it).
+			  }
+			  else if (typeid(*stm) == typeid(Declaration) || typeid(*stm) == typeid(At_Rule)) {
+				  hasDeclarations = true;
+			  }
+			  else if (dynamic_cast<Has_Block*>(stm)) {
+				  Block* pChildBlock = ((Has_Block*)stm)->block();
+				  if (isPrintable(pChildBlock, style)) {
+					  hasPrintableChildBlocks = true;
+				  }
+			  }
 
-        if (hasDeclarations || hasPrintableChildBlocks) {
-          return true;
-        }
-      }
+			  if (hasDeclarations || hasPrintableChildBlocks) {
+				  return true;
+			  }
+		  }
+	  }
 
       return false;
     }
@@ -625,11 +626,12 @@ namespace Sass {
       Block* b = m->block();
       if (b == 0) return false;
       for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        if (typeid(*stm) == typeid(At_Rule)) return true;
-        if (typeid(*stm) == typeid(Declaration)) return true;
-        if (Has_Block* child = dynamic_cast<Has_Block*>(stm)) {
-          if (isPrintable(child->block(), style)) return true;
+		  if (Statement* stm = (*b)[i]) {
+			if (typeid(*stm) == typeid(At_Rule)) return true;
+			if (typeid(*stm) == typeid(Declaration)) return true;
+			if (Has_Block* child = dynamic_cast<Has_Block*>(stm)) {
+				if (isPrintable(child->block(), style)) return true;
+			}
         }
       }
       return false;
@@ -641,34 +643,37 @@ namespace Sass {
       }
 
       for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement* stm = (*b)[i];
-        if (typeid(*stm) == typeid(Declaration) || typeid(*stm) == typeid(At_Rule)) {
-          return true;
-        }
-        else if (typeid(*stm) == typeid(Comment)) {
 
-        }
-        else if (typeid(*stm) == typeid(Ruleset)) {
-          Ruleset* r = (Ruleset*) stm;
-          if (isPrintable(r, style)) {
-            return true;
-          }
-        }
-        else if (typeid(*stm) == typeid(Supports_Block)) {
-          Supports_Block* f = (Supports_Block*) stm;
-          if (isPrintable(f, style)) {
-            return true;
-          }
-        }
-        else if (typeid(*stm) == typeid(Media_Block)) {
-          Media_Block* m = (Media_Block*) stm;
-          if (isPrintable(m, style)) {
-            return true;
-          }
-        }
-        else if (dynamic_cast<Has_Block*>(stm) && isPrintable(((Has_Block*)stm)->block(), style)) {
-          return true;
-        }
+		  if (Statement* stm = (*b)[i]) {
+
+			  if (typeid(*stm) == typeid(Declaration) || typeid(*stm) == typeid(At_Rule)) {
+				  return true;
+			  }
+			  else if (typeid(*stm) == typeid(Comment)) {
+
+			  }
+			  else if (typeid(*stm) == typeid(Ruleset)) {
+				  Ruleset* r = (Ruleset*)stm;
+				  if (isPrintable(r, style)) {
+					  return true;
+				  }
+			  }
+			  else if (typeid(*stm) == typeid(Supports_Block)) {
+				  Supports_Block* f = (Supports_Block*)stm;
+				  if (isPrintable(f, style)) {
+					  return true;
+				  }
+			  }
+			  else if (typeid(*stm) == typeid(Media_Block)) {
+				  Media_Block* m = (Media_Block*)stm;
+				  if (isPrintable(m, style)) {
+					  return true;
+				  }
+			  }
+			  else if (dynamic_cast<Has_Block*>(stm) && isPrintable(((Has_Block*)stm)->block(), style)) {
+				  return true;
+			  }
+		  }
       }
 
       return false;

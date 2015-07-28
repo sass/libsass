@@ -71,7 +71,7 @@ namespace Sass {
   class AST_Node {
     ADD_PROPERTY(ParserState, pstate)
   public:
-    AST_Node(ParserState pstate)
+  explicit  AST_Node(ParserState pstate)
     : pstate_(pstate)
     { }
     virtual ~AST_Node() = 0;
@@ -187,7 +187,7 @@ namespace Sass {
     void reset_hash() { hash_ = 0; }
     virtual void adjust_after_pushing(T element) { }
   public:
-    Vectorized(size_t s = 0) : elements_(vector<T>())
+    explicit Vectorized(size_t s = 0) : elements_(vector<T>()), hash_(0)
     { elements_.reserve(s); }
     virtual ~Vectorized() = 0;
     size_t length() const   { return elements_.size(); }
@@ -242,7 +242,7 @@ namespace Sass {
     void reset_duplicate_key() { duplicate_key_ = 0; }
     virtual void adjust_after_pushing(std::pair<Expression*, Expression*> p) { }
   public:
-    Hashed(size_t s = 0) : elements_(unordered_map<Expression*, Expression*>(s)), list_(vector<Expression*>())
+    explicit Hashed(size_t s = 0) : elements_(unordered_map<Expression*, Expression*>(s)), list_(vector<Expression*>()), hash_(0)
     { elements_.reserve(s); list_.reserve(s); reset_duplicate_key(); }
     virtual ~Hashed();
     size_t length() const                  { return list_.size(); }
@@ -329,7 +329,7 @@ namespace Sass {
     ADD_PROPERTY(bool, group_end)
   public:
     Statement(ParserState pstate, Statement_Type st = NONE, size_t t = 0)
-    : AST_Node(pstate), statement_type_(st), tabs_(t), group_end_(false)
+    : AST_Node(pstate), block_(nullptr), statement_type_(st), tabs_(t), group_end_(false)
      { }
     virtual ~Statement() = 0;
     // needed for rearranging nested rulesets during CSS emission
@@ -541,7 +541,7 @@ namespace Sass {
     vector<Expression*>    urls_;
     ADD_PROPERTY(List*, media_queries);
   public:
-    Import(ParserState pstate)
+    explicit Import(ParserState pstate)
     : Statement(pstate),
       files_(vector<string>()),
       urls_(vector<Expression*>()),
@@ -783,7 +783,7 @@ namespace Sass {
   ///////////////////////////////////////////////////
   class Content : public Statement {
   public:
-    Content(ParserState pstate) : Statement(pstate) { }
+    explicit Content(ParserState pstate) : Statement(pstate) { }
     ATTACH_OPERATIONS()
   };
 
@@ -792,7 +792,7 @@ namespace Sass {
   // type-tag.) Also used to represent variable-length argument lists.
   ///////////////////////////////////////////////////////////////////////
   class List : public Value, public Vectorized<Expression*> {
-    void adjust_after_pushing(Expression* e) { is_expanded(false); }
+    // UNUSED according to cppcheck: void adjust_after_pushing(Expression* e) { is_expanded(false); }
   private:
     ADD_PROPERTY(enum Sass_Separator, separator)
     ADD_PROPERTY(bool, is_arglist)
@@ -1010,6 +1010,7 @@ namespace Sass {
       try
       {
         const Argument* m = dynamic_cast<const Argument*>(&rhs);
+		if (m == nullptr) throw bad_cast();
         if (!(m && name() == m->name())) return false;
         return *value() == *m->value();
       }
@@ -1044,7 +1045,7 @@ namespace Sass {
   protected:
     void adjust_after_pushing(Argument* a);
   public:
-    Arguments(ParserState pstate)
+    explicit Arguments(ParserState pstate)
     : Expression(pstate),
       Vectorized<Argument*>(),
       has_named_arguments_(false),
@@ -1242,7 +1243,7 @@ namespace Sass {
     ADD_PROPERTY(string, disp)
     size_t hash_;
   public:
-    Color(ParserState pstate, double r, double g, double b, double a = 1, bool sixtuplet = true, const string disp = "")
+    Color(ParserState pstate, double r, double g, double b, double a = 1, bool sixtuplet = true, const string& disp = "")
     : Value(pstate), r_(r), g_(g), b_(b), a_(a), sixtuplet_(sixtuplet), disp_(disp),
       hash_(0)
     { concrete_type(COLOR); }
@@ -1577,7 +1578,7 @@ namespace Sass {
   //////////////////
   class Null : public Value {
   public:
-    Null(ParserState pstate) : Value(pstate) { concrete_type(NULL_VAL); }
+    explicit Null(ParserState pstate) : Value(pstate) { concrete_type(NULL_VAL); }
     string type() { return "null"; }
     static string type_name() { return "null"; }
     bool is_invisible() const { return true; }
@@ -1659,7 +1660,7 @@ namespace Sass {
       }
     }
   public:
-    Parameters(ParserState pstate)
+    explicit Parameters(ParserState pstate)
     : AST_Node(pstate),
       Vectorized<Parameter*>(),
       has_optional_parameters_(false),
@@ -1796,7 +1797,7 @@ namespace Sass {
   // only one simple parent selector means the first case.
   class Parent_Selector : public Simple_Selector {
   public:
-    Parent_Selector(ParserState pstate)
+    explicit Parent_Selector(ParserState pstate)
     : Simple_Selector(pstate, "&")
     { has_reference(true); }
     virtual bool has_parent_ref() { return true; };
@@ -2196,10 +2197,9 @@ namespace Sass {
     virtual unsigned long specificity()
     {
       unsigned long sum = 0;
-      unsigned long specificity = 0;
       for (size_t i = 0, L = length(); i < L; ++i)
       {
-        specificity = (*this)[i]->specificity();
+       unsigned long specificity = (*this)[i]->specificity();
         if (sum < specificity) sum = specificity;
       }
       return sum;

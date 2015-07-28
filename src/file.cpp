@@ -267,7 +267,7 @@ namespace Sass {
     }
 
     // helper function to resolve a filename
-    string find_file(const string& file, const vector<string> paths)
+    string find_file(const string& file, const vector<string>& paths)
     {
       // search in every include path for a match
       for (size_t i = 0, S = paths.size(); i < S; ++i)
@@ -307,14 +307,20 @@ namespace Sass {
         HANDLE hFile = CreateFileW(wpath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
         if (hFile == INVALID_HANDLE_VALUE) return 0;
         DWORD dwFileLength = GetFileSize(hFile, NULL);
-        if (dwFileLength == INVALID_FILE_SIZE) return 0;
+        if (dwFileLength == INVALID_FILE_SIZE) {
+          CloseHandle(hFile);
+          return 0;
+        }
+
         // allocate an extra byte for the null char
         pBuffer = (BYTE*)malloc((dwFileLength+1)*sizeof(BYTE));
-        ReadFile(hFile, pBuffer, dwFileLength, &dwBytes, NULL);
+        if (!pBuffer) throw bad_alloc();
+        if (ReadFile(hFile, pBuffer, dwFileLength, &dwBytes, NULL) != TRUE) throw runtime_error("Reading file failed!");
         pBuffer[dwFileLength] = '\0';
         CloseHandle(hFile);
+
         // just convert from unsigned char*
-        char* contents = (char*) pBuffer;
+        char* contents = (char*)pBuffer;
       #else
         struct stat st;
         if (stat(path.c_str(), &st) == -1 || S_ISDIR(st.st_mode)) return 0;

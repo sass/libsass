@@ -12,7 +12,7 @@ namespace Sass {
   class Emitter {
 
     public:
-      Emitter(Context* ctx);
+      explicit Emitter(Context* ctx);
       virtual ~Emitter() { }
 
     protected:

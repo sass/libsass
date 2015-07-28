@@ -753,7 +753,7 @@ namespace Sass
 		// The sentry object performs various tasks,
 		// such as thread synchronization and updating the stream state.
 
-		std::istream::sentry se(is, true);
+		//std::istream::sentry se(is, true);
 		std::streambuf* sb = is.rdbuf();
 
 		for(;;) {
@@ -812,8 +812,11 @@ namespace Sass
 		// allocate new memory on the heap
 		// caller has to free it after use
 		char * cstr = (char*) malloc (scss.length() + 1);
+		if (!cstr) throw bad_alloc();
+
 		// create a copy of the string
 		strcpy (cstr, scss.c_str());
+
 		// return pointer
 		return &cstr[0];
 

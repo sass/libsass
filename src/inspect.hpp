@@ -20,7 +20,7 @@ namespace Sass {
 
   public:
 
-    Inspect(Emitter emi);
+    explicit Inspect(Emitter emi);
     virtual ~Inspect();
 
     // statements
