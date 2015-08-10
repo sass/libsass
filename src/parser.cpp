@@ -19,6 +19,15 @@ namespace Sass {
   using namespace std;
   using namespace Constants;
 
+  Parser::~Parser()
+  {
+    for(vector<Block*>::iterator i = block_stack.begin(); i != block_stack.end(); ) {
+      Block *b = *i;
+      ++i;
+      ctx.mem.destroy(b);
+    }
+  }
+
   Parser Parser::from_c_str(const char* str, Context& ctx, ParserState pstate)
   {
     Parser p(ctx, pstate);
