@@ -1,12 +1,13 @@
 #include "sass.h"
+#define __STDC_LIMIT_MACROS
+#include <stdint.h>
+
 #include "ast.hpp"
 #include "util.hpp"
 #include "lexer.hpp"
 #include "prelexer.hpp"
 #include "constants.hpp"
 #include "utf8/checked.h"
-
-#include <stdint.h>
 
 namespace Sass {
 

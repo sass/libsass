@@ -202,6 +202,7 @@
     <ClCompile Include="..\src\color_maps.cpp" />
     <ClCompile Include="..\src\constants.cpp" />
     <ClCompile Include="..\src\context.cpp" />
+    <ClCompile Include="..\src\debug.cpp" />
     <ClCompile Include="..\src\environment.cpp" />
     <ClCompile Include="..\src\error_handling.cpp" />
     <ClCompile Include="..\src\eval.cpp" />
