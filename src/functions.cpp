@@ -245,20 +245,20 @@ namespace Sass {
     Signature rgb_sig = "rgb($red, $green, $blue)";
     BUILT_IN(rgb)
     {
-      return new (ctx.mem) Color(pstate,
-                                 color_num(ARGR("$red",   Number, 0, 255)),
-                                 color_num(ARGR("$green", Number, 0, 255)),
-                                 color_num(ARGR("$blue",  Number, 0, 255)));
+      double red = color_num(ARG("$red", Number));
+      double green = color_num(ARG("$green", Number));
+      double blue = color_num(ARG("$blue", Number));
+      return new (ctx.mem) Color(pstate, red, green, blue);
     }
 
     Signature rgba_4_sig = "rgba($red, $green, $blue, $alpha)";
     BUILT_IN(rgba_4)
     {
-      return new (ctx.mem) Color(pstate,
-                                 color_num(ARGR("$red",   Number, 0, 255)),
-                                 color_num(ARGR("$green", Number, 0, 255)),
-                                 color_num(ARGR("$blue",  Number, 0, 255)),
-                                 ARGR("$alpha", Number, 0, 1)->value());
+      double red = color_num(ARG("$red", Number));
+      double green = color_num(ARG("$green", Number));
+      double blue = color_num(ARG("$blue", Number));
+      double alpha = std::min(std::max(ARG("$alpha", Number)->value(), 0.0), 1.0);
+      return new (ctx.mem) Color(pstate, red, green, blue, alpha);
     }
 
     Signature rgba_2_sig = "rgba($color, $alpha)";
