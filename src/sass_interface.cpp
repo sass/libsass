@@ -24,7 +24,7 @@ extern "C" {
     return str == NULL ? "" : str;
   }
 
-  static void copy_strings(const std::vector<std::string>& strings, char*** array, int skip = 0) {
+  static void _copy_strings(const std::vector<std::string>& strings, char*** array, int skip = 0) {
     int num = static_cast<int>(strings.size());
     char** arr = (char**) malloc(sizeof(char*) * (num + 1));
 
@@ -38,7 +38,7 @@ extern "C" {
     *array = arr;
   }
 
-  static void free_string_array(char ** arr) {
+  static void _free_string_array(char ** arr) {
     if(!arr)
         return;
 
@@ -58,7 +58,7 @@ extern "C" {
     if (ctx->error_message)     free(ctx->error_message);
     if (ctx->c_functions)       free(ctx->c_functions);
 
-    free_string_array(ctx->included_files);
+    _free_string_array(ctx->included_files);
 
     free(ctx);
   }
@@ -73,7 +73,7 @@ extern "C" {
     if (ctx->error_message)     free(ctx->error_message);
     if (ctx->c_functions)       free(ctx->c_functions);
 
-    free_string_array(ctx->included_files);
+    _free_string_array(ctx->included_files);
 
     free(ctx);
   }
@@ -83,7 +83,7 @@ extern "C" {
 
   void sass_free_folder_context(sass_folder_context* ctx)
   {
-    free_string_array(ctx->included_files);
+    _free_string_array(ctx->included_files);
     free(ctx);
   }
 
@@ -135,7 +135,7 @@ extern "C" {
       c_ctx->error_message = 0;
       c_ctx->error_status = 0;
 
-      copy_strings(cpp_ctx.get_included_files(1), &c_ctx->included_files, 1);
+      _copy_strings(cpp_ctx.get_included_files(1), &c_ctx->included_files, 1);
     }
     catch (Error_Invalid& e) {
       std::stringstream msg_stream;
@@ -227,7 +227,7 @@ extern "C" {
       c_ctx->error_message = 0;
       c_ctx->error_status = 0;
 
-      copy_strings(cpp_ctx.get_included_files(), &c_ctx->included_files);
+      _copy_strings(cpp_ctx.get_included_files(), &c_ctx->included_files);
     }
     catch (Error_Invalid& e) {
       std::stringstream msg_stream;
