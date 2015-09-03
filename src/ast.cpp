@@ -911,10 +911,9 @@ namespace Sass {
                 *retval << s;
               }
             }
-          }
+          } else {
           // have no tails but parents
           // loop above is inside out
-          else {
             for (size_t i = 0, iL = parents->length(); i < iL; ++i) {
               Complex_Selector* parent = (*parents)[i];
               Complex_Selector* s = parent->cloneFully(ctx);
@@ -930,11 +929,11 @@ namespace Sass {
             }
           }
           return retval;
-        }
-        // have no parent but some tails
-        else {
+        } else {
           Selector_List* retval = SASS_MEMORY_NEW(ctx.mem, Selector_List, pstate());
+
           if (tails && tails->length() > 0) {
+            // have no parent but some tails
             for (size_t n = 0, nL = tails->length(); n < nL; ++n) {
               Complex_Selector* cpy = this->clone(ctx);
               cpy->tail((*tails)[n]->cloneFully(ctx));
@@ -944,15 +943,14 @@ namespace Sass {
               if (!cpy->head()->length()) cpy->head(0);
               *retval << cpy->skip_empty_reference();
             }
-          }
-          // have no parent and not tails
-          else {
+          } else {
+            // have no parent and not tails 
             Complex_Selector* cpy = this->clone(ctx);
             cpy->head(SASS_MEMORY_NEW(ctx.mem, Compound_Selector, head->pstate()));
             for (size_t i = 1, L = this->head()->length(); i < L; ++i)
               *cpy->head() << (*this->head())[i];
             if (!cpy->head()->length()) cpy->head(0);
-            *retval << cpy->skip_empty_reference();
+            *retval << cpy;
           }
           return retval;
         }
