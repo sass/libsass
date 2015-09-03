@@ -25,6 +25,37 @@ namespace Sass {
     return ret;
   }
 
+  // Optimization: this could be done with one single malloc call
+  // fetch needed length of all strings and use null terminated array
+  void copy_strings(const std::vector<std::string>& strings, char*** array) {
+    int num = static_cast<int>(strings.size());
+    char** arr = (char**) malloc(sizeof(char*) * (num + 1));
+    if (arr == 0) throw(std::bad_alloc());
+
+    for(int i = 0; i < num; i++) {
+      arr[i] = (char*) malloc(sizeof(char) * (strings[i].size() + 1));
+      if (arr[i] == 0) throw(std::bad_alloc());
+      std::copy(strings[i].begin(), strings[i].end(), arr[i]);
+      arr[i][strings[i].size()] = '\0';
+    }
+
+    arr[num] = 0;
+    *array = arr;
+  }
+
+  void free_string_array(char ** arr) {
+    if(!arr)
+        return;
+
+    char **it = arr;
+    while (it && (*it)) {
+      free(*it);
+      ++it;
+    }
+
+    free(arr);
+  }
+
   /* Locale unspecific atof function. */
   double sass_atof(const char *str)
   {

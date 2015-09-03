@@ -10,6 +10,9 @@
 
 namespace Sass {
 
+  void copy_strings(const std::vector<std::string>& strings, char*** array);
+  void free_string_array(char ** arr);
+
   char* sass_strdup(const char* str);
   double sass_atof(const char* str);
   std::string string_escape(const std::string& str);
