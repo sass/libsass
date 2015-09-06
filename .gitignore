@@ -73,6 +73,6 @@ src/support/libsass.pc
 
 # Cloned testing dirs
 sassc/
-sass-spec/
+test/*/
 
 installer/
