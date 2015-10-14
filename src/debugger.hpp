@@ -65,6 +65,11 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << bubble->tabs();
     std::cerr << std::endl;
+  } else if (Imported* imp = dynamic_cast<Imported*>(node)) {
+    std::cerr << ind << "Imported " << imp;
+    std::cerr << " (" << pstate_source_position(node) << ")";
+    std::cerr << "\n";
+    debug_ast(imp->block(), ind + " ", env);
   } else if (dynamic_cast<At_Root_Block*>(node)) {
     At_Root_Block* root_block = dynamic_cast<At_Root_Block*>(node);
     std::cerr << ind << "At_Root_Block " << root_block;

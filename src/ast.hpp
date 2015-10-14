@@ -310,6 +310,7 @@ namespace Sass {
       DECLARATION,
       ASSIGNMENT,
       IMPORT_STUB,
+      IMPORTED,
       IMPORT,
       COMMENT,
       WARNING,
@@ -537,27 +538,45 @@ namespace Sass {
   // necessary to store a list of each in an Import node.
   ////////////////////////////////////////////////////////////////////////////
   class Import : public Statement {
-    std::vector<std::string>         files_;
+    std::vector<std::string>    imports_;
+    std::vector<std::string>    files_;
     std::vector<Expression*>    urls_;
     ADD_PROPERTY(List*, media_queries);
   public:
     Import(ParserState pstate)
     : Statement(pstate),
+      imports_(std::vector<std::string>()),
       files_(std::vector<std::string>()),
       urls_(std::vector<Expression*>()),
       media_queries_(0)
     { statement_type(IMPORT); }
-    std::vector<std::string>&      files()    { return files_; }
+    std::vector<std::string>& imports()  { return imports_; }
+    std::vector<std::string>& files()    { return files_; }
     std::vector<Expression*>& urls()     { return urls_; }
     ATTACH_OPERATIONS()
   };
 
+  // not yet resolved single import
+  // so far we only know requested name
   class Import_Stub : public Statement {
     ADD_PROPERTY(std::string, file_name)
+    ADD_PROPERTY(std::string, import_path)
+    ADD_PROPERTY(std::string, abs_path)
   public:
-    Import_Stub(ParserState pstate, std::string f)
-    : Statement(pstate), file_name_(f)
+    Import_Stub(ParserState pstate, std::string f, std::string p, std::string abs_path)
+    : Statement(pstate), file_name_(f), import_path_(p), abs_path_(abs_path)
     { statement_type(IMPORT_STUB); }
+    ATTACH_OPERATIONS()
+  };
+
+  class Imported : public Has_Block {
+    ADD_PROPERTY(std::string, file_name)
+    ADD_PROPERTY(Import_Stub*, import_stub)
+  public:
+    Imported(Import_Stub* import_stub, Block* inner)
+    : Has_Block(import_stub->pstate(), inner),
+      import_stub_(import_stub)
+    { statement_type(IMPORTED); }
     ATTACH_OPERATIONS()
   };
 

@@ -20,6 +20,7 @@ namespace Sass {
     eval(Eval(*this)),
     env_stack(std::vector<Env*>()),
     block_stack(std::vector<Block*>()),
+    import_stack(std::vector<Imported*>()),
     property_stack(std::vector<String*>()),
     selector_stack(std::vector<Selector_List*>()),
     backtrace_stack(std::vector<Backtrace*>()),
@@ -28,6 +29,7 @@ namespace Sass {
     env_stack.push_back(0);
     env_stack.push_back(env);
     block_stack.push_back(0);
+    import_stack.push_back(0);
     property_stack.push_back(0);
     selector_stack.push_back(0);
     backtrace_stack.push_back(0);
@@ -315,8 +317,21 @@ namespace Sass {
 
   Statement* Expand::operator()(Import_Stub* i)
   {
+    Block* block = SASS_MEMORY_NEW(ctx.mem, Block, i->pstate());
+    Imported* imported = SASS_MEMORY_NEW(ctx.mem, Imported, i, block);
+    // *block_stack.back() << imported;
+    // block_stack.push_back(block);
+    // ParserState pstate(i->pstate());
+    // import_stack.push_back(imported);
     append_block(ctx.style_sheets[i->file_name()]);
+    // import_stack.pop_back();
+    // block_stack.pop_back();
     return 0;
+  }
+
+  Statement* Expand::operator()(Imported* i)
+  {
+    return i->block()->perform(this);
   }
 
   Statement* Expand::operator()(Warning* w)

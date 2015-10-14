@@ -23,6 +23,7 @@ namespace Sass {
   class Declaration;
   class Assignment;
   class Import;
+  class Imported;
   class Import_Stub;
   class Warning;
   class Error;

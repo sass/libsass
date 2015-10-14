@@ -202,6 +202,13 @@ namespace Sass {
     append_delimiter();
   }
 
+  void Inspect::operator()(Imported* import)
+  {
+    // import_stack.push_back(import);
+    import->block()->perform(this);
+    // import_stack.pop_back(import);
+  }
+
   void Inspect::operator()(Warning* warning)
   {
     append_indentation();

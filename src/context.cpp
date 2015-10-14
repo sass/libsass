@@ -224,7 +224,7 @@ namespace Sass {
   void Context::add_source(std::string load_path, std::string abs_path, char* contents)
   {
     sources.push_back(contents);
-    included_files.push_back(abs_path);
+    included_files.push_back(resolve_relative_path(abs_path, cwd));
     queue.push_back(Sass_Queued(load_path, abs_path, contents));
     emitter.add_source_index(sources.size() - 1);
     include_links.push_back(resolve_relative_path(abs_path, source_map_file, cwd));
@@ -235,16 +235,17 @@ namespace Sass {
   {
     using namespace File;
     std::string path(make_canonical_path(file));
-    std::string resolved(find_file(path, include_paths));
+    std::string resolver(find_file(path, include_paths));
+    std::string resolved = make_absolute_path(resolver, cwd);
     if (resolved == "") return resolved;
-    if (char* contents = read_file(resolved)) {
+    if (char* contents = read_file(resolver)) {
       add_source(path, resolved, contents);
-      style_sheets[path] = 0;
+      style_sheets[resolved] = 0;
       if (delay == false) {
         size_t i = queue.size() - 1;
         process_queue_entry(queue[i], i);
       }
-      return path;
+      return resolved;
     }
     return std::string("");
   }
@@ -256,7 +257,6 @@ namespace Sass {
     using namespace File;
     std::string path(make_canonical_path(file));
     std::string base_file(join_paths(base, path));
-    if (style_sheets.count(base_file)) return base_file;
     std::vector<Sass_Queued> resolved(resolve_file(base, path));
     if (resolved.size() > 1) {
       std::stringstream msg_stream;
@@ -269,12 +269,13 @@ namespace Sass {
       error(msg_stream.str(), pstate);
     }
     if (resolved.size()) {
+      if (style_sheets.count(resolved[0].abs_path)) return resolved[0].abs_path;
       if (char* contents = read_file(resolved[0].abs_path)) {
         add_source(base_file, resolved[0].abs_path, contents);
         style_sheets[base_file] = 0;
         size_t i = queue.size() - 1;
         process_queue_entry(queue[i], i);
-        return base_file;
+        return resolved[0].abs_path;
       }
     }
     // now go the regular code path
@@ -308,7 +309,7 @@ namespace Sass {
 
   void Context::process_queue_entry(Sass_Queued& entry, size_t i)
   {
-    if (style_sheets[queue[i].load_path]) return;
+    if (style_sheets[queue[i].abs_path]) return;
     Sass_Import_Entry import = sass_make_import(
       queue[i].load_path.c_str(),
       queue[i].abs_path.c_str(),
@@ -325,7 +326,7 @@ namespace Sass {
     // ToDo: we store by load_path, which can lead
     // to duplicates if importer reports the same path
     // Maybe we should add an error for duplicates!?
-    style_sheets[queue[i].load_path] = ast;
+    style_sheets[queue[i].abs_path] = ast;
   }
 
   Block* Context::parse_file()
@@ -333,7 +334,7 @@ namespace Sass {
     Block* root = 0;
     for (size_t i = 0; i < queue.size(); ++i) {
       process_queue_entry(queue[i], i);
-      if (i == 0) root = style_sheets[queue[i].load_path];
+      if (i == 0) root = style_sheets[queue[i].abs_path];
     }
     if (root == 0) return 0;
 

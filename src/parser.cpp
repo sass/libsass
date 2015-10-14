@@ -85,7 +85,7 @@ namespace Sass {
       if (!pre->urls().empty()) (*root) << pre;
       if (!pre->files().empty()) {
         for (size_t i = 0, S = pre->files().size(); i < S; ++i) {
-          (*root) << SASS_MEMORY_NEW(ctx.mem, Import_Stub, pstate, pre->files()[i]);
+          (*root) << SASS_MEMORY_NEW(ctx.mem, Import_Stub, pstate, pre->files()[i], pre->imports()[i], load_path);
         }
       }
     }
@@ -225,7 +225,7 @@ namespace Sass {
       // if it is a file(s), we should process them
       if (!imp->files().empty()) {
         for (size_t i = 0, S = imp->files().size(); i < S; ++i) {
-          (*block) << SASS_MEMORY_NEW(ctx.mem, Import_Stub, pstate, imp->files()[i]);
+          (*block) << SASS_MEMORY_NEW(ctx.mem, Import_Stub, pstate, imp->files()[i], imp->imports()[i], "abs");
         }
       }
     }
@@ -310,6 +310,7 @@ namespace Sass {
       std::string resolved(ctx.add_file(current_dir, unquoted, *this));
       if (resolved.empty()) error("file to import not found or unreadable: " + unquoted + "\nCurrent dir: " + current_dir, pstate);
       imp->files().push_back(resolved);
+      imp->imports().push_back(unquoted);
     }
 
   }
@@ -361,12 +362,14 @@ namespace Sass {
           } else if (source) {
             if (abs_path) {
               ctx.add_source(uniq_path, abs_path, source);
-              imp->files().push_back(uniq_path);
+              imp->files().push_back(abs_path);
+              imp->imports().push_back(uniq_path);
               size_t i = ctx.queue.size() - 1;
               ctx.process_queue_entry(ctx.queue[i], i);
             } else {
               ctx.add_source(uniq_path, uniq_path, source);
               imp->files().push_back(uniq_path);
+              imp->imports().push_back(uniq_path);
               size_t i = ctx.queue.size() - 1;
               ctx.process_queue_entry(ctx.queue[i], i);
             }
@@ -421,8 +424,7 @@ namespace Sass {
           error("malformed URL", pstate);
         }
         if (!lex< exactly<')'> >()) error("URI is missing ')'", pstate);
-        // imp->urls().push_back(result);
-        to_import.push_back(std::pair<std::string,Function_Call*>("", result));
+        to_import.push_back(std::pair<std::string, Function_Call*>("", result));
       }
       else {
         if (first) error("@import directive requires a url or quoted path", pstate);

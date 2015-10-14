@@ -30,6 +30,7 @@ namespace Sass {
     // it's easier to work with vectors
     std::vector<Env*>      env_stack;
     std::vector<Block*>    block_stack;
+    std::vector<Imported*> import_stack;
     std::vector<String*>   property_stack;
     std::vector<Selector_List*> selector_stack;
     std::vector<Backtrace*>backtrace_stack;
@@ -53,6 +54,7 @@ namespace Sass {
     Statement* operator()(Declaration*);
     Statement* operator()(Assignment*);
     Statement* operator()(Import*);
+    Statement* operator()(Imported*);
     Statement* operator()(Import_Stub*);
     Statement* operator()(Warning*);
     Statement* operator()(Error*);
