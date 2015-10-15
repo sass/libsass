@@ -81,7 +81,7 @@ namespace Sass {
       Import* pre = SASS_MEMORY_NEW(ctx.mem, Import, pstate);
       std::string load_path(ctx.queue[0].load_path);
       load_path = unquote(load_path);
-      do_import(load_path, pre, ctx.c_headers, false);
+      ctx.do_import(load_path, path, pstate, pre, ctx.c_headers, false);
       ctx.head_imports = ctx.queue.size() - 1;
       if (!pre->urls().empty()) (*root) << pre;
       if (!pre->files().empty()) {
@@ -290,128 +290,6 @@ namespace Sass {
   }
   // EO parse_block_nodes
 
-  void Parser::add_single_file (Import* imp, std::string load_path) {
-
-    std::string extension;
-    std::string unquoted(unquote(load_path));
-    if (unquoted.length() > 4) { // 2 quote marks + the 4 chars in .css
-      // a string constant is guaranteed to end with a quote mark, so make sure to skip it when indexing from the end
-      extension = unquoted.substr(unquoted.length() - 4, 4);
-    }
-
-    if (extension == ".css") {
-      String_Constant* loc = SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, unquote(load_path));
-      Argument* loc_arg = SASS_MEMORY_NEW(ctx.mem, Argument, pstate, loc);
-      Arguments* loc_args = SASS_MEMORY_NEW(ctx.mem, Arguments, pstate);
-      (*loc_args) << loc_arg;
-      Function_Call* new_url = SASS_MEMORY_NEW(ctx.mem, Function_Call, pstate, "url", loc_args);
-      imp->urls().push_back(new_url);
-    }
-    else {
-      std::string current_dir = File::dir_name(path);
-      std::string resolved(ctx.add_file(current_dir, unquoted, *this));
-      if (resolved.empty()) error("file to import not found or unreadable: " + unquoted + "\nCurrent dir: " + current_dir, pstate);
-      imp->files().push_back(resolved);
-      imp->imports().push_back(unquoted);
-    }
-
-  }
-
-  void Parser::import_single_file (Import* imp, std::string load_path) {
-
-    if (imp->media_queries() ||
-        !unquote(load_path).substr(0, 7).compare("http://") ||
-        !unquote(load_path).substr(0, 8).compare("https://") ||
-        !unquote(load_path).substr(0, 2).compare("//"))
-    {
-      imp->urls().push_back(SASS_MEMORY_NEW(ctx.mem, String_Quoted, pstate, load_path));
-    }
-    else {
-      add_single_file(imp, load_path);
-    }
-
-  }
-
-  // call custom importers on the given (unquoted) load_path and eventually parse the resulting style_sheet
-  bool Parser::do_import(const std::string& load_path, Import* imp, std::vector<Sass_Importer_Entry> importers, bool only_one)
-  {
-    // unique counter
-    size_t count = 0;
-    // need one correct import
-    bool has_import = false;
-    // process all custom importers (or custom headers)
-    for (Sass_Importer_Entry& importer : importers) {
-      // int priority = sass_importer_get_priority(importer);
-      Sass_Importer_Fn fn = sass_importer_get_function(importer);
-      // skip importer if it returns NULL
-      if (Sass_Import_List includes =
-          fn(load_path.c_str(), importer, ctx.c_compiler)
-      ) {
-        // get c pointer copy to iterate over
-        Sass_Import_List it_includes = includes;
-        while (*it_includes) { ++count;
-          // create unique path to use as key
-          std::string uniq_path = load_path;
-          if (!only_one && count) {
-            std::stringstream path_strm;
-            path_strm << uniq_path << ":" << count;
-            uniq_path = path_strm.str();
-          }
-          // query data from the current include
-          Sass_Import_Entry include = *it_includes;
-          char* source = sass_import_take_source(include);
-          size_t line = sass_import_get_error_line(include);
-          size_t column = sass_import_get_error_column(include);
-          const char *abs_path = sass_import_get_abs_path(include);
-          // handle error message passed back from custom importer
-          // it may (or may not) override the line and column info
-          if (const char* err_message = sass_import_get_error_message(include)) {
-            if (line == std::string::npos && column == std::string::npos) error(err_message, pstate);
-            else error(err_message, ParserState(err_message, source, Position(line, column)));
-          }
-          // content for import was set
-          else if (source) {
-            // resolved abs_path should be set by custom importer
-            // use the created uniq_path as fallback (maybe enforce)
-            std::string path_key(abs_path ? abs_path : uniq_path);
-            // register source buffer with the cpp context
-            ctx.add_source(uniq_path, path_key, source);
-            // attach information to AST node
-            imp->files().push_back(path_key);
-            imp->imports().push_back(uniq_path);
-            // now process the new queue entry
-            size_t i = ctx.queue.size() - 1;
-            // parses the source to AST nodes
-            // only does it once per given key
-            ctx.process_queue_entry(ctx.queue[i], i);
-          }
-          // only a path was retuned
-          // try to load it like normal
-          else if(abs_path) {
-            // checks some urls to preserve
-            // `http://`, `https://` and `//`
-            // or dispatchs to `add_single_file`
-            // which will check for a `.css` extension
-            // or resolves the file on the filesystem
-            // added and resolved via `ctx.add_file`
-            // finally stores everything on `imp`
-            import_single_file(imp, abs_path);
-          }
-          // move to next
-          ++it_includes;
-        }
-        // deallocate the returned memory
-        sass_delete_import_list(includes);
-        // set success flag
-        has_import = true;
-        // break out of loop
-        if (only_one) break;
-      }
-    }
-    // return result
-    return has_import;
-  }
-
   // parse imports inside the
   Import* Parser::parse_import()
   {
@@ -421,7 +299,7 @@ namespace Sass {
     do {
       while (lex< block_comment >());
       if (lex< quoted_string >()) {
-        if (!do_import(unquote(std::string(lexed)), imp, ctx.c_importers, true))
+        if (!ctx.do_import(unquote(std::string(lexed)), path, pstate, imp, ctx.c_importers, true))
         {
           // push single file import
           // import_single_file(imp, lexed);
@@ -465,7 +343,7 @@ namespace Sass {
       if (location.second) {
         imp->urls().push_back(location.second);
       } else {
-        import_single_file(imp, location.first);
+        ctx.import_single_file(imp, location.first, path);
       }
     }
 

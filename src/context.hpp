@@ -24,6 +24,11 @@ struct Sass_Function;
 namespace Sass {
 
   class Context {
+  private:
+    void add_single_file (Import* imp, std::string load_path, const std::string& ctx_path);
+  public:
+    void import_single_file (Import* imp, std::string load_path, const std::string& ctx_path);
+    bool do_import(const std::string& load_path, const char* ctx_path, ParserState& pstate, Import* imp, std::vector<Sass_Importer_Entry> importers, bool only_one = true);
   public:
     size_t head_imports;
     Memory_Manager mem;
