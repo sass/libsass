@@ -36,6 +36,7 @@ namespace Sass {
     struct Sass_Options* c_options;
     struct Sass_Compiler* c_compiler;
     char* source_c_str;
+    std::string entry_point;
 
     // c-strs containing Sass file contents
     // we will overtake ownership of memory
@@ -44,13 +45,13 @@ namespace Sass {
     std::vector<char*> strings;
     // absolute paths to includes
     std::vector<std::string> included_files;
-    // relative links to includes
-    std::vector<std::string> include_links;
+    // relative includes for sourcemap
+    std::vector<std::string> srcmap_links;
     // vectors above have same size
 
     std::vector<std::string> plugin_paths; // relative paths to load plugins
     std::vector<std::string> include_paths; // lookup paths for includes
-    std::vector<Sass_Queued> queue; // queue of files to be parsed
+    std::vector<Sass_Include> includes; // list with info for all includes
     std::map<std::string, Block*> style_sheets; // map of paths to ASTs
     // SourceMap source_map;
     Output emitter;
@@ -113,12 +114,13 @@ namespace Sass {
 
     Block* parse_file();
     Block* parse_string();
+    Block* render_root_block();
     void add_source(std::string, std::string, char*);
 
-    std::string add_file(const std::string& imp_path, bool delay = false);
-    std::string add_file(const std::string& imp_path, const std::string& abs_path, ParserState pstate);
+    std::vector<Sass_Include> find_include(const std::string& base_path, const std::string& load_path);
+    std::string load_file(const std::string& file, const std::string& base, ParserState pstate);
 
-    void process_queue_entry(Sass_Queued& entry, size_t idx);
+    void parse_queue_entry(size_t idx);
 
     // allow to optionally overwrite the input path
     // default argument for input_path is std::string("stdin")

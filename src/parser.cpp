@@ -76,13 +76,13 @@ namespace Sass {
     Block* root = SASS_MEMORY_NEW(ctx.mem, Block, pstate, 0, true);
     read_bom();
 
-    if (ctx.queue.size() == 1) {
+    if (ctx.includes.size() == 1) {
       is_root = true;
       Import* pre = SASS_MEMORY_NEW(ctx.mem, Import, pstate);
-      std::string load_path(ctx.queue[0].load_path);
+      std::string load_path(ctx.includes[0].load_path);
       load_path = unquote(load_path);
       ctx.do_import(load_path, path, pstate, pre, ctx.c_headers, false);
-      ctx.head_imports = ctx.queue.size() - 1;
+      ctx.head_imports = ctx.includes.size() - 1;
       if (!pre->urls().empty()) (*root) << pre;
       if (!pre->files().empty()) {
         for (size_t i = 0, S = pre->files().size(); i < S; ++i) {

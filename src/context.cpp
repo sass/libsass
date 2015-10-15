@@ -38,11 +38,12 @@ namespace Sass {
   using namespace File;
   using namespace Sass;
 
-  Sass_Queued::Sass_Queued(const std::string& load_path, const std::string& abs_path, const char* source)
+  Sass_Include::Sass_Include(const std::string& load_path, const std::string& abs_path, const char* source, const char* srcmap)
   {
     this->load_path = load_path;
     this->abs_path = abs_path;
     this->source = source;
+    this->srcmap = srcmap;
   }
 
   inline bool sort_importers (const Sass_Importer_Entry& i, const Sass_Importer_Entry& j)
@@ -55,13 +56,14 @@ namespace Sass {
     c_options               (initializers.c_options()),
     c_compiler              (initializers.c_compiler()),
     source_c_str            (initializers.source_c_str()),
+    entry_point             (initializers.entry_point()),
     sources                 (std::vector<char*>()),
     strings                 (std::vector<char*>()),
     plugin_paths            (initializers.plugin_paths()),
     include_paths           (initializers.include_paths()),
-    queue                   (std::vector<Sass_Queued>()),
+    includes                (std::vector<Sass_Include>()),
     style_sheets            (std::map<std::string, Block*>()),
-    emitter (this),
+    emitter                 (this),
     c_headers               (std::vector<Sass_Importer_Entry>()),
     c_importers             (std::vector<Sass_Importer_Entry>()),
     c_functions             (std::vector<Sass_Function_Entry>()),
@@ -78,7 +80,7 @@ namespace Sass {
     omit_source_map_url     (initializers.omit_source_map_url()),
     is_indented_syntax_src  (initializers.is_indented_syntax_src()),
     precision               (initializers.precision()),
-    plugins(),
+    plugins                 (),
     subset_map              (Subset_Map<std::string, std::pair<Complex_Selector*, Compound_Selector*> >())
   {
 
@@ -89,35 +91,24 @@ namespace Sass {
     if (input_path == "") input_path = "stdin";
     if (output_path == "") output_path = "stdout";
 
+    // add cwd to include paths
     include_paths.push_back(cwd);
+
+    // collect more paths from different options
     collect_include_paths(initializers.include_paths_c_str());
     // collect_include_paths(initializers.include_paths_array());
     collect_plugin_paths(initializers.plugin_paths_c_str());
     // collect_plugin_paths(initializers.plugin_paths_array());
 
-    for (size_t i = 0, S = plugin_paths.size(); i < S; ++i) {
-      plugins.load_plugins(plugin_paths[i]);
-    }
+    // load plugins and register custom behaviors
+    for(auto plug : plugin_paths) plugins.load_plugins(plug);
+    for(auto fn : plugins.get_headers()) c_headers.push_back(fn);
+    for(auto fn : plugins.get_importers()) c_importers.push_back(fn);
+    for(auto fn : plugins.get_functions()) c_functions.push_back(fn);
 
-    for(auto fn : plugins.get_functions()) {
-      c_functions.push_back(fn);
-    }
-    for(auto fn : plugins.get_headers()) {
-      c_headers.push_back(fn);
-    }
-    for(auto fn : plugins.get_importers()) {
-      c_importers.push_back(fn);
-    }
-
+    // sort the items by priority (lowest first)
     sort (c_headers.begin(), c_headers.end(), sort_importers);
     sort (c_importers.begin(), c_importers.end(), sort_importers);
-    std::string entry_point = initializers.entry_point();
-    if (!entry_point.empty()) {
-      std::string result(add_file(entry_point, true));
-      if (result.empty()) {
-        throw "File to read not found or unreadable: " + entry_point;
-      }
-    }
 
     emitter.set_filename(resolve_relative_path(output_path, source_map_file, cwd));
 
@@ -222,65 +213,97 @@ namespace Sass {
     }
   }
 
+
   void Context::add_source(std::string load_path, std::string abs_path, char* contents)
   {
-    sources.push_back(contents);
-    included_files.push_back(resolve_relative_path(abs_path, cwd));
-    queue.push_back(Sass_Queued(load_path, abs_path, contents));
-    emitter.add_source_index(sources.size() - 1);
-    include_links.push_back(resolve_relative_path(abs_path, source_map_file, cwd));
-  }
-
-  // Add a new import file to the context
-  std::string Context::add_file(const std::string& file, bool delay)
-  {
-    using namespace File;
-    std::string path(make_canonical_path(file));
-    std::string resolver(find_file(path, include_paths));
-    std::string resolved = make_absolute_path(resolver, cwd);
-    if (resolved == "") return resolved;
-    if (char* contents = read_file(resolver)) {
-      add_source(path, resolved, contents);
-      style_sheets[resolved] = 0;
-      if (delay == false) {
-        size_t i = queue.size() - 1;
-        process_queue_entry(queue[i], i);
-      }
-      return resolved;
+    // init cache for parsed result
+    if (!style_sheets[abs_path]) {
+      style_sheets[abs_path] = 0;
     }
-    return std::string("");
+    // put source under our control
+    // the memory will be freed later
+    sources.push_back(contents);
+    // tell emitter we have a new index
+    emitter.add_source_index(sources.size() - 1);
+    // add struct with main info to queue
+    includes.push_back(Sass_Include(load_path, abs_path, contents));
+    // add a relative link to the working directory
+    included_files.push_back(resolve_relative_path(abs_path, cwd));
+    // add a relative link  to the source map output file
+    srcmap_links.push_back(resolve_relative_path(abs_path, source_map_file, cwd));
+    // parse the new queue entry right away
+    parse_queue_entry(includes.size() - 1);
+  }
+
+  // resolve the load_path in base_path or include_paths
+  // looks for alternatives and returns a list from one directory
+  std::vector<Sass_Include> Context::find_include(const std::string& base_path, const std::string& load_path)
+  {
+    // first try to resolve the load path inside the base path
+    std::vector<Sass_Include> vec(resolve_file(base_path, load_path));
+    // then search in every include path (but only if nothing found yet)
+    for (size_t i = 0, S = include_paths.size(); vec.size() == 0 && i < S; ++i)
+    {
+      // call resolve_file and individual base path and append all results
+      std::vector<Sass_Include> resolved(resolve_file(include_paths[i], load_path));
+      if (resolved.size()) vec.insert(vec.end(), resolved.begin(), resolved.end());
+    }
+    // return vector
+    return vec;
   }
 
   // Add a new import file to the context
-  // This has some previous directory context
-  std::string Context::add_file(const std::string& base, const std::string& file, ParserState pstate)
+  std::string Context::load_file(const std::string& load_path, const std::string& ctx_path, ParserState pstate)
   {
+
     using namespace File;
-    std::string path(make_canonical_path(file));
-    std::string base_file(join_paths(base, path));
-    std::vector<Sass_Queued> resolved(resolve_file(base, path));
+    // get directory name of previous style sheet
+    std::string base_path(File::dir_name(ctx_path));
+    // do a logical clean up of the path
+    // no physical check on the filesystem
+    std::string file_path(make_canonical_path(load_path));
+    // join two path segments cleanly together
+    // but only if file_path is not absolute yet
+    std::string base_file(join_paths(base_path, file_path));
+    // search for valid imports (ie. partials) on the filesystem
+    // this may return more than one valid result (ambiguous load_path)
+    std::vector<Sass_Include> resolved(find_include(base_path, file_path));
+
+    // error nicely on ambiguous load_path
     if (resolved.size() > 1) {
       std::stringstream msg_stream;
       msg_stream << "It's not clear which file to import for ";
-      msg_stream << "'@import \"" << file << "\"'." << "\n";
+      msg_stream << "'@import \"" << load_path << "\"'." << "\n";
       msg_stream << "Candidates:" << "\n";
       for (size_t i = 0, L = resolved.size(); i < L; ++i)
       { msg_stream << "  " << resolved[i].load_path << "\n"; }
       msg_stream << "Please delete or rename all but one of these files." << "\n";
       error(msg_stream.str(), pstate);
     }
-    if (resolved.size()) {
+
+    // process the resolved entry
+    else if (resolved.size() == 1) {
+      // return early if this style sheet has already been loaded
       if (style_sheets.count(resolved[0].abs_path)) return resolved[0].abs_path;
+      // try to read the content of the resolved file entry
+      // the memory buffer returned must be freed by us!
       if (char* contents = read_file(resolved[0].abs_path)) {
+        // create the source entry for the resolved file entry
         add_source(base_file, resolved[0].abs_path, contents);
-        style_sheets[base_file] = 0;
-        size_t i = queue.size() - 1;
-        process_queue_entry(queue[i], i);
+        // process created queue entry
+        // size_t i = includes.size() - 1;
+        // parses the source to AST nodes
+        // only does it once per given key
+        // parse_queue_entry(includes[i], i);
+        // parse_queue_entry(includes.size() - 1);
+        // return path of resolved entry
         return resolved[0].abs_path;
       }
     }
-    // now go the regular code path
-    return add_file(path);
+
+    // nothing found
+    return std::string("");
+
   }
 
 
@@ -305,9 +328,8 @@ namespace Sass {
       imp->urls().push_back(new_url);
     }
     else {
-      std::string current_dir = File::dir_name(ctx_path);
-      std::string resolved(add_file(current_dir, unquoted, pstate));
-      if (resolved.empty()) error("file to import not found or unreadable: " + unquoted + "\nCurrent dir: " + current_dir, pstate);
+      std::string resolved(load_file(unquoted, ctx_path, pstate));
+      if (resolved.empty()) error("File to import not found or unreadable: " + unquoted + "\nParent style sheet: " + ctx_path, pstate);
       imp->files().push_back(resolved);
       imp->imports().push_back(unquoted);
     }
@@ -372,16 +394,12 @@ namespace Sass {
             // resolved abs_path should be set by custom importer
             // use the created uniq_path as fallback (maybe enforce)
             std::string path_key(abs_path ? abs_path : uniq_path);
-            // register source buffer with the cpp context
-            add_source(uniq_path, path_key, source);
             // attach information to AST node
             imp->files().push_back(path_key);
             imp->imports().push_back(uniq_path);
-            // now process the new queue entry
-            size_t i = queue.size() - 1;
-            // parses the source to AST nodes
-            // only does it once per given key
-            process_queue_entry(queue[i], i);
+            // register source buffer with the cpp context
+            add_source(uniq_path, path_key, source);
+            // parse_queue_entry(includes.size() - 1);
           }
           // only a path was retuned
           // try to load it like normal
@@ -438,35 +456,38 @@ namespace Sass {
     return sass_strdup(output.c_str());
   }
 
-  void Context::process_queue_entry(Sass_Queued& entry, size_t i)
+  void Context::parse_queue_entry(size_t i)
   {
-    if (style_sheets[queue[i].abs_path]) return;
+    if (style_sheets[includes[i].abs_path]) return;
     Sass_Import_Entry import = sass_make_import(
-      queue[i].load_path.c_str(),
-      queue[i].abs_path.c_str(),
+      includes[i].load_path.c_str(),
+      includes[i].abs_path.c_str(),
       0, 0
     );
     import_stack.push_back(import);
     // keep a copy of the path around (for parser states)
-    strings.push_back(sass_strdup(queue[i].abs_path.c_str()));
-    ParserState pstate(strings.back(), queue[i].source, i);
-    Parser p(Parser::from_c_str(queue[i].source, *this, pstate));
+    strings.push_back(sass_strdup(includes[i].abs_path.c_str()));
+    ParserState pstate(strings.back(), includes[i].source, i);
+    Parser p(Parser::from_c_str(includes[i].source, *this, pstate));
     Block* ast = p.parse();
     sass_delete_import(import_stack.back());
     import_stack.pop_back();
     // ToDo: we store by load_path, which can lead
     // to duplicates if importer reports the same path
     // Maybe we should add an error for duplicates!?
-    style_sheets[queue[i].abs_path] = ast;
+    style_sheets[includes[i].abs_path] = ast;
   }
 
-  Block* Context::parse_file()
+  // render root block from includes
+  Block* Context::render_root_block()
   {
-    Block* root = 0;
-    for (size_t i = 0; i < queue.size(); ++i) {
-      process_queue_entry(queue[i], i);
-      if (i == 0) root = style_sheets[queue[i].abs_path];
-    }
+    // abort if there is no data
+    if (includes.size() == 0) return 0;
+    // make sure all registered sources have been parsed
+    for (size_t i = 0; i < includes.size(); ++i) parse_queue_entry(i);
+    // get root block from the first style sheet
+    Block* root = style_sheets[includes[0].abs_path];
+    // abort on invalid root
     if (root == 0) return 0;
 
     Env global; // create root environment
@@ -499,28 +520,69 @@ namespace Sass {
     // return processed tree
     return root;
   }
-  // EO parse_file
+  // EO render_root_block
+
+  Block* Context::parse_file()
+  {
+
+    // check if entry file is given
+    if (entry_point.empty()) return 0;
+
+    // clear old root
+    includes.clear();
+
+    std::string path(make_canonical_path(entry_point));
+    std::string abs_path(make_absolute_path(path, cwd));
+
+    // try to load the entry file
+    char* contents = read_file(abs_path);
+
+    // alternatively also look inside each include path folder
+    // I think this differs from ruby sass (IMO too late to remove)
+    for (size_t i = 0, S = include_paths.size(); contents == 0 && i < S; ++i) {
+      // build absolute path for this include path entry
+      abs_path = make_absolute_path(path, include_paths[i]);
+      // try to load the resulting path
+      contents = read_file(abs_path);
+    }
+
+    // abort early if no content could be loaded (various reasons)
+    if (!contents) throw "File to read not found or unreadable: " + path;
+
+    // create the source entry for file entry
+    add_source(path, abs_path, contents);
+    // parse_queue_entry(includes.size() - 1);
+
+    // create root ast tree node
+    return render_root_block();
+
+  }
 
   Block* Context::parse_string()
   {
+
+    // check if source string is given
     if (!source_c_str) return 0;
-    queue.clear();
+
+    // clear old root
+    includes.clear();
+
     if(is_indented_syntax_src) {
       char * contents = sass2scss(source_c_str, SASS2SCSS_PRETTIFY_1 | SASS2SCSS_KEEP_COMMENT);
       add_source(input_path, input_path, contents);
+      // parse_queue_entry(includes.size() - 1);
       free(source_c_str);
-      return parse_file();
+      return render_root_block();
     }
     add_source(input_path, input_path, source_c_str);
-    size_t idx = queue.size() - 1;
-    process_queue_entry(queue[idx], idx);
-    return parse_file();
+    // parse_queue_entry(includes.size() - 1);
+    return render_root_block();
   }
 
   char* Context::compile_file()
   {
     // returns NULL if something fails
-    return compile_block(parse_file());
+    return compile_block(render_root_block());
   }
 
   char* Context::compile_string()
@@ -561,7 +623,7 @@ namespace Sass {
   // we probably always want to skip the header includes?
   std::vector<std::string> Context::get_included_files(bool skip, size_t headers)
   {
-      // create a copy of the vector for manupulations
+      // create a copy of the vector for manipulations
       std::vector<std::string> includes = included_files;
       if (includes.size() == 0) return includes;
       if (skip) { includes.erase( includes.begin(), includes.begin() + 1 + headers); }

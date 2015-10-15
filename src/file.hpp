@@ -8,12 +8,13 @@ namespace Sass {
 
   class Context;
 
-  struct Sass_Queued {
+  struct Sass_Include {
     std::string abs_path;
     std::string load_path;
     const char* source;
+    const char* srcmap;
   public:
-    Sass_Queued(const std::string& load_path, const std::string& abs_path, const char* source);
+    Sass_Include(const std::string& load_path, const std::string& abs_path, const char* source, const char* srcmap = 0);
   };
 
   namespace File {
@@ -51,7 +52,7 @@ namespace Sass {
     std::string resolve_relative_path(const std::string& path, const std::string& base, const std::string& cwd = ".");
 
     // try to find/resolve the filename
-    std::vector<Sass_Queued> resolve_file(const std::string& root, const std::string& file);
+    std::vector<Sass_Include> resolve_file(const std::string& root, const std::string& file);
 
     // helper function to resolve a filename
     std::string find_file(const std::string& file, const std::vector<std::string> paths);
