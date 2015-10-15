@@ -20,7 +20,6 @@ namespace Sass {
     eval(Eval(*this)),
     env_stack(std::vector<Env*>()),
     block_stack(std::vector<Block*>()),
-    import_stack(std::vector<Imported*>()),
     property_stack(std::vector<String*>()),
     selector_stack(std::vector<Selector_List*>()),
     backtrace_stack(std::vector<Backtrace*>()),
@@ -29,7 +28,6 @@ namespace Sass {
     env_stack.push_back(0);
     env_stack.push_back(env);
     block_stack.push_back(0);
-    import_stack.push_back(0);
     property_stack.push_back(0);
     selector_stack.push_back(0);
     backtrace_stack.push_back(0);
@@ -319,7 +317,7 @@ namespace Sass {
   {
     // we don't seem to need that actually afterall
     Sass_Import_Entry import = sass_make_import(
-      i->import_path().c_str(),
+      i->load_path().c_str(),
       i->abs_path().c_str(),
       0, 0
     );

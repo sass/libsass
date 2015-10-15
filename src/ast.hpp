@@ -560,11 +560,11 @@ namespace Sass {
   // so far we only know requested name
   class Import_Stub : public Statement {
     ADD_PROPERTY(std::string, file_name)
-    ADD_PROPERTY(std::string, import_path)
+    ADD_PROPERTY(std::string, load_path)
     ADD_PROPERTY(std::string, abs_path)
   public:
     Import_Stub(ParserState pstate, std::string f, std::string p, std::string abs_path)
-    : Statement(pstate), file_name_(f), import_path_(p), abs_path_(abs_path)
+    : Statement(pstate), file_name_(f), load_path_(p), abs_path_(abs_path)
     { statement_type(IMPORT_STUB); }
     ATTACH_OPERATIONS()
   };
