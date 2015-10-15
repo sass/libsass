@@ -501,7 +501,7 @@ namespace Sass {
     return p;
   }
 
-  Arguments* Parser::parse_arguments(bool has_url)
+  Arguments* Parser::parse_arguments()
   {
     std::string name(lexed);
     Position position = after_token;
@@ -509,7 +509,7 @@ namespace Sass {
     if (lex_css< exactly<'('> >()) {
       // if there's anything there at all
       if (!peek_css< exactly<')'> >()) {
-        do (*args) << parse_argument(has_url);
+        do (*args) << parse_argument();
         while (lex_css< exactly<','> >());
       }
       if (!lex_css< exactly<')'> >()) error("expected a variable name (e.g. $x) or ')' for the parameter list for " + name, position);
@@ -517,7 +517,7 @@ namespace Sass {
     return args;
   }
 
-  Argument* Parser::parse_argument(bool has_url)
+  Argument* Parser::parse_argument()
   {
     if (peek_css< sequence < exactly< hash_lbrace >, exactly< rbrace > > >()) {
       position += 2;
@@ -525,12 +525,7 @@ namespace Sass {
     }
 
     Argument* arg;
-    // some urls can look like line comments (parse literally - chunk would not work)
-    if (has_url && lex< sequence < uri_value, lookahead < loosely<')'> > > >(false)) {
-      String* the_url = parse_interpolated_chunk(lexed);
-      arg = SASS_MEMORY_NEW(ctx.mem, Argument, the_url->pstate(), the_url);
-    }
-    else if (peek_css< sequence < variable, optional_css_comments, exactly<':'> > >()) {
+    if (peek_css< sequence < variable, optional_css_comments, exactly<':'> > >()) {
       lex_css< variable >();
       std::string name(Util::normalize_underscores(lexed));
       ParserState p = pstate;
@@ -1410,6 +1405,9 @@ namespace Sass {
       }
       return string;
     }
+    else if (peek< sequence< uri_prefix, W, real_uri_value > >()) {
+      return parse_url_function_string();
+    }
     else if (peek< re_functional >()) {
       return parse_function_call();
     }
@@ -1790,14 +1788,39 @@ namespace Sass {
     return SASS_MEMORY_NEW(ctx.mem, Function_Call, call_pos, name, args);
   }
 
+  String* Parser::parse_url_function_string()
+  {
+    const char* p = position;
+
+    lex< uri_prefix >();
+    std::string prefix = lexed;
+
+    lex< real_uri_value >(false);
+    std::string uri = lexed;
+
+    if (peek< exactly< hash_lbrace > >()) {
+      const char* pp = position;
+      // TODO: error checking for unclosed interpolants
+      while (peek< exactly< hash_lbrace > >(pp)) {
+        pp = sequence< interpolant, real_uri_value >(pp);
+      }
+      position = peek< real_uri_suffix >(pp);
+      return parse_interpolated_chunk(Token(p, position));
+    } else {
+      lex< real_uri_suffix >();
+      std::string res = prefix + Util::rtrim(uri) + lexed.to_string();
+      return SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, res);
+    }
+
+  }
+
   Function_Call* Parser::parse_function_call()
   {
     lex< identifier >();
     std::string name(lexed);
 
     ParserState call_pos = pstate;
-    bool expect_url = name == "url" || name == "url-prefix";
-    Arguments* args = parse_arguments(expect_url);
+    Arguments* args = parse_arguments();
     return SASS_MEMORY_NEW(ctx.mem, Function_Call, call_pos, name, args);
   }
 
@@ -1935,8 +1958,8 @@ namespace Sass {
   List* Parser::parse_media_queries()
   {
     List* media_queries = SASS_MEMORY_NEW(ctx.mem, List, pstate, 0, SASS_COMMA);
-    if (!peek< exactly<'{'> >()) (*media_queries) << parse_media_query();
-    while (lex< exactly<','> >()) (*media_queries) << parse_media_query();
+    if (!peek_css < exactly <'{'> >()) (*media_queries) << parse_media_query();
+    while (lex_css < exactly <','> >()) (*media_queries) << parse_media_query();
     return media_queries;
   }
 
@@ -1945,14 +1968,16 @@ namespace Sass {
   {
     Media_Query* media_query = SASS_MEMORY_NEW(ctx.mem, Media_Query, pstate);
 
-    if (lex< exactly< not_kwd > >()) media_query->is_negated(true);
-    else if (lex< exactly< only_kwd > >()) media_query->is_restricted(true);
+    lex < css_comments >(false);
+    if (lex < word < not_kwd > >()) media_query->is_negated(true);
+    else if (lex < word < only_kwd > >()) media_query->is_restricted(true);
 
-    if (lex < identifier_schema >()) media_query->media_type(parse_identifier_schema());
-    else if (lex< identifier >())    media_query->media_type(parse_interpolated_chunk(lexed));
+    lex < css_comments >(false);
+    if (lex < identifier_schema >())  media_query->media_type(parse_identifier_schema());
+    else if (lex < identifier >())    media_query->media_type(parse_interpolated_chunk(lexed));
     else                             (*media_query) << parse_media_expression();
 
-    while (lex< exactly< and_kwd > >()) (*media_query) << parse_media_expression();
+    while (lex_css < word < and_kwd > >()) (*media_query) << parse_media_expression();
     if (lex < identifier_schema >()) {
       String_Schema* schema = SASS_MEMORY_NEW(ctx.mem, String_Schema, pstate);
       *schema << media_query->media_type();
@@ -1960,7 +1985,7 @@ namespace Sass {
       *schema << parse_identifier_schema();
       media_query->media_type(schema);
     }
-    while (lex< exactly< and_kwd > >()) (*media_query) << parse_media_expression();
+    while (lex_css < word < and_kwd > >()) (*media_query) << parse_media_expression();
     return media_query;
   }
 
@@ -1970,11 +1995,11 @@ namespace Sass {
       String* ss = parse_identifier_schema();
       return SASS_MEMORY_NEW(ctx.mem, Media_Query_Expression, pstate, ss, 0, true);
     }
-    if (!lex< exactly<'('> >()) {
+    if (!lex_css< exactly<'('> >()) {
       error("media query expression must begin with '('", pstate);
     }
     Expression* feature = 0;
-    if (peek< exactly<')'> >()) {
+    if (peek_css< exactly<')'> >()) {
       error("media feature required in media query expression", pstate);
     }
     feature = parse_expression();
