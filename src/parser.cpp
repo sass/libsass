@@ -225,7 +225,8 @@ namespace Sass {
       // if it is a file(s), we should process them
       if (!imp->files().empty()) {
         for (size_t i = 0, S = imp->files().size(); i < S; ++i) {
-          (*block) << SASS_MEMORY_NEW(ctx.mem, Import_Stub, pstate, imp->files()[i], imp->imports()[i], "abs");
+          std::string abspath(Sass::File::make_absolute_path(imp->files()[i], Sass::File::get_cwd()));
+          (*block) << SASS_MEMORY_NEW(ctx.mem, Import_Stub, pstate, imp->files()[i], imp->imports()[i], abspath);
         }
       }
     }

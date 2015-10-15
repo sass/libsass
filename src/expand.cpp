@@ -317,20 +317,22 @@ namespace Sass {
 
   Statement* Expand::operator()(Import_Stub* i)
   {
-    Block* block = SASS_MEMORY_NEW(ctx.mem, Block, i->pstate());
-    Imported* imported = SASS_MEMORY_NEW(ctx.mem, Imported, i, block);
-    // *block_stack.back() << imported;
-    // block_stack.push_back(block);
-    // ParserState pstate(i->pstate());
-    // import_stack.push_back(imported);
+    // we don't seem to need that actually afterall
+    Sass_Import_Entry import = sass_make_import(
+      i->import_path().c_str(),
+      i->abs_path().c_str(),
+      0, 0
+    );
+    ctx.import_stack.push_back(import);
     append_block(ctx.style_sheets[i->file_name()]);
-    // import_stack.pop_back();
-    // block_stack.pop_back();
+    sass_delete_import(ctx.import_stack.back());
+    ctx.import_stack.pop_back();
     return 0;
   }
 
   Statement* Expand::operator()(Imported* i)
   {
+    std::cerr << "not needed anyways??\n";
     return i->block()->perform(this);
   }
 

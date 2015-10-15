@@ -412,7 +412,7 @@ extern "C" {
 
     // simply pass the error message back to the caller for now
     catch (Error_Invalid& e) { return sass_make_error(e.message.c_str()); }
-    catch (std::bad_alloc& ba) { return sass_make_error("memory exhausted"); }
+    catch (std::bad_alloc&) { return sass_make_error("memory exhausted"); }
     catch (std::exception& e) { return sass_make_error(e.what()); }
     catch (std::string& e) { return sass_make_error(e.c_str()); }
     catch (const char* e) { return sass_make_error(e); }
