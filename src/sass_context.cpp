@@ -1,4 +1,4 @@
-	#include <cstring>
+#include <cstring>
 #include <stdexcept>
 #include <sstream>
 #include <string>
@@ -9,6 +9,7 @@
 #include "json.hpp"
 #include "util.hpp"
 #include "context.hpp"
+#include "sass_context.hpp"
 #include "ast_fwd_decl.hpp"
 #include "error_handling.hpp"
 
@@ -17,161 +18,15 @@
 extern "C" {
   using namespace Sass;
 
-  // Input behaviours
-  enum Sass_Input_Style {
-    SASS_CONTEXT_NULL,
-    SASS_CONTEXT_FILE,
-    SASS_CONTEXT_DATA,
-    SASS_CONTEXT_FOLDER
-  };
-
-  // simple linked list
-  struct string_list {
-    string_list* next;
-    char* string;
-  };
-
-  // sass config options structure
-  struct Sass_Options {
-
-    // Precision for fractional numbers
-    int precision;
-
-    // Output style for the generated css code
-    // A value from above SASS_STYLE_* constants
-    enum Sass_Output_Style output_style;
-
-    // Emit comments in the generated CSS indicating
-    // the corresponding source line.
-    bool source_comments;
-
-    // embed sourceMappingUrl as data uri
-    bool source_map_embed;
-
-    // embed include contents in maps
-    bool source_map_contents;
-
-    // Disable sourceMappingUrl in css output
-    bool omit_source_map_url;
-
-    // Treat source_string as sass (as opposed to scss)
-    bool is_indented_syntax_src;
-
-    // The input path is used for source map
-    // generation. It can be used to define
-    // something with string compilation or to
-    // overload the input file path. It is
-    // set to "stdin" for data contexts and
-    // to the input file on file contexts.
-    char* input_path;
-
-    // The output path is used for source map
-    // generation. Libsass will not write to
-    // this file, it is just used to create
-    // information in source-maps etc.
-    char* output_path;
-
-    // String to be used for indentation
-    const char* indent;
-    // String to be used to for line feeds
-    const char* linefeed;
-
-    // Colon-separated list of paths
-    // Semicolon-separated on Windows
-    // Maybe use array interface instead?
-    char* include_path;
-    char* plugin_path;
-
-    // Include paths (linked string list)
-    struct string_list* include_paths;
-    // Plugin paths (linked string list)
-    struct string_list* plugin_paths;
-
-    // Path to source map file
-    // Enables source map generation
-    // Used to create sourceMappingUrl
-    char* source_map_file;
-
-    // Directly inserted in source maps
-    char* source_map_root;
-
-    // Custom functions that can be called from sccs code
-    Sass_Function_List c_functions;
-
-    // List of custom importers
-    Sass_Importer_List c_importers;
-
-    // List of custom headers
-    Sass_Importer_List c_headers;
-
-  };
-
-  // base for all contexts
-  struct Sass_Context : Sass_Options
-  {
-
-    // store context type info
-    enum Sass_Input_Style type;
-
-    // generated output data
-    char* output_string;
-
-    // generated source map json
-    char* source_map_string;
-
-    // error status
-    int error_status;
-    char* error_json;
-    char* error_text;
-    char* error_message;
-    // error position
-    char* error_file;
-    size_t error_line;
-    size_t error_column;
-    const char* error_src;
-
-    // report imported files
-    char** included_files;
-
-  };
-
-  // struct for file compilation
-  struct Sass_File_Context : Sass_Context {
-
-    // no additional fields required
-    // input_path is already on options
-
-  };
-
-  // struct for data compilation
-  struct Sass_Data_Context : Sass_Context {
-
-    // provided source string
-    char* source_string;
-
-  };
-
-  // link c and cpp context
-  struct Sass_Compiler {
-    // progress status
-    Sass_Compiler_State state;
-    // original c context
-    Sass_Context* c_ctx;
-    // Sass::Context
-    Context* cpp_ctx;
-    // Sass::Block
-    Block* root;
-  };
-
   static void copy_options(struct Sass_Options* to, struct Sass_Options* from) { *to = *from; }
 
   #define IMPLEMENT_SASS_OPTION_ACCESSOR(type, option) \
     type ADDCALL sass_option_get_##option (struct Sass_Options* options) { return options->option; } \
     void ADDCALL sass_option_set_##option (struct Sass_Options* options, type option) { options->option = option; }
   #define IMPLEMENT_SASS_OPTION_STRING_ACCESSOR(type, option) \
-    type ADDCALL sass_option_get_##option (struct Sass_Options* options) { return options->option; } \
+    type ADDCALL sass_option_get_##option (struct Sass_Options* options) { return safe_str(options->option); } \
     void ADDCALL sass_option_set_##option (struct Sass_Options* options, type option) \
-    { free(options->option); options->option = option ? sass_strdup(option) : 0; }
+    { free(options->option); options->option = sass_strdup(option ? option : ""); }
 
   #define IMPLEMENT_SASS_CONTEXT_GETTER(type, option) \
     type ADDCALL sass_context_get_##option (struct Sass_Context* ctx) { return ctx->option; }
@@ -186,7 +41,7 @@ extern "C" {
     catch (Error_Invalid& e) {
       std::stringstream msg_stream;
       std::string cwd(Sass::File::get_cwd());
-      std::string rel_path(Sass::File::resolve_relative_path(e.pstate.path, cwd, cwd));
+      std::string rel_path(Sass::File::abs2rel(e.pstate.path, cwd, cwd));
 
       std::string msg_prefix("Error: ");
       bool got_newline = false;
@@ -322,18 +177,9 @@ extern "C" {
   }
 
   // generic compilation function (not exported, use file/data compile instead)
-  static Sass_Compiler* sass_prepare_context (Sass_Context* c_ctx, Context::Data cpp_opt) throw()
+  static Sass_Compiler* sass_prepare_context (Sass_Context* c_ctx, Context* cpp_ctx) throw()
   {
     try {
-
-      // get input/output path from options
-      std::string input_path = safe_str(c_ctx->input_path);
-      std::string output_path = safe_str(c_ctx->output_path);
-      // maybe we can extract an output path from input path
-      if (output_path == "" && input_path != "") {
-        int lastindex = static_cast<int>(input_path.find_last_of("."));
-        output_path = (lastindex > -1 ? input_path.substr(0, lastindex) : input_path) + ".css";
-      }
 
       // convert include path linked list to static array
       struct string_list* inc = c_ctx->include_paths;
@@ -365,31 +211,6 @@ extern "C" {
         imp = imp->next;
       }
 
-      // transfer the options to c++
-      cpp_opt.c_compiler(0)
-             .c_options(c_ctx)
-             .input_path(input_path)
-             .output_path(output_path)
-             .output_style((Output_Style) c_ctx->output_style)
-             .is_indented_syntax_src(c_ctx->is_indented_syntax_src)
-             .source_comments(c_ctx->source_comments)
-             .source_map_file(safe_str(c_ctx->source_map_file))
-             .source_map_root(safe_str(c_ctx->source_map_root))
-             .source_map_embed(c_ctx->source_map_embed)
-             .source_map_contents(c_ctx->source_map_contents)
-             .omit_source_map_url(c_ctx->omit_source_map_url)
-             .include_paths_c_str(c_ctx->include_path)
-             .plugin_paths_c_str(c_ctx->plugin_path)
-             // .include_paths_array(include_paths)
-             // .plugin_paths_array(plugin_paths)
-             .include_paths(std::vector<std::string>())
-             .plugin_paths(std::vector<std::string>())
-             .precision(c_ctx->precision)
-             .linefeed(c_ctx->linefeed)
-             .indent(c_ctx->indent);
-
-      // create new c++ Context
-      Context* cpp_ctx = new Context(cpp_opt);
       // free intermediate data
       free(include_paths);
       free(plugin_paths);
@@ -476,15 +297,12 @@ extern "C" {
 
       // maybe skip some entries of included files
       // we do not include stdin for data contexts
-      bool skip = false;
+      bool skip = c_ctx->type == SASS_CONTEXT_DATA;
 
-      // dispatch to the correct render function
-      if (c_ctx->type == SASS_CONTEXT_FILE) {
-        root = cpp_ctx->parse_file();
-      } else if (c_ctx->type == SASS_CONTEXT_DATA) {
-        root = cpp_ctx->parse_string();
-        skip = true; // skip first entry of includes
-      }
+      // dispatch parse call
+      root = cpp_ctx->parse();
+      // abort on errors
+      if (!root) return 0;
 
       // skip all prefixed files? (ToDo: check srcmap)
       // IMO source-maps should point to headers already
@@ -492,10 +310,9 @@ extern "C" {
       // remove completely once this is tested
       size_t headers = cpp_ctx->head_imports;
 
-      // copy the included files on to the context (dont forget to free)
-      if (root)
-        if (copy_strings(cpp_ctx->get_included_files(skip, headers), &c_ctx->included_files) == NULL)
-          throw(std::bad_alloc());
+      // copy the included files on to the context (dont forget to free later)
+      if (copy_strings(cpp_ctx->get_included_files(skip, headers), &c_ctx->included_files) == NULL)
+        throw(std::bad_alloc());
 
       // return parsed block
       return root;
@@ -510,11 +327,11 @@ extern "C" {
   }
 
   // generic compilation function (not exported, use file/data compile instead)
-  static int sass_compile_context (Sass_Context* c_ctx, Context::Data cpp_opt)
+  static int sass_compile_context (Sass_Context* c_ctx, Context* cpp_ctx)
   {
 
     // prepare sass compiler with context and options
-    Sass_Compiler* compiler = sass_prepare_context(c_ctx, cpp_opt);
+    Sass_Compiler* compiler = sass_prepare_context(c_ctx, cpp_ctx);
 
     try {
       // call each compiler step
@@ -560,7 +377,7 @@ extern "C" {
     return ctx;
   }
 
-  Sass_Data_Context* ADDCALL sass_make_data_context(char* source_string)
+  Sass_Data_Context* ADDCALL sass_make_data_context(char* source_string, char* srcmap_string)
   {
     struct Sass_Data_Context* ctx = (struct Sass_Data_Context*) calloc(1, sizeof(struct Sass_Data_Context));
     if (ctx == 0) { std::cerr << "Error allocating memory for data context" << std::endl; return 0; }
@@ -570,60 +387,53 @@ extern "C" {
       if (source_string == 0) { throw(std::runtime_error("Data context created without a source string")); }
       if (*source_string == 0) { throw(std::runtime_error("Data context created with empty source string")); }
       ctx->source_string = source_string;
+      ctx->srcmap_string = srcmap_string;
     } catch (...) {
       handle_errors(ctx);
     }
     return ctx;
   }
 
-  struct Sass_Compiler* ADDCALL sass_make_file_compiler (struct Sass_File_Context* c_ctx)
+  struct Sass_Compiler* ADDCALL sass_make_data_compiler (struct Sass_Data_Context* data_ctx)
   {
-    if (c_ctx == 0) return 0;
-    Context::Data cpp_opt = Context::Data();
-    cpp_opt.entry_point(c_ctx->input_path);
-    return sass_prepare_context(c_ctx, cpp_opt);
+    if (data_ctx == 0) return 0;
+    Context* cpp_ctx = new Data_Context(data_ctx);
+    return sass_prepare_context(data_ctx, cpp_ctx);
   }
 
-  struct Sass_Compiler* ADDCALL sass_make_data_compiler (struct Sass_Data_Context* c_ctx)
+  struct Sass_Compiler* ADDCALL sass_make_file_compiler (struct Sass_File_Context* file_ctx)
   {
-    if (c_ctx == 0) return 0;
-    Context::Data cpp_opt = Context::Data();
-    cpp_opt.source_c_str(c_ctx->source_string);
-    c_ctx->source_string = 0; // passed away
-    return sass_prepare_context(c_ctx, cpp_opt);
+    if (file_ctx == 0) return 0;
+    Context* cpp_ctx = new File_Context(file_ctx);
+    return sass_prepare_context(file_ctx, cpp_ctx);
   }
 
   int ADDCALL sass_compile_data_context(Sass_Data_Context* data_ctx)
   {
     if (data_ctx == 0) return 1;
-    Sass_Context* c_ctx = data_ctx;
-    if (c_ctx->error_status)
-      return c_ctx->error_status;
-    Context::Data cpp_opt = Context::Data();
+    if (data_ctx->error_status)
+      return data_ctx->error_status;
     try {
       if (data_ctx->source_string == 0) { throw(std::runtime_error("Data context has no source string")); }
       if (*data_ctx->source_string == 0) { throw(std::runtime_error("Data context has empty source string")); }
-      cpp_opt.source_c_str(data_ctx->source_string);
-      data_ctx->source_string = 0; // passed away
     }
-    catch (...) { return handle_errors(c_ctx) | 1; }
-    return sass_compile_context(c_ctx, cpp_opt);
+    catch (...) { return handle_errors(data_ctx) | 1; }
+    Context* cpp_ctx = new Data_Context(data_ctx);
+    return sass_compile_context(data_ctx, cpp_ctx);
   }
 
   int ADDCALL sass_compile_file_context(Sass_File_Context* file_ctx)
   {
     if (file_ctx == 0) return 1;
-    Sass_Context* c_ctx = file_ctx;
-    if (c_ctx->error_status)
-      return c_ctx->error_status;
-    Context::Data cpp_opt = Context::Data();
+    if (file_ctx->error_status)
+      return file_ctx->error_status;
     try {
       if (file_ctx->input_path == 0) { throw(std::runtime_error("File context has no input path")); }
       if (*file_ctx->input_path == 0) { throw(std::runtime_error("File context has empty input path")); }
-      cpp_opt.entry_point(file_ctx->input_path);
     }
-    catch (...) { return handle_errors(c_ctx) | 1; }
-    return sass_compile_context(c_ctx, cpp_opt);
+    catch (...) { return handle_errors(file_ctx) | 1; }
+    Context* cpp_ctx = new File_Context(file_ctx);
+    return sass_compile_context(file_ctx, cpp_ctx);
   }
 
   int ADDCALL sass_compiler_parse(struct Sass_Compiler* compiler)
@@ -655,11 +465,11 @@ extern "C" {
     Context* cpp_ctx = compiler->cpp_ctx;
     Block* root = compiler->root;
     // compile the parsed root block
-    try { compiler->c_ctx->output_string = cpp_ctx->compile_block(root); }
+    try { compiler->c_ctx->output_string = cpp_ctx->render(root); }
     // pass catched errors to generic error handler
     catch (...) { return handle_errors(compiler->c_ctx) | 1; }
     // generate source map json and store on context
-    compiler->c_ctx->source_map_string = cpp_ctx->generate_source_map();
+    compiler->c_ctx->source_map_string = cpp_ctx->render_srcmap();
     // success
     return 0;
   }
@@ -788,6 +598,7 @@ extern "C" {
     // clean the source string if it was not passed
     // we reset this member once we start parsing
     if (ctx->source_string) free(ctx->source_string);
+    if (ctx->srcmap_string) free(ctx->srcmap_string);
     // clear the context and free it
     sass_clear_context(ctx); free(ctx);
   }

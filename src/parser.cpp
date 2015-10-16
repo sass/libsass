@@ -76,19 +76,10 @@ namespace Sass {
     Block* root = SASS_MEMORY_NEW(ctx.mem, Block, pstate, 0, true);
     read_bom();
 
-    if (ctx.includes.size() == 1) {
-      is_root = true;
-      Import* pre = SASS_MEMORY_NEW(ctx.mem, Import, pstate);
-      std::string load_path(ctx.includes[0].load_path);
-      load_path = unquote(load_path);
-      ctx.do_import(load_path, path, pstate, pre, ctx.c_headers, false);
-      ctx.head_imports = ctx.includes.size() - 1;
-      if (!pre->urls().empty()) (*root) << pre;
-      if (!pre->files().empty()) {
-        for (size_t i = 0, S = pre->files().size(); i < S; ++i) {
-          (*root) << SASS_MEMORY_NEW(ctx.mem, Import_Stub, pstate, pre->files()[i], pre->imports()[i], load_path);
-        }
-      }
+    // custom headers
+    if (ctx.resources.size() == 1) {
+    is_root = true;
+      ctx.apply_custom_headers(root, path, pstate);
     }
 
     block_stack.push_back(root);
@@ -223,12 +214,9 @@ namespace Sass {
       Import* imp = parse_import();
       // if it is a url, we only add the statement
       if (!imp->urls().empty()) (*block) << imp;
-      // if it is a file(s), we should process them
-      if (!imp->files().empty()) {
-        for (size_t i = 0, S = imp->files().size(); i < S; ++i) {
-          std::string abspath(Sass::File::make_absolute_path(imp->files()[i], Sass::File::get_cwd()));
-          (*block) << SASS_MEMORY_NEW(ctx.mem, Import_Stub, pstate, imp->files()[i], imp->imports()[i], abspath);
-        }
+      // process all resources now (add Import_Stub nodes)
+      for (size_t i = 0, S = imp->incs().size(); i < S; ++i) {
+        (*block) << SASS_MEMORY_NEW(ctx.mem, Import_Stub, pstate, imp->incs()[i]);
       }
     }
 
@@ -299,7 +287,7 @@ namespace Sass {
     do {
       while (lex< block_comment >());
       if (lex< quoted_string >()) {
-        if (!ctx.do_import(unquote(std::string(lexed)), path, pstate, imp, ctx.c_importers, true))
+        if (!ctx.call_importers(unquote(std::string(lexed)), path, pstate, imp))
         {
           // push single file import
           // import_single_file(imp, lexed);
@@ -343,7 +331,7 @@ namespace Sass {
       if (location.second) {
         imp->urls().push_back(location.second);
       } else {
-        ctx.import_single_file(imp, location.first, path);
+        ctx.import_url(imp, location.first, path);
       }
     }
 

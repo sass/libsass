@@ -32,7 +32,7 @@ enum Sass_Compiler_State {
 ADDAPI struct Sass_Options* ADDCALL sass_make_options (void);
 // Create and initialize a specific context
 ADDAPI struct Sass_File_Context* ADDCALL sass_make_file_context (const char* input_path);
-ADDAPI struct Sass_Data_Context* ADDCALL sass_make_data_context (char* source_string);
+ADDAPI struct Sass_Data_Context* ADDCALL sass_make_data_context (char* source_string, char* srcmap_string);
 
 // Call the compilation step for the specific context
 ADDAPI int ADDCALL sass_compile_file_context (struct Sass_File_Context* ctx);
