@@ -377,7 +377,7 @@ extern "C" {
     return ctx;
   }
 
-  Sass_Data_Context* ADDCALL sass_make_data_context(char* source_string, char* srcmap_string)
+  Sass_Data_Context* ADDCALL sass_make_data_context(char* source_string)
   {
     struct Sass_Data_Context* ctx = (struct Sass_Data_Context*) calloc(1, sizeof(struct Sass_Data_Context));
     if (ctx == 0) { std::cerr << "Error allocating memory for data context" << std::endl; return 0; }
@@ -387,7 +387,7 @@ extern "C" {
       if (source_string == 0) { throw(std::runtime_error("Data context created without a source string")); }
       if (*source_string == 0) { throw(std::runtime_error("Data context created with empty source string")); }
       ctx->source_string = source_string;
-      ctx->srcmap_string = srcmap_string;
+      // ctx->srcmap_string = srcmap_string;
     } catch (...) {
       handle_errors(ctx);
     }
