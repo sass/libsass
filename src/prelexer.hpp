@@ -354,6 +354,14 @@ namespace Sass {
     // const char* folders(const char* src);
 
 
+    const char* NMSTART(const char* src);
+    const char* NMCHAR(const char* src);
+    const char* UNIT(const char* src);
+    const char* NNUMBER(const char* src);
+    const char* UNITLESS_NUMBER(const char* src);
+    const char* HEXCOLOR(const char* src);
+
+
     const char* static_string(const char* src);
     const char* static_component(const char* src);
     const char* static_property(const char* src);

@@ -434,7 +434,7 @@ namespace Sass {
       return one_plus< alternatives< alnum,
                                      exactly<'-'>,
                                      exactly<'_'>,
-                                     exactly<'\\'> > >(src);
+                                     ESCAPE > >(src);
     }
 
     const char* kwd_warn(const char* src) {
@@ -522,7 +522,12 @@ namespace Sass {
     }
     // Match CSS id names.
     const char* id_name(const char* src) {
-      return sequence<exactly<'#'>, name>(src);
+      return sequence<
+        exactly<'#'>,
+        zero_plus< exactly<'-'> >,
+        NMSTART,
+        zero_plus< NMCHAR >
+      >(src);
     }
     // Match CSS class names.
     const char* class_name(const char* src) {
@@ -571,6 +576,10 @@ namespace Sass {
     }
     const char* ampersand(const char* src) {
       return exactly<'&'>(src);
+    }
+
+    const char* HEXCOLOR(const char* src) {
+      return sequence< exactly<'#'>, one_plus<xdigit> >(src);
     }
 
     /* not used anymore - remove?
@@ -953,7 +962,7 @@ namespace Sass {
           exactly<'\\'>,
           alternatives<
             NONASCII,
-            escapable_character
+            escape_character
           >
         >
       >(src);
@@ -1012,16 +1021,74 @@ namespace Sass {
       >(src);
     }
 
+    const char* NMSTART(const char* src) {
+      return alternatives<
+        alternatives< alpha, exactly<'_'> >,
+        NONASCII,
+        ESCAPE
+      >(src);
+    }
+
+    const char* NMCHAR(const char* src) {
+      return alternatives<
+        alternatives< alnum, exactly<'_'>, exactly<'-'> >,
+        NONASCII,
+        ESCAPE
+      >(src);
+    }
+
+    const char* UNIT(const char* src) {
+      return alternatives<
+        // This should be removed in favour of the following
+        // commented section once we bump sass-spec to use
+        // Sass >= 3.4.16.
+        identifier,
+        // sequence<
+        //   optional< exactly<'-'> >,
+        //   NMSTART,
+        //   zero_plus< alternatives<
+        //     alternatives< alnum, exactly<'_'> >,
+        //     NONASCII,
+        //     ESCAPE,
+        //     sequence< exactly<'-'>, negate< number > >
+        //   > >
+        // >,
+        exactly<'%'>
+      >(src);
+    }
+
+    const char* UNITLESS_NUMBER(const char* src) {
+      return sequence<
+        alternatives<
+          sequence<
+            optional< digits >,
+            exactly<'.'>,
+            digits
+          >,
+          digits
+        >,
+        optional< sequence<
+          alternatives< exactly<'E'>, exactly<'e'> >,
+          optional< sign >,
+          digits
+        > >
+      >(src);
+    }
+
+    const char* NNUMBER(const char* src) {
+      return sequence<
+        UNITLESS_NUMBER,
+        optional< UNIT >
+      >(src);
+    }
+
     const char* static_component(const char* src) {
       return alternatives< identifier,
                            static_string,
-                           percentage,
                            hex,
-                           exactly<'|'>,
-                           // exactly<'+'>,
-                           sequence < number, identifier >,
-                           number,
-                           sequence< exactly<'!'>, word<important_kwd> >
+                           sequence< optional< sign >, NNUMBER >,
+                           sequence< exactly<'!'>, word<important_kwd> >,
+                           exactly<'|'>
                           >(src);
     }
 
@@ -1064,24 +1131,37 @@ namespace Sass {
     }
 
     const char* static_value(const char* src) {
-      return sequence< sequence<
-                         static_component,
-                         zero_plus< identifier >
-                       >,
-                       zero_plus < sequence<
-                                     alternatives<
-                                       sequence< optional_spaces, alternatives<
-                                         exactly < '/' >,
-                                         exactly < ',' >,
-                                         exactly < ' ' >
-                                       >, optional_spaces >,
-                                       spaces
-                                     >,
-                                     static_component
-                       > >,
-                       zero_plus < spaces >,
-                       alternatives< exactly<';'>, exactly<'}'> >
-                      >(src);
+      return sequence<
+              static_component,
+              zero_plus<
+                sequence<
+                  non_greedy<
+                    space,
+                    alternatives<
+                      exactly<'/'>,
+                      exactly<','>,
+                      sequence<
+                        space,
+                        negate<
+                          alternatives<
+                            exactly<'/'>,
+                            exactly<','>
+                          >
+                        >
+                      >
+                    >
+                  >,
+                  alternatives<
+                    exactly<'/'>,
+                    exactly<','>,
+                    space
+                  >,
+                  optional_spaces,
+                  static_component
+                >
+              >,
+              alternatives< exactly<';'>, exactly<'}'> >
+            >(src);
     }
 
     const char* parenthese_scope(const char* src) {

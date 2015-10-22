@@ -11,6 +11,8 @@
 #include "color_maps.hpp"
 #include "sass/functions.h"
 #include "error_handling.hpp"
+#include "debug.hpp"
+#include "debugger.hpp"
 
 #include <typeinfo>
 #include <tuple>
@@ -925,13 +927,26 @@ namespace Sass {
     if (peek_css< exactly<';'> >()) error("style declaration must contain a value", pstate);
     if (peek_css< exactly<'{'> >()) is_indented = false; // don't indent if value is empty
     if (peek_css< static_value >()) {
+      // DEBUG_PRINTLN(ALL, "static_value");
       return SASS_MEMORY_NEW(ctx.mem, Declaration, prop->pstate(), prop, parse_static_value()/*, lex<kwd_important>()*/);
+    }
+    else if (lex_css< id_name >()) {
+      String_Constant* value = SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, lexed);
+      return SASS_MEMORY_NEW(ctx.mem, Declaration, prop->pstate(), prop, value/*, lex<kwd_important>()*/);
+    }
+    else if (lex_css< HEXCOLOR >()) {
+      String_Constant* value = SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, lexed);
+      return SASS_MEMORY_NEW(ctx.mem, Declaration, prop->pstate(), prop, value/*, lex<kwd_important>()*/);
     }
     else {
       Expression* value;
       Lookahead lookahead = lookahead_for_value(position);
+      // DEBUG_PRINTLN(ALL, "lookahead");
       if (lookahead.found) {
+      // DEBUG_PRINTLN(ALL, "lookahead.has_interpolants >> " << lookahead.has_interpolants);
+      // DEBUG_PRINTLN(ALL, "++" << lookahead.found << "++");
         if (lookahead.has_interpolants) {
+
           value = parse_value_schema(lookahead.found);
         } else {
           value = parse_list();
@@ -2254,6 +2269,8 @@ namespace Sass {
         >
       >(p)
     ) {
+      // DEBUG_PRINTLN(ALL, "++" << p);
+      // DEBUG_PRINTLN(ALL, "**" << q);
       if (p == q) return rv;
       while (p < q) {
         // did we have interpolations?
