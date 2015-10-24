@@ -6,14 +6,23 @@
 #include "constants.hpp"
 #include "utf8/checked.h"
 
+#include <cmath>
 #include <stdint.h>
 
 namespace Sass {
 
-  #define out_of_memory() do {                    \
-      fprintf(stderr, "Out of memory.\n");    \
-      exit(EXIT_FAILURE);                     \
+  #define out_of_memory() do {            \
+      std::cerr << "Out of memory.\n";    \
+      exit(EXIT_FAILURE);                 \
     } while (0)
+
+  double round(double val)
+  {
+    using namespace std;
+    // sometimes I saw numbers like 25.5 rounded to 25
+    // not sure why converting to a float solves this
+    return ::round(float(val));
+  }
 
   /* Sadly, sass_strdup is not portable. */
   char *sass_strdup(const char *str)

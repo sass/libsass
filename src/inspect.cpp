@@ -459,8 +459,8 @@ namespace Sass {
   void Inspect::operator()(Number* n)
   {
     // use values to_string facility
-    bool compressed = ctx->output_style == COMPRESSED;
-    std::string res = n->to_string(compressed, (int)ctx->precision);
+    bool compressed = ctx->output_style == SASS_STYLE_COMPRESSED;
+    std::string res(n->to_string(compressed, (int)ctx->precision));
     // output the final token
     append_token(res, n);
   }
@@ -468,8 +468,8 @@ namespace Sass {
   void Inspect::operator()(Color* c)
   {
     // use values to_string facility
-    bool compressed = ctx->output_style == COMPRESSED;
-	std::string res = c->to_string(compressed, (int)ctx->precision);
+    bool compressed = ctx->output_style == SASS_STYLE_COMPRESSED;
+    std::string res(c->to_string(compressed, (int)ctx->precision));
     // output the final token
     append_token(res, c);
   }
@@ -477,8 +477,8 @@ namespace Sass {
   void Inspect::operator()(Boolean* b)
   {
     // use values to_string facility
-    bool compressed = ctx->output_style == COMPRESSED;
-	std::string res = b->to_string(compressed, (int)ctx->precision);
+    bool compressed = ctx->output_style == SASS_STYLE_COMPRESSED;
+    std::string res(b->to_string(compressed, (int)ctx->precision));
     // output the final token
     append_token(res, b);
   }
@@ -612,8 +612,8 @@ namespace Sass {
   void Inspect::operator()(Null* n)
   {
     // use values to_string facility
-    bool compressed = ctx->output_style == COMPRESSED;
-    std::string res = n->to_string(compressed, (int)ctx->precision);
+    bool compressed = ctx->output_style == SASS_STYLE_COMPRESSED;
+    std::string res(n->to_string(compressed, (int)ctx->precision));
     // output the final token
     append_token(res, n);
   }
