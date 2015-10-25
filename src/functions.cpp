@@ -384,9 +384,9 @@ namespace Sass {
       else m2 = (l+s)-(l*s);
       double m1 = (l*2.0)-m2;
       // round the results -- consider moving this into the Color constructor
-      double r = (h_to_rgb(m1, m2, h+1.0/3.0) * 255.0);
+      double r = (h_to_rgb(m1, m2, h + 1.0/3.0) * 255.0);
       double g = (h_to_rgb(m1, m2, h) * 255.0);
-      double b = (h_to_rgb(m1, m2, h-1.0/3.0) * 255.0);
+      double b = (h_to_rgb(m1, m2, h - 1.0/3.0) * 255.0);
 
       return SASS_MEMORY_NEW(ctx.mem, Color, pstate, r, g, b, a);
     }
