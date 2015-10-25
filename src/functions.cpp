@@ -311,9 +311,9 @@ namespace Sass {
 
       return SASS_MEMORY_NEW(ctx.mem, Color,
                              pstate,
-                             std::round(w1*color1->r() + w2*color2->r()),
-                             std::round(w1*color1->g() + w2*color2->g()),
-                             std::round(w1*color1->b() + w2*color2->b()),
+                             Sass::round(w1*color1->r() + w2*color2->r(), ctx.precision),
+                             Sass::round(w1*color1->g() + w2*color2->g(), ctx.precision),
+                             Sass::round(w1*color1->b() + w2*color2->b(), ctx.precision),
                              color1->a()*p + color2->a()*(1-p));
     }
 
@@ -854,10 +854,10 @@ namespace Sass {
 
       std::stringstream ss;
       ss << '#' << std::setw(2) << std::setfill('0');
-      ss << std::hex << std::setw(2) << static_cast<unsigned long>(std::floor(a+0.5));
-      ss << std::hex << std::setw(2) << static_cast<unsigned long>(std::floor(r+0.5));
-      ss << std::hex << std::setw(2) << static_cast<unsigned long>(std::floor(g+0.5));
-      ss << std::hex << std::setw(2) << static_cast<unsigned long>(std::floor(b+0.5));
+      ss << std::hex << std::setw(2) << static_cast<unsigned long>(Sass::round(a, ctx.precision));
+      ss << std::hex << std::setw(2) << static_cast<unsigned long>(Sass::round(r, ctx.precision));
+      ss << std::hex << std::setw(2) << static_cast<unsigned long>(Sass::round(g, ctx.precision));
+      ss << std::hex << std::setw(2) << static_cast<unsigned long>(Sass::round(b, ctx.precision));
 
       std::string result(ss.str());
       for (size_t i = 0, L = result.length(); i < L; ++i) {
@@ -1089,7 +1089,7 @@ namespace Sass {
       Number* n = ARG("$number", Number);
       Number* r = SASS_MEMORY_NEW(ctx.mem, Number, *n);
       r->pstate(pstate);
-      r->value(std::floor(r->value() + 0.5));
+      r->value(Sass::round(r->value(), ctx.precision));
       return r;
     }
 
