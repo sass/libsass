@@ -21,8 +21,8 @@ namespace Sass {
     // apply epsilon?
     if (precision) {
       // implement ruby sass round behavior
-      // if (val < 0) val -= std::pow(0.1, precision + 1);
-      // else if (val) val += std::pow(0.1, precision + 1);
+      if (val < 0) val -= std::pow(0.1, precision + 1);
+      else if (val) val += std::pow(0.1, precision + 1);
     }
     // work around some compiler issue
     // cygwin has it not defined in std
