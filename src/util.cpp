@@ -21,7 +21,7 @@ namespace Sass {
     using namespace std;
     // sometimes I saw numbers like 25.5 rounded to 25
     // not sure why converting to a float solves this
-    return ::round(float(val));
+    return ::round(val);
   }
 
   /* Sadly, sass_strdup is not portable. */
