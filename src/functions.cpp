@@ -311,9 +311,9 @@ namespace Sass {
 
       return SASS_MEMORY_NEW(ctx.mem, Color,
                              pstate,
-                             std::round(w1*color1->r() + w2*color2->r()),
-                             std::round(w1*color1->g() + w2*color2->g()),
-                             std::round(w1*color1->b() + w2*color2->b()),
+                             Sass::round(w1*color1->r() + w2*color2->r(), ctx.precision),
+                             Sass::round(w1*color1->g() + w2*color2->g(), ctx.precision),
+                             Sass::round(w1*color1->b() + w2*color2->b(), ctx.precision),
                              color1->a()*p + color2->a()*(1-p));
     }
 
@@ -331,7 +331,7 @@ namespace Sass {
 
       double max = std::max(r, std::max(g, b));
       double min = std::min(r, std::min(g, b));
-      double del = max - min;
+      double delta = max - min;
 
       double h = 0, s = 0, l = (max + min) / 2.0;
 
@@ -339,12 +339,12 @@ namespace Sass {
         h = s = 0; // achromatic
       }
       else {
-        if (l < 0.5) s = del / (max + min);
-        else         s = del / (2.0 - max - min);
+        if (l < 0.5) s = delta / (max + min);
+        else         s = delta / (2.0 - max - min);
 
-        if      (r == max) h = (g - b) / del + (g < b ? 6 : 0);
-        else if (g == max) h = (b - r) / del + 2;
-        else if (b == max) h = (r - g) / del + 4;
+        if      (r == max) h = (g - b) / delta + (g < b ? 6 : 0);
+        else if (g == max) h = (b - r) / delta + 2;
+        else if (b == max) h = (r - g) / delta + 4;
       }
 
       HSL hsl_struct;
@@ -357,8 +357,8 @@ namespace Sass {
 
     // hue to RGB helper function
     double h_to_rgb(double m1, double m2, double h) {
-      if (h < 0) h += 1;
-      if (h > 1) h -= 1;
+      while (h < 0) h += 1;
+      while (h > 1) h -= 1;
       if (h*6.0 < 1) return m1 + (m2 - m1)*h*6;
       if (h*2.0 < 1) return m2;
       if (h*3.0 < 2) return m1 + (m2 - m1) * (2.0/3.0 - h)*6;
@@ -384,9 +384,9 @@ namespace Sass {
       else m2 = (l+s)-(l*s);
       double m1 = (l*2.0)-m2;
       // round the results -- consider moving this into the Color constructor
-      double r = (h_to_rgb(m1, m2, h+1.0/3.0) * 255.0);
+      double r = (h_to_rgb(m1, m2, h + 1.0/3.0) * 255.0);
       double g = (h_to_rgb(m1, m2, h) * 255.0);
-      double b = (h_to_rgb(m1, m2, h-1.0/3.0) * 255.0);
+      double b = (h_to_rgb(m1, m2, h - 1.0/3.0) * 255.0);
 
       return SASS_MEMORY_NEW(ctx.mem, Color, pstate, r, g, b, a);
     }
@@ -854,10 +854,10 @@ namespace Sass {
 
       std::stringstream ss;
       ss << '#' << std::setw(2) << std::setfill('0');
-      ss << std::hex << std::setw(2) << static_cast<unsigned long>(std::floor(a+0.5));
-      ss << std::hex << std::setw(2) << static_cast<unsigned long>(std::floor(r+0.5));
-      ss << std::hex << std::setw(2) << static_cast<unsigned long>(std::floor(g+0.5));
-      ss << std::hex << std::setw(2) << static_cast<unsigned long>(std::floor(b+0.5));
+      ss << std::hex << std::setw(2) << static_cast<unsigned long>(Sass::round(a, ctx.precision));
+      ss << std::hex << std::setw(2) << static_cast<unsigned long>(Sass::round(r, ctx.precision));
+      ss << std::hex << std::setw(2) << static_cast<unsigned long>(Sass::round(g, ctx.precision));
+      ss << std::hex << std::setw(2) << static_cast<unsigned long>(Sass::round(b, ctx.precision));
 
       std::string result(ss.str());
       for (size_t i = 0, L = result.length(); i < L; ++i) {
@@ -1089,7 +1089,7 @@ namespace Sass {
       Number* n = ARG("$number", Number);
       Number* r = SASS_MEMORY_NEW(ctx.mem, Number, *n);
       r->pstate(pstate);
-      r->value(std::floor(r->value() + 0.5));
+      r->value(Sass::round(r->value(), ctx.precision));
       return r;
     }
 

@@ -6,14 +6,29 @@
 #include "constants.hpp"
 #include "utf8/checked.h"
 
+#include <cmath>
 #include <stdint.h>
 
 namespace Sass {
 
-  #define out_of_memory() do {                    \
-      fprintf(stderr, "Out of memory.\n");    \
-      exit(EXIT_FAILURE);                     \
+  #define out_of_memory() do {            \
+      std::cerr << "Out of memory.\n";    \
+      exit(EXIT_FAILURE);                 \
     } while (0)
+
+  double round(double val, size_t precision)
+  {
+    // apply epsilon?
+    if (precision) {
+      // implement ruby sass round behavior
+      if (val < 0) val -= std::pow(0.1, precision + 1);
+      else if (val) val += std::pow(0.1, precision + 1);
+    }
+    // work around some compiler issue
+    // cygwin has it not defined in std
+    using namespace std;
+    return ::round(val);
+  }
 
   /* Sadly, sass_strdup is not portable. */
   char *sass_strdup(const char *str)
@@ -107,7 +122,7 @@ namespace Sass {
 
           // convert the extracted hex string to code point value
           // ToDo: Maybe we could do this without creating a substring
-          uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), nullptr, 16);
+          uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), 0, 16);
 
           if (cp == 0) cp = 0xFFFD;
 
@@ -401,7 +416,7 @@ namespace Sass {
 
           // convert the extracted hex string to code point value
           // ToDo: Maybe we could do this without creating a substring
-          uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), nullptr, 16);
+          uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), 0, 16);
 
           if (s[i + len] == ' ') ++ len;
 
