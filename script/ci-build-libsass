@@ -88,35 +88,19 @@ echo AUTOTOOLS=$AUTOTOOLS COVERAGE=$COVERAGE BUILD=$BUILD
 if [ "$CONTINUOUS_INTEGRATION" == "true" ] && [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "x$TRAVIS_PULL_REQUEST" != "x" ] &&
    ([ "$TRAVIS_OS_NAME" == "linux" ] || [ "$TRAVIS_OS_NAME" == "osx" ] || [ "$TRAVIS_OS_NAME" == "cygwin" ]);
 then
-  echo "Downloading jq for $TRAVIS_OS_NAME"
-
-  if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-    curl -L https://github.com/stedolan/jq/releases/download/jq-1.4/jq-linux-x86 -o ./jq
-    chmod +x jq
-  elif [ "$TRAVIS_OS_NAME" == "osx" ]; then
-    curl -L https://github.com/stedolan/jq/releases/download/jq-1.4/jq-osx-x86 -o ./jq
-    chmod +x jq
-  elif [ "$TRAVIS_OS_NAME" == "cygwin" ]; then
-    curl -L https://github.com/stedolan/jq/releases/download/jq-1.5/jq-win32.exe -o ./jq.exe
-    chmod +x jq.exe
-  fi
 
   echo "Fetching PR $TRAVIS_PULL_REQUEST"
 
   JSON=$(curl -L -sS https://api.github.com/repos/sass/libsass/pulls/$TRAVIS_PULL_REQUEST)
 
-  SPEC_PR=$(echo $JSON | ./jq -r .body)
+  RE_SPEC_PR="sass\/sass-spec(#|\/pull\/)([0-9]+)"
 
-  BLAH="sass\/sass-spec(#|\/pull\/)([0-9]+)"
-
-  if [[ $SPEC_PR =~ $BLAH ]];
+  if [[ $JSON =~ $RE_SPEC_PR ]];
   then
     SPEC_PR="${BASH_REMATCH[2]}"
-
     echo "Fetching Sass Spec PR $SPEC_PR"
-    git -C sass-spec fetch --update-head-ok origin pull/$SPEC_PR/head:ci-spec-pr-$SPEC_PR
+    git -C sass-spec fetch -u origin pull/$SPEC_PR/head:ci-spec-pr-$SPEC_PR
     git -C sass-spec checkout --force ci-spec-pr-$SPEC_PR
-
     LD_LIBRARY_PATH="$PREFIX/lib/" make $MAKE_OPTS test_build
   else
     LD_LIBRARY_PATH="$PREFIX/lib/" make $MAKE_OPTS test_build
