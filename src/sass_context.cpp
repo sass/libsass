@@ -228,6 +228,10 @@ extern "C" {
         msg_stream << "   " << std::string(e.pstate.column - move_in, '-') << "^\n";
       }
 
+      std::string msg_input_file_prefix("Input path: ");
+      std::string rel_input_path(Sass::File::resolve_relative_path(c_ctx->input_path, cwd, cwd));
+      msg_stream << msg_input_file_prefix << rel_input_path << "\n";
+
       JsonNode* json_err = json_mkobject();
       json_append_member(json_err, "status", json_mknumber(1));
       json_append_member(json_err, "file", json_mkstring(e.pstate.path));
