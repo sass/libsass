@@ -310,6 +310,7 @@ namespace Sass {
       DECLARATION,
       ASSIGNMENT,
       IMPORT_STUB,
+      IMPORTED,
       IMPORT,
       COMMENT,
       WARNING,
@@ -537,27 +538,44 @@ namespace Sass {
   // necessary to store a list of each in an Import node.
   ////////////////////////////////////////////////////////////////////////////
   class Import : public Statement {
-    std::vector<std::string>         files_;
-    std::vector<Expression*>    urls_;
-    ADD_PROPERTY(List*, media_queries);
+    std::vector<Expression*> urls_;
+    std::vector<Include>     incs_;
+    ADD_PROPERTY(List*,      media_queries);
   public:
     Import(ParserState pstate)
     : Statement(pstate),
-      files_(std::vector<std::string>()),
       urls_(std::vector<Expression*>()),
+      incs_(std::vector<Include>()),
       media_queries_(0)
     { statement_type(IMPORT); }
-    std::vector<std::string>&      files()    { return files_; }
-    std::vector<Expression*>& urls()     { return urls_; }
+    std::vector<Expression*>& urls() { return urls_; }
+    std::vector<Include>& incs() { return incs_; }
     ATTACH_OPERATIONS()
   };
 
+  // not yet resolved single import
+  // so far we only know requested name
   class Import_Stub : public Statement {
-    ADD_PROPERTY(std::string, file_name)
+    Include resource_;
   public:
-    Import_Stub(ParserState pstate, std::string f)
-    : Statement(pstate), file_name_(f)
+    std::string abs_path() { return resource_.abs_path; };
+    std::string imp_path() { return resource_.imp_path; };
+    Include resource() { return resource_; };
+
+    Import_Stub(ParserState pstate, Include res)
+    : Statement(pstate), resource_(res)
     { statement_type(IMPORT_STUB); }
+    ATTACH_OPERATIONS()
+  };
+
+  class Imported : public Has_Block {
+    ADD_PROPERTY(std::string, file_name)
+    ADD_PROPERTY(Import_Stub*, import_stub)
+  public:
+    Imported(Import_Stub* import_stub, Block* inner)
+    : Has_Block(import_stub->pstate(), inner),
+      import_stub_(import_stub)
+    { statement_type(IMPORTED); }
     ATTACH_OPERATIONS()
   };
 

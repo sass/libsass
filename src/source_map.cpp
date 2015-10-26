@@ -9,16 +9,17 @@
 #include "context.hpp"
 #include "position.hpp"
 #include "source_map.hpp"
+#include "sass_context.hpp"
 
 namespace Sass {
   SourceMap::SourceMap() : current_position(0, 0, 0), file("stdin") { }
   SourceMap::SourceMap(const std::string& file) : current_position(0, 0, 0), file(file) { }
 
-  std::string SourceMap::generate_source_map(Context &ctx) {
+  std::string SourceMap::render_srcmap(Context &ctx) {
 
-    const bool include_sources = ctx.source_map_contents;
-    const std::vector<std::string> includes = ctx.include_links;
-    const std::vector<char*> sources = ctx.sources;
+    const bool include_sources = ctx.c_options->source_map_contents;
+    const std::vector<std::string> links = ctx.srcmap_links;
+    const std::vector<Resources>& sources(ctx.resources);
 
     JsonNode* json_srcmap = json_mkobject();
 
@@ -36,7 +37,7 @@ namespace Sass {
 
     JsonNode *json_includes = json_mkarray();
     for (size_t i = 0; i < source_index.size(); ++i) {
-      const char *include = includes[source_index[i]].c_str();
+      const char *include = links[source_index[i]].c_str();
       JsonNode *json_include = json_mkstring(include);
       json_append_element(json_includes, json_include);
     }
@@ -45,8 +46,8 @@ namespace Sass {
     if (include_sources) {
       JsonNode *json_contents = json_mkarray();
       for (size_t i = 0; i < source_index.size(); ++i) {
-        const char *content = sources[source_index[i]];
-        JsonNode *json_content = json_mkstring(content);
+        const Resources& resource(sources[source_index[i]]);
+        JsonNode *json_content = json_mkstring(resource.contents);
         json_append_element(json_contents, json_content);
       }
       if (json_contents->children.head)

@@ -24,9 +24,6 @@ namespace Sass {
     SourceMap();
     SourceMap(const std::string& file);
 
-    void setFile(const std::string& str) {
-      file = str;
-    }
     void append(const Offset& offset);
     void prepend(const Offset& offset);
     void append(const OutputBuffer& out);
@@ -34,7 +31,7 @@ namespace Sass {
     void add_open_mapping(AST_Node* node);
     void add_close_mapping(AST_Node* node);
 
-    std::string generate_source_map(Context &ctx);
+    std::string render_srcmap(Context &ctx);
     ParserState remap(const ParserState& pstate);
 
   private:
