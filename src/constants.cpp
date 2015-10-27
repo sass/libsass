@@ -153,6 +153,7 @@ namespace Sass {
     // optional modifiers for alternative compare context
     extern const char attribute_compare_modifiers[] = "~|^$*";
     extern const char selector_lookahead_ops[] = "*&%,()[]";
+    extern const char selector_lookahead_mods[] = "-+~>";
 
     // byte order marks
     // (taken from http://en.wikipedia.org/wiki/Byte_order_mark)

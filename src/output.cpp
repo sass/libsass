@@ -380,6 +380,7 @@ namespace Sass {
   void Output::operator()(String_Constant* s)
   {
     std::string value(s->value());
+    // this cleans whitespace for wrapped binomials
     if (s->can_compress_whitespace() && output_style() == COMPRESSED) {
       value.erase(std::remove_if(value.begin(), value.end(), ::isspace), value.end());
     }
