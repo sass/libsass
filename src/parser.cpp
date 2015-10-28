@@ -2231,8 +2231,8 @@ namespace Sass {
             schema_reference_combinator,
             // match selector ops /[*&%,()\[\]]/
             class_char < selector_lookahead_ops >,
-            // match selector combinators /[>+~]/
-            class_char < selector_combinator_ops >,
+            // match selector combinators /[->+~]/
+            class_char < selector_lookahead_mods >,
             // match attribute compare operators
             alternatives <
               exact_match, class_match, dash_match,
