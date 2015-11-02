@@ -59,6 +59,11 @@ namespace Sass {
       inspect.append_mandatory_linefeed();
     }
 
+    if (output_style() == SASS_STYLE_COMPRESSED) {
+      if (wbuf.buffer.size() == 0) {
+        inspect.scheduled_delimiter = false;
+      }
+    }
     // flush scheduled outputs
     inspect.finalize();
     // prepend buffer on top
@@ -307,9 +312,31 @@ namespace Sass {
     in_media_block = false;
     append_scope_opener();
 
+
+
+    bool had_ruleset = false;
+    bool need_linefeed = false;
     for (size_t i = 0, L = b->length(); i < L; ++i) {
+      if (dynamic_cast<Ruleset*>((*b)[i]) || dynamic_cast<At_Rule*>((*b)[i]))
+      {
+        if (had_ruleset)
+          append_special_linefeed();
+        had_ruleset = true;
+      }
+      else if (i > 0 && dynamic_cast<Comment*>((*b)[i])) {
+        append_special_linefeed();
+        had_ruleset = true;
+      }
+      else if (need_linefeed) {
+        append_mandatory_linefeed();
+        had_ruleset = true;
+      }
+      need_linefeed = false;
       if ((*b)[i]) (*b)[i]->perform(this);
-      if (i < L - 1) append_special_linefeed();
+      if (i == 0 && dynamic_cast<Comment*>((*b)[i])) {
+        had_ruleset = true;
+        need_linefeed = true;
+      }
     }
 
     if (output_style() == SASS_STYLE_NESTED) indentation -= m->tabs();
@@ -336,12 +363,13 @@ namespace Sass {
       v->perform(this);
     }
     if (!b) {
-      append_delimiter();
+      append_mandatory_delimiter();
       return;
     }
 
     if (b->is_invisible() || b->length() == 0) {
-      return append_string(" {}");
+      append_optional_space();
+      return append_string("{}");
     }
 
     append_scope_opener();

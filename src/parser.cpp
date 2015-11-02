@@ -1262,10 +1262,10 @@ namespace Sass {
       // expression can be evaluated
       value->is_delayed(false);
       // make sure wrapped lists and division expressions are non-delayed within parentheses
-      if (value->concrete_type() == Expression::LIST) {
+      /* if (value->concrete_type() == Expression::LIST) {
         List* l = static_cast<List*>(value);
         if (!l->empty()) (*l)[0]->is_delayed(false);
-      } else if (typeid(*value) == typeid(Binary_Expression)) {
+      } else */ if (typeid(*value) == typeid(Binary_Expression)) {
         Binary_Expression* b = static_cast<Binary_Expression*>(value);
         Binary_Expression* lhs = static_cast<Binary_Expression*>(b->left());
         if (lhs && lhs->type() == Sass_OP::DIV) lhs->is_delayed(false);

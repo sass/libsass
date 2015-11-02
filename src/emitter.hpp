@@ -82,7 +82,8 @@ namespace Sass {
       void append_scope_closer(AST_Node* node = 0);
       void append_comma_separator(void);
       void append_colon_separator(void);
-      void append_delimiter(void);
+      void append_mandatory_delimiter(void);
+      void append_optional_delimiter(void);
 
   };
 
