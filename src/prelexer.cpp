@@ -1043,16 +1043,16 @@ namespace Sass {
         // commented section once we bump sass-spec to use
         // Sass >= 3.4.16.
         identifier,
-        // sequence<
-        //   optional< exactly<'-'> >,
-        //   NMSTART,
-        //   zero_plus< alternatives<
-        //     alternatives< alnum, exactly<'_'> >,
-        //     NONASCII,
-        //     ESCAPE,
-        //     sequence< exactly<'-'>, negate< number > >
-        //   > >
-        // >,
+        sequence<
+          optional< exactly<'-'> >,
+          NMSTART,
+          zero_plus< alternatives<
+            alternatives< alnum, exactly<'_'> >,
+            NONASCII,
+            ESCAPE,
+            sequence< exactly<'-'>, negate< number > >
+          > >
+        >,
         exactly<'%'>
       >(src);
     }
