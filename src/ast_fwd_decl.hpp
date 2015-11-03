@@ -6,8 +6,6 @@
 /////////////////////////////////////////////
 namespace Sass {
 
-  enum Output_Style { NESTED, EXPANDED, COMPACT, COMPRESSED, FORMATTED };
-
   class AST_Node;
   // statements
   class Statement;
@@ -84,6 +82,9 @@ namespace Sass {
   class Compound_Selector;
   class Complex_Selector;
   class Selector_List;
+
+  // common classes
+  class Context;
 
 }
 

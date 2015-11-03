@@ -10,6 +10,7 @@
 #include <typeinfo>
 #include <algorithm>
 #include <unordered_map>
+#include "sass/base.h"
 
 #ifdef __clang__
 
@@ -537,26 +538,32 @@ namespace Sass {
   // necessary to store a list of each in an Import node.
   ////////////////////////////////////////////////////////////////////////////
   class Import : public Statement {
-    std::vector<std::string>         files_;
-    std::vector<Expression*>    urls_;
-    ADD_PROPERTY(List*, media_queries);
+    std::vector<Expression*> urls_;
+    std::vector<Include>     incs_;
+    ADD_PROPERTY(List*,      media_queries);
   public:
     Import(ParserState pstate)
     : Statement(pstate),
-      files_(std::vector<std::string>()),
       urls_(std::vector<Expression*>()),
+      incs_(std::vector<Include>()),
       media_queries_(0)
     { statement_type(IMPORT); }
-    std::vector<std::string>&      files()    { return files_; }
-    std::vector<Expression*>& urls()     { return urls_; }
+    std::vector<Expression*>& urls() { return urls_; }
+    std::vector<Include>& incs() { return incs_; }
     ATTACH_OPERATIONS()
   };
 
+  // not yet resolved single import
+  // so far we only know requested name
   class Import_Stub : public Statement {
-    ADD_PROPERTY(std::string, file_name)
+    Include resource_;
   public:
-    Import_Stub(ParserState pstate, std::string f)
-    : Statement(pstate), file_name_(f)
+    std::string abs_path() { return resource_.abs_path; };
+    std::string imp_path() { return resource_.imp_path; };
+    Include resource() { return resource_; };
+
+    Import_Stub(ParserState pstate, Include res)
+    : Statement(pstate), resource_(res)
     { statement_type(IMPORT_STUB); }
     ATTACH_OPERATIONS()
   };
@@ -622,6 +629,10 @@ namespace Sass {
     If(ParserState pstate, Expression* pred, Block* con, Block* alt = 0)
     : Has_Block(pstate, con), predicate_(pred), alternative_(alt)
     { statement_type(IF); }
+    virtual bool has_content()
+    {
+      return Has_Block::has_content() || (alternative_ && alternative_->has_content());
+    }
     ATTACH_OPERATIONS()
   };
 
@@ -2133,9 +2144,10 @@ namespace Sass {
       if ((!head_ || !head_->length() || head_->is_empty_reference()) &&
           combinator() == Combinator::ANCESTOR_OF)
       {
+        if (!tail_) return 0;
         tail_->has_line_feed_ = this->has_line_feed_;
         // tail_->has_line_break_ = this->has_line_break_;
-        return tail_ ? tail_->skip_empty_reference() : 0;
+        return tail_->skip_empty_reference();
       }
       return this;
     }

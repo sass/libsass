@@ -15,6 +15,7 @@ namespace Sass {
     // Match Sass boolean keywords.
     const char* kwd_true(const char* src);
     const char* kwd_false(const char* src);
+    const char* kwd_only(const char* src);
     const char* kwd_and(const char* src);
     const char* kwd_or(const char* src);
     const char* kwd_not(const char* src);
@@ -336,9 +337,6 @@ namespace Sass {
     const char* ie_keyword_arg(const char* src);
     const char* ie_keyword_arg_value(const char* src);
     const char* ie_keyword_arg_property(const char* src);
-
-    // match urls
-    const char* url(const char* src);
 
     // match url()
     const char* H(const char* src);

@@ -4,15 +4,17 @@
 #include <vector>
 #include <string>
 #include <assert.h>
+#include "sass/base.h"
 #include "ast_fwd_decl.hpp"
 
 #define SASS_ASSERT(cond, msg) assert(cond && msg)
 
 namespace Sass {
 
+  double round(double val);
   char* sass_strdup(const char* str);
   double sass_atof(const char* str);
-  const char* safe_str(const char *);
+  const char* safe_str(const char *, const char* = "");
   void free_string_array(char **);
   char **copy_strings(const std::vector<std::string>&, char ***, int = 0);
   std::string string_escape(const std::string& str);
@@ -45,13 +47,13 @@ namespace Sass {
     std::string vecJoin(const std::vector<std::string>& vec, const std::string& sep);
     bool containsAnyPrintableStatements(Block* b);
 
-    bool isPrintable(Ruleset* r, Output_Style style = NESTED);
-    bool isPrintable(Supports_Block* r, Output_Style style = NESTED);
-    bool isPrintable(Media_Block* r, Output_Style style = NESTED);
-    bool isPrintable(Block* b, Output_Style style = NESTED);
-    bool isPrintable(String_Constant* s, Output_Style style = NESTED);
-    bool isPrintable(String_Quoted* s, Output_Style style = NESTED);
-    bool isPrintable(Declaration* d, Output_Style style = NESTED);
+    bool isPrintable(Ruleset* r, Sass_Output_Style style = SASS_STYLE_NESTED);
+    bool isPrintable(Supports_Block* r, Sass_Output_Style style = SASS_STYLE_NESTED);
+    bool isPrintable(Media_Block* r, Sass_Output_Style style = SASS_STYLE_NESTED);
+    bool isPrintable(Block* b, Sass_Output_Style style = SASS_STYLE_NESTED);
+    bool isPrintable(String_Constant* s, Sass_Output_Style style = SASS_STYLE_NESTED);
+    bool isPrintable(String_Quoted* s, Sass_Output_Style style = SASS_STYLE_NESTED);
+    bool isPrintable(Declaration* d, Sass_Output_Style style = SASS_STYLE_NESTED);
     bool isAscii(const char chr);
 
   }

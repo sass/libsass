@@ -26,11 +26,11 @@ namespace Sass {
       add_open_mapping(block);
       append_scope_opener();
     }
-    if (output_style() == NESTED) indentation += block->tabs();
+    if (output_style() == SASS_STYLE_NESTED) indentation += block->tabs();
     for (size_t i = 0, L = block->length(); i < L; ++i) {
       (*block)[i]->perform(this);
     }
-    if (output_style() == NESTED) indentation -= block->tabs();
+    if (output_style() == SASS_STYLE_NESTED) indentation -= block->tabs();
     if (!block->is_root()) {
       append_scope_closer();
       add_close_mapping(block);
@@ -123,7 +123,7 @@ namespace Sass {
     if (dec->value()->concrete_type() == Expression::NULL_VAL) return;
     bool was_decl = in_declaration;
     in_declaration = true;
-    if (output_style() == NESTED)
+    if (output_style() == SASS_STYLE_NESTED)
       indentation += dec->tabs();
     append_indentation();
     dec->property()->perform(this);
@@ -141,7 +141,7 @@ namespace Sass {
       append_string("!important");
     }
     append_delimiter();
-    if (output_style() == NESTED)
+    if (output_style() == SASS_STYLE_NESTED)
       indentation -= dec->tabs();
     in_declaration = was_decl;
   }
@@ -198,7 +198,7 @@ namespace Sass {
     append_indentation();
     append_token("@import", import);
     append_mandatory_space();
-    append_string(import->file_name());
+    append_string(import->imp_path());
     append_delimiter();
   }
 
@@ -363,7 +363,7 @@ namespace Sass {
   void Inspect::operator()(List* list)
   {
     std::string sep(list->separator() == SASS_SPACE ? " " : ",");
-    if (output_style() != COMPRESSED && sep == ",") sep += " ";
+    if ((output_style() != SASS_STYLE_COMPRESSED || in_debug) && sep == ",") sep += " ";
     else if (in_media_block && sep != " ") sep += " "; // verified
     if (list->empty()) return;
     bool items_output = false;
@@ -459,8 +459,8 @@ namespace Sass {
   void Inspect::operator()(Number* n)
   {
     // use values to_string facility
-    bool compressed = ctx->output_style == COMPRESSED;
-    std::string res = n->to_string(compressed, (int)ctx->precision);
+    bool compressed = ctx->output_style() == SASS_STYLE_COMPRESSED;
+    std::string res(n->to_string(compressed, (int)ctx->c_options->precision));
     // output the final token
     append_token(res, n);
   }
@@ -468,8 +468,8 @@ namespace Sass {
   void Inspect::operator()(Color* c)
   {
     // use values to_string facility
-    bool compressed = ctx->output_style == COMPRESSED;
-	std::string res = c->to_string(compressed, (int)ctx->precision);
+    bool compressed = ctx->output_style() == SASS_STYLE_COMPRESSED;
+    std::string res(c->to_string(compressed, (int)ctx->c_options->precision));
     // output the final token
     append_token(res, c);
   }
@@ -477,8 +477,8 @@ namespace Sass {
   void Inspect::operator()(Boolean* b)
   {
     // use values to_string facility
-    bool compressed = ctx->output_style == COMPRESSED;
-	std::string res = b->to_string(compressed, (int)ctx->precision);
+    bool compressed = ctx->output_style() == SASS_STYLE_COMPRESSED;
+    std::string res(b->to_string(compressed, (int)ctx->c_options->precision));
     // output the final token
     append_token(res, b);
   }
@@ -497,8 +497,8 @@ namespace Sass {
   void Inspect::operator()(String_Constant* s)
   {
     // get options from optional? context
-    int precision = ctx ? (int)ctx->precision : 5;
-    bool compressed = ctx ? ctx->output_style == COMPRESSED : false;
+    int precision = ctx ? (int)ctx->c_options->precision : 5;
+    bool compressed = ctx ? ctx->output_style() == SASS_STYLE_COMPRESSED : false;
     // use values to_string facility
     std::string res(s->to_string(compressed, precision));
     // output the final token
@@ -508,8 +508,8 @@ namespace Sass {
   void Inspect::operator()(String_Quoted* s)
   {
     // get options from optional? context
-    int precision = ctx ? (int)ctx->precision : 5;
-    bool compressed = ctx ? ctx->output_style == COMPRESSED : false;
+    int precision = ctx ? (int)ctx->c_options->precision : 5;
+    bool compressed = ctx ? ctx->output_style() == SASS_STYLE_COMPRESSED : false;
     // use values to_string facility
     std::string res(s->to_string(compressed, precision));
     // output the final token
@@ -612,8 +612,8 @@ namespace Sass {
   void Inspect::operator()(Null* n)
   {
     // use values to_string facility
-    bool compressed = ctx->output_style == COMPRESSED;
-    std::string res = n->to_string(compressed, (int)ctx->precision);
+    bool compressed = output_style() == SASS_STYLE_COMPRESSED;
+    std::string res(n->to_string(compressed, (int)ctx->c_options->precision));
     // output the final token
     append_token(res, n);
   }
@@ -752,7 +752,7 @@ namespace Sass {
       (*s)[i]->perform(this);
     }
     if (s->has_line_break()) {
-      if (output_style() != COMPACT) {
+      if (output_style() != SASS_STYLE_COMPACT) {
         append_optional_linefeed();
       }
     }
@@ -774,7 +774,7 @@ namespace Sass {
     if (head && head->length() != 0) head->perform(this);
     bool is_empty = !head || head->length() == 0 || head->is_empty_reference();
     bool is_tail = head && !head->is_empty_reference() && tail;
-    if (output_style() == COMPRESSED && comb != Complex_Selector::ANCESTOR_OF) scheduled_space = 0;
+    if (output_style() == SASS_STYLE_COMPRESSED && comb != Complex_Selector::ANCESTOR_OF) scheduled_space = 0;
 
     switch (comb) {
       case Complex_Selector::ANCESTOR_OF:
@@ -810,7 +810,7 @@ namespace Sass {
     }
     if (tail) tail->perform(this);
     if (!tail && c->has_line_break()) {
-      if (output_style() == COMPACT) {
+      if (output_style() == SASS_STYLE_COMPACT) {
         append_mandatory_space();
       }
     }

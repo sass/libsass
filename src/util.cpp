@@ -6,14 +6,32 @@
 #include "constants.hpp"
 #include "utf8/checked.h"
 
+#include <cmath>
 #include <stdint.h>
 
 namespace Sass {
 
-  #define out_of_memory() do {                    \
-      fprintf(stderr, "Out of memory.\n");    \
-      exit(EXIT_FAILURE);                     \
+  #define out_of_memory() do {            \
+      std::cerr << "Out of memory.\n";    \
+      exit(EXIT_FAILURE);                 \
     } while (0)
+
+  double round(double val)
+  {
+    // work around some compiler issue
+    // cygwin has it not defined in std
+    using namespace std;
+
+    // This was later repatched in 3.4.20
+    // which is as yet unreleased.
+    // https://github.com/sass/sass/commit/4e3e1d5684cc29073a507578fc977434ff488c93
+    if (fmod(val, 1) - 0.5 > -0.00001) return std::ceil(val);
+    return ::round(val);
+
+    // Use this version once sass-spec is at 3.4.20
+    // if (fmod(val, 1) - 0.5 > -0.00001) return ::round(val);
+    // return value > 0 ? std::ceil(val) : std::floor(val);
+  }
 
   /* Sadly, sass_strdup is not portable. */
   char *sass_strdup(const char *str)
@@ -49,8 +67,8 @@ namespace Sass {
   }
 
   // helper for safe access to c_ctx
-  const char* safe_str (const char* str) {
-    return str == NULL ? "" : str;
+  const char* safe_str (const char* str, const char* alt) {
+    return str == NULL ? alt : str;
   }
 
   void free_string_array(char ** arr) {
@@ -107,7 +125,7 @@ namespace Sass {
 
           // convert the extracted hex string to code point value
           // ToDo: Maybe we could do this without creating a substring
-          uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), nullptr, 16);
+          uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), NULL, 16);
 
           if (cp == 0) cp = 0xFFFD;
 
@@ -401,7 +419,7 @@ namespace Sass {
 
           // convert the extracted hex string to code point value
           // ToDo: Maybe we could do this without creating a substring
-          uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), nullptr, 16);
+          uint32_t cp = strtol(s.substr (i + 1, len - 1).c_str(), NULL, 16);
 
           if (s[i + len] == ' ') ++ len;
 
@@ -571,7 +589,7 @@ namespace Sass {
       }
     }
 
-    bool isPrintable(Ruleset* r, Output_Style style) {
+    bool isPrintable(Ruleset* r, Sass_Output_Style style) {
       if (r == NULL) {
         return false;
       }
@@ -597,7 +615,7 @@ namespace Sass {
           }
         } else if (Comment* c = dynamic_cast<Comment*>(stm)) {
           // keep for uncompressed
-          if (style != COMPRESSED) {
+          if (style != SASS_STYLE_COMPRESSED) {
             hasDeclarations = true;
           }
           // output style compressed
@@ -618,17 +636,17 @@ namespace Sass {
       return false;
     }
 
-    bool isPrintable(String_Constant* s, Output_Style style)
+    bool isPrintable(String_Constant* s, Sass_Output_Style style)
     {
       return ! s->value().empty();
     }
 
-    bool isPrintable(String_Quoted* s, Output_Style style)
+    bool isPrintable(String_Quoted* s, Sass_Output_Style style)
     {
       return true;
     }
 
-    bool isPrintable(Declaration* d, Output_Style style)
+    bool isPrintable(Declaration* d, Sass_Output_Style style)
     {
       Expression* val = d->value();
       if (String_Quoted* sq = dynamic_cast<String_Quoted*>(val)) return isPrintable(sq, style);
@@ -636,7 +654,7 @@ namespace Sass {
       return true;
     }
 
-    bool isPrintable(Supports_Block* f, Output_Style style) {
+    bool isPrintable(Supports_Block* f, Sass_Output_Style style) {
       if (f == NULL) {
         return false;
       }
@@ -673,7 +691,7 @@ namespace Sass {
       return false;
     }
 
-    bool isPrintable(Media_Block* m, Output_Style style)
+    bool isPrintable(Media_Block* m, Sass_Output_Style style)
     {
       if (m == 0) return false;
       Block* b = m->block();
@@ -689,7 +707,7 @@ namespace Sass {
       return false;
     }
 
-    bool isPrintable(Block* b, Output_Style style) {
+    bool isPrintable(Block* b, Sass_Output_Style style) {
       if (b == NULL) {
         return false;
       }
@@ -702,7 +720,7 @@ namespace Sass {
         else if (typeid(*stm) == typeid(Comment)) {
           Comment* c = (Comment*) stm;
           // keep for uncompressed
-          if (style != COMPRESSED) {
+          if (style != SASS_STYLE_COMPRESSED) {
             return true;
           }
           // output style compressed

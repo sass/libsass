@@ -2,6 +2,7 @@
 #define SASS_EMITTER_H
 
 #include <string>
+#include "sass/base.h"
 #include "source_map.hpp"
 #include "ast_fwd_decl.hpp"
 
@@ -25,7 +26,7 @@ namespace Sass {
       void set_filename(const std::string& str);
       void add_open_mapping(AST_Node* node);
       void add_close_mapping(AST_Node* node);
-      std::string generate_source_map(Context &ctx);
+      std::string render_srcmap(Context &ctx);
       ParserState remap(const ParserState& pstate);
 
     public:
@@ -47,12 +48,14 @@ namespace Sass {
       // nested lists need parentheses
       bool in_space_array;
       bool in_comma_array;
+      // list separators don't get compressed in @debug
+      bool in_debug;
 
     public:
       // return buffer as std::string
       std::string get_buffer(void);
       // flush scheduled space/linefeed
-      Output_Style output_style(void);
+      Sass_Output_Style output_style(void);
       // add outstanding linefeed
       void finalize(void);
       // flush scheduled space/linefeed

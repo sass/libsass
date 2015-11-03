@@ -6,15 +6,8 @@
 
 namespace Sass {
 
+  class Block;
   class Context;
-
-  struct Sass_Queued {
-    std::string abs_path;
-    std::string load_path;
-    const char* source;
-  public:
-    Sass_Queued(const std::string& load_path, const std::string& abs_path, const char* source);
-  };
 
   namespace File {
 
@@ -43,15 +36,16 @@ namespace Sass {
     // but only if right side is not absolute yet
     std::string join_paths(std::string root, std::string name);
 
+    // if the relative path is outside of the cwd we want want to
+    // show the absolute path in console messages
+    std::string path_for_console(const std::string& rel_path, const std::string& abs_path, const std::string& orig_path);
+
     // create an absolute path by resolving relative paths with cwd
-    std::string make_absolute_path(const std::string& path, const std::string& cwd = ".");
+    std::string rel2abs(const std::string& path, const std::string& base = ".", const std::string& cwd = get_cwd());
 
     // create a path that is relative to the given base directory
     // path and base will first be resolved against cwd to make them absolute
-    std::string resolve_relative_path(const std::string& path, const std::string& base, const std::string& cwd = ".");
-
-    // try to find/resolve the filename
-    std::vector<Sass_Queued> resolve_file(const std::string& root, const std::string& file);
+    std::string abs2rel(const std::string& path, const std::string& base = ".", const std::string& cwd = get_cwd());
 
     // helper function to resolve a filename
     std::string find_file(const std::string& file, const std::vector<std::string> paths);
@@ -64,6 +58,66 @@ namespace Sass {
     char* read_file(const std::string& file);
 
   }
+
+  // requested import
+  class Importer {
+    public:
+      // requested import path
+      std::string imp_path;
+      // parent context path
+      std::string ctx_path;
+      // base derived from context path
+      // this really just acts as a cache
+      std::string base_path;
+    public:
+      Importer(std::string imp_path, std::string ctx_path)
+      : imp_path(File::make_canonical_path(imp_path)),
+        ctx_path(File::make_canonical_path(ctx_path)),
+        base_path(File::dir_name(ctx_path))
+      { }
+  };
+
+  // a resolved include (final import)
+  class Include : public Importer {
+    public:
+      // resolved absolute path
+      std::string abs_path;
+    public:
+      Include(const Importer& imp, std::string abs_path)
+      : Importer(imp), abs_path(abs_path)
+      { }
+  };
+
+  // a loaded resource
+  class Resource {
+    public:
+      // the file contents
+      char* contents;
+      // conected sourcemap
+      char* srcmap;
+    public:
+      Resource(char* contents, char* srcmap)
+      : contents(contents), srcmap(srcmap)
+      { }
+  };
+
+  // parsed stylesheet from loaded resource
+  class StyleSheet : public Resource {
+    public:
+      // parsed root block
+      Block* root;
+    public:
+      StyleSheet(const Resource& res, Block* root)
+      : Resource(res), root(root)
+      { }
+  };
+
+  namespace File {
+
+    std::vector<Include> resolve_includes(const std::string& root, const std::string& file);
+
+  }
+
 }
 
 #endif
