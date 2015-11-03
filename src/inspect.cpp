@@ -114,7 +114,7 @@ namespace Sass {
       at_rule->block()->perform(this);
     }
     else {
-      append_delimiter();
+      append_optional_delimiter();
     }
   }
 
@@ -140,7 +140,7 @@ namespace Sass {
       append_optional_space();
       append_string("!important");
     }
-    append_delimiter();
+    append_mandatory_delimiter();
     if (output_style() == SASS_STYLE_NESTED)
       indentation -= dec->tabs();
     in_declaration = was_decl;
@@ -155,7 +155,7 @@ namespace Sass {
       append_optional_space();
       append_string("!default");
     }
-    append_delimiter();
+    append_mandatory_delimiter();
   }
 
   void Inspect::operator()(Import* import)
@@ -173,7 +173,7 @@ namespace Sass {
         append_mandatory_space();
         import->media_queries()->perform(this);
       }
-      append_delimiter();
+      scheduled_delimiter = true;
       for (size_t i = 1, S = import->urls().size(); i < S; ++i) {
         append_mandatory_linefeed();
         append_token("@import", import);
@@ -188,7 +188,7 @@ namespace Sass {
           append_mandatory_space();
           import->media_queries()->perform(this);
         }
-        append_delimiter();
+        scheduled_delimiter = true;
       }
     }
   }
@@ -199,7 +199,7 @@ namespace Sass {
     append_token("@import", import);
     append_mandatory_space();
     append_string(import->imp_path());
-    append_delimiter();
+    append_optional_delimiter();
   }
 
   void Inspect::operator()(Warning* warning)
@@ -208,7 +208,7 @@ namespace Sass {
     append_token("@warn", warning);
     append_mandatory_space();
     warning->message()->perform(this);
-    append_delimiter();
+    append_optional_delimiter();
   }
 
   void Inspect::operator()(Error* error)
@@ -217,7 +217,7 @@ namespace Sass {
     append_token("@error", error);
     append_mandatory_space();
     error->message()->perform(this);
-    append_delimiter();
+    append_optional_delimiter();
   }
 
   void Inspect::operator()(Debug* debug)
@@ -226,7 +226,7 @@ namespace Sass {
     append_token("@debug", debug);
     append_mandatory_space();
     debug->value()->perform(this);
-    append_delimiter();
+    append_optional_delimiter();
   }
 
   void Inspect::operator()(Comment* comment)
@@ -294,7 +294,7 @@ namespace Sass {
     append_token("@return", ret);
     append_mandatory_space();
     ret->value()->perform(this);
-    append_delimiter();
+    append_optional_delimiter();
   }
 
   void Inspect::operator()(Extension* extend)
@@ -303,7 +303,7 @@ namespace Sass {
     append_token("@extend", extend);
     append_mandatory_space();
     extend->selector()->perform(this);
-    append_delimiter();
+    append_optional_delimiter();
   }
 
   void Inspect::operator()(Definition* def)
@@ -334,14 +334,14 @@ namespace Sass {
       append_optional_space();
       call->block()->perform(this);
     }
-    if (!call->block()) append_delimiter();
+    if (!call->block()) append_optional_delimiter();
   }
 
   void Inspect::operator()(Content* content)
   {
     append_indentation();
     append_token("@content", content);
-    append_delimiter();
+    append_optional_delimiter();
   }
 
   void Inspect::operator()(Map* map)

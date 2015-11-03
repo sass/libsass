@@ -459,9 +459,11 @@ namespace Sass {
   Expression* Eval::operator()(Binary_Expression* b)
   {
     enum Sass_OP op_type = b->type();
+    // force evaluation for some operations
+    if (op_type == Sass_OP::EQ) { b->set_delayed(false); }
     // don't eval delayed expressions (the '/' when used as a separator)
+
     if (op_type == Sass_OP::DIV && b->is_delayed()) return b;
-    b->is_delayed(false);
     // if one of the operands is a '/' then make sure it's evaluated
     Expression* lhs = b->left()->perform(this);
     lhs->is_delayed(false);

@@ -156,7 +156,7 @@ namespace Sass {
     append_string(indent);
   }
 
-  void Emitter::append_delimiter()
+  void Emitter::append_mandatory_delimiter()
   {
     scheduled_delimiter = true;
     if (output_style() == SASS_STYLE_COMPACT) {
@@ -167,6 +167,13 @@ namespace Sass {
       }
     } else if (output_style() != SASS_STYLE_COMPRESSED) {
       append_optional_linefeed();
+    }
+  }
+
+  void Emitter::append_optional_delimiter()
+  {
+    if (output_style() != SASS_STYLE_COMPRESSED) {
+      append_mandatory_delimiter();
     }
   }
 

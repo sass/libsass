@@ -489,6 +489,8 @@ namespace Sass {
     if (!root) return 0;
     // start the render process
     root->perform(&emitter);
+    if (c_options->output_style == SASS_STYLE_COMPRESSED)
+      emitter.scheduled_delimiter = false;
     // finish emitter stream
     emitter.finalize();
     // get the resulting buffer from stream
