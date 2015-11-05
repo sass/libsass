@@ -32,6 +32,7 @@
 #include "sass2scss.h"
 #include "prelexer.hpp"
 #include "emitter.hpp"
+#include "debugger.hpp"
 
 namespace Sass {
   using namespace Constants;
@@ -638,8 +639,10 @@ namespace Sass {
     // create crtp visitor objects
     Expand expand(*this, &global, &backtrace);
     Cssize cssize(*this, &backtrace);
+    // debug_ast(root);
     // expand and eval the tree
     root = root->perform(&expand)->block();
+    // debug_ast(root);
     // merge and bubble certain rules
     root = root->perform(&cssize)->block();
     // should we extend something?

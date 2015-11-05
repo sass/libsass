@@ -11,6 +11,8 @@
 #include "color_maps.hpp"
 #include "sass/functions.h"
 #include "error_handling.hpp"
+#include "debug.hpp"
+#include "debugger.hpp"
 
 #include <typeinfo>
 #include <tuple>
@@ -925,13 +927,18 @@ namespace Sass {
     if (peek_css< exactly<';'> >()) error("style declaration must contain a value", pstate);
     if (peek_css< exactly<'{'> >()) is_indented = false; // don't indent if value is empty
     if (peek_css< static_value >()) {
+      // DEBUG_PRINTLN(ALL, "static_value");
       return SASS_MEMORY_NEW(ctx.mem, Declaration, prop->pstate(), prop, parse_static_value()/*, lex<kwd_important>()*/);
     }
     else {
       Expression* value;
       Lookahead lookahead = lookahead_for_value(position);
+      // DEBUG_PRINTLN(ALL, "lookahead");
       if (lookahead.found) {
+      // DEBUG_PRINTLN(ALL, "lookahead.has_interpolants >> " << lookahead.has_interpolants);
+      // DEBUG_PRINTLN(ALL, "++" << lookahead.found << "++");
         if (lookahead.has_interpolants) {
+
           value = parse_value_schema(lookahead.found);
         } else {
           value = parse_list();
@@ -1360,7 +1367,9 @@ namespace Sass {
     { return SASS_MEMORY_NEW(ctx.mem, Textual, pstate, Textual::HEX, lexed); }
 
     if (lex< sequence < exactly <'#'>, identifier > >())
-    { return SASS_MEMORY_NEW(ctx.mem, String_Quoted, pstate, lexed); }
+    {
+DEBUG_PRINTLN(ALL, "yolo");
+      return SASS_MEMORY_NEW(ctx.mem, String_Quoted, pstate, lexed); }
 
     // also handle the 10em- foo special case
     if (lex< sequence< dimension, optional< sequence< exactly<'-'>, negate< digit > > > > >())
@@ -1374,6 +1383,37 @@ namespace Sass {
 
     if (lex< variable >())
     { return SASS_MEMORY_NEW(ctx.mem, Variable, pstate, Util::normalize_underscores(lexed)); }
+
+    if (lex< HEXCOLOR >())
+    {
+      DEBUG_PRINTLN(ALL, lexed);
+        std::string lexed_str(lexed.to_string());
+        std::string hext(lexed_str.substr(1)); // chop off the '#'
+        if (hext.length() == 6) {
+          std::string r(hext.substr(0,2));
+          std::string g(hext.substr(2,2));
+          std::string b(hext.substr(4,2));
+          return SASS_MEMORY_NEW(ctx.mem, Color,
+                                 pstate,
+                                 static_cast<double>(strtol(r.c_str(), NULL, 16)),
+                                 static_cast<double>(strtol(g.c_str(), NULL, 16)),
+                                 static_cast<double>(strtol(b.c_str(), NULL, 16)),
+                                 1, true,
+                                 lexed_str);
+        } else if (hext.length() == 3) {
+          std::string r(hext.substr(0,1));
+          std::string g(hext.substr(1,1));
+          std::string b(hext.substr(2,1));
+          return SASS_MEMORY_NEW(ctx.mem, Color,
+                                 pstate,
+                                 static_cast<double>(strtol(r.c_str(), NULL, 16)),
+                                 static_cast<double>(strtol(g.c_str(), NULL, 16)),
+                                 static_cast<double>(strtol(b.c_str(), NULL, 16)),
+                                 1, true,
+                                 lexed_str);
+        }
+        return 0;
+    }
 
     // Special case handling for `%` proceeding an interpolant.
     if (lex< sequence< exactly<'%'>, optional< percentage > > >())
@@ -2254,6 +2294,8 @@ namespace Sass {
         >
       >(p)
     ) {
+      // DEBUG_PRINTLN(ALL, "++" << p);
+      // DEBUG_PRINTLN(ALL, "**" << q);
       if (p == q) return rv;
       while (p < q) {
         // did we have interpolations?
