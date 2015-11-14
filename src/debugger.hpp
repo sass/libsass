@@ -429,6 +429,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
   } else if (dynamic_cast<Variable*>(node)) {
     Variable* expression = dynamic_cast<Variable*>(node);
     std::cerr << ind << "Variable " << expression;
+    std::cerr << " [interpolant: " << expression->is_interpolant() << "] ";
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [" << expression->name() << "]" << std::endl;
     std::string name(expression->name());
@@ -436,6 +437,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
   } else if (dynamic_cast<Function_Call_Schema*>(node)) {
     Function_Call_Schema* expression = dynamic_cast<Function_Call_Schema*>(node);
     std::cerr << ind << "Function_Call_Schema " << expression;
+    std::cerr << " [interpolant: " << expression->is_interpolant() << "] ";
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << "" << std::endl;
     debug_ast(expression->name(), ind + "name: ", env);
@@ -443,6 +445,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
   } else if (dynamic_cast<Function_Call*>(node)) {
     Function_Call* expression = dynamic_cast<Function_Call*>(node);
     std::cerr << ind << "Function_Call " << expression;
+    std::cerr << " [interpolant: " << expression->is_interpolant() << "] ";
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [" << expression->name() << "]";
     if (expression->is_delayed()) std::cerr << " [delayed]";
@@ -486,12 +489,14 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
   } else if (dynamic_cast<Unary_Expression*>(node)) {
     Unary_Expression* expression = dynamic_cast<Unary_Expression*>(node);
     std::cerr << ind << "Unary_Expression " << expression;
+    std::cerr << " [interpolant: " << expression->is_interpolant() << "] ";
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [" << expression->type() << "]" << std::endl;
     debug_ast(expression->operand(), ind + " operand: ", env);
   } else if (dynamic_cast<Binary_Expression*>(node)) {
     Binary_Expression* expression = dynamic_cast<Binary_Expression*>(node);
     std::cerr << ind << "Binary_Expression " << expression;
+    std::cerr << " [interpolant: " << expression->is_interpolant() << "] ";
     std::cerr << " [delayed: " << expression->is_delayed() << "] ";
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [" << expression->type_name() << "]" << std::endl;
@@ -500,6 +505,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
   } else if (dynamic_cast<Map*>(node)) {
     Map* expression = dynamic_cast<Map*>(node);
     std::cerr << ind << "Map " << expression;
+    std::cerr << " [interpolant: " << expression->is_interpolant() << "] ";
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [Hashed]" << std::endl;
     for (auto i : expression->elements()) {
