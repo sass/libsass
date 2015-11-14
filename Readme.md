@@ -1,7 +1,7 @@
 LibSass
 =======
 
-by Aaron Leung ([@akhleung]) and Hampton Catlin ([@hcatlin])
+by Aaron Leung ([@akhleung]) and Hampton Catlin ([@hcatlin]) 
 
 [![Linux CI](https://travis-ci.org/sass/libsass.png?branch=master)](https://travis-ci.org/sass/libsass)
 [![Windows CI](https://ci.appveyor.com/api/projects/status/github/sass/libsass?svg=true)](https://ci.appveyor.com/project/sass/libsass/branch/master)
