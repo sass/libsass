@@ -431,8 +431,11 @@ namespace Sass {
       bool is_keyword = false;
       Expression* val = parse_space_list();
       val->is_delayed(false);
+      List* l = dynamic_cast<List*>(val);
       if (lex_css< exactly< ellipsis > >()) {
-        if (val->concrete_type() == Expression::MAP) is_keyword = true;
+        if (val->concrete_type() == Expression::MAP || (
+           (l != NULL && l->separator() == SASS_HASH)
+        )) is_keyword = true;
         else is_arglist = true;
       }
       arg = SASS_MEMORY_NEW(ctx.mem, Argument, pstate, val, "", is_arglist, is_keyword);
@@ -972,7 +975,7 @@ namespace Sass {
   Expression* Parser::parse_map()
   {
     Expression* key = parse_list();
-    Map* map = SASS_MEMORY_NEW(ctx.mem, Map, pstate, 1);
+    List* map = SASS_MEMORY_NEW(ctx.mem, List, pstate, 0, SASS_HASH);
     if (String_Quoted* str = dynamic_cast<String_Quoted*>(key)) {
       if (!str->quote_mark() && !str->is_delayed()) {
         if (const Color* col = name_to_color(str->value())) {
@@ -992,7 +995,7 @@ namespace Sass {
 
     Expression* value = parse_space_list();
 
-    (*map) << std::make_pair(key, value);
+    (*map) << key << value;
 
     while (lex_css< exactly<','> >())
     {
@@ -1017,7 +1020,7 @@ namespace Sass {
 
       Expression* value = parse_space_list();
 
-      (*map) << std::make_pair(key, value);
+      (*map) << key << value;
     }
 
     ParserState ps = map->pstate();
