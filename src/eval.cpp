@@ -17,6 +17,7 @@
 #include "sass/values.h"
 #include "to_value.hpp"
 #include "to_c.hpp"
+#include "debugger.hpp"
 #include "context.hpp"
 #include "backtrace.hpp"
 #include "lexer.hpp"
@@ -486,6 +487,8 @@ namespace Sass {
 
   Expression* Eval::operator()(Binary_Expression* b)
   {
+
+    // debug_ast(b);
     enum Sass_OP op_type = b->type();
     // don't eval delayed expressions (the '/' when used as a separator)
     if (op_type == Sass_OP::DIV && b->is_delayed()) return b;
@@ -530,6 +533,7 @@ namespace Sass {
       // rhs->set_delayed(false);
       // rhs = rhs->perform(this);
     }
+    // debug_ast(b->right(), "rhs: ");
 
     // upgrade string to number if possible (issue #948)
     if (op_type == Sass_OP::DIV || op_type == Sass_OP::MUL) {
@@ -556,6 +560,8 @@ namespace Sass {
     }
 
 
+    Expression* o_lhs = b->left();
+    Expression* o_rhs = b->right();
     Expression::Concrete_Type l_type = lhs->concrete_type();
     Expression::Concrete_Type r_type = rhs->concrete_type();
 
@@ -563,8 +569,13 @@ namespace Sass {
     String_Schema* s1 = dynamic_cast<String_Schema*>(b->left());
     String_Schema* s2 = dynamic_cast<String_Schema*>(b->right());
 
-    if ((s1 && s1->has_interpolants()) || (s2 && s2->has_interpolants())) {
+    bool delay_op = op_type == Sass_OP::DIV || op_type == Sass_OP::ADD || op_type == Sass_OP::SUB;
+      // debug_ast(b, "b: ");
+
+    if (((s1 && s1->has_interpolants()) || (s2 && s2->has_interpolants()))) {
       std::string sep;
+      // debug_ast(s1, "s1: ");
+      // debug_ast(s2, "s2: ");
       switch (op_type) {
         case Sass_OP::SUB: sep = "-"; break;
         case Sass_OP::DIV: sep = "/"; break;
@@ -579,31 +590,72 @@ namespace Sass {
           std::string value(str->value());
           const char* start = value.c_str();
           if (Prelexer::sequence < Prelexer::number >(start) != 0) {
+            bool is_interpolant = lhs->is_interpolant();
             lhs = SASS_MEMORY_NEW(ctx.mem, Textual, lhs->pstate(), Textual::DIMENSION, str->value());
             lhs->is_delayed(false); lhs = lhs->perform(this);
+            lhs->is_interpolant(is_interpolant);
           }
         }
         if (String_Constant* str = dynamic_cast<String_Constant*>(rhs)) {
           std::string value(str->value());
           const char* start = value.c_str();
           if (Prelexer::sequence < Prelexer::number >(start) != 0) {
+            bool is_interpolant = rhs->is_interpolant();
             rhs = SASS_MEMORY_NEW(ctx.mem, Textual, rhs->pstate(), Textual::DIMENSION, str->value());
             rhs->is_delayed(false); rhs = rhs->perform(this);
+            rhs->is_interpolant(is_interpolant);
           }
         }
       }
 
       To_Value to_value(ctx, ctx.mem);
-      Value* v_l = dynamic_cast<Value*>(lhs->perform(&to_value));
-      Value* v_r = dynamic_cast<Value*>(rhs->perform(&to_value));
-      Expression::Concrete_Type l_type = lhs->concrete_type();
-      Expression::Concrete_Type r_type = rhs->concrete_type();
+      Expression* n_lhs = lhs->perform(&to_value);
+      Expression* n_rhs = rhs->perform(&to_value);
+      Value* v_l = dynamic_cast<Value*>(n_lhs);
+      Value* v_r = dynamic_cast<Value*>(n_rhs);
+      Expression::Concrete_Type l_n_type = n_lhs->concrete_type();
+      Expression::Concrete_Type r_n_type = n_rhs->concrete_type();
+      // lhs = v_l;
+      // rhs = v_r;
 
-      if (l_type == Expression::NUMBER && r_type == Expression::NUMBER) {
-        return SASS_MEMORY_NEW(ctx.mem, String_Constant, lhs->pstate(),
-          v_l->to_string() + " " + sep + " " + v_r->to_string());
+
+      // debug_ast(o_lhs, "lhs: ");
+      // debug_ast(o_rhs, "rhs: ");
+
+      bool fast_op = false;
+      if (String_Schema* rhs_schema = dynamic_cast<String_Schema*>(o_rhs)) {
+        if (rhs_schema->length() && rhs_schema->elements().front()->is_interpolant()) fast_op = true;
       }
-    }
+      // if (op_type == Sass_OP::DIV) fast_op = true;
+      if (String_Schema* lhs_schema = dynamic_cast<String_Schema*>(o_lhs)) {
+        if (lhs_schema->length() && lhs_schema->elements().front()->is_interpolant()) fast_op = true;
+      }
+      bool fast_op2 = op_type == Sass_OP::DIV || fast_op;
+
+      if (fast_op && o_lhs->is_delayed()) fast_op2 = true;
+
+      // if (op_type == Sass_OP::DIV || (o_lhs->is_interpolant()) || (o_rhs->is_interpolant())) {
+
+
+      if (fast_op2 && l_n_type == Expression::NUMBER && r_n_type == Expression::NUMBER) {
+        std::string space(o_lhs->is_interpolant() ? "" : "");
+        if (op_type != Sass_OP::DIV) space = " ";
+        else {
+
+          if (fast_op) space = " ";
+          //   bar: 10 / #{5}; keeps space
+
+        }
+        return SASS_MEMORY_NEW(ctx.mem, String_Constant, lhs->pstate(),
+          v_l->to_string() + space + sep + space + v_r->to_string());
+      } else if (!fast_op2) {
+
+        lhs = v_l; l_type = l_n_type;
+        rhs = v_r; r_type = r_n_type;
+
+      }
+      }
+    // }
 
     // ToDo: throw error in op functions
     // ToDo: then catch and re-throw them
@@ -1086,7 +1138,7 @@ namespace Sass {
     }
     std::string res("");
     for (size_t i = 0; i < L; ++i) {
-      (*s)[i]->perform(this);
+      // (*s)[i]->perform(this);
       Expression* ex = (*s)[i]->is_delayed() ? (*s)[i] : (*s)[i]->perform(this);
       interpolation(ctx, res, ex, into_quotes, ex->is_interpolant());
 

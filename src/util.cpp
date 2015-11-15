@@ -170,7 +170,7 @@ namespace Sass {
     for (auto i : str) {
       if (i == 13) {
         lf = true;
-      } if (i == 10) {
+      } else if (i == 10) {
         out += ' ';
         lf = true;
       } else if (!(lf && isspace(i))) {
