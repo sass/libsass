@@ -431,8 +431,11 @@ namespace Sass {
       bool is_keyword = false;
       Expression* val = parse_space_list();
       val->is_delayed(false);
+      List* l = dynamic_cast<List*>(val);
       if (lex_css< exactly< ellipsis > >()) {
-        if (val->concrete_type() == Expression::MAP) is_keyword = true;
+        if (val->concrete_type() == Expression::MAP || (
+           (l != NULL && l->separator() == SASS_HASH)
+        )) is_keyword = true;
         else is_arglist = true;
       }
       arg = SASS_MEMORY_NEW(ctx.mem, Argument, pstate, val, "", is_arglist, is_keyword);
@@ -971,7 +974,7 @@ namespace Sass {
   Expression* Parser::parse_map()
   {
     Expression* key = parse_list();
-    Map* map = SASS_MEMORY_NEW(ctx.mem, Map, pstate, 1);
+    List* map = SASS_MEMORY_NEW(ctx.mem, List, pstate, 0, SASS_HASH);
     if (String_Quoted* str = dynamic_cast<String_Quoted*>(key)) {
       if (!str->quote_mark() && !str->is_delayed()) {
         if (const Color* col = name_to_color(str->value())) {
@@ -991,7 +994,7 @@ namespace Sass {
 
     Expression* value = parse_space_list();
 
-    (*map) << std::make_pair(key, value);
+    (*map) << key << value;
 
     while (lex_css< exactly<','> >())
     {
@@ -1016,7 +1019,7 @@ namespace Sass {
 
       Expression* value = parse_space_list();
 
-      (*map) << std::make_pair(key, value);
+      (*map) << key << value;
     }
 
     ParserState ps = map->pstate();
@@ -1400,6 +1403,7 @@ namespace Sass {
     }
 
     String_Schema* schema = SASS_MEMORY_NEW(ctx.mem, String_Schema, pstate);
+    schema->is_interpolant(true);
     while (i < chunk.end) {
       p = find_first_in_interval< exactly<hash_lbrace> >(i, chunk.end);
       if (p) {
@@ -1547,11 +1551,14 @@ namespace Sass {
         if (peek< exactly< rbrace > >()) {
           css_error("Invalid CSS", " after ", ": expected expression (e.g. 1px, bold), was ");
         }
+        Expression* ex = 0;
         if (lex< re_static_expression >()) {
-          (*schema) << SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, lexed);
+          ex = SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, lexed);
         } else {
-          (*schema) << parse_list();
+          ex = parse_list();
         }
+        ex->is_interpolant(true);
+        (*schema) << ex;
         // ToDo: no error check here?
         lex < exactly < rbrace > >();
       }
