@@ -910,6 +910,27 @@ namespace Sass {
     ATTACH_OPERATIONS()
   };
 
+  inline static const std::string sass_op_to_name(enum Sass_OP op) {
+    switch (op) {
+      case AND: return "and"; break;
+      case OR: return "or"; break;
+      case EQ: return "eq"; break;
+      case NEQ: return "neq"; break;
+      case GT: return "gt"; break;
+      case GTE: return "gte"; break;
+      case LT: return "lt"; break;
+      case LTE: return "lte"; break;
+      case ADD: return "add"; break;
+      case SUB: return "sub"; break;
+      case MUL: return "times"; break;
+      case DIV: return "div"; break;
+      case MOD: return "mod"; break;
+      // this is only used internally!
+      case NUM_OPS: return "[OPS]"; break;
+      default: return "invalid"; break;
+    }
+  }
+
   //////////////////////////////////////////////////////////////////////////
   // Binary expressions. Represents logical, relational, and arithmetic
   // operations. Templatized to avoid large switch statements and repetitive
