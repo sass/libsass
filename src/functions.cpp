@@ -24,6 +24,10 @@
 #include <random>
 #include <set>
 
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#include "inttypes.h"
+#endif
+
 #ifdef __MINGW32__
 #include "windows.h"
 #include "wincrypt.h"
@@ -211,9 +215,9 @@ namespace Sass {
       return seed;
     }
     #else
-    static std::random_device rd;
     uint64_t GetSeed()
     {
+      std::random_device rd;
       return rd();
     }
     #endif
@@ -1125,11 +1129,15 @@ namespace Sass {
     Signature min_sig = "min($numbers...)";
     BUILT_IN(min)
     {
+      To_String to_string(&ctx);
       List* arglist = ARG("$numbers", List);
       Number* least = 0;
       for (size_t i = 0, L = arglist->length(); i < L; ++i) {
-        Number* xi = dynamic_cast<Number*>(arglist->value_at_index(i));
-        if (!xi) error("`" + std::string(sig) + "` only takes numeric arguments", pstate);
+        Expression* val = arglist->value_at_index(i);
+        Number* xi = dynamic_cast<Number*>(val);
+        if (!xi) {
+          error("\"" + val->perform(&to_string) + "\" is not a number for `min'", pstate);
+        }
         if (least) {
           if (Eval::lt(xi, least)) least = xi;
         } else least = xi;
@@ -1140,11 +1148,15 @@ namespace Sass {
     Signature max_sig = "max($numbers...)";
     BUILT_IN(max)
     {
+      To_String to_string(&ctx);
       List* arglist = ARG("$numbers", List);
       Number* greatest = 0;
       for (size_t i = 0, L = arglist->length(); i < L; ++i) {
-        Number* xi = dynamic_cast<Number*>(arglist->value_at_index(i));
-        if (!xi) error("`" + std::string(sig) + "` only takes numeric arguments", pstate);
+        Expression* val = arglist->value_at_index(i);
+        Number* xi = dynamic_cast<Number*>(val);
+        if (!xi) {
+          error("\"" + val->perform(&to_string) + "\" is not a number for `max'", pstate);
+        }
         if (greatest) {
           if (Eval::lt(greatest, xi)) greatest = xi;
         } else greatest = xi;
@@ -1155,7 +1167,10 @@ namespace Sass {
     Signature random_sig = "random($limit:false)";
     BUILT_IN(random)
     {
-      Number* l = dynamic_cast<Number*>(env["$limit"]);
+      AST_Node* arg = env["$limit"];
+      Value* v = dynamic_cast<Value*>(arg);
+      Number* l = dynamic_cast<Number*>(arg);
+      Boolean* b = dynamic_cast<Boolean*>(arg);
       if (l) {
         double v = l->value();
         if (v < 1) {
@@ -1173,11 +1188,16 @@ namespace Sass {
         uint_fast32_t distributed = static_cast<uint_fast32_t>(distributor(rand));
         return SASS_MEMORY_NEW(ctx.mem, Number, pstate, (double)distributed);
       }
-      else {
+      else if (b) {
         std::uniform_real_distribution<> distributor(0, 1);
         double distributed = static_cast<double>(distributor(rand));
         return SASS_MEMORY_NEW(ctx.mem, Number, pstate, distributed);
-     }
+      } else if (v) {
+        throw Exception::InvalidArgumentType(pstate, "random", "$limit", "number", v);
+      } else {
+        throw Exception::InvalidArgumentType(pstate, "random", "$limit", "number");
+      }
+      return 0;
     }
 
     /////////////////

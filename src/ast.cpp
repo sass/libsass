@@ -205,10 +205,8 @@ namespace Sass {
 
   bool Simple_Selector::operator== (const Simple_Selector& rhs) const
   {
-    const Attribute_Selector* ll = dynamic_cast<const Attribute_Selector*>(this);
-    const Attribute_Selector* rr = dynamic_cast<const Attribute_Selector*>(&rhs);
-    if (ll && rr) return *ll == *rr;
-
+    if (const Wrapped_Selector* lw = dynamic_cast<const Wrapped_Selector*>(this)) return *lw == rhs;
+    if (const Attribute_Selector* la = dynamic_cast<const Attribute_Selector*>(this)) return *la == rhs;
     if (is_ns_eq(ns(), rhs.ns()))
     { return name() == rhs.name(); }
     return ns() == rhs.ns();
@@ -216,10 +214,8 @@ namespace Sass {
 
   bool Simple_Selector::operator< (const Simple_Selector& rhs) const
   {
-    const Attribute_Selector* ll = dynamic_cast<const Attribute_Selector*>(this);
-    const Attribute_Selector* rr = dynamic_cast<const Attribute_Selector*>(&rhs);
-    if (ll && rr) return *ll < *rr;
-
+    if (const Wrapped_Selector* lw = dynamic_cast<const Wrapped_Selector*>(this)) return *lw < rhs;
+    if (const Attribute_Selector* la = dynamic_cast<const Attribute_Selector*>(this)) return *la < rhs;
     if (is_ns_eq(ns(), rhs.ns()))
     { return name() < rhs.name(); }
     return ns() < rhs.ns();
@@ -291,7 +287,7 @@ namespace Sass {
     {
       for (i = 0, L = rhs->length(); i < L; ++i)
       {
-        if ((typeid(*(*rhs)[i]) == typeid(Pseudo_Selector) || typeid(*(*rhs)[i]) == typeid(Wrapped_Selector)) && (*rhs)[L-1]->is_pseudo_element())
+        if ((dynamic_cast<Pseudo_Selector*>((*rhs)[i]) || dynamic_cast<Wrapped_Selector*>((*rhs)[i])) && (*rhs)[L-1]->is_pseudo_element())
         { found = true; break; }
       }
     }
@@ -299,7 +295,7 @@ namespace Sass {
     {
       for (i = 0, L = rhs->length(); i < L; ++i)
       {
-        if (typeid(*(*rhs)[i]) == typeid(Pseudo_Selector) || typeid(*(*rhs)[i]) == typeid(Wrapped_Selector))
+        if (dynamic_cast<Pseudo_Selector*>((*rhs)[i]) || dynamic_cast<Wrapped_Selector*>((*rhs)[i]))
         { found = true; break; }
       }
     }
@@ -498,6 +494,26 @@ namespace Sass {
     if (is_ns_eq(ns(), rhs.ns()))
     { return name() == rhs.name(); }
     return ns() == rhs.ns();
+  }
+
+  bool Wrapped_Selector::operator< (const Wrapped_Selector& rhs) const
+  {
+    if (is_ns_eq(ns(), rhs.ns()) && name() == rhs.name())
+    { return *(selector()) < *(rhs.selector()); }
+    if (is_ns_eq(ns(), rhs.ns()))
+    { return name() < rhs.name(); }
+    return ns() < rhs.ns();
+  }
+
+  bool Wrapped_Selector::operator< (const Simple_Selector& rhs) const
+  {
+    if (const Wrapped_Selector* w = dynamic_cast<const Wrapped_Selector*>(&rhs))
+    {
+      return *this < *w;
+    }
+    if (is_ns_eq(ns(), rhs.ns()))
+    { return name() < rhs.name(); }
+    return ns() < rhs.ns();
   }
 
   bool Wrapped_Selector::is_superselector_of(Wrapped_Selector* sub)
@@ -793,7 +809,7 @@ namespace Sass {
       if (lhs_tail->combinator() != rhs_tail->combinator()) return false;
       if (lhs_tail->head() && !rhs_tail->head()) return false;
       if (!lhs_tail->head() && rhs_tail->head()) return false;
-      if (lhs_tail->head() && lhs_tail->head()) {
+      if (lhs_tail->head() && rhs_tail->head()) {
         if (!lhs_tail->head()->is_superselector_of(rhs_tail->head())) return false;
       }
     }
@@ -983,6 +999,11 @@ namespace Sass {
               Complex_Selector* parent = (*parents)[i];
               Complex_Selector* s = parent->cloneFully(ctx);
               Complex_Selector* ss = this->clone(ctx);
+              // this is only if valid if the parent has no trailing op
+              // otherwise we cannot append more simple selectors to head
+              if (parent->last()->combinator() != ANCESTOR_OF) {
+                throw Exception::InvalidParent(parent, ss);
+              }
               ss->tail(tail ? tail->clone(ctx) : 0);
               Compound_Selector* h = head_->clone(ctx);
               if (h->length()) h->erase(h->begin());
@@ -1009,7 +1030,7 @@ namespace Sass {
               *retval << cpy->skip_empty_reference();
             }
           }
-          // have no parent and not tails
+          // have no parent nor tails
           else {
             Complex_Selector* cpy = this->clone(ctx);
             cpy->head(SASS_MEMORY_NEW(ctx.mem, Compound_Selector, head->pstate()));
@@ -2023,6 +2044,91 @@ namespace Sass {
   std::string Custom_Warning::to_string(bool compressed, int precision) const
   {
     return message();
+  }
+
+  std::string Selector_List::to_string(bool compressed, int precision) const
+  {
+    std::string str("");
+    auto end = this->end();
+    auto start = this->begin();
+    while (start < end && *start) {
+      Complex_Selector* sel = *start;
+      if (!str.empty()) str += ", ";
+      str += sel->to_string(compressed, precision);
+      ++ start;
+    }
+    return str;
+  }
+
+  std::string Compound_Selector::to_string(bool compressed, int precision) const
+  {
+    std::string str("");
+    auto end = this->end();
+    auto start = this->begin();
+    while (start < end && *start) {
+      Simple_Selector* sel = *start;
+      str += sel->to_string(compressed, precision);
+      ++ start;
+    }
+    return str;
+  }
+
+  std::string Complex_Selector::to_string(bool compressed, int precision) const
+  {
+    // first render head and tail if they are available
+    std::string str_head(head() ? head()->to_string(compressed, precision) : "");
+    std::string str_tail(tail() ? tail()->to_string(compressed, precision) : "");
+    std::string str_ref(reference() ? reference()->to_string(compressed, precision) : "");
+    // combinator in between
+    std::string str_op("");
+    // use a switch statement
+    switch (combinator()) {
+      case ANCESTOR_OF: str_op = " "; break;
+      case PARENT_OF:   str_op = ">"; break;
+      case PRECEDES:    str_op = "~"; break;
+      case ADJACENT_TO: str_op = "+"; break;
+      case REFERENCE:   str_op = "/" + str_ref + "/"; break;
+    }
+    // prettify for non ancestors
+    if (combinator() != ANCESTOR_OF) {
+      // no spaces needed for compressed
+      if (compressed == false) {
+        // make sure we add some spaces where needed
+        if (str_tail != "") str_op += " ";
+        if (str_head != "") str_head += " ";
+      }
+    }
+    // is ancestor with no tail
+    else if (str_tail == "") {
+      str_op = ""; // superflous
+    }
+    // now build the final result
+    return str_head + str_op + str_tail;
+  }
+
+  std::string Selector_Schema::to_string(bool compressed, int precision) const
+  {
+    return contents()->to_string(compressed, precision);
+  }
+
+  std::string Parent_Selector::to_string(bool compressed, int precision) const
+  {
+    return "&";
+  }
+
+  std::string Attribute_Selector::to_string(bool compressed, int precision) const
+  {
+    std::string val(value() ? value()->to_string(compressed, precision) : "");
+    return "[" + this->ns_name() + this->matcher() + val + "]";
+  }
+
+  std::string Wrapped_Selector::to_string(bool compressed, int precision) const
+  {
+    // first render the
+    std::string main(this->Simple_Selector::to_string(compressed, precision));
+    std::string wrapped(selector() ? selector()->to_string(compressed, precision) : "");
+    // now build the final result
+    return main + "(" + wrapped + ")";
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

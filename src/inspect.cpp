@@ -408,22 +408,30 @@ namespace Sass {
   void Inspect::operator()(Binary_Expression* expr)
   {
     expr->left()->perform(this);
+    if ( in_media_block || (
+          expr->op().ws_before
+          && !expr->is_delayed()
+    )) append_string(" ");
     switch (expr->type()) {
-      case Sass_OP::AND: append_string(" and "); break;
-      case Sass_OP::OR:  append_string(" or ");  break;
-      case Sass_OP::EQ:  append_string(" == ");  break;
-      case Sass_OP::NEQ: append_string(" != ");  break;
-      case Sass_OP::GT:  append_string(" > ");   break;
-      case Sass_OP::GTE: append_string(" >= ");  break;
-      case Sass_OP::LT:  append_string(" < ");   break;
-      case Sass_OP::LTE: append_string(" <= ");  break;
-      case Sass_OP::ADD: append_string(" + ");   break;
-      case Sass_OP::SUB: append_string(" - ");   break;
-      case Sass_OP::MUL: append_string(" * ");   break;
-      case Sass_OP::DIV: append_string(in_media_block ? " / " : "/"); break;
-      case Sass_OP::MOD: append_string(" % ");   break;
+      case Sass_OP::AND: append_string("&&"); break;
+      case Sass_OP::OR:  append_string("||");  break;
+      case Sass_OP::EQ:  append_string("==");  break;
+      case Sass_OP::NEQ: append_string("!=");  break;
+      case Sass_OP::GT:  append_string(">");   break;
+      case Sass_OP::GTE: append_string(">=");  break;
+      case Sass_OP::LT:  append_string("<");   break;
+      case Sass_OP::LTE: append_string("<=");  break;
+      case Sass_OP::ADD: append_string("+");   break;
+      case Sass_OP::SUB: append_string("-");   break;
+      case Sass_OP::MUL: append_string("*");   break;
+      case Sass_OP::DIV: append_string("/"); break;
+      case Sass_OP::MOD: append_string("%");   break;
       default: break; // shouldn't get here
     }
+    if ( in_media_block || (
+          expr->op().ws_after
+          && !expr->is_delayed()
+    )) append_string(" ");
     expr->right()->perform(this);
   }
 
@@ -830,7 +838,10 @@ namespace Sass {
     for (size_t i = 0, L = g->length(); i < L; ++i) {
       if (!in_wrapped && i == 0) append_indentation();
       if ((*g)[i] == 0) continue;
+      schedule_mapping((*g)[i]->last());
+      // add_open_mapping((*g)[i]->last());
       (*g)[i]->perform(this);
+      // add_close_mapping((*g)[i]->last());
       if (i < L - 1) {
         scheduled_space = 0;
         append_comma_separator();
