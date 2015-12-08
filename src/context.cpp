@@ -777,6 +777,7 @@ namespace Sass {
     register_function(ctx, str_slice_sig, str_slice, env);
     register_function(ctx, to_upper_case_sig, to_upper_case, env);
     register_function(ctx, to_lower_case_sig, to_lower_case, env);
+    register_function(ctx, base64_encode_sig, base64_encode, env);
     // Number Functions
     register_function(ctx, percentage_sig, percentage, env);
     register_function(ctx, round_sig, round, env);

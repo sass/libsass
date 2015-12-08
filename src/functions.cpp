@@ -1931,5 +1931,23 @@ namespace Sass {
       return SASS_MEMORY_NEW(ctx.mem, String_Quoted, pstate, ss.str());
     }
 
+    Signature base64_encode_sig = "base64-encode($string)";
+    BUILT_IN(base64_encode)
+    {
+      std::string newstr;
+      try {
+        String_Constant* s = ARG("$string", String_Constant);
+        std::string str = unquote(s->value());
+        base64::encoder E;
+        std::istringstream is( str );
+        std::ostringstream buffer;
+        E.encode(is, buffer);
+        newstr = buffer.str();
+      }
+      catch (...) { handle_utf8_error(pstate, backtrace); }
+      return SASS_MEMORY_NEW(ctx.mem, String_Quoted, pstate, newstr);
+    }
+
+
   }
 }

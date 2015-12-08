@@ -1,6 +1,9 @@
 #ifndef SASS_FUNCTIONS_H
 #define SASS_FUNCTIONS_H
 
+#define BUFFERSIZE 255
+#include "b64/encode.h"
+
 #include "position.hpp"
 #include "environment.hpp"
 #include "sass/functions.h"
@@ -109,6 +112,7 @@ namespace Sass {
     extern Signature is_superselector_sig;
     extern Signature simple_selectors_sig;
     extern Signature selector_parse_sig;
+    extern Signature base64_encode_sig;
 
     BUILT_IN(rgb);
     BUILT_IN(rgba_4);
@@ -191,6 +195,7 @@ namespace Sass {
     BUILT_IN(is_superselector);
     BUILT_IN(simple_selectors);
     BUILT_IN(selector_parse);
+    BUILT_IN(base64_encode);
   }
 }
 
