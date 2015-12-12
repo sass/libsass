@@ -108,6 +108,7 @@ namespace Sass {
   // append some text or token to the buffer
   void Emitter::append_string(const std::string& text)
   {
+
     // write space/lf
     flush_schedules();
 
