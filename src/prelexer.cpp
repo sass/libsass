@@ -204,7 +204,6 @@ namespace Sass {
                        digits,
                        identifier,
                        quoted_string,
-                       exactly<'+'>,
                        exactly<'-'>
                      >
                    >

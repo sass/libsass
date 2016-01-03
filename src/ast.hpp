@@ -150,7 +150,7 @@ namespace Sass {
   };
 
   //////////////////////////////////////////////////////////////////////
-  // Still just an expression, but with a to_string method
+  // base class for values that support operations
   //////////////////////////////////////////////////////////////////////
   class PreValue : public Expression {
   public:
@@ -939,7 +939,14 @@ namespace Sass {
     Binary_Expression(ParserState pstate,
                       Operand op, Expression* lhs, Expression* rhs)
     : PreValue(pstate), op_(op), left_(lhs), right_(rhs), hash_(0)
-    { }
+    {
+/*
+      is_interpolant(
+        (lhs && lhs->is_interpolant()) ||
+        (rhs && rhs->is_interpolant())
+      );
+*/
+    }
     const std::string type_name() {
       switch (type()) {
         case AND: return "and"; break;
