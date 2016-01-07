@@ -21,14 +21,14 @@ namespace Sass {
     Context& ctx;
     Listize  listize;
     Eval(Expand& exp);
-    virtual ~Eval();
+    ~Eval();
+
+    bool is_in_comment;
 
     Env* environment();
     Context& context();
     Selector_List* selector();
     Backtrace* backtrace();
-
-    using Operation<Expression*>::operator();
 
     // for evaluating function bodies
     Expression* operator()(Block*);
@@ -93,10 +93,10 @@ namespace Sass {
     static Value* op_number_color(Memory_Manager&, enum Sass_OP, const Number&, const Color&, bool compressed = false, int precision = 5, ParserState* pstate = 0);
     static Value* op_color_number(Memory_Manager&, enum Sass_OP, const Color&, const Number&, bool compressed = false, int precision = 5, ParserState* pstate = 0);
     static Value* op_colors(Memory_Manager&, enum Sass_OP, const Color&, const Color&, bool compressed = false, int precision = 5, ParserState* pstate = 0);
-    static Value* op_strings(Memory_Manager&, enum Sass_OP, Value&, Value&, bool compressed = false, int precision = 5, ParserState* pstate = 0);
+    static Value* op_strings(Memory_Manager&, Sass::Operand, Value&, Value&, bool compressed = false, int precision = 5, ParserState* pstate = 0);
 
   private:
-    std::string interpolation(Expression* s, bool into_quotes = false);
+    void interpolation(Context& ctx, std::string& res, Expression* ex, bool into_quotes, bool was_itpl = false);
 
   };
 

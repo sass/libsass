@@ -204,7 +204,6 @@ namespace Sass {
                        digits,
                        identifier,
                        quoted_string,
-                       exactly<'+'>,
                        exactly<'-'>
                      >
                    >
@@ -539,6 +538,9 @@ namespace Sass {
     }
     // Match CSS numeric constants.
 
+    const char* op(const char* src) {
+      return class_char<op_chars>(src);
+    }
     const char* sign(const char* src) {
       return class_char<sign_chars>(src);
     }

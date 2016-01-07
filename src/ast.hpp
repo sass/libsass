@@ -145,7 +145,21 @@ namespace Sass {
     virtual bool is_false() { return false; }
     virtual bool operator== (const Expression& rhs) const { return false; }
     virtual void set_delayed(bool delayed) { is_delayed(delayed); }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const = 0;
     virtual size_t hash() { return 0; }
+  };
+
+  //////////////////////////////////////////////////////////////////////
+  // base class for values that support operations
+  //////////////////////////////////////////////////////////////////////
+  class PreValue : public Expression {
+  public:
+    PreValue(ParserState pstate,
+               bool d = false, bool e = false, bool i = false, Concrete_Type ct = NONE)
+    : Expression(pstate, d, e, i, ct)
+    { }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const = 0;
+    virtual ~PreValue() { }
   };
 
   //////////////////////////////////////////////////////////////////////
@@ -846,8 +860,8 @@ namespace Sass {
     std::string type() { return is_arglist_ ? "arglist" : "list"; }
     static std::string type_name() { return "list"; }
     const char* sep_string(bool compressed = false) const {
-      return separator() == SASS_COMMA ?
-        (compressed ? "," : ", ") : " ";
+      return separator() == SASS_SPACE ?
+        " " : (compressed ? "," : ", ");
     }
     bool is_invisible() const { return empty(); }
     Expression* value_at_index(size_t i);
@@ -915,7 +929,7 @@ namespace Sass {
   // operations. Templatized to avoid large switch statements and repetitive
   // subclassing.
   //////////////////////////////////////////////////////////////////////////
-  class Binary_Expression : public Expression {
+  class Binary_Expression : public PreValue {
   private:
     ADD_HASHED(Operand, op)
     ADD_HASHED(Expression*, left)
@@ -924,8 +938,15 @@ namespace Sass {
   public:
     Binary_Expression(ParserState pstate,
                       Operand op, Expression* lhs, Expression* rhs)
-    : Expression(pstate), op_(op), left_(lhs), right_(rhs), hash_(0)
-    { }
+    : PreValue(pstate), op_(op), left_(lhs), right_(rhs), hash_(0)
+    {
+/*
+      is_interpolant(
+        (lhs && lhs->is_interpolant()) ||
+        (rhs && rhs->is_interpolant())
+      );
+*/
+    }
     const std::string type_name() {
       switch (type()) {
         case AND: return "and"; break;
@@ -997,6 +1018,7 @@ namespace Sass {
       }
       return hash_;
     }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
     enum Sass_OP type() const { return op_.operand; }
     ATTACH_OPERATIONS()
   };
@@ -1046,6 +1068,7 @@ namespace Sass {
       };
       return hash_;
     }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
 
@@ -1091,6 +1114,7 @@ namespace Sass {
       return hash_;
     }
 
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
 
@@ -1113,6 +1137,7 @@ namespace Sass {
       has_rest_argument_(false),
       has_keyword_argument_(false)
     { }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
 
     Argument* get_rest_argument();
     Argument* get_keyword_argument();
@@ -1123,17 +1148,17 @@ namespace Sass {
   //////////////////
   // Function calls.
   //////////////////
-  class Function_Call : public Expression {
+  class Function_Call : public PreValue {
     ADD_HASHED(std::string, name)
     ADD_HASHED(Arguments*, arguments)
     ADD_PROPERTY(void*, cookie)
     size_t hash_;
   public:
     Function_Call(ParserState pstate, std::string n, Arguments* args, void* cookie)
-    : Expression(pstate), name_(n), arguments_(args), cookie_(cookie), hash_(0)
+    : PreValue(pstate), name_(n), arguments_(args), cookie_(cookie), hash_(0)
     { concrete_type(STRING); }
     Function_Call(ParserState pstate, std::string n, Arguments* args)
-    : Expression(pstate), name_(n), arguments_(args), cookie_(0), hash_(0)
+    : PreValue(pstate), name_(n), arguments_(args), cookie_(0), hash_(0)
     { concrete_type(STRING); }
 
     virtual bool operator==(const Expression& rhs) const
@@ -1164,6 +1189,7 @@ namespace Sass {
       return hash_;
     }
 
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
 
@@ -1177,17 +1203,18 @@ namespace Sass {
     Function_Call_Schema(ParserState pstate, String* n, Arguments* args)
     : Expression(pstate), name_(n), arguments_(args)
     { concrete_type(STRING); }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
 
   ///////////////////////
   // Variable references.
   ///////////////////////
-  class Variable : public Expression {
+  class Variable : public PreValue {
     ADD_PROPERTY(std::string, name)
   public:
     Variable(ParserState pstate, std::string n)
-    : Expression(pstate), name_(n)
+    : PreValue(pstate), name_(n)
     { }
 
     virtual bool operator==(const Expression& rhs) const
@@ -1208,6 +1235,7 @@ namespace Sass {
     {
       return std::hash<std::string>()(name());
     }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
 
     ATTACH_OPERATIONS()
   };
@@ -1251,6 +1279,7 @@ namespace Sass {
       }
       return hash_;
     }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
 
     ATTACH_OPERATIONS()
   };
@@ -1330,6 +1359,7 @@ namespace Sass {
     }
 
     virtual bool operator== (const Expression& rhs) const;
+    virtual std::string to_hex(bool compressed = false, int precision = 5) const;
     virtual std::string to_string(bool compressed = false, int precision = 5) const;
 
     ATTACH_OPERATIONS()
@@ -1416,14 +1446,22 @@ namespace Sass {
   // evaluation phase.
   ///////////////////////////////////////////////////////////////////////
   class String_Schema : public String, public Vectorized<Expression*> {
-    ADD_PROPERTY(bool, has_interpolants)
+    // ADD_PROPERTY(bool, has_interpolants)
     size_t hash_;
   public:
     String_Schema(ParserState pstate, size_t size = 0, bool has_interpolants = false)
-    : String(pstate), Vectorized<Expression*>(size), has_interpolants_(has_interpolants), hash_(0)
+    : String(pstate), Vectorized<Expression*>(size), hash_(0)
     { concrete_type(STRING); }
     std::string type() { return "string"; }
     static std::string type_name() { return "string"; }
+
+    void has_interpolants(bool tc) { }
+    bool has_interpolants() {
+      for (auto el : elements()) {
+        if (el->is_interpolant()) return true;
+      }
+      return false;
+    }
 
     virtual size_t hash()
     {
@@ -1513,6 +1551,7 @@ namespace Sass {
     : Expression(pstate), Vectorized<Media_Query_Expression*>(s),
       media_type_(t), is_negated_(n), is_restricted_(r)
     { }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
 
@@ -1528,6 +1567,7 @@ namespace Sass {
                            Expression* f, Expression* v, bool i = false)
     : Expression(pstate), feature_(f), value_(v), is_interpolated_(i)
     { }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
 
@@ -1554,6 +1594,7 @@ namespace Sass {
     : Expression(pstate)
     { }
     virtual bool needs_parens(Supports_Condition* cond) const { return false; }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
 
@@ -1658,6 +1699,7 @@ namespace Sass {
         return false;
       }
     }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
     ATTACH_OPERATIONS()
   };
 
@@ -1731,6 +1773,7 @@ namespace Sass {
     Thunk(ParserState pstate, Expression* exp, Env* env = 0)
     : Expression(pstate), expression_(exp), environment_(env)
     { }
+    virtual std::string to_string(bool compressed = false, int precision = 5) const;
   };
 
   /////////////////////////////////////////////////////////
