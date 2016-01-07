@@ -14,6 +14,7 @@
 #include "sass/base.h"
 #include "utf8.h"
 
+#include <cstdint>
 #include <cstdlib>
 #include <cmath>
 #include <cctype>
