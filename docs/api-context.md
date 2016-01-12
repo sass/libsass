@@ -88,7 +88,7 @@ char* source_map_file;
 char* source_map_root;
 ```
 ```C
-// Custom functions that can be called from sccs code
+// Custom functions that can be called from sass code
 Sass_C_Function_List c_functions;
 ```
 ```C
