@@ -12,7 +12,7 @@
 
 namespace Sass {
 
-  Expand::Expand(Context& ctx, Env* env, Backtrace* bt)
+  Expand::Expand(Context& ctx, Env* env, std::vector<Sass_Stack_Entry>& fn_stack, Backtrace* bt)
   : ctx(ctx),
     eval(Eval(*this)),
     env_stack(std::vector<Env*>()),
@@ -21,6 +21,7 @@ namespace Sass {
     property_stack(std::vector<String*>()),
     selector_stack(std::vector<Selector_List*>()),
     backtrace_stack(std::vector<Backtrace*>()),
+    fn_stack(fn_stack),
     in_keyframes(false)
   {
     env_stack.push_back(0);
