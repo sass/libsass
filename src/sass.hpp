@@ -1,3 +1,5 @@
+#define _NO_W32_PSEUDO_MODIFIERS
+
 // must be the first include in all compile units
 #ifndef SASS_SASS_H
 #define SASS_SASS_H
