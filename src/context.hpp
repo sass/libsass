@@ -39,7 +39,7 @@ namespace Sass {
   public:
     const std::string CWD;
     struct Sass_Options& c_options;
-    std::vector<Sass_Stack_Entry> fn_stack;
+    std::vector<struct Sass_Caller> fn_stack;
     std::string entry_path;
     size_t head_imports;
     Memory_Manager mem;
