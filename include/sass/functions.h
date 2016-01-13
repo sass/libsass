@@ -17,6 +17,9 @@ struct Sass_Compiler;
 struct Sass_Importer;
 struct Sass_Function;
 
+
+// Typedef helpers for import lists
+typedef struct Sass_Caller (*Sass_Stack_Entry);
 // Typedef helpers for import lists
 typedef struct Sass_Import (*Sass_Import_Entry);
 typedef struct Sass_Import* (*Sass_Import_List);

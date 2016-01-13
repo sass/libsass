@@ -22,6 +22,15 @@ struct Sass_Import {
   size_t column;
 };
 
+// External call stack entry
+struct Sass_Caller {
+  // the parent document
+  Sass_Import_Entry import;
+  // current position
+  size_t line;
+  size_t column;
+};
+
 // Struct to hold importer callback
 struct Sass_Importer {
   Sass_Importer_Fn importer;

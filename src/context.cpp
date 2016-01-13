@@ -72,6 +72,7 @@ namespace Sass {
     sheets(),
     subset_map(),
     import_stack(),
+    call_stack(),
 
     c_headers               (std::vector<Sass_Importer_Entry>()),
     c_importers             (std::vector<Sass_Importer_Entry>()),
