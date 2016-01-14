@@ -61,6 +61,7 @@ namespace Sass {
   Context::Context(struct Sass_Context& c_ctx)
   : CWD(File::get_cwd()),
     c_options(c_ctx),
+    fn_stack(),
     entry_path(""),
     head_imports(0),
     mem(Memory_Manager()),
@@ -72,6 +73,7 @@ namespace Sass {
     sheets(),
     subset_map(),
     import_stack(),
+    call_stack(),
 
     c_headers               (std::vector<Sass_Importer_Entry>()),
     c_importers             (std::vector<Sass_Importer_Entry>()),
@@ -646,7 +648,7 @@ namespace Sass {
     // create initial backtrace entry
     Backtrace backtrace(0, ParserState("", 0), "");
     // create crtp visitor objects
-    Expand expand(*this, &global, &backtrace);
+    Expand expand(*this, &global, fn_stack, &backtrace);
     Cssize cssize(*this, &backtrace);
     // expand and eval the tree
     root = root->perform(&expand)->block();

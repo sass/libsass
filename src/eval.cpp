@@ -16,6 +16,7 @@
 #include "environment.hpp"
 #include "position.hpp"
 #include "sass/values.h"
+#include "sass_functions.hpp"
 #include "to_value.hpp"
 #include "to_c.hpp"
 #include "context.hpp"
@@ -889,12 +890,15 @@ namespace Sass {
     if (func || body) {
       bind(std::string("Function"), c->name(), params, args, &ctx, &fn_env, this);
       Backtrace here(backtrace(), c->pstate(), ", in function `" + c->name() + "`");
+      exp.fn_stack.push_back({ ctx.import_stack.back(), def->pstate().line, def->pstate().column });
       exp.backtrace_stack.push_back(&here);
+
       // eval the body if user-defined or special, invoke underlying CPP function if native
       if (body && !Prelexer::re_special_fun(c->name().c_str())) { result = body->perform(this); }
       else if (func) { result = func(fn_env, *env, ctx, def->signature(), c->pstate(), backtrace()); }
       if (!result) error(std::string("Function ") + c->name() + " did not return a value", c->pstate());
       exp.backtrace_stack.pop_back();
+      exp.fn_stack.pop_back();
     }
 
     // else if it's a user-defined c function
@@ -914,6 +918,7 @@ namespace Sass {
       bind(std::string("Function"), c->name(), params, args, &ctx, &fn_env, this);
 
       Backtrace here(backtrace(), c->pstate(), ", in function `" + c->name() + "`");
+      exp.fn_stack.push_back({ ctx.import_stack.back(), def->pstate().line, def->pstate().column });
       exp.backtrace_stack.push_back(&here);
 
       To_C to_c;
@@ -933,6 +938,7 @@ namespace Sass {
       result = cval_to_astnode(ctx.mem, c_val, ctx, backtrace(), c->pstate());
 
       exp.backtrace_stack.pop_back();
+      exp.fn_stack.pop_back();
       sass_delete_value(c_args);
       if (c_val != c_args)
         sass_delete_value(c_val);

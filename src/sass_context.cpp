@@ -635,6 +635,10 @@ extern "C" {
   size_t ADDCALL sass_compiler_get_import_stack_size(struct Sass_Compiler* compiler) { return compiler->cpp_ctx->import_stack.size(); }
   Sass_Import_Entry ADDCALL sass_compiler_get_last_import(struct Sass_Compiler* compiler) { return compiler->cpp_ctx->import_stack.back(); }
   Sass_Import_Entry ADDCALL sass_compiler_get_import_entry(struct Sass_Compiler* compiler, size_t idx) { return compiler->cpp_ctx->import_stack[idx]; }
+  // Getters for Sass_Compiler options (query call stack)
+  size_t ADDCALL sass_compiler_get_call_stack_size(struct Sass_Compiler* compiler) { return compiler->cpp_ctx->call_stack.size(); }
+  Sass_Stack_Entry ADDCALL sass_compiler_get_last_caller(struct Sass_Compiler* compiler) { return compiler->cpp_ctx->call_stack.back(); }
+  Sass_Stack_Entry ADDCALL sass_compiler_get_caller_entry(struct Sass_Compiler* compiler, size_t idx) { return compiler->cpp_ctx->call_stack[idx]; }
 
   // Calculate the size of the stored null terminated array
   size_t ADDCALL sass_context_get_included_files_size (struct Sass_Context* ctx)

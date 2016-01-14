@@ -5,6 +5,7 @@
 #include "expand.hpp"
 #include "bind.hpp"
 #include "eval.hpp"
+#include "sass_functions.hpp"
 #include "to_string.hpp"
 #include "backtrace.hpp"
 #include "context.hpp"
@@ -12,7 +13,7 @@
 
 namespace Sass {
 
-  Expand::Expand(Context& ctx, Env* env, Backtrace* bt)
+  Expand::Expand(Context& ctx, Env* env, std::vector<struct Sass_Caller>& fn_stack, Backtrace* bt)
   : ctx(ctx),
     eval(Eval(*this)),
     env_stack(std::vector<Env*>()),
@@ -21,6 +22,7 @@ namespace Sass {
     property_stack(std::vector<String*>()),
     selector_stack(std::vector<Selector_List*>()),
     backtrace_stack(std::vector<Backtrace*>()),
+    fn_stack(fn_stack),
     in_keyframes(false)
   {
     env_stack.push_back(0);
@@ -655,6 +657,7 @@ namespace Sass {
     Arguments* args = static_cast<Arguments*>(c->arguments()
                                                ->perform(&eval));
     Backtrace new_bt(backtrace(), c->pstate(), ", in mixin `" + c->name() + "`");
+    fn_stack.push_back({ ctx.import_stack.back(), c->pstate().line, c->pstate().column });
     backtrace_stack.push_back(&new_bt);
     Env new_env(def->environment());
     env_stack.push_back(&new_env);
@@ -674,6 +677,7 @@ namespace Sass {
     append_block(body);
     backtrace_stack.pop_back();
     env_stack.pop_back();
+    fn_stack.pop_back();
     return 0;
   }
 

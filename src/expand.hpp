@@ -34,6 +34,7 @@ namespace Sass {
     std::vector<String*>   property_stack;
     std::vector<Selector_List*> selector_stack;
     std::vector<Backtrace*>backtrace_stack;
+    std::vector<Sass_Caller>& fn_stack;
     bool              in_keyframes;
 
     Statement* fallback_impl(AST_Node* n);
@@ -42,7 +43,7 @@ namespace Sass {
     void expand_selector_list(Selector*, Selector_List* extender);
 
   public:
-    Expand(Context&, Env*, Backtrace*);
+    Expand(Context&, Env*, std::vector<Sass_Caller>& fn_stack, Backtrace*);
     ~Expand() { }
 
     Statement* operator()(Block*);

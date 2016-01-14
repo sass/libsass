@@ -39,6 +39,7 @@ namespace Sass {
   public:
     const std::string CWD;
     struct Sass_Options& c_options;
+    std::vector<struct Sass_Caller> fn_stack;
     std::string entry_path;
     size_t head_imports;
     Memory_Manager mem;
@@ -52,6 +53,7 @@ namespace Sass {
     std::map<const std::string, const StyleSheet> sheets;
     Subset_Map<std::string, std::pair<Complex_Selector*, Compound_Selector*> > subset_map;
     std::vector<Sass_Import_Entry> import_stack;
+    std::vector<Sass_Stack_Entry> call_stack;
 
     struct Sass_Compiler* c_compiler;
 
