@@ -76,6 +76,7 @@ namespace Sass {
     std::map<K, std::vector<triple<std::vector<K>, std::set<K>, size_t> > > hash_;
   public:
     void put(const std::vector<K>& s, const V& value);
+    void prepend(const std::vector<K>& s, const V& value);
     std::vector<std::pair<V, std::vector<K> > > get_kv(const std::vector<K>& s);
     std::vector<V> get_v(const std::vector<K>& s);
     bool empty() { return values_.empty(); }
@@ -85,6 +86,21 @@ namespace Sass {
 
   template<typename K, typename V>
   void Subset_Map<K, V>::put(const std::vector<K>& s, const V& value)
+  {
+    if (s.empty()) throw "internal error: subset map keys may not be empty";
+    size_t index = values_.size();
+    values_.push_back(value);
+    std::set<K> ss;
+    for (size_t i = 0, S = s.size(); i < S; ++i)
+    { ss.insert(s[i]); }
+    for (size_t i = 0, S = s.size(); i < S; ++i)
+    {
+      hash_[s[i]].push_back(make_triple(s, ss, index));
+    }
+  }
+
+  template<typename K, typename V>
+  void Subset_Map<K, V>::prepend(const std::vector<K>& s, const V& value)
   {
     if (s.empty()) throw "internal error: subset map keys may not be empty";
     size_t index = values_.size();

@@ -4,6 +4,7 @@
 #include "context.hpp"
 #include "backtrace.hpp"
 #include "parser.hpp"
+#include "debugger.hpp"
 #include "constants.hpp"
 #include "inspect.hpp"
 #include "extend.hpp"
@@ -1740,13 +1741,24 @@ namespace Sass {
       for(;itr != parsedSelectors.end(); ++itr) {
         Selector_List* child = *itr;
         std::vector<Complex_Selector*> exploded;
-        Selector_List* rv = child->parentize(result, ctx);
+        Selector_List* rv = child;
+
+        // debug_ast(rv, "oo: ");
+        rv = result->connect(rv, ctx);
+        // rv->remove_parent_selectors();
+        // result->remove_parent_selectors();
+        // debug_ast(rv, "in: ");
+        rv = rv->parentalize(result, ctx);
+        // debug_ast(rv, "out: ");
         for (size_t m = 0, mLen = rv->length(); m < mLen; ++m) {
-          exploded.push_back((*rv)[m]);
+          if (dynamic_cast<Parent_Selector*>((*rv)[m])) {
+            exploded.push_back(exploded.back());
+          } else {
+            exploded.push_back((*rv)[m]);
+          }
         }
         result->elements(exploded);
       }
-
       Listize listize(ctx.mem);
       return result->perform(&listize);
     }
@@ -1803,7 +1815,6 @@ namespace Sass {
           for (size_t j = 0, childLen = child->length(); j < childLen; ++j) {
             Complex_Selector* parentSeqClone = (*result)[i]->cloneFully(ctx);
             Complex_Selector* childSeq = (*child)[j];
-            Complex_Selector* base = childSeq->tail();
 
             // Must be a simple sequence
             if( childSeq->combinator() != Complex_Selector::Combinator::ANCESTOR_OF ) {
@@ -1816,7 +1827,7 @@ namespace Sass {
             }
 
             // Cannot be a Universal selector
-            Type_Selector* pType = dynamic_cast<Type_Selector*>(base->head()->first());
+            Type_Selector* pType = dynamic_cast<Type_Selector*>(childSeq->head()->first());
             if(pType && pType->name() == "*") {
               std::string msg("Can't append  `");
               msg += childSeq->to_string();
@@ -1829,10 +1840,10 @@ namespace Sass {
             // TODO: Add check for namespace stuff
 
             // append any selectors in childSeq's head
-            *(parentSeqClone->innermost()->head()) += (base->head());
+            *(parentSeqClone->innermost()->head()) += (childSeq->head());
 
             // Set parentSeqClone new tail
-            parentSeqClone->innermost()->tail( base->tail() );
+            parentSeqClone->innermost()->tail( childSeq->tail() );
 
             newElements.push_back(parentSeqClone);
           }

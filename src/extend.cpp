@@ -6,6 +6,7 @@
 #include "parser.hpp"
 #include "node.hpp"
 #include "sass_util.hpp"
+#include "debugger.hpp"
 #include "debug.hpp"
 #include <iostream>
 #include <deque>
@@ -2054,6 +2055,7 @@ namespace Sass {
 
   void Extend::operator()(Ruleset* pRuleset)
   {
+    std::cerr << "extend " << pRuleset->selector()->to_string() << "\n";
     extendObjectWithSelectorAndBlock(pRuleset, ctx, subset_map);
     pRuleset->block()->perform(this);
   }
@@ -2068,7 +2070,7 @@ namespace Sass {
     pMediaBlock->block()->perform(this);
   }
 
-  void Extend::operator()(At_Rule* a)
+  void Extend::operator()(Directive* a)
   {
     // Selector_List* ls = dynamic_cast<Selector_List*>(a->selector());
     // selector_stack.push_back(ls);

@@ -6,6 +6,7 @@
 #include "cssize.hpp"
 #include "context.hpp"
 #include "backtrace.hpp"
+#include "debugger.hpp"
 
 namespace Sass {
 
@@ -13,12 +14,111 @@ namespace Sass {
   : ctx(ctx),
     block_stack(std::vector<Block*>()),
     p_stack(std::vector<Statement*>()),
+    s_stack(std::vector<Selector_List*>()),
     backtrace(bt)
-  {  }
+  {
+    s_stack.push_back(0);
+  }
 
   Statement* Cssize::parent()
   {
     return p_stack.size() ? p_stack.back() : block_stack.front();
+  }
+
+  Selector_List* Cssize::selector()
+  {
+    return s_stack.size() ? s_stack.back() : 0;
+  }
+
+  void Cssize::expand_selector_list(Selector* s, Selector_List* extender) {
+
+    /*
+    */
+
+    Selector_List* contextualized = dynamic_cast<Selector_List*>(s);
+
+    // debug_ast(s);
+    if (Selector_List* sl = contextualized) {
+      for (Complex_Selector* complex_selector : sl->elements()) {
+        Complex_Selector* tail = complex_selector;
+        while (tail) {
+          if (tail->head()) for (Simple_Selector* header : tail->head()->elements()) {
+            if (dynamic_cast<Parent_Selector*>(header) == NULL) continue; // skip all others
+            std::string sel_str(complex_selector->to_string(ctx.c_options));
+            error("Can't extend " + sel_str + ": can't extend parent selectors", header->pstate(), 0);
+          }
+          tail = tail->tail();
+        }
+      }
+    }
+
+    if (contextualized == NULL) return;
+    for (auto complex_sel : contextualized->elements()) {
+      Complex_Selector* c = complex_sel;
+      /*
+      if (!c->head() || c->tail()) {
+        std::string sel_str(contextualized->to_string(ctx.c_options));
+        error("Can't extend " + sel_str + ": can't extend nested selectors", c->pstate(), 0);
+      }
+      */
+      Compound_Selector* placeholder = c->head();
+      placeholder->is_optional(s->is_optional());
+      for (size_t i = 0, L = extender->length(); i < L; ++i) {
+        Complex_Selector* sel = (*extender)[i];
+        if (!(sel->head() && sel->head()->length() > 0 &&
+            dynamic_cast<Parent_Selector*>((*sel->head())[0])))
+        {
+          Compound_Selector* hh = SASS_MEMORY_NEW(ctx.mem, Compound_Selector, (*extender)[i]->pstate());
+          hh->media_block((*extender)[i]->media_block());
+          Complex_Selector* ssel = SASS_MEMORY_NEW(ctx.mem, Complex_Selector, (*extender)[i]->pstate());
+          ssel->media_block((*extender)[i]->media_block());
+          if (sel->has_line_feed()) ssel->has_line_feed(true);
+          Parent_Selector* ps = SASS_MEMORY_NEW(ctx.mem, Parent_Selector, (*extender)[i]->pstate());
+          ps->media_block((*extender)[i]->media_block());
+          *hh << ps;
+          ssel->tail(sel);
+          ssel->head(hh);
+          sel = ssel;
+        }
+        // std::cerr << "ADD TO W " << placeholder->to_string() << ": " << sel->to_string() << "\n";
+        ctx.subset_map.put(placeholder->to_str_vec(), std::make_pair(sel, placeholder));
+      }
+    }
+
+  }
+
+  Statement* Cssize::operator()(Extension* e)
+  {
+    if (Selector_List* extender = dynamic_cast<Selector_List*>(selector())) {
+
+    std::vector<Selector_List*> stack;
+
+    for (int i = p_stack.size() - 1; i != -1; --i) {
+      if (Ruleset* rs = dynamic_cast<Ruleset*>(p_stack.at(i))) {
+        // if (l->connect_parent() == false) break;
+        if (Selector_List* r_sel = dynamic_cast<Selector_List*>(rs->selector())) {
+          stack.insert(stack.begin(), r_sel);
+          // extender = r_sel->connect(extender, ctx);
+          // l->connect_parent(r_sel->connect_parent());
+        }
+      }
+    }
+    expand_selector_list(e->selector(), parentzia(stack, ctx));
+    return 0;
+
+      for (int i = s_stack.size() - 2; i > -1; --i) {
+        if (!extender->connect_parent()) break;
+        if (s_stack.at(i) == NULL) break;
+        extender = s_stack.at(i)->connect(extender, ctx);
+      }
+      s_stack.push_back(0);
+      Selector* s = e->selector();
+      // debug_ast(extender, "ext: ");
+      extender->connect_parent(true); // HACK
+      expand_selector_list(s, extender);
+      s_stack.pop_back();
+    }
+    return 0;
   }
 
   Statement* Cssize::operator()(Block* b)
@@ -31,7 +131,7 @@ namespace Sass {
     return bb;
   }
 
-  Statement* Cssize::operator()(At_Rule* r)
+  Statement* Cssize::operator()(Directive* r)
   {
     if (!r->block() || !r->block()->length()) return r;
 
@@ -41,7 +141,7 @@ namespace Sass {
     }
 
     p_stack.push_back(r);
-    At_Rule* rr = SASS_MEMORY_NEW(ctx.mem, At_Rule,
+    Directive* rr = SASS_MEMORY_NEW(ctx.mem, Directive,
                                   r->pstate(),
                                   r->keyword(),
                                   r->selector(),
@@ -57,7 +157,7 @@ namespace Sass {
       else {
         s = static_cast<Bubble*>(s)->node();
         if (s->statement_type() != Statement::DIRECTIVE) directive_exists = false;
-        else directive_exists = (static_cast<At_Rule*>(s)->keyword() == rr->keyword());
+        else directive_exists = (static_cast<Directive*>(s)->keyword() == rr->keyword());
       }
 
     }
@@ -65,7 +165,7 @@ namespace Sass {
     Block* result = SASS_MEMORY_NEW(ctx.mem, Block, rr->pstate());
     if (!(directive_exists || rr->is_keyframes()))
     {
-      At_Rule* empty_node = static_cast<At_Rule*>(rr);
+      Directive* empty_node = static_cast<Directive*>(rr);
       empty_node->block(SASS_MEMORY_NEW(ctx.mem, Block, rr->block() ? rr->block()->pstate() : rr->pstate()));
       *result << empty_node;
     }
@@ -93,11 +193,14 @@ namespace Sass {
   Statement* Cssize::operator()(Ruleset* r)
   {
     p_stack.push_back(r);
+    Selector_List* sel = dynamic_cast<Selector_List*>(r->selector());
+    s_stack.push_back(sel);
     Ruleset* rr = SASS_MEMORY_NEW(ctx.mem, Ruleset,
                                   r->pstate(),
                                   r->selector(),
                                   r->block()->perform(this)->block());
     // rr->tabs(r->block()->tabs());
+    s_stack.pop_back();
     p_stack.pop_back();
 
     if (!rr->block()) {
@@ -126,6 +229,24 @@ namespace Sass {
 
       rules->unshift(rr);
     }
+
+// if (p_stack.size()) debug_ast(p_stack.back(), "stack: ");
+// debug_ast(rr, "in: ");
+if (Selector_List* l = dynamic_cast<Selector_List*>(rr->selector())) {
+  for (int i = p_stack.size() - 1; i != -1; --i) {
+    if (Ruleset* rs = dynamic_cast<Ruleset*>(p_stack.at(i))) {
+      // if (l->connect_parent() == false) break;
+      if (Selector_List* r_sel = dynamic_cast<Selector_List*>(rs->selector())) {
+// debug_ast(l);
+        l = r_sel->connect(l, ctx);
+        // l->connect_parent(r_sel->connect_parent());
+      }
+    }
+  }
+  rr->selector(l);
+  // debug_ast(l, "out: ");
+}
+
 
     rules = debubble(rules)->block();
 
@@ -188,6 +309,7 @@ namespace Sass {
 
   Statement* Cssize::operator()(At_Root_Block* m)
   {
+    // debug_ast(m);
     bool tmp = false;
     for (size_t i = 0, L = p_stack.size(); i < L; ++i) {
       Statement* s = p_stack[i];
@@ -213,7 +335,7 @@ namespace Sass {
     return bubble(m);
   }
 
-  Statement* Cssize::bubble(At_Rule* m)
+  Statement* Cssize::bubble(Directive* m)
   {
     Block* bb = SASS_MEMORY_NEW(ctx.mem, Block, this->parent()->pstate());
     Has_Block* new_rule = static_cast<Has_Block*>(shallow_copy(this->parent()));
@@ -227,7 +349,7 @@ namespace Sass {
 
     Block* wrapper_block = SASS_MEMORY_NEW(ctx.mem, Block, m->block() ? m->block()->pstate() : m->pstate());
     *wrapper_block << new_rule;
-    At_Rule* mm = SASS_MEMORY_NEW(ctx.mem, At_Rule,
+    Directive* mm = SASS_MEMORY_NEW(ctx.mem, Directive,
                                   m->pstate(),
                                   m->keyword(),
                                   m->selector(),
@@ -268,6 +390,7 @@ namespace Sass {
                                         parent->pstate(),
                                         parent->selector(),
                                         bb);
+    new_rule->connect_parent(parent->connect_parent());
     new_rule->tabs(parent->tabs());
 
     for (size_t i = 0, L = m->block()->length(); i < L; ++i) {
@@ -296,6 +419,7 @@ namespace Sass {
                                         parent->pstate(),
                                         parent->selector(),
                                         bb);
+    new_rule->connect_parent(parent->connect_parent());
     new_rule->tabs(parent->tabs());
 
     for (size_t i = 0, L = m->block()->length(); i < L; ++i) {
@@ -374,7 +498,7 @@ namespace Sass {
       case Statement::BUBBLE:
         return SASS_MEMORY_NEW(ctx.mem, Bubble, *static_cast<Bubble*>(s));
       case Statement::DIRECTIVE:
-        return SASS_MEMORY_NEW(ctx.mem, At_Rule, *static_cast<At_Rule*>(s));
+        return SASS_MEMORY_NEW(ctx.mem, Directive, *static_cast<Directive*>(s));
       case Statement::SUPPORTS:
         return SASS_MEMORY_NEW(ctx.mem, Supports_Block, *static_cast<Supports_Block*>(s));
       case Statement::ATROOT:

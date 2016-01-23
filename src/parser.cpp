@@ -6,6 +6,7 @@
 #include "file.hpp"
 #include "inspect.hpp"
 #include "constants.hpp"
+#include "debugger.hpp"
 #include "util.hpp"
 #include "prelexer.hpp"
 #include "color_maps.hpp"
@@ -235,8 +236,11 @@ namespace Sass {
     }
 
     // selector may contain interpolations which need delayed evaluation
-    else if (!(lookahead_result = lookahead_for_selector(position)).error)
-    { (*block) << parse_ruleset(lookahead_result, is_root); }
+    else if (!(lookahead_result = lookahead_for_selector(position)).error &&
+      lookahead_result.found != NULL && *lookahead_result.found == '{')
+    {
+      (*block) << parse_ruleset(lookahead_result, is_root);
+    }
 
     // parse multiple specific keyword directives
     else if (lex < kwd_media >(true)) { (*block) << parse_media_block(); }
@@ -251,7 +255,9 @@ namespace Sass {
     else if (lex< kwd_charset_directive >(true)) { parse_charset_directive(); }
 
     // generic at keyword (keep last)
-    else if (lex< at_keyword >(true)) { (*block) << parse_at_rule(); }
+    else if (lex< re_special_directive >(true)) { (*block) << parse_special_directive(); }
+    else if (lex< re_prefixed_directive >(true)) { (*block) << parse_prefixed_directive(); }
+    else if (lex< at_keyword >(true)) { (*block) << parse_directive(); }
 
     else if (block->is_root()) {
       lex< css_whitespace >();
@@ -491,6 +497,10 @@ namespace Sass {
     // inherit is_root from parent block
     // need this info for sanity checks
     ruleset->is_root(is_root);
+    ruleset->connect_parent(!ruleset->selector()->has_parent_ref());
+    if (Selector_List* l = dynamic_cast<Selector_List*>(ruleset->selector())) {
+      l->connect_parent(!ruleset->selector()->has_parent_ref());
+    }
     // return AST Node
     return ruleset;
   }
@@ -606,7 +616,10 @@ namespace Sass {
       // now parse the complex selector
       sel = parse_complex_selector(in_root);
 
-      if (!sel) return group;
+      if (!sel) {
+        group->connect_parent(!group->has_parent_ref());
+        return group;
+      }
 
       sel->has_line_feed(had_linefeed);
 
@@ -625,11 +638,13 @@ namespace Sass {
     }
     while (reloop);
     while (lex_css< kwd_optional >()) {
-      group->is_optional(true);
+      group->set_optional(true);
     }
     // update for end position
     group->update_pstate(pstate);
     if (sel) sel->last()->has_line_break(false);
+    group->connect_parent(!group->has_parent_ref());
+    // debug_ast(group, "gbr: ");
     return group;
   }
   // EO parse_selector_list
@@ -692,6 +707,8 @@ namespace Sass {
       }
     }
 
+return sel;
+
     // add a parent selector if we are not in a root
     // also skip adding parent ref if we only have refs
     if (!sel->has_parent_ref() && !in_at_root && !in_root) {
@@ -744,8 +761,11 @@ namespace Sass {
       else if (lex< exactly<'&'> >(false))
       {
         // this produces a linefeed!?
+        seq->connectz(false);
         seq->has_parent_reference(true);
-        (*seq) << SASS_MEMORY_NEW(ctx.mem, Parent_Selector, pstate);
+        Parent_Selector* p = SASS_MEMORY_NEW(ctx.mem, Parent_Selector, pstate);
+        p->leave_me_alone(true);
+        (*seq) << p;
         // parent selector only allowed at start
         // upcoming sass may allow also trailing
         if (seq->length() > 1) {
@@ -780,6 +800,9 @@ namespace Sass {
     if (seq && !peek_css<exactly<'{'>>()) {
       seq->has_line_break(peek_newline());
     }
+
+    seq->connectz(!seq->has_parent_ref());
+    // debug_ast(seq, "seq: ");
 
     // EO while true
     return seq;
@@ -1377,7 +1400,10 @@ namespace Sass {
     lex< css_comments >(false);
     if (lex< ampersand >())
     {
-      return SASS_MEMORY_NEW(ctx.mem, Parent_Selector, pstate); }
+      Parent_Selector* p = SASS_MEMORY_NEW(ctx.mem, Parent_Selector, pstate);
+      p->leave_me_alone(true);
+      return p;
+    }
 
     if (lex< kwd_important >())
     { return SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, "!important"); }
@@ -2135,28 +2161,31 @@ namespace Sass {
   {
     ParserState at_source_position = pstate;
     Block* body = 0;
-    At_Root_Expression* expr = 0;
+    At_Root_Query* expr = 0;
     Lookahead lookahead_result;
     // stack.push_back(Scope::Root);
     LOCAL_FLAG(in_at_root, true);
-    if (lex< exactly<'('> >()) {
-      expr = parse_at_root_expression();
+    if (lex_css< exactly<'('> >()) {
+      expr = parse_at_root_query();
     }
-    if (peek < exactly<'{'> >()) {
-      body = parse_block(true);
+    if (peek_css < exactly<'{'> >()) {
+      lex <optional_spaces>();
+      body = parse_block(false);
     }
     else if ((lookahead_result = lookahead_for_selector(position)).found) {
       Ruleset* r = parse_ruleset(lookahead_result, false);
       body = SASS_MEMORY_NEW(ctx.mem, Block, r->pstate(), 1, true);
+      r->selector()->transparent(true);
       *body << r;
     }
     At_Root_Block* at_root = SASS_MEMORY_NEW(ctx.mem, At_Root_Block, at_source_position, body);
     if (expr) at_root->expression(expr);
     // stack.pop_back();
+    // debug_ast(at_root);
     return at_root;
   }
 
-  At_Root_Expression* Parser::parse_at_root_expression()
+  At_Root_Query* Parser::parse_at_root_query()
   {
     if (peek< exactly<')'> >()) error("at-root feature required in at-root expression", pstate);
 
@@ -2164,29 +2193,62 @@ namespace Sass {
       css_error("Invalid CSS", " after ", ": expected \"with\" or \"without\", was ");
     }
 
-    Declaration* declaration = parse_declaration();
-    List* value = SASS_MEMORY_NEW(ctx.mem, List, declaration->value()->pstate(), 1);
+    Expression* feature = parse_list();
+    if (!lex_css< exactly<':'> >()) error("style declaration must contain a value", pstate);
+    Expression* expression = parse_list();
 
-    if (declaration->value()->concrete_type() == Expression::LIST) {
-        value = static_cast<List*>(declaration->value());
+    // Declaration* declaration = parse_declaration();
+    List* value = SASS_MEMORY_NEW(ctx.mem, List, feature->pstate(), 1);
+
+    if (expression->concrete_type() == Expression::LIST) {
+        value = static_cast<List*>(expression);
     }
-    else *value << declaration->value();
+    else *value << expression;
 
-    At_Root_Expression* cond = SASS_MEMORY_NEW(ctx.mem, At_Root_Expression,
-                                               declaration->pstate(),
-                                               declaration->property(),
+    At_Root_Query* cond = SASS_MEMORY_NEW(ctx.mem, At_Root_Query,
+                                               value->pstate(),
+                                               feature,
                                                value);
-    if (!lex< exactly<')'> >()) error("unclosed parenthesis in @at-root expression", pstate);
+    if (!lex_css< exactly<')'> >()) error("unclosed parenthesis in @at-root expression", pstate);
     return cond;
   }
 
-  At_Rule* Parser::parse_at_rule()
+
+  Directive* Parser::parse_special_directive()
   {
     std::string kwd(lexed);
 
     if (lexed == "@else") error("Invalid CSS: @else must come after @if", pstate);
 
-    At_Rule* at_rule = SASS_MEMORY_NEW(ctx.mem, At_Rule, pstate, kwd);
+    Directive* at_rule = SASS_MEMORY_NEW(ctx.mem, Directive, pstate, kwd);
+    Lookahead lookahead = lookahead_for_include(position);
+    if (lookahead.found && !lookahead.has_interpolants) {
+      at_rule->selector(parse_selector_list(true));
+    }
+
+    lex < css_comments >(false);
+
+    if (lex < static_property >()) {
+      at_rule->value(parse_interpolated_chunk(Token(lexed)));
+    } else if (!(peek < alternatives < exactly<'{'>, exactly<'}'>, exactly<';'> > >())) {
+      at_rule->value(parse_list());
+    }
+
+    lex < css_comments >(false);
+
+    if (peek< exactly<'{'> >()) {
+      at_rule->block(parse_block());
+    }
+
+    return at_rule;
+  }
+  Directive* Parser::parse_prefixed_directive()
+  {
+    std::string kwd(lexed);
+
+    if (lexed == "@else") error("Invalid CSS: @else must come after @if", pstate);
+
+    Directive* at_rule = SASS_MEMORY_NEW(ctx.mem, Directive, pstate, kwd);
     Lookahead lookahead = lookahead_for_include(position);
     if (lookahead.found && !lookahead.has_interpolants) {
       at_rule->selector(parse_selector_list(true));
@@ -2209,6 +2271,148 @@ namespace Sass {
     return at_rule;
   }
 
+
+  Directive* Parser::parse_directive()
+  {
+    Directive* directive = SASS_MEMORY_NEW(ctx.mem, Directive, pstate, lexed);
+    Expression* val = parse_almost_any_value();
+    // strip left and right if they are of type string
+    // debug_ast(val);
+    // std::cerr << "HAASDASD\n";
+    directive->value(val);
+    if (peek< exactly<'{'> >()) {
+      directive->block(parse_block());
+    } else if (!val) {
+      css_error("most def");
+    }
+    return directive;
+  }
+
+  Expression* Parser::lex_block_comment()
+  {
+    return 0;
+  }
+
+  Expression* Parser::lex_single_line_comment()
+  {
+    return 0;
+  }
+
+  Expression* Parser::lex_interpolation()
+  {
+    if (lex < interpolant >(src)) {
+      return parse_interpolated_chunk(lexed, true);
+    }
+    return 0;
+  }
+
+  Expression* Parser::lex_interp_uri()
+  {
+    // create a string schema by lexing optional interpolations
+    return lex_interp< re_string_uri_open, re_string_uri_close >();
+  }
+
+  Expression* Parser::lex_interp_string()
+  {
+    Expression* rv = 0;
+    if ((rv = lex_interp< re_string_double_open, re_string_double_close >()) != NULL) return rv;
+    if ((rv = lex_interp< re_string_single_open, re_string_single_close >()) != NULL) return rv;
+    return rv;
+  }
+
+  Expression* Parser::lex_almost_any_value_chars()
+  {
+    const char* match =
+    lex <
+      one_plus <
+        alternatives <
+          sequence <
+            exactly <'\\'>,
+            any_char
+          >,
+          sequence <
+            negate <
+              sequence <
+                exactly < url_kwd >,
+                exactly <'('>
+              >
+            >,
+            neg_class_char <
+              almost_any_value_class
+            >
+          >,
+          sequence <
+            exactly <'/'>,
+            negate <
+              alternatives <
+                exactly <'/'>,
+                exactly <'*'>
+              >
+            >
+          >,
+          sequence <
+            exactly <'\\'>,
+            exactly <'#'>,
+            negate <
+              exactly <'{'>
+            >
+          >,
+          sequence <
+            exactly <'!'>,
+            negate <
+              alpha
+            >
+          >
+        >
+      >
+    >(false);
+    if (match) {
+      // std::cerr << "[[" << std::string(lexed) << "]\n";
+      return SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, lexed);
+    }
+    return NULL;
+  }
+
+  Expression* Parser::lex_almost_any_value_token()
+  {
+    Expression* rv = 0;
+    if (*position == 0) return 0;
+    if ((rv = lex_almost_any_value_chars()) != NULL) return rv;
+    if ((rv = lex_block_comment()) != NULL) return rv;
+    if ((rv = lex_single_line_comment()) != NULL) return rv;
+    if ((rv = lex_interp_string()) != NULL) return rv;
+    if ((rv = lex_interp_uri()) != NULL) return rv;
+    if ((rv = lex_interpolation()) != NULL) return rv;
+    return rv;
+  }
+
+  String_Schema* Parser::parse_almost_any_value()
+  {
+
+    String_Schema* schema = SASS_MEMORY_NEW(ctx.mem, String_Schema, pstate);
+    if (*position == 0) return 0;
+    lex < spaces >(false);
+    Expression* token = lex_almost_any_value_token();
+    if (!token) return 0;
+    // std::cerr << "LEX [" << std::string(lexed) << "]\n";
+    *schema << token;
+    if (*position == 0) {
+      schema->rtrim();
+      return schema;
+    }
+
+    while (token = lex_almost_any_value_token()) {
+    //   std::cerr << "LEX [" << std::string(lexed) << "]\n";
+      *schema << token;
+    }
+
+    lex < css_whitespace >();
+
+    schema->rtrim();
+
+// debug_ast(schema, "RV: ");
+    return schema;
+  }
   Warning* Parser::parse_warning()
   {
     if (stack.back() != Scope::Root &&
@@ -2263,72 +2467,7 @@ namespace Sass {
     rv.error = p;
     if (const char* q =
       peek <
-        alternatives <
-          // partial bem selector
-          sequence <
-            ampersand,
-            one_plus <
-              exactly < '-' >
-            >,
-            word_boundary
-          >,
-          // main selector matching
-          one_plus <
-            alternatives <
-              // consume whitespace and comments
-              spaces, block_comment, line_comment,
-              // match `/deep/` selector (pass-trough)
-              // there is no functionality for it yet
-              schema_reference_combinator,
-              // match selector ops /[*&%,()\[\]]/
-              class_char < selector_lookahead_ops >,
-              // match selector combinators /[>+~]/
-              class_char < selector_combinator_ops >,
-              // match attribute compare operators
-              alternatives <
-                exact_match, class_match, dash_match,
-                prefix_match, suffix_match, substring_match
-              >,
-              // main selector match
-              sequence <
-                // allow namespace prefix
-                optional < namespace_schema >,
-                // modifiers prefixes
-                alternatives <
-                  sequence <
-                    exactly <'#'>,
-                    // not for interpolation
-                    negate < exactly <'{'> >
-                  >,
-                  // class match
-                  exactly <'.'>,
-                  // single or double colon
-                  optional < pseudo_prefix >
-                >,
-                // accept hypens in token
-                one_plus < sequence <
-                  // can start with hyphens
-                  zero_plus < exactly<'-'> >,
-                  // now the main token
-                  alternatives <
-                    kwd_optional,
-                    exactly <'*'>,
-                    quoted_string,
-                    interpolant,
-                    identifier,
-                    variable,
-                    percentage,
-                    binomial,
-                    dimension,
-                    alnum
-                  >
-                > >,
-                // can also end with hyphens
-                zero_plus < exactly<'-'> >
-              >
-            >
-          >
-        >
+        re_selector_list
       >(p)
     ) {
       while (p < q) {
@@ -2348,6 +2487,7 @@ namespace Sass {
       // check expected opening bracket
       // only after successfull matching
       if (peek < exactly<'{'> >(q)) rv.found = q;
+      else if (peek < exactly<'('> >(q)) rv.found = q;
       // else if (peek < exactly<';'> >(q)) rv.found = q;
       // else if (peek < exactly<'}'> >(q)) rv.found = q;
       if (rv.found || *p == 0) rv.error = 0;
@@ -2361,7 +2501,7 @@ namespace Sass {
   }
   // EO lookahead_for_selector
 
-  // used in parse_block_nodes and parse_at_rule
+  // used in parse_block_nodes and parse_directive
   // ToDo: actual usage is still not really clear to me?
   Lookahead Parser::lookahead_for_include(const char* start)
   {

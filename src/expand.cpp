@@ -2,6 +2,7 @@
 #include <iostream>
 #include <typeinfo>
 
+#include "debugger.hpp"
 #include "expand.hpp"
 #include "bind.hpp"
 #include "eval.hpp"
@@ -116,14 +117,26 @@ namespace Sass {
     Expression* ex = r->selector()->perform(&eval);
     Selector_List* sel = dynamic_cast<Selector_List*>(ex);
     if (sel == 0) throw std::runtime_error("Expanded null selector");
-
+    if (Selector_List* ls = dynamic_cast<Selector_List*>(r->selector())) {
+      sel->connect_parent(ls->connect_parent());
+    }
     selector_stack.push_back(sel);
     Env* env = 0;
     if (block_stack.back()->is_root()) {
       env = new Env(environment());
       env_stack.push_back(env);
     }
+if (r->chroot()) {
+  auto q = selector_stack.back();
+  selector_stack.push_back(0);
+  selector_stack.push_back(q);
+  // selector_stack.push_back(dynamic_cast<Selector_List*>(r->selector()));
+}
     Block* blk = r->block()->perform(this)->block();
+if (r->chroot()) {
+  selector_stack.pop_back();
+  selector_stack.pop_back();
+}
     Ruleset* rr = SASS_MEMORY_NEW(ctx.mem, Ruleset,
                                   r->pstate(),
                                   sel,
@@ -134,6 +147,7 @@ namespace Sass {
       delete env;
     }
     rr->tabs(r->tabs());
+    rr->connect_parent(r->connect_parent());
 
     return rr;
   }
@@ -205,17 +219,37 @@ namespace Sass {
     // if (ab) ab->is_root(true);
     Expression* ae = a->expression();
     if (ae) ae = ae->perform(&eval);
-    else ae = SASS_MEMORY_NEW(ctx.mem, At_Root_Expression, a->pstate());
+    else ae = SASS_MEMORY_NEW(ctx.mem, At_Root_Query, a->pstate());
+    if (auto at_b = dynamic_cast<Block*>(a->block())) {
+      for (auto at_bb : *at_b) {
+        if (auto at_r = dynamic_cast<Ruleset*>(at_bb)) {
+          if (dynamic_cast<Selector_Schema*>(at_r->selector())) {
+          }
+          at_r->chroot(true);
+        }
+      }
+    }
     Block* bb = ab ? ab->perform(this)->block() : 0;
     At_Root_Block* aa = SASS_MEMORY_NEW(ctx.mem, At_Root_Block,
                                         a->pstate(),
                                         bb,
-                                        static_cast<At_Root_Expression*>(ae));
-    // aa->block()->is_root(true);
+                                        static_cast<At_Root_Query*>(ae));
+    for (auto x : *bb) {
+      if (auto r = dynamic_cast<Ruleset*>(x)) {
+        if (auto l = dynamic_cast<Selector_List*>(r->selector())) {
+          for (auto c : *l) {
+            if (!c->head()) continue;
+            c->head()->connectz(false);
+          }
+          // debug_ast(l, " XX ");
+        }
+      }
+    }
+    // debug_ast(bb, " -- ");
     return aa;
   }
 
-  Statement* Expand::operator()(At_Rule* a)
+  Statement* Expand::operator()(Directive* a)
   {
     LOCAL_FLAG(in_keyframes, a->is_keyframes());
     Block* ab = a->block();
@@ -226,7 +260,7 @@ namespace Sass {
     if (as) as = dynamic_cast<Selector*>(as->perform(&eval));
     selector_stack.pop_back();
     Block* bb = ab ? ab->perform(this)->block() : 0;
-    At_Rule* aa = SASS_MEMORY_NEW(ctx.mem, At_Rule,
+    Directive* aa = SASS_MEMORY_NEW(ctx.mem, Directive,
                                   a->pstate(),
                                   a->keyword(),
                                   as,
@@ -557,7 +591,7 @@ namespace Sass {
 
 
   void Expand::expand_selector_list(Selector* s, Selector_List* extender) {
-
+/*
     if (Selector_List* sl = dynamic_cast<Selector_List*>(s)) {
       for (Complex_Selector* complex_selector : sl->elements()) {
         Complex_Selector* tail = complex_selector;
@@ -601,14 +635,25 @@ namespace Sass {
           sel = ssel;
         }
         // if (c->has_line_feed()) sel->has_line_feed(true);
-        ctx.subset_map.put(placeholder->to_str_vec(), std::make_pair(sel, placeholder));
+        // ctx.subset_map.put(placeholder->to_str_vec(), std::make_pair(sel, placeholder));
       }
     }
-
+*/
   }
 
   Statement* Expand::operator()(Extension* e)
   {
+    Extension* ee = SASS_MEMORY_NEW(ctx.mem, Extension, *e);
+
+    selector_stack.push_back(0);
+    if (e->block()) ee->selector(dynamic_cast<Selector*>(e->block()->perform(this)));
+    eval.skip_parentization = true;
+    if (e->selector()) ee->selector(dynamic_cast<Selector*>(e->selector()->perform(&eval)));
+    //debug_ast(e->selector());
+    //debug_ast(ee->selector());
+    eval.skip_parentization = false;
+    selector_stack.pop_back();
+    return ee;
     if (Selector_List* extender = dynamic_cast<Selector_List*>(selector())) {
       selector_stack.push_back(0);
       Selector* s = e->selector();
@@ -707,7 +752,7 @@ namespace Sass {
   {
     std::string err =std:: string("`Expand` doesn't handle ") + typeid(*n).name();
     String_Quoted* msg = SASS_MEMORY_NEW(ctx.mem, String_Quoted, ParserState("[WARN]"), err);
-    error("unknown internal error; please contact the LibSass maintainers", n->pstate(), backtrace());
+    error("2unknown internal error; please contact the LibSass maintainers", n->pstate(), backtrace());
     return SASS_MEMORY_NEW(ctx.mem, Warning, ParserState("[WARN]"), msg);
   }
 

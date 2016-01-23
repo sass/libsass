@@ -1,4 +1,5 @@
 // must be the first include in all compile units
+// #define DEBUG
 #ifndef SASS_SASS_H
 #define SASS_SASS_H
 

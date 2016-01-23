@@ -21,6 +21,7 @@
 #include "backtrace.hpp"
 #include "lexer.hpp"
 #include "prelexer.hpp"
+#include "debugger.hpp"
 #include "parser.hpp"
 #include "expand.hpp"
 #include "color_maps.hpp"
@@ -41,7 +42,8 @@ namespace Sass {
 
   Eval::Eval(Expand& exp)
   : exp(exp),
-    ctx(exp.ctx)
+    ctx(exp.ctx),
+    skip_parentization(false)
   { }
   Eval::~Eval() { }
 
@@ -1252,17 +1254,16 @@ namespace Sass {
     return cc;
   }
 
-  Expression* Eval::operator()(At_Root_Expression* e)
+  Expression* Eval::operator()(At_Root_Query* e)
   {
     Expression* feature = e->feature();
     feature = (feature ? feature->perform(this) : 0);
     Expression* value = e->value();
     value = (value ? value->perform(this) : 0);
-    Expression* ee = SASS_MEMORY_NEW(ctx.mem, At_Root_Expression,
+    Expression* ee = SASS_MEMORY_NEW(ctx.mem, At_Root_Query,
                                      e->pstate(),
                                      static_cast<String*>(feature),
-                                     value,
-                                     e->is_interpolated());
+                                     value);
     return ee;
   }
 
@@ -1650,9 +1651,13 @@ namespace Sass {
 
   Selector_List* Eval::operator()(Selector_List* s)
   {
+//    debug_ast(s, "pref: ");
     std::vector<Selector_List*> rv;
     Selector_List* sl = SASS_MEMORY_NEW(ctx.mem, Selector_List, s->pstate());
+    sl->connect_parent(s->connect_parent());
+    sl->is_optional(s->is_optional());
     sl->media_block(s->media_block());
+    sl->transparent(s->transparent());
     for (size_t i = 0, iL = s->length(); i < iL; ++i) {
       rv.push_back(operator()((*s)[i]));
     }
@@ -1675,12 +1680,58 @@ namespace Sass {
       }
 
     }
+/*
+// this fixes some, bails other
+    if (s->has_parent_ref()) {
+      for (int i = exp.selector_stack.size() - 1; i > -1; --i) {
+        if (sl->connect_parent()) break;
+        if (Selector_List* r_sl = exp.selector_stack.at(i)) {
+          sl = r_sl->connect(sl, ctx);
+          sl->connect_parent(r_sl->connect_parent());
+          if (!sl->connect_parent()) break;
+        } else break;
+      }
+    // }
+    }
+*/
+
     return sl;
   }
 
 
   Selector_List* Eval::operator()(Complex_Selector* s)
   {
+    // return s->parentize(selector(), ctx);
+  //  debug_ast(s, "in: ");
+    // if (skip_parentization) {
+      Selector_List* ls = SASS_MEMORY_NEW(ctx.mem, Selector_List, s->pstate());
+      Complex_Selector* ss = SASS_MEMORY_NEW(ctx.mem, Complex_Selector, *s);
+      Compound_Selector* sh = s->head();
+      ;
+
+      Selector_List* pls = parentzia(exp.selector_stack, ctx);
+//      debug_ast(pls, "PARENTZIA: ");
+
+    auto a = s->parentize(pls, ctx);
+//    debug_ast(a);
+    return a;
+
+      for (size_t i = 0; sh && i < sh->length(); i++) {
+        (*sh)[i] = dynamic_cast<Simple_Selector*>((*sh)[i]->perform(this));
+      }
+
+      if (Complex_Selector* st = ss->tail()) {
+        if (Selector_List* tails = operator()(st)) {
+          ss->tail(tails->at(0));
+        }
+      }
+
+      // ss->head(Compound_);
+      *ls << s;
+      // ls->remove_parent_selectors();
+      return ls;
+    // };
+
     return s->parentize(selector(), ctx);
 
   }
@@ -1701,11 +1752,46 @@ namespace Sass {
     std::string result_str(s->contents()->perform(this)->to_string(ctx.c_options));
     result_str = unquote(Util::rtrim(result_str)) + "{";
     Parser p = Parser::from_c_str(result_str.c_str(), ctx, s->pstate());
-    return operator()(p.parse_selector_list(exp.block_stack.back()->is_root()));
+    // std::cerr << result_str.c_str() << "]]\n";
+    auto a = p.parse_selector_list(exp.block_stack.back()->is_root());
+    auto b = operator()(a);
+    b->connect_parent(!a->has_parent_ref());
+    for (auto c : *b) {
+     // c->head()->connectz(!c->has_parent_ref());
+    }
+    return b;
+  }
+
+  Wrapped_Selector* Eval::operator()(Wrapped_Selector* w)
+  {
+    // debug_ast(w, "w= ");
+    return w;
   }
 
   Expression* Eval::operator()(Parent_Selector* p)
   {
+
+    // when we interpolate a parent in eval stage, we actually
+    // freeze the current nesting. Connected rules (implicit
+    // parent) are evaluated in cssize, don't confuse these!
+
+    if (Selector_List* pl = exp.selector_stack.back()) {
+      for (int i = exp.selector_stack.size() - 2; i > -1; --i) {
+        // if (!pl->connect_parent()) break;
+        if (exp.selector_stack.at(i) == NULL) break;
+        pl = exp.selector_stack.at(i)->cloneFully(ctx)->connect(pl->cloneFully(ctx), ctx);
+        // pl->connect_parent(exp.selector_stack.at(i)->connect_parent());
+
+        // pl = exp.selector_stack.at(i)->connect(pl, ctx);
+        // pl->connect_parent(exp.selector_stack.at(i)->connect_parent());
+
+      }
+      return pl;
+    }
+    return SASS_MEMORY_NEW(ctx.mem, Null, p->pstate());
+
+
+    // if (p->leave_me_alone()) return p;
     Selector_List* pr = selector();
     if (pr) {
       exp.selector_stack.pop_back();

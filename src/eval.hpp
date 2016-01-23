@@ -19,6 +19,7 @@ namespace Sass {
    public:
     Expand&  exp;
     Context& ctx;
+    bool skip_parentization;
     Eval(Expand& exp);
     ~Eval();
 
@@ -57,7 +58,7 @@ namespace Sass {
     // Expression* operator()(Selector_List*);
     Expression* operator()(Media_Query*);
     Expression* operator()(Media_Query_Expression*);
-    Expression* operator()(At_Root_Expression*);
+    Expression* operator()(At_Root_Query*);
     Expression* operator()(Supports_Operator*);
     Expression* operator()(Supports_Negation*);
     Expression* operator()(Supports_Declaration*);
@@ -70,11 +71,12 @@ namespace Sass {
     // these will return selectors
     Selector_List* operator()(Selector_List*);
     Selector_List* operator()(Complex_Selector*);
+    Wrapped_Selector* operator()(Wrapped_Selector*);
     Attribute_Selector* operator()(Attribute_Selector*);
     // they don't have any specific implementatio (yet)
     Type_Selector* operator()(Type_Selector* s) { return s; };
     Pseudo_Selector* operator()(Pseudo_Selector* s) { return s; };
-    Wrapped_Selector* operator()(Wrapped_Selector* s) { return s; };
+    // Wrapped_Selector* operator()(Wrapped_Selector* s) { return s; };
     Selector_Qualifier* operator()(Selector_Qualifier* s) { return s; };
     Selector_Placeholder* operator()(Selector_Placeholder* s) { return s; };
     // actual evaluated selectors
