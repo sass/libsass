@@ -2,6 +2,7 @@
 #include "remove_placeholders.hpp"
 #include "context.hpp"
 #include "inspect.hpp"
+#include "debugger.hpp"
 #include <iostream>
 
 namespace Sass {
@@ -34,7 +35,6 @@ namespace Sass {
     void Remove_Placeholders::operator()(Ruleset* r) {
         // Create a new selector group without placeholders
         Selector_List* sl = static_cast<Selector_List*>(r->selector());
-
         if (sl) {
           // Set the new placeholder selector list
           r->selector(remove_placeholders(sl));
@@ -74,7 +74,7 @@ namespace Sass {
         }
     }
 
-    void Remove_Placeholders::operator()(At_Rule* a) {
+    void Remove_Placeholders::operator()(Directive* a) {
         if (a->block()) a->block()->perform(this);
     }
 

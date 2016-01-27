@@ -65,6 +65,14 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << bubble->tabs();
     std::cerr << std::endl;
+  } else if (dynamic_cast<At_Root_Query*>(node)) {
+    At_Root_Query* root_query = dynamic_cast<At_Root_Query*>(node);
+    std::cerr << ind << "At_Root_Query " << root_query;
+    std::cerr << " <" << root_query->type() << ">";
+    std::cerr << " (" << pstate_source_position(node) << ")";
+    std::cerr << std::endl;
+    debug_ast(root_query->feature(), ind + "F:", env);
+    debug_ast(root_query->value(), ind + "::", env);
   } else if (dynamic_cast<At_Root_Block*>(node)) {
     At_Root_Block* root_block = dynamic_cast<At_Root_Block*>(node);
     std::cerr << ind << "At_Root_Block " << root_block;
@@ -79,8 +87,13 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " [@media:" << selector->media_block() << "]";
+    std::cerr << (selector->transparent() ? " [transparent]" : "");
+    std::cerr << (selector->has_placeholder() ? " [has-placeholder]": " -");
+    std::cerr << (selector->contains_placeholder() ? " [contains-placeholder]": " -");
+    std::cerr << (selector->connect_parent() ? " [connect]": " -");
     std::cerr << (selector->is_optional() ? " [is_optional]": " -");
     std::cerr << (selector->has_parent_ref() ? " [has-parent]": " -");
+    // std::cerr << (selector->has_parent_ref() ? " [contains-parent]": " -");
     std::cerr << (selector->has_line_break() ? " [line-break]": " -");
     std::cerr << (selector->has_line_feed() ? " [line-feed]": " -");
     std::cerr << std::endl;
@@ -97,7 +110,10 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
 //    if (selector->not_selector()) cerr << " [in_declaration]";
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
-    std::cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">" << std::endl;
+    std::cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">";
+    // this should not be cleaned by "remove_parent_selector"
+    if (selector->leave_me_alone()) std::cerr << " [leave me alone] ";
+    std::cerr << std::endl;
 //    debug_ast(selector->selector(), ind + "->", env);
 
   } else if (dynamic_cast<Complex_Selector*>(node)) {
@@ -106,8 +122,12 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
       << " (" << pstate_source_position(node) << ")"
       << " <" << selector->hash() << ">"
       << " [weight:" << longToHex(selector->specificity()) << "]"
-      << " [@media:" << selector->media_block() << "]"
-      << (selector->is_optional() ? " [is_optional]": " -")
+      << " [@media:" << selector->media_block() << "]";
+    std::cerr << (selector->connectz() ? " [connect]": " -");
+    std::cerr << (selector->transparent() ? " [transparent]" : "");
+    std::cerr << (selector->has_placeholder() ? " [has-placeholder]": " -");
+    std::cerr << (selector->contains_placeholder() ? " [contains-placeholder]": " -");
+    std::cerr << (selector->is_optional() ? " [is_optional]": " -")
       << (selector->has_parent_ref() ? " [has parent]": " -")
       << (selector->has_line_feed() ? " [line-feed]": " -")
       << (selector->has_line_break() ? " [line-break]": " -")
@@ -137,7 +157,11 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " [weight:" << longToHex(selector->specificity()) << "]";
     std::cerr << " [@media:" << selector->media_block() << "]";
+    std::cerr << (selector->connectz() ? " [connect]": " -");
     std::cerr << (selector->extended() ? " [extended]": " -");
+    std::cerr << (selector->transparent() ? " [transparent]" : "");
+    std::cerr << (selector->has_placeholder() ? " [has-placeholder]": " -");
+    std::cerr << (selector->contains_placeholder() ? " [contains-placeholder]": " -");
     std::cerr << (selector->is_optional() ? " [is_optional]": " -");
     std::cerr << (selector->has_parent_ref() ? " [has-parent]": " -");
     std::cerr << (selector->has_line_break() ? " [line-break]": " -");
@@ -156,6 +180,9 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " <<" << selector->ns_name() << ">>";
+    std::cerr << (selector->transparent() ? " [transparent]" : "");
+    std::cerr << (selector->has_placeholder() ? " [has-placeholder]": " -");
+    std::cerr << (selector->contains_placeholder() ? " [contains-placeholder]": " -");
     std::cerr << (selector->is_optional() ? " [is_optional]": " -");
     std::cerr << (selector->has_parent_ref() ? " [has-parent]": " -");
     std::cerr << (selector->has_line_break() ? " [line-break]": " -");
@@ -203,6 +230,9 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " <<" << selector->ns_name() << ">>";
+    std::cerr << (selector->transparent() ? " [transparent]" : "");
+    std::cerr << (selector->has_placeholder() ? " [has-placeholder]": " -");
+    std::cerr << (selector->contains_placeholder() ? " [contains-placeholder]": " -");
     std::cerr << (selector->is_optional() ? " [is_optional]": " -");
     std::cerr << (selector->has_parent_ref() ? " [has-parent]": " -");
     std::cerr << (selector->has_line_break() ? " [line-break]": " -");
@@ -386,9 +416,9 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " " << has_block->tabs() << std::endl;
     if (has_block->selector()) debug_ast(has_block->selector(), ind + "@");
     if (has_block->block()) for(auto i : has_block->block()->elements()) { debug_ast(i, ind + " ", env); }
-  } else if (dynamic_cast<At_Rule*>(node)) {
-    At_Rule* block = dynamic_cast<At_Rule*>(node);
-    std::cerr << ind << "At_Rule " << block;
+  } else if (dynamic_cast<Directive*>(node)) {
+    Directive* block = dynamic_cast<Directive*>(node);
+    std::cerr << ind << "Directive " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [" << block->keyword() << "] " << block->tabs() << std::endl;
     debug_ast(block->selector(), ind + "~", env);
@@ -437,6 +467,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " [indent: " << ruleset->tabs() << "]";
     std::cerr << (ruleset->at_root() ? " [@ROOT]" : "");
     std::cerr << (ruleset->is_root() ? " [root]" : "");
+    std::cerr << (ruleset->connect_parent() ? " [connect]" : "");
     std::cerr << std::endl;
     debug_ast(ruleset->selector(), ind + ">");
     debug_ast(ruleset->block(), ind + " ");

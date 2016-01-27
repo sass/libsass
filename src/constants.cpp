@@ -93,6 +93,8 @@ namespace Sass {
     extern const char webkit_calc_kwd[]  = "-webkit-calc(";
     extern const char ms_calc_kwd[]      = "-ms-calc(";
 
+    extern const char almost_any_value_class[] = "\"'\#!;{}";
+
     // css selector keywords
     extern const char sel_deep_kwd[] = "/deep/";
 
@@ -155,7 +157,7 @@ namespace Sass {
     extern const char selector_combinator_ops[] = "+~>";
     // optional modifiers for alternative compare context
     extern const char attribute_compare_modifiers[] = "~|^$*";
-    extern const char selector_lookahead_ops[] = "*&%,()[]";
+    extern const char selector_lookahead_ops[] = "*&%,[]";
 
     // byte order marks
     // (taken from http://en.wikipedia.org/wiki/Byte_order_mark)

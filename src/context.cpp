@@ -21,6 +21,7 @@
 #include "cssize.hpp"
 #include "listize.hpp"
 #include "extend.hpp"
+#include "debugger.hpp"
 #include "remove_placeholders.hpp"
 #include "functions.hpp"
 #include "sass_functions.hpp"
@@ -649,9 +650,12 @@ namespace Sass {
     Expand expand(*this, &global, &backtrace);
     Cssize cssize(*this, &backtrace);
     // expand and eval the tree
+  // debug_ast(root);
     root = root->perform(&expand)->block();
     // merge and bubble certain rules
+//  debug_ast(root);
     root = root->perform(&cssize)->block();
+//  debug_ast(root);
     // should we extend something?
     if (!subset_map.empty()) {
       // create crtp visitor object

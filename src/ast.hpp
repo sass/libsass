@@ -54,6 +54,8 @@ namespace Sass {
   // Note: most methods follow precision option
   const double NUMBER_EPSILON = 0.00000000000001;
 
+  Selector_List* parentzia(std::vector<Selector_List*>, Context& ctx);
+
   // ToDo: where does this fit best?
   // We don't share this with C-API?
   class Operand {
@@ -448,11 +450,13 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////////
   class Ruleset : public Has_Block {
     ADD_PROPERTY(Selector*, selector)
+    ADD_PROPERTY(bool, connect_parent);
     ADD_PROPERTY(bool, at_root);
     ADD_PROPERTY(bool, is_root);
+    ADD_PROPERTY(bool, chroot);
   public:
     Ruleset(ParserState pstate, Selector* s = 0, Block* b = 0)
-    : Has_Block(pstate, b), selector_(s), at_root_(false), is_root_(false)
+    : Has_Block(pstate, b), selector_(s), connect_parent_(true), at_root_(false), is_root_(false), chroot_(false)
     { statement_type(RULESET); }
     bool is_invisible() const;
     // nested rulesets need to be hoisted out of their enclosing blocks
@@ -508,12 +512,12 @@ namespace Sass {
   // At-rules -- arbitrary directives beginning with "@" that may have an
   // optional statement block.
   ///////////////////////////////////////////////////////////////////////
-  class At_Rule : public Has_Block {
+  class Directive : public Has_Block {
     ADD_PROPERTY(std::string, keyword)
     ADD_PROPERTY(Selector*, selector)
     ADD_PROPERTY(Expression*, value)
   public:
-    At_Rule(ParserState pstate, std::string kwd, Selector* sel = 0, Block* b = 0, Expression* val = 0)
+    Directive(ParserState pstate, std::string kwd, Selector* sel = 0, Block* b = 0, Expression* val = 0)
     : Has_Block(pstate, b), keyword_(kwd), selector_(sel), value_(val) // set value manually if needed
     { statement_type(DIRECTIVE); }
     bool bubbles() { return is_keyframes() || is_media(); }
@@ -1447,6 +1451,9 @@ namespace Sass {
     { concrete_type(STRING); }
     static std::string type_name() { return "string"; }
     virtual ~String() = 0;
+    virtual void rtrim() = 0;
+    virtual void ltrim() = 0;
+    virtual void trim() = 0;
     virtual bool operator==(const Expression& rhs) const = 0;
     ATTACH_OPERATIONS()
   };
@@ -1475,6 +1482,9 @@ namespace Sass {
       }
       return false;
     }
+    virtual void rtrim();
+    virtual void ltrim();
+    virtual void trim();
 
     virtual size_t hash()
     {
@@ -1514,6 +1524,9 @@ namespace Sass {
     { }
     std::string type() { return "string"; }
     static std::string type_name() { return "string"; }
+    virtual void rtrim();
+    virtual void ltrim();
+    virtual void trim();
 
     virtual size_t hash()
     {
@@ -1671,42 +1684,15 @@ namespace Sass {
   /////////////////////////////////////////////////
   // At root expressions (for use inside @at-root).
   /////////////////////////////////////////////////
-  class At_Root_Expression : public Expression {
+  class At_Root_Query : public Expression {
   private:
-    ADD_PROPERTY(String*, feature)
+    ADD_PROPERTY(Expression*, feature)
     ADD_PROPERTY(Expression*, value)
-    ADD_PROPERTY(bool, is_interpolated)
   public:
-    At_Root_Expression(ParserState pstate, String* f = 0, Expression* v = 0, bool i = false)
-    : Expression(pstate), feature_(f), value_(v), is_interpolated_(i)
+    At_Root_Query(ParserState pstate, Expression* f = 0, Expression* v = 0, bool i = false)
+    : Expression(pstate), feature_(f), value_(v)
     { }
-    bool exclude(std::string str)
-    {
-      bool with = feature() && unquote(feature()->to_string()).compare("with") == 0;
-      List* l = static_cast<List*>(value());
-      std::string v;
-
-      if (with)
-      {
-        if (!l || l->length() == 0) return str.compare("rule") != 0;
-        for (size_t i = 0, L = l->length(); i < L; ++i)
-        {
-          v = unquote((*l)[i]->to_string());
-          if (v.compare("all") == 0 || v == str) return false;
-        }
-        return true;
-      }
-      else
-      {
-        if (!l || !l->length()) return str.compare("rule") == 0;
-        for (size_t i = 0, L = l->length(); i < L; ++i)
-        {
-          v = unquote((*l)[i]->to_string());
-          if (v.compare("all") == 0 || v == str) return true;
-        }
-        return false;
-      }
-    }
+    bool exclude(std::string str);
     ATTACH_OPERATIONS()
   };
 
@@ -1714,9 +1700,9 @@ namespace Sass {
   // At-root.
   ///////////
   class At_Root_Block : public Has_Block {
-    ADD_PROPERTY(At_Root_Expression*, expression)
+    ADD_PROPERTY(At_Root_Query*, expression)
   public:
-    At_Root_Block(ParserState pstate, Block* b = 0, At_Root_Expression* e = 0)
+    At_Root_Block(ParserState pstate, Block* b = 0, At_Root_Query* e = 0)
     : Has_Block(pstate, b), expression_(e)
     { statement_type(ATROOT); }
     bool is_hoistable() { return true; }
@@ -1724,7 +1710,7 @@ namespace Sass {
     bool exclude_node(Statement* s) {
       if (s->statement_type() == Statement::DIRECTIVE)
       {
-        return expression()->exclude(static_cast<At_Rule*>(s)->keyword().erase(0, 1));
+        return expression()->exclude(static_cast<Directive*>(s)->keyword().erase(0, 1));
       }
       if (s->statement_type() == Statement::MEDIA)
       {
@@ -1738,7 +1724,7 @@ namespace Sass {
       {
         return expression()->exclude("supports");
       }
-      if (static_cast<At_Rule*>(s)->is_keyframes())
+      if (static_cast<Directive*>(s)->is_keyframes())
       {
         return expression()->exclude("keyframes");
       }
@@ -1854,6 +1840,7 @@ namespace Sass {
     ADD_PROPERTY(bool, has_line_break)
     // maybe we have optional flag
     ADD_PROPERTY(bool, is_optional)
+    ADD_PROPERTY(bool, transparent);
     // parent block pointers
     ADD_PROPERTY(Media_Block*, media_block)
   protected:
@@ -1866,14 +1853,19 @@ namespace Sass {
       has_line_feed_(false),
       has_line_break_(false),
       is_optional_(false),
+      transparent_(false),
       media_block_(0),
       hash_(0)
     { concrete_type(SELECTOR); }
+    virtual bool contains_placeholder(void) {
+      return has_placeholder();
+    }
     virtual ~Selector() = 0;
     virtual size_t hash() = 0;
     virtual bool has_parent_ref() {
       return false;
     }
+    virtual void set_optional(bool flag) = 0;
     virtual unsigned long specificity() {
       return Constants::Specificity_Universal;
     }
@@ -1891,6 +1883,7 @@ namespace Sass {
     Selector_Schema(ParserState pstate, String* c)
     : Selector(pstate), contents_(c), at_root_(false)
     { }
+    virtual void set_optional(bool flag) {};
     virtual size_t hash() {
       if (hash_ == 0) {
         hash_combine(hash_, contents_->hash());
@@ -1934,6 +1927,9 @@ namespace Sass {
         hash_combine(hash_, std::hash<std::string>()(name()));
       }
       return hash_;
+    }
+    virtual void set_optional(bool flag) {
+      is_optional(flag);
     }
     // namespace query functions
     bool is_universal_ns() const
@@ -1987,9 +1983,11 @@ namespace Sass {
   // inside strings in declarations (Compound_Selector).
   // only one simple parent selector means the first case.
   class Parent_Selector : public Simple_Selector {
+    ADD_PROPERTY(bool, leave_me_alone)
   public:
     Parent_Selector(ParserState pstate)
-    : Simple_Selector(pstate, "&")
+    : Simple_Selector(pstate, "&"),
+      leave_me_alone_(false)
     { /* has_reference(true); */ }
     virtual bool has_parent_ref() { return true; };
     virtual unsigned long specificity()
@@ -2152,6 +2150,9 @@ namespace Sass {
     Wrapped_Selector(ParserState pstate, std::string n, Selector* sel)
     : Simple_Selector(pstate, n), selector_(sel)
     { }
+    virtual bool contains_placeholder() {
+      return has_placeholder();
+    };
     virtual bool has_parent_ref() {
       // if (has_reference()) return true;
       if (!selector()) return false;
@@ -2193,6 +2194,7 @@ namespace Sass {
     SourcesSet sources_;
     ADD_PROPERTY(bool, extended);
     ADD_PROPERTY(bool, has_parent_reference);
+    ADD_PROPERTY(bool, connectz);
   protected:
     void adjust_after_pushing(Simple_Selector* s)
     {
@@ -2204,14 +2206,20 @@ namespace Sass {
     : Selector(pstate),
       Vectorized<Simple_Selector*>(s),
       extended_(false),
-      has_parent_reference_(false)
+      has_parent_reference_(false),
+      connectz_(true)
     { }
-    bool contains_placeholder() {
+    virtual bool contains_placeholder() {
       for (size_t i = 0, L = length(); i < L; ++i) {
-        if ((*this)[i]->has_placeholder()) return true;
+        if ((*this)[i]->contains_placeholder()) return true;
       }
       return false;
     };
+    virtual void set_optional(bool flag) {
+      is_optional(flag);
+      for (size_t i = 0, L = length(); i < L; ++i)
+      { (*this)[i]->set_optional(flag); }
+    }
 
     bool is_universal() const
     {
@@ -2256,7 +2264,8 @@ namespace Sass {
     bool is_empty_reference()
     {
       return length() == 1 &&
-             dynamic_cast<Parent_Selector*>((*this)[0]);
+             dynamic_cast<Parent_Selector*>((*this)[0]) &&
+             ! dynamic_cast<Parent_Selector*>((*this)[0])->leave_me_alone();
     }
     std::vector<std::string> to_str_vec(); // sometimes need to convert to a flat "by-value" data structure
 
@@ -2289,11 +2298,15 @@ namespace Sass {
     ADD_PROPERTY(Complex_Selector*, tail)
     ADD_PROPERTY(String*, reference);
   public:
-    bool contains_placeholder() {
+    virtual bool contains_placeholder() {
       if (head() && head()->contains_placeholder()) return true;
       if (tail() && tail()->contains_placeholder()) return true;
       return false;
     };
+    bool connectz() {
+      return (!head_ || head_->connectz()) &&
+      (!tail_ || tail_->connectz());
+    }
     Complex_Selector(ParserState pstate,
                      Combinator c = ANCESTOR_OF,
                      Compound_Selector* h = 0,
@@ -2309,6 +2322,7 @@ namespace Sass {
     }
     virtual bool has_parent_ref();
 
+
     Complex_Selector* skip_empty_reference()
     {
       if ((!head_ || !head_->length() || head_->is_empty_reference()) &&
@@ -2320,6 +2334,12 @@ namespace Sass {
         return tail_->skip_empty_reference();
       }
       return this;
+    }
+
+    virtual void set_optional(bool flag) {
+      is_optional(flag);
+      if (head_) head_->set_optional(flag);
+      if (tail_) tail_->set_optional(flag);
     }
 
     // can still have a tail
@@ -2351,6 +2371,7 @@ namespace Sass {
 
     size_t length() const;
     Selector_List* parentize(Selector_List* parents, Context& ctx);
+    Selector_List* parentalize(Selector_List* parents, Context& ctx);
     virtual bool is_superselector_of(Compound_Selector* sub, std::string wrapping = "");
     virtual bool is_superselector_of(Complex_Selector* sub, std::string wrapping = "");
     virtual bool is_superselector_of(Selector_List* sub, std::string wrapping = "");
@@ -2441,19 +2462,33 @@ namespace Sass {
   ///////////////////////////////////
   class Selector_List : public Selector, public Vectorized<Complex_Selector*> {
     ADD_PROPERTY(std::vector<std::string>, wspace)
+    ADD_PROPERTY(bool, connect_parent)
   protected:
     void adjust_after_pushing(Complex_Selector* c);
   public:
     Selector_List(ParserState pstate, size_t s = 0)
-    : Selector(pstate), Vectorized<Complex_Selector*>(s), wspace_(0)
+    : Selector(pstate), Vectorized<Complex_Selector*>(s), wspace_(0), connect_parent_(true)
     { }
+    virtual bool contains_placeholder() {
+      for (size_t i = 0, L = length(); i < L; ++i) {
+        if ((*this)[i]->contains_placeholder()) return true;
+      }
+      return false;
+    };
     std::string type() { return "list"; }
     // remove parent selector references
     // basically unwraps parsed selectors
     virtual bool has_parent_ref();
     void remove_parent_selectors();
+    virtual void set_optional(bool flag) {
+      is_optional(flag);
+      for (size_t i = 0, L = length(); i < L; ++i)
+      { (*this)[i]->set_optional(flag); }
+    }
     // virtual Selector_Placeholder* find_placeholder();
+    Selector_List* connect(Selector_List* parents, Context& ctx);
     Selector_List* parentize(Selector_List* parents, Context& ctx);
+    Selector_List* parentalize(Selector_List* parents, Context& ctx);
     virtual bool is_superselector_of(Compound_Selector* sub, std::string wrapping = "");
     virtual bool is_superselector_of(Complex_Selector* sub, std::string wrapping = "");
     virtual bool is_superselector_of(Selector_List* sub, std::string wrapping = "");

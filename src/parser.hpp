@@ -130,6 +130,8 @@ namespace Sass {
     const char* lex(bool lazy = true, bool force = false)
     {
 
+      if (*position == 0) return 0;
+
       // position considered before lexed token
       // we can skip whitespace or comments for
       // lazy developers (but we need control)
@@ -292,11 +294,23 @@ namespace Sass {
     Supports_Condition* parse_supports_declaration();
     Supports_Condition* parse_supports_condition_in_parens();
     At_Root_Block* parse_at_root_block();
-    At_Root_Expression* parse_at_root_expression();
-    At_Rule* parse_at_rule();
+    At_Root_Query* parse_at_root_query();
+    String_Schema* parse_almost_any_value();
+    Directive* parse_special_directive();
+    Directive* parse_prefixed_directive();
+    Directive* parse_directive();
     Warning* parse_warning();
     Error* parse_error();
     Debug* parse_debug();
+
+    // try to be more ruby sass
+    Expression* lex_block_comment();
+    Expression* lex_single_line_comment();
+    Expression* lex_almost_any_value_token();
+    Expression* lex_almost_any_value_chars();
+    Expression* lex_interp_string();
+    Expression* lex_interp_uri();
+    Expression* lex_interpolation();
 
     // these will throw errors
     Token lex_variable();
@@ -313,6 +327,34 @@ namespace Sass {
 
     void throw_syntax_error(std::string message, size_t ln = 0);
     void throw_read_error(std::string message, size_t ln = 0);
+
+
+    template <Prelexer::prelexer open, Prelexer::prelexer close>
+    Expression* lex_interp()
+    {
+      if (lex < open >(false)) {
+        String_Schema* schema = SASS_MEMORY_NEW(ctx.mem, String_Schema, pstate);
+        // std::cerr << "LEX [[" << std::string(lexed) << "]]\n";
+        *schema << SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, lexed);
+        if (position[0] == '#' && position[1] == '{') {
+          Expression* itpl = lex_interpolation();
+          if (itpl) *schema << itpl;
+          while (lex < close >(false)) {
+            // std::cerr << "LEX [[" << std::string(lexed) << "]]\n";
+            *schema << SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, lexed);
+            if (position[0] == '#' && position[1] == '{') {
+              Expression* itpl = lex_interpolation();
+              if (itpl) *schema << itpl;
+            } else {
+              return schema;
+            }
+          }
+        } else {
+          return SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, lexed);
+        }
+      }
+      return 0;
+    }
   };
 
   size_t check_bom_chars(const char* src, const char *end, const unsigned char* bom, size_t len);
