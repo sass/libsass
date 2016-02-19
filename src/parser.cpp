@@ -1596,6 +1596,8 @@ namespace Sass {
     }
 
     const char* e = 0;
+    const char* ee = end;
+    end = stop;
     size_t num_items = 0;
     bool need_space = false;
     while (position < stop) {
@@ -1605,7 +1607,7 @@ namespace Sass {
       }
       if (need_space) {
         need_space = false;
-        (*schema) << SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, " ");
+        // (*schema) << SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, " ");
       }
       if ((e = peek< re_functional >()) && e < stop) {
         (*schema) << parse_function_call();
@@ -1632,19 +1634,22 @@ namespace Sass {
       else if (lex< alternatives < exactly<'%'>, exactly < '-' >, exactly < '+' > > >()) {
         (*schema) << SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, lexed);
       }
+      // lex a quoted string
+      else if (lex< quoted_string >()) {
+        // need_space = true;
+        // if (schema->length()) (*schema) << SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, " ");
+        // else need_space = true;
+        (*schema) << parse_string();
+        if ((*position == '"' || *position == '\'') || peek < alternatives < alpha > >()) {
+          // need_space = true;
+        }
+        if (peek < exactly < '-' > >()) break;
+      }
       else if (lex< sequence < identifier > >()) {
         (*schema) << SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, lexed);
         if ((*position == '"' || *position == '\'') || peek < alternatives < alpha > >()) {
-          need_space = true;
+           // need_space = true;
         }
-      }
-      // lex a quoted string
-      else if (lex< quoted_string >()) {
-        (*schema) << SASS_MEMORY_NEW(ctx.mem, String_Quoted, pstate, lexed, '"');
-        if ((*position == '"' || *position == '\'') || peek < alternatives < alpha > >()) {
-          need_space = true;
-        }
-        if (peek < exactly < '-' > >()) return schema;
       }
       // lex (normalized) variable
       else if (lex< variable >()) {
@@ -1675,10 +1680,15 @@ namespace Sass {
         (*schema) << parse_factor();
       }
       else {
-        return schema;
+        break;
       }
       ++num_items;
     }
+    if (position != stop) {
+      (*schema) << SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, std::string(position, stop));
+      position = stop;
+    }
+    end = ee;
     return schema;
   }
 
@@ -2392,19 +2402,27 @@ namespace Sass {
         non_greedy <
           alternatives <
             // consume whitespace
-            block_comment, spaces,
+            block_comment, // spaces,
             // main tokens
-            interpolant,
+            sequence <
+              interpolant,
+              optional <
+                quoted_string
+              >
+            >,
             identifier,
             variable,
             // issue #442
             sequence <
               parenthese_scope,
-              interpolant
+              interpolant,
+              optional <
+                quoted_string
+              >
             >
           >,
           sequence <
-            optional_spaces,
+            // optional_spaces,
             alternatives <
               exactly<'{'>,
               exactly<'}'>,
