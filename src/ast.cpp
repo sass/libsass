@@ -960,6 +960,38 @@ namespace Sass {
     return ss;
   }
 
+  Compound_Selector* Compound_Selector::parentize(Selector_List* parents, Context& ctx)
+  {
+    Compound_Selector* cpy = SASS_MEMORY_NEW(ctx.mem, Compound_Selector, this->pstate());
+    for (Simple_Selector* sel : this->elements()) {
+      if (Wrapped_Selector* ws = dynamic_cast<Wrapped_Selector*>(sel)) {
+        if (Selector_List* sl = dynamic_cast<Selector_List*>(ws->selector())) {
+          Selector_List* prl = sl->parentize(parents, ctx);
+          if (sl->length() > 1) {
+            *cpy << SASS_MEMORY_NEW(ctx.mem,
+                                    Wrapped_Selector,
+                                    ws->pstate(),
+                                    ws->name(),
+                                    prl);
+          } else {
+            for (Complex_Selector* prs : *prl) {
+              *cpy << SASS_MEMORY_NEW(ctx.mem,
+                                      Wrapped_Selector,
+                                      ws->pstate(),
+                                      ws->name(),
+                                      prs);
+            }
+          }
+        } else {
+          *cpy << sel;
+        }
+      } else {
+        *cpy << sel;
+      }
+    }
+    return cpy;
+  }
+
   Selector_List* Complex_Selector::parentize(Selector_List* parents, Context& ctx)
   {
 
@@ -1006,7 +1038,7 @@ namespace Sass {
                 throw Exception::InvalidParent(parent, ss);
               }
               ss->tail(tail ? tail->clone(ctx) : 0);
-              Compound_Selector* h = head_->clone(ctx);
+              Compound_Selector* h = head_->parentize(parents, ctx);
               if (h->length()) h->erase(h->begin());
               ss->head(h->length() ? h : 0);
               // \/ IMO ruby sass bug \/
