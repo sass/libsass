@@ -71,8 +71,17 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << root_block->tabs();
     std::cerr << std::endl;
-    debug_ast(root_block->expression(), ind + ":", env);
+    debug_ast(root_block->expression()->feature(), ind + "=", env);
+    debug_ast(root_block->expression()->value(), ind + ":", env);
     debug_ast(root_block->block(), ind + " ", env);
+  } else if (dynamic_cast<At_Root_Expression*>(node)) {
+    At_Root_Expression* ex = dynamic_cast<At_Root_Expression*>(node);
+    std::cerr << ind << "At_Root_Expression " << ex;
+    std::cerr << " (" << pstate_source_position(node) << ")";
+    std::cerr << (ex->is_interpolated() ? " [is_interpolated]": "");
+    std::cerr << std::endl;
+    debug_ast(ex->feature(), ind + "=", env);
+    debug_ast(ex->value(), ind + ":", env);
   } else if (dynamic_cast<Selector_List*>(node)) {
     Selector_List* selector = dynamic_cast<Selector_List*>(node);
     std::cerr << ind << "Selector_List " << selector;

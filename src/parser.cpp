@@ -2149,7 +2149,11 @@ namespace Sass {
       expr = parse_at_root_expression();
     }
     if (peek < exactly<'{'> >()) {
-      body = parse_block(true);
+      std::string feat("");
+      if (expr && expr->feature())
+        feat = expr->feature()->to_string();
+      // allow declarations in certain cases
+      body = parse_block(feat != "without");
     }
     else if ((lookahead_result = lookahead_for_selector(position)).found) {
       Ruleset* r = parse_ruleset(lookahead_result, false);
