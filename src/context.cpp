@@ -77,6 +77,8 @@ namespace Sass {
     c_importers             (std::vector<Sass_Importer_Entry>()),
     c_functions             (std::vector<Sass_Function_Entry>()),
 
+    css_imports             (false),
+
     indent                  (safe_str(c_options.indent, "  ")),
     linefeed                (safe_str(c_options.linefeed, "\n")),
 
@@ -239,7 +241,7 @@ namespace Sass {
     for (size_t i = 0, S = include_paths.size(); vec.size() == 0 && i < S; ++i)
     {
       // call resolve_includes and individual base path and append all results
-      std::vector<Include> resolved(resolve_includes(include_paths[i], import.imp_path));
+      std::vector<Include> resolved(resolve_includes(include_paths[i], import.imp_path, c_options.css_imports));
       if (resolved.size()) vec.insert(vec.end(), resolved.begin(), resolved.end());
     }
     // return vector

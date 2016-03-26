@@ -114,7 +114,7 @@ namespace Sass {
 
   namespace File {
 
-    std::vector<Include> resolve_includes(const std::string& root, const std::string& file);
+    std::vector<Include> resolve_includes(const std::string& root, const std::string& file, const bool css_imports = false);
 
   }
 

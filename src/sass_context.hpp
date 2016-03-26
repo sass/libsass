@@ -21,6 +21,10 @@ struct Sass_Options : Sass_Output_Options {
   // Treat source_string as sass (as opposed to scss)
   bool is_indented_syntax_src;
 
+  // Whether .css files should be considered
+  // when resolving @import
+  bool css_imports;
+
   // The input path is used for source map
   // generation. It can be used to define
   // something with string compilation or to

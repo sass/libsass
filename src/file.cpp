@@ -300,13 +300,18 @@ namespace Sass {
     // (2) underscore + given
     // (3) underscore + given + extension
     // (4) given + extension
-    std::vector<Include> resolve_includes(const std::string& root, const std::string& file)
+    std::vector<Include> resolve_includes(const std::string& root, const std::string& file, const bool css_imports)
     {
       std::string filename = join_paths(root, file);
       // supported extensions
-      const std::vector<std::string> exts = {
-        ".scss", ".sass", ".css"
+      std::vector<std::string> exts = {
+        ".sass", ".scss"
       };
+
+      if (css_imports) {
+        exts.push_back(".css");
+      }
+
       // split the filename
       std::string base(dir_name(file));
       std::string name(base_name(file));
