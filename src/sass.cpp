@@ -11,6 +11,12 @@
 extern "C" {
   using namespace Sass;
 
+  // Allocates a string owned by libsass
+  char* ADDCALL sass_string_alloc(size_t length)
+  {
+	  return sass_stralloc(length);
+  }
+
   // caller must free the returned memory
   char* ADDCALL sass_string_quote (const char *str, const char quote_mark)
   {

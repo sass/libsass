@@ -29,11 +29,18 @@ namespace Sass {
   }
 
   /* Sadly, sass_strdup is not portable. */
+  char *sass_stralloc(size_t length)
+  {
+	  char *ret = (char*)malloc(length + 1);
+	  if (ret == NULL)
+		  out_of_memory();
+	  return ret;
+  }
+
+  /* Sadly, sass_strdup is not portable. */
   char *sass_strdup(const char *str)
   {
-    char *ret = (char*) malloc(strlen(str) + 1);
-    if (ret == NULL)
-      out_of_memory();
+    char *ret = sass_stralloc(strlen(str));
     strcpy(ret, str);
     return ret;
   }

@@ -13,6 +13,7 @@
 namespace Sass {
 
   double round(double val, size_t precision = 0);
+  char* sass_stralloc(size_t length);
   char* sass_strdup(const char* str);
   double sass_atof(const char* str);
   const char* safe_str(const char *, const char* = "");
