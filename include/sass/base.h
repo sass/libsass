@@ -63,6 +63,7 @@ enum Sass_Output_Style {
 };
 
 // Some convenient string helper function
+ADDAPI char* ADDCALL sass_string_alloc(size_t length); // Allocates a string of length+1 (terminated by zero)
 ADDAPI char* ADDCALL sass_string_quote (const char* str, const char quote_mark);
 ADDAPI char* ADDCALL sass_string_unquote (const char* str);
 
