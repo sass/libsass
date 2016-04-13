@@ -3,7 +3,7 @@
 script/branding
 
 if [ ! -d "sass-spec" ]; then
-  git clone https://github.com/sass/sass-spec.git
+  git clone https://github.com/sass/sass-spec.git -b language_versions
 fi
 if [ ! -d "sassc" ]; then
   git clone https://github.com/sass/sassc.git
