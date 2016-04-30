@@ -207,9 +207,54 @@
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\b64\cencode.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClCompile Include="$(LIBSASS_HEADERS_DIR)\ast\common.hpp">
+      <Filter>Headers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_HEADERS_DIR)\ast\nodes.hpp">
+      <Filter>Headers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_HEADERS_DIR)\ast\blocks.hpp">
+      <Filter>Headers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_HEADERS_DIR)\ast\values.hpp">
+      <Filter>Headers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_HEADERS_DIR)\ast\selectors.hpp">
+      <Filter>Headers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_HEADERS_DIR)\ast\containers.hpp">
+      <Filter>Headers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_HEADERS_DIR)\ast\statements.hpp">
+      <Filter>Headers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_HEADERS_DIR)\ast\expressions.hpp">
+      <Filter>Headers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup Label="Sources">
     <ClCompile Include="$(LIBSASS_SRC_DIR)\ast.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\nodes.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\blocks.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\values.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\selectors.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\containers.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\statements.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\expressions.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="$(LIBSASS_SRC_DIR)\base64vlq.cpp">
@@ -219,7 +264,7 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Condition="$(VisualStudioVersion) &lt; 14.0" Include="$(LIBSASS_SRC_DIR)\c99func.c">
-      <Filter>Source Files</Filter>
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="$(LIBSASS_SRC_DIR)\cencode.c">
       <Filter>Sources</Filter>

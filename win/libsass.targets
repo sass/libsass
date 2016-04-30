@@ -11,6 +11,14 @@
   </ItemGroup>
   <ItemGroup Label="LibSass Headers">
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast\common.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast\nodes.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast\blocks.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast\values.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast\selectors.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast\containers.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast\statements.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast\expressions.hpp" />
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast_def_macros.hpp" />
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast_factory.hpp" />
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast_fwd_decl.hpp" />
@@ -67,6 +75,13 @@
   </ItemGroup>
   <ItemGroup Label="LibSass Sources">
     <ClCompile Include="$(LIBSASS_SRC_DIR)\ast.cpp" />
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\nodes.cpp" />
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\blocks.cpp" />
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\values.cpp" />
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\selectors.cpp" />
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\containers.cpp" />
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\statements.cpp" />
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\ast\expressions.cpp" />
     <ClCompile Include="$(LIBSASS_SRC_DIR)\base64vlq.cpp" />
     <ClCompile Include="$(LIBSASS_SRC_DIR)\bind.cpp" />
     <ClCompile Condition="$(VisualStudioVersion) &lt; 14.0" Include="$(LIBSASS_SRC_DIR)\c99func.c" />
