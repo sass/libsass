@@ -20,7 +20,6 @@ namespace Sass {
     : Base(pstate, msg)
     { }
 
-
     InvalidParent::InvalidParent(Selector* parent, Selector* selector)
     : Base(selector->pstate()), parent(parent), selector(selector)
     {

@@ -493,6 +493,15 @@ namespace Sass {
     return flatten(result);
   }
 
+  Statement* Cssize::operator()(Declaration* d)
+  {
+    if (block_stack.size() < 2) {
+      throw Exception::InvalidSass(d->pstate(), "Properties are only allowed "
+        "within rules, directives, mixin includes, or other properties.");
+    }
+    return static_cast<Statement*>(d);
+  }
+
   Statement* Cssize::fallback_impl(AST_Node* n)
   {
     return static_cast<Statement*>(n);
