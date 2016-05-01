@@ -1,3 +1,4 @@
+AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4 -I script
 
 AM_COPT = -Wall -O2
