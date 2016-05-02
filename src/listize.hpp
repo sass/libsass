@@ -24,6 +24,7 @@ namespace Sass {
     Listize(Memory_Manager&);
     ~Listize() { }
 
+    Expression* operator()(Map*);
     Expression* operator()(Selector_List*);
     Expression* operator()(Complex_Selector*);
     Expression* operator()(Compound_Selector*);

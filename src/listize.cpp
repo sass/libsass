@@ -14,6 +14,17 @@ namespace Sass {
   : mem(mem)
   {  }
 
+  Expression* Listize::operator()(Map* m)
+  {
+    List* l = SASS_MEMORY_NEW(mem, List, m->pstate(), m->length(), SASS_COMMA);
+    for (size_t i = 0, L = m->length(); i < L; i++) {
+      List* il = SASS_MEMORY_NEW(mem, List, m->pstate(), 2, SASS_SPACE);
+      *il << m->key(i) << m->value(i);
+      *l << il;
+    }
+    return l;
+  }
+
   Expression* Listize::operator()(Selector_List* sel)
   {
     List* l = SASS_MEMORY_NEW(mem, List, sel->pstate(), sel->length(), SASS_COMMA);
