@@ -226,6 +226,8 @@ namespace Sass {
   public:
     Vectorized(size_t s = 0) : elements_(std::vector<T>())
     { elements_.reserve(s); }
+    Vectorized(std::vector<T> els) : elements_(els)
+    { }
     virtual ~Vectorized() = 0;
     size_t length() const   { return elements_.size(); }
     bool empty() const      { return elements_.empty(); }
@@ -775,7 +777,7 @@ namespace Sass {
   struct Backtrace;
   typedef Environment<AST_Node*> Env;
   typedef const char* Signature;
-  typedef Expression* (*Native_Function)(Env&, Env&, Context&, Signature, ParserState, Backtrace*);
+  typedef Expression* (*Native_Function)(Env&, Env&, Context&, Signature, Parameters*, ParserState, Backtrace*);
   typedef const char* Signature;
   class Definition : public Has_Block {
   public:
@@ -1846,11 +1848,17 @@ namespace Sass {
       }
     }
   public:
-    Parameters(ParserState pstate)
+    Parameters(ParserState pstate, bool has_optional = false, bool has_rest = false)
     : AST_Node(pstate),
       Vectorized<Parameter*>(),
-      has_optional_parameters_(false),
-      has_rest_parameter_(false)
+      has_optional_parameters_(has_optional),
+      has_rest_parameter_(has_rest)
+    { }
+    Parameters(ParserState pstate, std::vector<Parameter*> params, bool has_optional = false, bool has_rest = false)
+    : AST_Node(pstate),
+      Vectorized<Parameter*>(params),
+      has_optional_parameters_(has_optional),
+      has_rest_parameter_(has_rest)
     { }
     ATTACH_OPERATIONS()
   };

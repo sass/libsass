@@ -30,20 +30,22 @@
 #include "wincrypt.h"
 #endif
 
-#define ARG(argname, argtype) get_arg<argtype>(argname, env, sig, pstate, backtrace)
-#define ARGR(argname, argtype, lo, hi) get_arg_r(argname, env, sig, pstate, lo, hi, backtrace)
-#define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, pstate, backtrace, ctx)
+#define ARG(argname, argtype) get_arg<argtype>(argname, env, sig, params, pstate, backtrace)
+#define ARGR(argname, argtype, lo, hi) get_arg_r(argname, env, sig, params, pstate, lo, hi, backtrace)
+#define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, params, pstate, backtrace, ctx)
 
 namespace Sass {
   using std::stringstream;
   using std::endl;
 
-  Definition* make_native_function(Signature sig, Native_Function func, Context& ctx)
+  Definition* make_native_function(std::string name, Signature sig, Parameters* params, Native_Function func, Context& ctx)
   {
-    Parser sig_parser = Parser::from_c_str(sig, ctx, ParserState("[built-in function]"));
-    sig_parser.lex<Prelexer::identifier>();
-    std::string name(Util::normalize_underscores(sig_parser.lexed));
-    Parameters* params = sig_parser.parse_parameters();
+    if (params == 0) {
+      Parser sig_parser = Parser::from_c_str(sig, ctx, ParserState("[built-in function]"));
+      sig_parser.lex<Prelexer::identifier>();
+      std::string name(Util::normalize_underscores(sig_parser.lexed));
+      params = sig_parser.parse_parameters();
+    }
     return SASS_MEMORY_NEW(ctx.mem, Definition,
                            ParserState("[built-in function]"),
                            sig,
@@ -105,7 +107,7 @@ namespace Sass {
     }
 
     template <typename T>
-    T* get_arg(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace)
+    T* get_arg(const std::string& argname, Env& env, Signature sig, Parameters* params, ParserState pstate, Backtrace* backtrace)
     {
       // Minimal error handling -- the expectation is that built-ins will be written correctly!
       T* val = dynamic_cast<T*>(env[argname]);
@@ -121,7 +123,7 @@ namespace Sass {
       return val;
     }
 
-    Map* get_arg_m(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx)
+    Map* get_arg_m(const std::string& argname, Env& env, Signature sig, Parameters* params, ParserState pstate, Backtrace* backtrace, Context& ctx)
     {
       // Minimal error handling -- the expectation is that built-ins will be written correctly!
       Map* val = dynamic_cast<Map*>(env[argname]);
@@ -131,14 +133,14 @@ namespace Sass {
       if (lval && lval->length() == 0) return SASS_MEMORY_NEW(ctx.mem, Map, pstate, 0);
 
       // fallback on get_arg for error handling
-      val = get_arg<Map>(argname, env, sig, pstate, backtrace);
+      val = get_arg<Map>(argname, env, sig, params, pstate, backtrace);
       return val;
     }
 
-    Number* get_arg_r(const std::string& argname, Env& env, Signature sig, ParserState pstate, double lo, double hi, Backtrace* backtrace)
+    Number* get_arg_r(const std::string& argname, Env& env, Signature sig, Parameters* params, ParserState pstate, double lo, double hi, Backtrace* backtrace)
     {
       // Minimal error handling -- the expectation is that built-ins will be written correctly!
-      Number* val = get_arg<Number>(argname, env, sig, pstate, backtrace);
+      Number* val = get_arg<Number>(argname, env, sig, params, pstate, backtrace);
       double v = val->value();
       if (!(lo <= v && v <= hi)) {
         std::stringstream msg;
@@ -149,13 +151,13 @@ namespace Sass {
       return val;
     }
 
-    #define ARGSEL(argname, seltype, contextualize) get_arg_sel<seltype>(argname, env, sig, pstate, backtrace, ctx)
+    #define ARGSEL(argname, seltype, contextualize) get_arg_sel<seltype>(argname, env, sig, params, pstate, backtrace, ctx)
 
     template <typename T>
-    T* get_arg_sel(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx);
+    T* get_arg_sel(const std::string& argname, Env& env, Signature sig, Parameters* params, ParserState pstate, Backtrace* backtrace, Context& ctx);
 
     template <>
-    Selector_List* get_arg_sel(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx) {
+    Selector_List* get_arg_sel(const std::string& argname, Env& env, Signature sig, Parameters* params, ParserState pstate, Backtrace* backtrace, Context& ctx) {
       Expression* exp = ARG(argname, Expression);
       if (exp->concrete_type() == Expression::NULL_VAL) {
         std::stringstream msg;
@@ -171,7 +173,7 @@ namespace Sass {
     }
 
     template <>
-    Complex_Selector* get_arg_sel(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx) {
+    Complex_Selector* get_arg_sel(const std::string& argname, Env& env, Signature sig, Parameters* params, ParserState pstate, Backtrace* backtrace, Context& ctx) {
       Expression* exp = ARG(argname, Expression);
       if (exp->concrete_type() == Expression::NULL_VAL) {
         std::stringstream msg;
@@ -188,7 +190,7 @@ namespace Sass {
     }
 
     template <>
-    Compound_Selector* get_arg_sel(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtrace* backtrace, Context& ctx) {
+    Compound_Selector* get_arg_sel(const std::string& argname, Env& env, Signature sig, Parameters* params, ParserState pstate, Backtrace* backtrace, Context& ctx) {
       Expression* exp = ARG(argname, Expression);
       if (exp->concrete_type() == Expression::NULL_VAL) {
         std::stringstream msg;
@@ -260,6 +262,12 @@ namespace Sass {
     }
 
     Signature rgb_sig = "rgb($red, $green, $blue)";
+    Parameter rgb_red(ParserState("[rgb-red]"), "$red");
+    Parameter rgb_green(ParserState("[rgb-green]"), "$green");
+    Parameter rgb_blue(ParserState("[rgb-blue]"), "$blue");
+    Parameters rgb_params(ParserState("[rgb]"), {
+      &rgb_red, &rgb_green, &rgb_blue
+    }, false, false);
     BUILT_IN(rgb)
     {
       return SASS_MEMORY_NEW(ctx.mem, Color,
@@ -270,6 +278,13 @@ namespace Sass {
     }
 
     Signature rgba_4_sig = "rgba($red, $green, $blue, $alpha)";
+    Parameter rgba_4_red(ParserState("[rgba-red]"), "$red");
+    Parameter rgba_4_green(ParserState("[rgba-green]"), "$green");
+    Parameter rgba_4_blue(ParserState("[rgba-blue]"), "$blue");
+    Parameter rgba_4_alpha(ParserState("[rgba-alpha]"), "$alpha");
+    Parameters rgba_4_params(ParserState("[rgba]"), {
+      &rgba_4_red, &rgba_4_green, &rgba_4_blue, &rgba_4_alpha
+    }, false, false);
     BUILT_IN(rgba_4)
     {
       return SASS_MEMORY_NEW(ctx.mem, Color,
@@ -281,6 +296,11 @@ namespace Sass {
     }
 
     Signature rgba_2_sig = "rgba($color, $alpha)";
+    Parameter rgba_2_color(ParserState("[rgba-color]"), "$color");
+    Parameter rgba_2_alpha(ParserState("[rgba-alpha]"), "$alpha");
+    Parameters rgba_2_params(ParserState("[rgba]"), {
+      &rgba_2_color, &rgba_2_alpha
+    }, false, false);
     BUILT_IN(rgba_2)
     {
       Color* c_arg = ARG("$color", Color);
@@ -291,18 +311,37 @@ namespace Sass {
     }
 
     Signature red_sig = "red($color)";
+    Parameter red_color(ParserState("[red-color]"), "$color");
+    Parameters red_params(ParserState("[red]"), {
+      &red_color
+    }, false, false);
     BUILT_IN(red)
     { return SASS_MEMORY_NEW(ctx.mem, Number, pstate, ARG("$color", Color)->r()); }
 
     Signature green_sig = "green($color)";
+    Parameter green_color(ParserState("[green-color]"), "$color");
+    Parameters green_params(ParserState("[green]"), {
+      &green_color
+    }, false, false);
     BUILT_IN(green)
     { return SASS_MEMORY_NEW(ctx.mem, Number, pstate, ARG("$color", Color)->g()); }
 
     Signature blue_sig = "blue($color)";
+    Parameter blue_color(ParserState("[blue-color]"), "$color");
+    Parameters blue_params(ParserState("[blue]"), {
+      &blue_color
+    }, false, false);
     BUILT_IN(blue)
     { return SASS_MEMORY_NEW(ctx.mem, Number, pstate, ARG("$color", Color)->b()); }
 
     Signature mix_sig = "mix($color-1, $color-2, $weight: 50%)";
+    Parameter mix_color_1(ParserState("[mix-color-1]"), "$color-1");
+    Parameter mix_color_2(ParserState("[mix-color-2]"), "$color-2");
+    Number mix_weight_default(ParserState("[mix-weight]"), 50, "%");
+    Parameter mix_weight(ParserState("[weight]"), "$weight", &mix_weight_default);
+    Parameters mix_params(ParserState("[mix]"), {
+      &mix_color_1, &mix_color_2, &mix_weight
+    }, false, false);
     BUILT_IN(mix)
     {
       Color*  color1 = ARG("$color-1", Color);
@@ -399,6 +438,12 @@ namespace Sass {
     }
 
     Signature hsl_sig = "hsl($hue, $saturation, $lightness)";
+    Parameter hsl_hue(ParserState("[hsl-hue]"), "$hue");
+    Parameter hsl_saturation(ParserState("[hsl-saturation]"), "$saturation");
+    Parameter hsl_lightness(ParserState("[hsl-lightness]"), "$lightness");
+    Parameters hsl_params(ParserState("[hsl]"), {
+      &hsl_hue, &hsl_saturation, &hsl_lightness
+    }, false, false);
     BUILT_IN(hsl)
     {
       return hsla_impl(ARG("$hue", Number)->value(),
@@ -410,6 +455,13 @@ namespace Sass {
     }
 
     Signature hsla_sig = "hsla($hue, $saturation, $lightness, $alpha)";
+    Parameter hsla_hue(ParserState("[hsla-hue]"), "$hue");
+    Parameter hsla_saturation(ParserState("[hsla-saturation]"), "$saturation");
+    Parameter hsla_lightness(ParserState("[hsla-lightness]"), "$lightness");
+    Parameter hsla_alpha(ParserState("[hsla-alpha]"), "$alpha");
+    Parameters hsla_params(ParserState("[hsla]"), {
+      &hsla_hue, &hsla_saturation, &hsla_lightness, &hsla_alpha
+    }, false, false);
     BUILT_IN(hsla)
     {
       return hsla_impl(ARG("$hue", Number)->value(),
@@ -421,6 +473,10 @@ namespace Sass {
     }
 
     Signature hue_sig = "hue($color)";
+    Parameter hue_color(ParserState("[hue-color]"), "$color");
+    Parameters hue_params(ParserState("[hue]"), {
+      &hue_color
+    }, false, false);
     BUILT_IN(hue)
     {
       Color* rgb_color = ARG("$color", Color);
@@ -431,6 +487,10 @@ namespace Sass {
     }
 
     Signature saturation_sig = "saturation($color)";
+    Parameter saturation_color(ParserState("[saturation-color]"), "$color");
+    Parameters saturation_params(ParserState("[saturation]"), {
+      &saturation_color
+    }, false, false);
     BUILT_IN(saturation)
     {
       Color* rgb_color = ARG("$color", Color);
@@ -441,6 +501,10 @@ namespace Sass {
     }
 
     Signature lightness_sig = "lightness($color)";
+    Parameter lightness_color(ParserState("[lightness-color]"), "$color");
+    Parameters lightness_params(ParserState("[lightness]"), {
+      &lightness_color
+    }, false, false);
     BUILT_IN(lightness)
     {
       Color* rgb_color = ARG("$color", Color);
@@ -451,6 +515,11 @@ namespace Sass {
     }
 
     Signature adjust_hue_sig = "adjust-hue($color, $degrees)";
+    Parameter adjust_hue_color(ParserState("[adjust-hue-color]"), "$color");
+    Parameter adjust_hue_degrees(ParserState("[adjust-hue-degrees]"), "$degrees");
+    Parameters adjust_hue_params(ParserState("[adjust-hue]"), {
+      &adjust_hue_color, &adjust_hue_degrees
+    }, false, false);
     BUILT_IN(adjust_hue)
     {
       Color* rgb_color = ARG("$color", Color);
@@ -467,6 +536,11 @@ namespace Sass {
     }
 
     Signature lighten_sig = "lighten($color, $amount)";
+    Parameter lighten_color(ParserState("[lighten-color]"), "$color");
+    Parameter lighten_amount(ParserState("[lighten-amount]"), "$amount");
+    Parameters lighten_params(ParserState("[lighten]"), {
+      &lighten_color, &lighten_amount
+    }, false, false);
     BUILT_IN(lighten)
     {
       Color* rgb_color = ARG("$color", Color);
@@ -489,6 +563,11 @@ namespace Sass {
     }
 
     Signature darken_sig = "darken($color, $amount)";
+    Parameter darken_color(ParserState("[darken-color]"), "$color");
+    Parameter darken_amount(ParserState("[darken-amount]"), "$amount");
+    Parameters darken_params(ParserState("[darken]"), {
+      &darken_color, &darken_amount
+    }, false, false);
     BUILT_IN(darken)
     {
       Color* rgb_color = ARG("$color", Color);
@@ -512,6 +591,12 @@ namespace Sass {
     }
 
     Signature saturate_sig = "saturate($color, $amount: false)";
+    Parameter saturate_color(ParserState("[saturate-color]"), "$color");
+    Boolean saturate_amount_default(ParserState("[saturate-amount-default]"), false);
+    Parameter saturate_amount(ParserState("[saturate-amount]"), "$amount", &saturate_amount_default);
+    Parameters saturate_params(ParserState("[saturate]"), {
+      &saturate_color, &saturate_amount
+    }, false, false);
     BUILT_IN(saturate)
     {
       // CSS3 filter function overload: pass literal through directly
@@ -545,6 +630,11 @@ namespace Sass {
     }
 
     Signature desaturate_sig = "desaturate($color, $amount)";
+    Parameter desaturate_color(ParserState("[desaturate-color]"), "$color");
+    Parameter desaturate_amount(ParserState("[desaturate-amount]"), "$amount");
+    Parameters desaturate_params(ParserState("[desaturate]"), {
+      &desaturate_color, &desaturate_amount
+    }, false, false);
     BUILT_IN(desaturate)
     {
       Color* rgb_color = ARG("$color", Color);
@@ -572,6 +662,10 @@ namespace Sass {
     }
 
     Signature grayscale_sig = "grayscale($color)";
+    Parameter grayscale_color(ParserState("[grayscale-color]"), "$color");
+    Parameters grayscale_params(ParserState("[grayscale]"), {
+      &grayscale_color,
+    }, false, false);
     BUILT_IN(grayscale)
     {
       // CSS3 filter function overload: pass literal through directly
@@ -593,6 +687,10 @@ namespace Sass {
     }
 
     Signature complement_sig = "complement($color)";
+    Parameter complement_color(ParserState("[complement-color]"), "$color");
+    Parameters complement_params(ParserState("[complement]"), {
+      &complement_color,
+    }, false, false);
     BUILT_IN(complement)
     {
       Color* rgb_color = ARG("$color", Color);
@@ -608,6 +706,10 @@ namespace Sass {
     }
 
     Signature invert_sig = "invert($color)";
+    Parameter invert_color(ParserState("[invert-color]"), "$color");
+    Parameters invert_params(ParserState("[invert]"), {
+      &invert_color,
+    }, false, false);
     BUILT_IN(invert)
     {
       // CSS3 filter function overload: pass literal through directly
@@ -630,6 +732,10 @@ namespace Sass {
     ////////////////////
     Signature alpha_sig = "alpha($color)";
     Signature opacity_sig = "opacity($color)";
+    Parameter alpha_color(ParserState("[alpha-color]"), "$color");
+    Parameter opacity_color(ParserState("[opacity-color]"), "$color");
+    Parameters alpha_params(ParserState("[alpha]"), { &alpha_color }, false, false);
+    Parameters opacity_params(ParserState("[opacity]"), { &opacity_color }, false, false);
     BUILT_IN(alpha)
     {
       String_Constant* ie_kwd = dynamic_cast<String_Constant*>(env["$color"]);
@@ -648,6 +754,12 @@ namespace Sass {
 
     Signature opacify_sig = "opacify($color, $amount)";
     Signature fade_in_sig = "fade-in($color, $amount)";
+    Parameter opacify_color(ParserState("[opacify-color]"), "$color");
+    Parameter fade_in_color(ParserState("[fade-in-color]"), "$color");
+    Parameter opacify_amount(ParserState("[opacify-amount]"), "$amount");
+    Parameter fade_in_amount(ParserState("[fade-in-amount]"), "$amount");
+    Parameters opacify_params(ParserState("[opacify]"), { &opacify_color, &opacify_amount }, false, false);
+    Parameters fade_in_params(ParserState("[fade-in]"), { &fade_in_color, &fade_in_amount }, false, false);
     BUILT_IN(opacify)
     {
       Color* color = ARG("$color", Color);
@@ -663,6 +775,12 @@ namespace Sass {
 
     Signature transparentize_sig = "transparentize($color, $amount)";
     Signature fade_out_sig = "fade-out($color, $amount)";
+    Parameter transparentize_color(ParserState("[transparentize-color]"), "$color");
+    Parameter fade_out_color(ParserState("[fade-out-color]"), "$color");
+    Parameter transparentize_amount(ParserState("[transparentize-amount]"), "$amount");
+    Parameter fade_out_amount(ParserState("[fade-out-amount]"), "$amount");
+    Parameters transparentize_params(ParserState("[transparentize]"), { &transparentize_color, &transparentize_amount }, false, false);
+    Parameters fade_out_params(ParserState("[fade-out]"), { &fade_out_color, &fade_out_amount }, false, false);
     BUILT_IN(transparentize)
     {
       Color* color = ARG("$color", Color);
@@ -681,6 +799,25 @@ namespace Sass {
     ////////////////////////
 
     Signature adjust_color_sig = "adjust-color($color, $red: false, $green: false, $blue: false, $hue: false, $saturation: false, $lightness: false, $alpha: false)";
+    Boolean adjust_color_red_default("[adjust-color-red-default]", false);
+    Boolean adjust_color_green_default("[adjust-color-green-default]", false);
+    Boolean adjust_color_blue_default("[adjust-color-blue-default]", false);
+    Boolean adjust_color_hue_default("[adjust-color-hue-default]", false);
+    Boolean adjust_color_saturation_default("[adjust-color-saturation-default]", false);
+    Boolean adjust_color_lightness_default("[adjust-color-lightness-default]", false);
+    Boolean adjust_color_alpha_default("[adjust-color-red-alpha]", false);
+    Parameter adjust_color_color(ParserState("[adjust-color-color]"), "$color");
+    Parameter adjust_color_red(ParserState("[adjust-color-red]"), "$red", &adjust_color_red_default);
+    Parameter adjust_color_green(ParserState("[adjust-color-green]"), "$green", &adjust_color_green_default);
+    Parameter adjust_color_blue(ParserState("[adjust-color-blue]"), "$blue", &adjust_color_blue_default);
+    Parameter adjust_color_hue(ParserState("[adjust-color-hue]"), "$hue", &adjust_color_hue_default);
+    Parameter adjust_color_saturation(ParserState("[adjust-color-saturation]"), "$saturation", &adjust_color_saturation_default);
+    Parameter adjust_color_lightness(ParserState("[adjust-color-lightness]"), "$lightness", &adjust_color_lightness_default);
+    Parameter adjust_color_alpha(ParserState("[adjust-color-alpha]"), "$alpha", &adjust_color_alpha_default);
+    Parameters adjust_color_params(ParserState("[adjust-color]"), {
+      &adjust_color_color, &adjust_color_red, &adjust_color_green, &adjust_color_blue,
+      &adjust_color_hue, &adjust_color_saturation, &adjust_color_lightness, &adjust_color_alpha
+    }, false, false);
     BUILT_IN(adjust_color)
     {
       Color* color = ARG("$color", Color);
@@ -736,6 +873,25 @@ namespace Sass {
     }
 
     Signature scale_color_sig = "scale-color($color, $red: false, $green: false, $blue: false, $hue: false, $saturation: false, $lightness: false, $alpha: false)";
+    Boolean scale_color_red_default("[scale-color-red-default]", false);
+    Boolean scale_color_green_default("[scale-color-green-default]", false);
+    Boolean scale_color_blue_default("[scale-color-blue-default]", false);
+    Boolean scale_color_hue_default("[scale-color-hue-default]", false);
+    Boolean scale_color_saturation_default("[scale-color-saturation-default]", false);
+    Boolean scale_color_lightness_default("[scale-color-lightness-default]", false);
+    Boolean scale_color_alpha_default("[scale-color-red-alpha]", false);
+    Parameter scale_color_color(ParserState("[scale-color-color]"), "$color");
+    Parameter scale_color_red(ParserState("[scale-color-red]"), "$red", &scale_color_red_default);
+    Parameter scale_color_green(ParserState("[scale-color-green]"), "$green", &scale_color_green_default);
+    Parameter scale_color_blue(ParserState("[scale-color-blue]"), "$blue", &scale_color_blue_default);
+    Parameter scale_color_hue(ParserState("[scale-color-hue]"), "$hue", &scale_color_hue_default);
+    Parameter scale_color_saturation(ParserState("[scale-color-saturation]"), "$saturation", &scale_color_saturation_default);
+    Parameter scale_color_lightness(ParserState("[scale-color-lightness]"), "$lightness", &scale_color_lightness_default);
+    Parameter scale_color_alpha(ParserState("[scale-color-alpha]"), "$alpha", &scale_color_alpha_default);
+    Parameters scale_color_params(ParserState("[scale-color]"), {
+      &scale_color_color, &scale_color_red, &scale_color_green, &scale_color_blue,
+      &scale_color_hue, &scale_color_saturation, &scale_color_lightness, &scale_color_alpha
+    }, false, false);
     BUILT_IN(scale_color)
     {
       Color* color = ARG("$color", Color);
@@ -792,6 +948,25 @@ namespace Sass {
     }
 
     Signature change_color_sig = "change-color($color, $red: false, $green: false, $blue: false, $hue: false, $saturation: false, $lightness: false, $alpha: false)";
+    Boolean change_color_red_default("[change-color-red-default]", false);
+    Boolean change_color_green_default("[change-color-green-default]", false);
+    Boolean change_color_blue_default("[change-color-blue-default]", false);
+    Boolean change_color_hue_default("[change-color-hue-default]", false);
+    Boolean change_color_saturation_default("[change-color-saturation-default]", false);
+    Boolean change_color_lightness_default("[change-color-lightness-default]", false);
+    Boolean change_color_alpha_default("[change-color-red-alpha]", false);
+    Parameter change_color_color(ParserState("[change-color-color]"), "$color");
+    Parameter change_color_red(ParserState("[change-color-red]"), "$red", &change_color_red_default);
+    Parameter change_color_green(ParserState("[change-color-green]"), "$green", &change_color_green_default);
+    Parameter change_color_blue(ParserState("[change-color-blue]"), "$blue", &change_color_blue_default);
+    Parameter change_color_hue(ParserState("[change-color-hue]"), "$hue", &change_color_hue_default);
+    Parameter change_color_saturation(ParserState("[change-color-saturation]"), "$saturation", &change_color_saturation_default);
+    Parameter change_color_lightness(ParserState("[change-color-lightness]"), "$lightness", &change_color_lightness_default);
+    Parameter change_color_alpha(ParserState("[change-color-alpha]"), "$alpha", &change_color_alpha_default);
+    Parameters change_color_params(ParserState("[change-color]"), {
+      &change_color_color, &change_color_red, &change_color_green, &change_color_blue,
+      &change_color_hue, &change_color_saturation, &change_color_lightness, &change_color_alpha
+    }, false, false);
     BUILT_IN(change_color)
     {
       Color* color = ARG("$color", Color);
@@ -847,6 +1022,10 @@ namespace Sass {
     }
 
     Signature ie_hex_str_sig = "ie-hex-str($color)";
+    Parameter ie_hex_str_color(ParserState("[ie-hex-str-color]"), "$color");
+    Parameters ie_hex_str_params(ParserState("[ie-hex-str]"), {
+      &ie_hex_str_color,
+    }, false, false);
     BUILT_IN(ie_hex_str)
     {
       Color* c = ARG("$color", Color);
@@ -874,6 +1053,10 @@ namespace Sass {
     ///////////////////
 
     Signature unquote_sig = "unquote($string)";
+    Parameter unquote_string(ParserState("[unquote-string]"), "$string");
+    Parameters unquote_params(ParserState("[unquote]"), {
+      &unquote_string
+    }, false, false);
     BUILT_IN(sass_unquote)
     {
       AST_Node* arg = env["$string"];
@@ -899,6 +1082,10 @@ namespace Sass {
     }
 
     Signature quote_sig = "quote($string)";
+    Parameter quote_string(ParserState("[quote-string]"), "$string");
+    Parameters quote_params(ParserState("[quote]"), {
+      &quote_string
+    }, false, false);
     BUILT_IN(sass_quote)
     {
       AST_Node* arg = env["$string"];
@@ -916,6 +1103,10 @@ namespace Sass {
 
 
     Signature str_length_sig = "str-length($string)";
+    Parameter str_length_string(ParserState("[str-length-string]"), "$string");
+    Parameters str_length_params(ParserState("[str-length]"), {
+      &str_length_string
+    }, false, false);
     BUILT_IN(str_length)
     {
       size_t len = std::string::npos;
@@ -932,6 +1123,12 @@ namespace Sass {
     }
 
     Signature str_insert_sig = "str-insert($string, $insert, $index)";
+    Parameter str_insert_string(ParserState("[str-insert-string]"), "$string");
+    Parameter str_insert_insert(ParserState("[str-insert-insert]"), "$insert");
+    Parameter str_insert_index(ParserState("[str-insert-index]"), "$index");
+    Parameters str_insert_params(ParserState("[str-insert]"), {
+      &str_insert_string, &str_insert_insert, &str_insert_index
+    }, false, false);
     BUILT_IN(str_insert)
     {
       std::string str;
@@ -978,6 +1175,11 @@ namespace Sass {
     }
 
     Signature str_index_sig = "str-index($string, $substring)";
+    Parameter str_index_string(ParserState("[str-index-string]"), "$string");
+    Parameter str_index_substring(ParserState("[str-index-substring]"), "$substring");
+    Parameters str_index_params(ParserState("[str-index]"), {
+      &str_index_string, &str_index_substring
+    }, false, false);
     BUILT_IN(str_index)
     {
       size_t index = std::string::npos;
@@ -1003,6 +1205,13 @@ namespace Sass {
     }
 
     Signature str_slice_sig = "str-slice($string, $start-at, $end-at:-1)";
+    Parameter str_slice_string(ParserState("[str-slice-string]"), "$string");
+    Parameter str_slice_start_at(ParserState("[str-slice-start-at]"), "$start-at");
+    Number str_slice_end_at_default(ParserState("[str-slice-end-at-default]"), -1);
+    Parameter str_slice_end_at(ParserState("[str-slice-end-at]"), "$end-at", &str_slice_end_at_default);
+    Parameters str_slice_params(ParserState("[str-slice]"), {
+      &str_slice_string, &str_slice_start_at, &str_slice_end_at
+    }, false, false);
     BUILT_IN(str_slice)
     {
       std::string newstr;
@@ -1039,6 +1248,10 @@ namespace Sass {
     }
 
     Signature to_upper_case_sig = "to-upper-case($string)";
+    Parameter to_upper_case_string(ParserState("[to-upper-case-string]"), "$string");
+    Parameters to_upper_case_params(ParserState("[to-upper-case]"), {
+      &to_upper_case_string
+    }, false, false);
     BUILT_IN(to_upper_case)
     {
       String_Constant* s = ARG("$string", String_Constant);
@@ -1060,6 +1273,10 @@ namespace Sass {
     }
 
     Signature to_lower_case_sig = "to-lower-case($string)";
+    Parameter to_lower_case_string(ParserState("[to-lower-case-string]"), "$string");
+    Parameters to_lower_case_params(ParserState("[to-lower-case]"), {
+      &to_lower_case_string
+    }, false, false);
     BUILT_IN(to_lower_case)
     {
       String_Constant* s = ARG("$string", String_Constant);
@@ -1085,6 +1302,10 @@ namespace Sass {
     ///////////////////
 
     Signature percentage_sig = "percentage($number)";
+    Parameter percentage_number(ParserState("[percentage-number]"), "$number");
+    Parameters percentage_params(ParserState("[percentage]"), {
+      &percentage_number
+    }, false, false);
     BUILT_IN(percentage)
     {
       Number* n = ARG("$number", Number);
@@ -1093,6 +1314,10 @@ namespace Sass {
     }
 
     Signature round_sig = "round($number)";
+    Parameter round_number(ParserState("[round-number]"), "$number");
+    Parameters round_params(ParserState("[round]"), {
+      &round_number
+    }, false, false);
     BUILT_IN(round)
     {
       Number* n = ARG("$number", Number);
@@ -1103,6 +1328,10 @@ namespace Sass {
     }
 
     Signature ceil_sig = "ceil($number)";
+    Parameter ceil_number(ParserState("[ceil-number]"), "$number");
+    Parameters ceil_params(ParserState("[ceil]"), {
+      &ceil_number
+    }, false, false);
     BUILT_IN(ceil)
     {
       Number* n = ARG("$number", Number);
@@ -1113,6 +1342,10 @@ namespace Sass {
     }
 
     Signature floor_sig = "floor($number)";
+    Parameter floor_number(ParserState("[floor-number]"), "$number");
+    Parameters floor_params(ParserState("[floor]"), {
+      &floor_number
+    }, false, false);
     BUILT_IN(floor)
     {
       Number* n = ARG("$number", Number);
@@ -1123,6 +1356,10 @@ namespace Sass {
     }
 
     Signature abs_sig = "abs($number)";
+    Parameter abs_number(ParserState("[abs-number]"), "$number");
+    Parameters abs_params(ParserState("[abs]"), {
+      &abs_number
+    }, false, false);
     BUILT_IN(abs)
     {
       Number* n = ARG("$number", Number);
@@ -1133,6 +1370,10 @@ namespace Sass {
     }
 
     Signature min_sig = "min($numbers...)";
+    Parameter min_numbers(ParserState("[min-numbers]"), "$numbers", 0, true);
+    Parameters min_params(ParserState("[min]"), {
+      &min_numbers
+    }, false, true);
     BUILT_IN(min)
     {
       List* arglist = ARG("$numbers", List);
@@ -1151,6 +1392,10 @@ namespace Sass {
     }
 
     Signature max_sig = "max($numbers...)";
+    Parameter max_numbers(ParserState("[max-numbers]"), "$numbers", 0, true);
+    Parameters max_params(ParserState("[max]"), {
+      &max_numbers
+    }, false, true);
     BUILT_IN(max)
     {
       List* arglist = ARG("$numbers", List);
@@ -1169,6 +1414,11 @@ namespace Sass {
     }
 
     Signature random_sig = "random($limit:false)";
+    Boolean random_limit_default(ParserState("[random-limit-default]"), false);
+    Parameter random_limit(ParserState("[random-limit]"), "$limit", &random_limit_default);
+    Parameters random_params(ParserState("[random]"), {
+      &random_limit
+    }, false, true);
     BUILT_IN(random)
     {
       AST_Node* arg = env["$limit"];
@@ -1209,6 +1459,10 @@ namespace Sass {
     /////////////////
 
     Signature length_sig = "length($list)";
+    Parameter length_list(ParserState("[length-list]"), "$list");
+    Parameters length_params(ParserState("[length]"), {
+      &length_list
+    }, false, true);
     BUILT_IN(length)
     {
       if (Selector_List* sl = dynamic_cast<Selector_List*>(env["$list"])) {
@@ -1236,6 +1490,11 @@ namespace Sass {
     }
 
     Signature nth_sig = "nth($list, $n)";
+    Parameter nth_list(ParserState("[nth-list]"), "$list");
+    Parameter nth_n(ParserState("[nth-n]"), "$n");
+    Parameters nth_params(ParserState("[nth]"), {
+      &nth_list, &nth_n
+    }, false, true);
     BUILT_IN(nth)
     {
       Number* n = ARG("$n", Number);
@@ -1277,6 +1536,12 @@ namespace Sass {
     }
 
     Signature set_nth_sig = "set-nth($list, $n, $value)";
+    Parameter set_nth_list(ParserState("[set-nth-list]"), "$list");
+    Parameter set_nth_n(ParserState("[set-nth-n]"), "$n");
+    Parameter set_nth_value(ParserState("[set-nth-value]"), "$value");
+    Parameters set_nth_params(ParserState("[set-nth]"), {
+      &set_nth_list, &set_nth_n, &set_nth_value
+    }, false, true);
     BUILT_IN(set_nth)
     {
       List* l = dynamic_cast<List*>(env["$list"]);
@@ -1297,6 +1562,11 @@ namespace Sass {
     }
 
     Signature index_sig = "index($list, $value)";
+    Parameter index_list(ParserState("[index-list]"), "$list");
+    Parameter index_value(ParserState("[index-value]"), "$value");
+    Parameters index_params(ParserState("[index]"), {
+      &index_list, &index_value
+    }, false, true);
     BUILT_IN(index)
     {
       List* l = dynamic_cast<List*>(env["$list"]);
@@ -1312,6 +1582,13 @@ namespace Sass {
     }
 
     Signature join_sig = "join($list1, $list2, $separator: auto)";
+    Parameter join_list_1(ParserState("[join-list-1]"), "$list1");
+    Parameter join_list_2(ParserState("[join-list-2]"), "$list2");
+    String_Constant join_separator_default(ParserState("[join-separator-default]"), "auto");
+    Parameter join_separator(ParserState("[join-separator]"), "$separator", &join_separator_default);
+    Parameters join_params(ParserState("[join]"), {
+      &join_list_1, &join_list_2, &join_separator
+    }, false, true);
     BUILT_IN(join)
     {
       List* l1 = dynamic_cast<List*>(env["$list1"]);
@@ -1339,6 +1616,13 @@ namespace Sass {
     }
 
     Signature append_sig = "append($list, $val, $separator: auto)";
+    Parameter append_list(ParserState("[append-list]"), "$list");
+    Parameter append_val(ParserState("[append-val]"), "$val");
+    String_Constant append_separator_default(ParserState("[append-separator-default]"), "auto");
+    Parameter append_separator(ParserState("[append-separator]"), "$separator", &append_separator_default);
+    Parameters append_params(ParserState("[append]"), {
+      &append_list, &append_val, &append_separator
+    }, false, true);
     BUILT_IN(append)
     {
       List* l = dynamic_cast<List*>(env["$list"]);
@@ -1375,6 +1659,10 @@ namespace Sass {
     }
 
     Signature zip_sig = "zip($lists...)";
+    Parameter zip_lists(ParserState("[zip-lists]"), "$lists", 0, true);
+    Parameters zip_params(ParserState("[zip]"), {
+      &zip_lists
+    }, false, true);
     BUILT_IN(zip)
     {
       List* arglist = SASS_MEMORY_NEW(ctx.mem, List, *ARG("$lists", List));
@@ -1405,6 +1693,10 @@ namespace Sass {
     }
 
     Signature list_separator_sig = "list_separator($list)";
+    Parameter list_separator_list(ParserState("[list-separator-list]"), "$list");
+    Parameters list_separator_params(ParserState("[list-separator]"), {
+      &list_separator_list
+    }, false, false);
     BUILT_IN(list_separator)
     {
       List* l = dynamic_cast<List*>(env["$list"]);
@@ -1422,6 +1714,11 @@ namespace Sass {
     /////////////////
 
     Signature map_get_sig = "map-get($map, $key)";
+    Parameter map_get_map(ParserState("[map-get-map]"), "$map");
+    Parameter map_get_key(ParserState("[map-get-key]"), "$key");
+    Parameters map_get_params(ParserState("[map-get]"), {
+      &map_get_map, &map_get_key
+    }, false, false);
     BUILT_IN(map_get)
     {
       Map* m = ARGM("$map", Map, ctx);
@@ -1435,6 +1732,11 @@ namespace Sass {
     }
 
     Signature map_has_key_sig = "map-has-key($map, $key)";
+    Parameter map_has_key_map(ParserState("[map-has-key-map]"), "$map");
+    Parameter map_has_key_key(ParserState("[map-has-key-key]"), "$key");
+    Parameters map_has_key_params(ParserState("[map-has-key]"), {
+      &map_has_key_map, &map_has_key_key
+    }, false, false);
     BUILT_IN(map_has_key)
     {
       Map* m = ARGM("$map", Map, ctx);
@@ -1443,6 +1745,10 @@ namespace Sass {
     }
 
     Signature map_keys_sig = "map-keys($map)";
+    Parameter map_keys_map(ParserState("[map-keys-map]"), "$map");
+    Parameters map_keys_params(ParserState("[map-keys]"), {
+      &map_keys_map
+    }, false, false);
     BUILT_IN(map_keys)
     {
       Map* m = ARGM("$map", Map, ctx);
@@ -1454,6 +1760,10 @@ namespace Sass {
     }
 
     Signature map_values_sig = "map-values($map)";
+    Parameter map_values_map(ParserState("[map-values-map]"), "$map");
+    Parameters map_values_params(ParserState("[map-values]"), {
+      &map_values_map
+    }, false, false);
     BUILT_IN(map_values)
     {
       Map* m = ARGM("$map", Map, ctx);
@@ -1465,6 +1775,11 @@ namespace Sass {
     }
 
     Signature map_merge_sig = "map-merge($map1, $map2)";
+    Parameter map_merge_map_1(ParserState("[map-merge-map-1]"), "$map1");
+    Parameter map_merge_map_2(ParserState("[map-merge-map-2]"), "$map2");
+    Parameters map_merge_params(ParserState("[map-merge]"), {
+      &map_merge_map_1, &map_merge_map_2
+    }, false, false);
     BUILT_IN(map_merge)
     {
       Map* m1 = ARGM("$map1", Map, ctx);
@@ -1478,6 +1793,11 @@ namespace Sass {
     }
 
     Signature map_remove_sig = "map-remove($map, $keys...)";
+    Parameter map_remove_map(ParserState("[map-remove-map]"), "$map");
+    Parameter map_remove_keys(ParserState("[map-remove-keys]"), "$keys", 0, true);
+    Parameters map_remove_params(ParserState("[map-remove]"), {
+      &map_remove_map, &map_remove_keys
+    }, false, true);
     BUILT_IN(map_remove)
     {
       bool remove;
@@ -1495,6 +1815,10 @@ namespace Sass {
     }
 
     Signature keywords_sig = "keywords($args)";
+    Parameter keywords_args(ParserState("[keywords-args]"), "$args");
+    Parameters keywords_params(ParserState("[keywords]"), {
+      &keywords_args
+    }, false, false);
     BUILT_IN(keywords)
     {
       List* arglist = SASS_MEMORY_NEW(ctx.mem, List, *ARG("$args", List));
@@ -1514,6 +1838,10 @@ namespace Sass {
     //////////////////////////
 
     Signature type_of_sig = "type-of($value)";
+    Parameter type_of_value(ParserState("[type-of-value]"), "$value");
+    Parameters type_of_params(ParserState("[type-of]"), {
+      &type_of_value
+    }, false, false);
     BUILT_IN(type_of)
     {
       Expression* v = ARG("$value", Expression);
@@ -1521,14 +1849,27 @@ namespace Sass {
     }
 
     Signature unit_sig = "unit($number)";
+    Parameter unit_number(ParserState("[unit-number]"), "$number");
+    Parameters unit_params(ParserState("[unit]"), {
+      &unit_number
+    }, false, false);
     BUILT_IN(unit)
     { return SASS_MEMORY_NEW(ctx.mem, String_Quoted, pstate, quote(ARG("$number", Number)->unit(), '"')); }
 
     Signature unitless_sig = "unitless($number)";
+    Parameter unitless_number(ParserState("[unitless-number]"), "$number");
+    Parameters unitless_params(ParserState("[unitless]"), {
+      &unitless_number
+    }, false, false);
     BUILT_IN(unitless)
     { return SASS_MEMORY_NEW(ctx.mem, Boolean, pstate, ARG("$number", Number)->is_unitless()); }
 
     Signature comparable_sig = "comparable($number-1, $number-2)";
+    Parameter comparable_number_1(ParserState("[comparable-number]"), "$number-1");
+    Parameter comparable_number_2(ParserState("[comparable-number]"), "$number-2");
+    Parameters comparable_params(ParserState("[comparable]"), {
+      &comparable_number_1, &comparable_number_2
+    }, false, false);
     BUILT_IN(comparable)
     {
       Number* n1 = ARG("$number-1", Number);
@@ -1542,6 +1883,10 @@ namespace Sass {
     }
 
     Signature variable_exists_sig = "variable-exists($name)";
+    Parameter variable_exists_name(ParserState("[variable-exists-name]"), "$name");
+    Parameters variable_exists_params(ParserState("[variable-exists]"), {
+      &variable_exists_name
+    }, false, false);
     BUILT_IN(variable_exists)
     {
       std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
@@ -1555,6 +1900,10 @@ namespace Sass {
     }
 
     Signature global_variable_exists_sig = "global-variable-exists($name)";
+    Parameter global_variable_exists_name(ParserState("[global-variable-exists-name]"), "$name");
+    Parameters global_variable_exists_params(ParserState("[global-variable-exists]"), {
+      &global_variable_exists_name
+    }, false, false);
     BUILT_IN(global_variable_exists)
     {
       std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
@@ -1568,6 +1917,10 @@ namespace Sass {
     }
 
     Signature function_exists_sig = "function-exists($name)";
+    Parameter function_exists_name(ParserState("[function-exists-name]"), "$name");
+    Parameters function_exists_params(ParserState("[function-exists]"), {
+      &function_exists_name
+    }, false, false);
     BUILT_IN(function_exists)
     {
       std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
@@ -1581,6 +1934,10 @@ namespace Sass {
     }
 
     Signature mixin_exists_sig = "mixin-exists($name)";
+    Parameter mixin_exists_name(ParserState("[mixin-exists-name]"), "$name");
+    Parameters mixin_exists_params(ParserState("[mixin-exists]"), {
+      &mixin_exists_name
+    }, false, false);
     BUILT_IN(mixin_exists)
     {
       std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
@@ -1594,6 +1951,10 @@ namespace Sass {
     }
 
     Signature feature_exists_sig = "feature-exists($name)";
+    Parameter feature_exists_name(ParserState("[feature-exists-name]"), "$name");
+    Parameters feature_exists_params(ParserState("[feature-exists]"), {
+      &feature_exists_name
+    }, false, false);
     BUILT_IN(feature_exists)
     {
       std::string s = unquote(ARG("$name", String_Constant)->value());
@@ -1607,6 +1968,11 @@ namespace Sass {
     }
 
     Signature call_sig = "call($name, $args...)";
+    Parameter call_name(ParserState("[call-name]"), "$name");
+    Parameter call_args(ParserState("[call-args]"), "$args", 0, true);
+    Parameters call_params(ParserState("[call]"), {
+      &call_name, &call_args
+    }, false, true);
     BUILT_IN(call)
     {
       std::string name = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
@@ -1647,10 +2013,20 @@ namespace Sass {
     ////////////////////
 
     Signature not_sig = "not($value)";
+    Parameter not_value(ParserState("[not-value]"), "$value");
+    Parameters not_params(ParserState("[not]"), {
+      &not_value
+    }, false, false);
     BUILT_IN(sass_not)
     { return SASS_MEMORY_NEW(ctx.mem, Boolean, pstate, ARG("$value", Expression)->is_false()); }
 
     Signature if_sig = "if($condition, $if-true, $if-false)";
+    Parameter if_condition(ParserState("[if-condition]"), "$condition");
+    Parameter if_if_true(ParserState("[if-if-true]"), "$if-true");
+    Parameter if_if_false(ParserState("[if-if-false]"), "$if-false");
+    Parameters if_params(ParserState("[if]"), {
+      &if_condition, &if_if_true, &if_if_false
+    }, false, false);
     // BUILT_IN(sass_if)
     // { return ARG("$condition", Expression)->is_false() ? ARG("$if-false", Expression) : ARG("$if-true", Expression); }
     BUILT_IN(sass_if)
@@ -1663,17 +2039,6 @@ namespace Sass {
       return res;
     }
 
-    ////////////////
-    // URL FUNCTIONS
-    ////////////////
-
-    Signature image_url_sig = "image-url($path, $only-path: false, $cache-buster: false)";
-    BUILT_IN(image_url)
-    {
-      error("`image_url` has been removed from libsass because it's not part of the Sass spec", pstate);
-      return 0; // suppress warning, error will exit anyway
-    }
-
     //////////////////////////
     // MISCELLANEOUS FUNCTIONS
     //////////////////////////
@@ -1682,6 +2047,10 @@ namespace Sass {
     // unquoted_string(value.to_sass)
 
     Signature inspect_sig = "inspect($value)";
+    Parameter inspect_value(ParserState("[inspect-value]"), "$value");
+    Parameters inspect_params(ParserState("[inspect]"), {
+      &inspect_value
+    }, false, false);
     BUILT_IN(inspect)
     {
       Expression* v = ARG("$value", Expression);
@@ -1705,7 +2074,16 @@ namespace Sass {
       }
       // return v;
     }
+
+    //////////////////////////
+    // SELECTOR FUNCTIONS
+    //////////////////////////
+
     Signature selector_nest_sig = "selector-nest($selectors...)";
+    Parameter selector_nest_selectors(ParserState("[selector-nest-selectors]"), "$selectors", 0, true);
+    Parameters selector_nest_params(ParserState("[selector-nest]"), {
+      &selector_nest_selectors
+    }, false, true);
     BUILT_IN(selector_nest)
     {
       List* arglist = ARG("$selectors", List);
@@ -1757,6 +2135,10 @@ namespace Sass {
     }
 
     Signature selector_append_sig = "selector-append($selectors...)";
+    Parameter selector_append_selectors(ParserState("[selector-append-selectors]"), "$selectors", 0, true);
+    Parameters selector_append_params(ParserState("[selector-append]"), {
+      &selector_append_selectors
+    }, false, true);
     BUILT_IN(selector_append)
     {
       List* arglist = ARG("$selectors", List);
@@ -1851,6 +2233,11 @@ namespace Sass {
     }
 
     Signature selector_unify_sig = "selector-unify($selector1, $selector2)";
+    Parameter selector_unify_selector_1(ParserState("[selector-unify-selector-1]"), "$selector1");
+    Parameter selector_unify_selector_2(ParserState("[selector-unify-selector-2]"), "$selector2");
+    Parameters selector_unify_params(ParserState("[selector-unify]"), {
+      &selector_unify_selector_1, &selector_unify_selector_2
+    }, false, false);
     BUILT_IN(selector_unify)
     {
       Selector_List* selector1 = ARGSEL("$selector1", Selector_List, p_contextualize);
@@ -1862,6 +2249,10 @@ namespace Sass {
     }
 
     Signature simple_selectors_sig = "simple-selectors($selector)";
+    Parameter simple_selectors_selector(ParserState("[simple-selectors-selector]"), "$selector");
+    Parameters simple_selectors_params(ParserState("[simple-selectors]"), {
+      &simple_selectors_selector
+    }, false, false);
     BUILT_IN(simple_selectors)
     {
       Compound_Selector* sel = ARGSEL("$selector", Compound_Selector, p_contextualize);
@@ -1879,6 +2270,12 @@ namespace Sass {
     }
 
     Signature selector_extend_sig = "selector-extend($selector, $extendee, $extender)";
+    Parameter selector_extend_selector(ParserState("[selector-extend-selector]"), "$selector");
+    Parameter selector_extend_extendee(ParserState("[selector-extend-extendee]"), "$extendee");
+    Parameter selector_extend_extender(ParserState("[selector-extend-extender]"), "$extender");
+    Parameters selector_extend_params(ParserState("[selector-extend]"), {
+      &selector_extend_selector, &selector_extend_extendee, &selector_extend_extender
+    }, false, false);
     BUILT_IN(selector_extend)
     {
       Selector_List*  selector = ARGSEL("$selector", Selector_List, p_contextualize);
@@ -1895,6 +2292,12 @@ namespace Sass {
     }
 
     Signature selector_replace_sig = "selector-replace($selector, $original, $replacement)";
+    Parameter selector_replace_selector(ParserState("[selector-replace-selector]"), "$selector");
+    Parameter selector_replace_original(ParserState("[selector-replace-original]"), "$original");
+    Parameter selector_replace_replacement(ParserState("[selector-replace-replacement]"), "$replacement");
+    Parameters selector_replace_params(ParserState("[selector-replace]"), {
+      &selector_replace_selector, &selector_replace_original, &selector_replace_replacement
+    }, false, false);
     BUILT_IN(selector_replace)
     {
       Selector_List*  selector = ARGSEL("$selector", Selector_List, p_contextualize);
@@ -1911,6 +2314,10 @@ namespace Sass {
     }
 
     Signature selector_parse_sig = "selector-parse($selector)";
+    Parameter selector_parse_selector(ParserState("[selector-parse-selector]"), "$selector");
+    Parameters selector_parse_params(ParserState("[selector-parse]"), {
+      &selector_parse_selector
+    }, false, false);
     BUILT_IN(selector_parse)
     {
       Selector_List* sel = ARGSEL("$selector", Selector_List, p_contextualize);
@@ -1920,6 +2327,11 @@ namespace Sass {
     }
 
     Signature is_superselector_sig = "is-superselector($super, $sub)";
+    Parameter is_superselector_super(ParserState("[is-superselector-super]"), "$super");
+    Parameter is_superselector_sub(ParserState("[is-superselector-sub]"), "$sub");
+    Parameters is_superselector_params(ParserState("[is-superselector]"), {
+      &is_superselector_super, &is_superselector_sub
+    }, false, false);
     BUILT_IN(is_superselector)
     {
       Selector_List*  sel_sup = ARGSEL("$super", Selector_List, p_contextualize);
@@ -1929,6 +2341,7 @@ namespace Sass {
     }
 
     Signature unique_id_sig = "unique-id()";
+    Parameters unique_id_params(ParserState("[unique-id]"), {}, false, false);
     BUILT_IN(unique_id)
     {
       std::stringstream ss;
