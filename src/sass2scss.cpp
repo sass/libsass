@@ -16,6 +16,8 @@
 #include <cstdlib>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
+#include <regex>
 #include <stdio.h>
 
 ///*
@@ -788,14 +790,74 @@ namespace Sass
 		}
 	}
 
+	// Preprocess the sass text in order to detect
+	// unfinished lines and, thus, concatenate them
+	// with the following line.
+	std::string preprocess(const std::string& sass)
+	{
+		std::string result = "";
+
+		std::istringstream lines(sass);
+		std::string line;
+
+		bool concat = false;
+		size_t par_count = 0;
+
+		while (safeGetline(lines, line) && !lines.eof())
+		{
+			if (std::regex_match(line, std::regex("[[:space:]]*")))
+				continue;
+
+			// When concatenating, ignore white lines and trim whitespace
+			// from the beginning of the line
+			if (concat)
+			{
+				line.erase(line.begin(), std::find_if(line.begin(),
+					line.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+				result += " ";
+			}
+
+			// Count parenthesis in order to keep the stylesheet sane
+			par_count += std::count(line.begin(), line.end(), '(') -
+				std::count(line.begin(), line.end(), ')');
+
+			result += line;
+
+			// If it ends with a backslash, comma, colon, or doesn't have balanced
+			// parenthesis, concatenate
+			if (std::regex_match(line, std::regex(".*[\\\\:,][[:space:]]*")) ||
+				par_count != 0)
+			{
+				concat = true;
+			}
+			else
+			{
+				// Else, just print a new line
+				result += "\n";
+				concat = false;
+			}
+
+			auto last_backslash = result.rfind('\\');
+			// If it ends with a backslash, strip it from the resulting string
+			if (std::regex_match(line, std::regex(".*[\\][[:space:]]*")) &&
+				last_backslash != std::string::npos)
+			{
+				result.erase(last_backslash);
+			}
+		}
+
+		return result;
+	}
+
 	// the main converter function for c++
 	char* sass2scss (const std::string& sass, const int options)
 	{
+		std::string processed_sass = preprocess(sass);
 
 		// local variables
 		std::string line;
 		std::string scss = "";
-		std::stringstream stream(sass);
+		std::stringstream stream(processed_sass);
 
 		// create converter variable
 		converter converter;
