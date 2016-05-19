@@ -153,44 +153,6 @@ namespace Sass {
     return rr;
   }
 
-  // this is not properly implemented
-  // mixes string_schema and statement
-  Statement* Expand::operator()(Propset* p)
-  {
-    property_stack.push_back(p->property_fragment());
-    Block* expanded_block = p->block()->perform(this)->block();
-    for (size_t i = 0, L = expanded_block->length(); i < L; ++i) {
-      Statement* stm = (*expanded_block)[i];
-      if (Declaration* dec = static_cast<Declaration*>(stm)) {
-        // dec = SASS_MEMORY_NEW(ctx.mem, Declaration, *dec);
-        String_Schema* combined_prop = SASS_MEMORY_NEW(ctx.mem, String_Schema, p->pstate());
-        if (!property_stack.empty()) {
-          *combined_prop << property_stack.back()->perform(&eval);
-          *combined_prop << SASS_MEMORY_NEW(ctx.mem, String_Quoted, p->pstate(), "-");
-          if (dec->property()) {
-            // we cannot directly add block (from dec->property()) to string schema (combined_prop)
-            *combined_prop << SASS_MEMORY_NEW(ctx.mem, String_Quoted, dec->pstate(), dec->property()->to_string());
-          }
-        }
-        else {
-          *combined_prop << dec->property();
-        }
-        dec->property(combined_prop);
-        *block_stack.back() << dec;
-      }
-      else if (typeid(*stm) == typeid(Comment)) {
-        // drop comments in propsets
-      }
-      else {
-        error("contents of namespaced properties must result in style declarations only", stm->pstate(), backtrace());
-      }
-    }
-
-    property_stack.pop_back();
-
-    return 0;
-  }
-
   Statement* Expand::operator()(Supports_Block* f)
   {
     Expression* condition = f->condition()->perform(&eval);
@@ -258,15 +220,20 @@ namespace Sass {
 
   Statement* Expand::operator()(Declaration* d)
   {
+    Block* ab = d->block();
     String* old_p = d->property();
     String* new_p = static_cast<String*>(old_p->perform(&eval));
     Expression* value = d->value()->perform(&eval);
-    if (!value || (value->is_invisible() && !d->is_important())) return 0;
+    Block* bb = ab ? ab->perform(this)->block() : 0;
+    if (!bb) {
+      if (!value || (value->is_invisible() && !d->is_important())) return 0;
+    }
     Declaration* decl = SASS_MEMORY_NEW(ctx.mem, Declaration,
                                         d->pstate(),
                                         new_p,
                                         value,
-                                        d->is_important());
+                                        d->is_important(),
+                                        bb);
     decl->tabs(d->tabs());
     return decl;
   }
