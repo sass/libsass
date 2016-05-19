@@ -21,7 +21,8 @@ namespace Sass {
     selector_stack(std::vector<Selector_List*>()),
     media_block_stack(std::vector<Media_Block*>()),
     backtrace_stack(std::vector<Backtrace*>()),
-    in_keyframes(false)
+    in_keyframes(false),
+    at_root_without_rule(false)
   {
     env_stack.push_back(0);
     env_stack.push_back(env);
@@ -86,8 +87,6 @@ namespace Sass {
 
   Statement* Expand::operator()(Ruleset* r)
   {
-    // reset when leaving scope
-
     if (in_keyframes) {
       Keyframe_Rule* k = SASS_MEMORY_NEW(ctx.mem, Keyframe_Rule, r->pstate(), r->block()->perform(this)->block());
       if (r->selector()) {
@@ -97,6 +96,9 @@ namespace Sass {
       }
       return k;
     }
+
+    // reset when leaving scope
+    LOCAL_FLAG(at_root_without_rule, false);
 
     // do some special checks for the base level rules
     if (r->is_root()) {
@@ -223,16 +225,19 @@ namespace Sass {
   Statement* Expand::operator()(At_Root_Block* a)
   {
     Block* ab = a->block();
-    // if (ab) ab->is_root(true);
     Expression* ae = a->expression();
+
     if (ae) ae = ae->perform(&eval);
     else ae = SASS_MEMORY_NEW(ctx.mem, At_Root_Query, a->pstate());
+
+    LOCAL_FLAG(at_root_without_rule, true);
+    LOCAL_FLAG(in_keyframes, false);
+
     Block* bb = ab ? ab->perform(this)->block() : 0;
     At_Root_Block* aa = SASS_MEMORY_NEW(ctx.mem, At_Root_Block,
                                         a->pstate(),
                                         bb,
                                         static_cast<At_Root_Query*>(ae));
-    // aa->block()->is_root(true);
     return aa;
   }
 
@@ -708,10 +713,22 @@ namespace Sass {
     }
 
     bind(std::string("Mixin"), c->name(), params, args, &ctx, &new_env, &eval);
-    append_block(body);
-    backtrace_stack.pop_back();
+
+    Block* trace_block = SASS_MEMORY_NEW(ctx.mem, Block, c->pstate());
+    Trace* trace = SASS_MEMORY_NEW(ctx.mem, Trace, c->pstate(), c->name(), trace_block);
+
+
+    block_stack.push_back(trace_block);
+    for (auto bb : *body) {
+      Statement* ith = bb->perform(this);
+      if (ith) *trace->block() << ith;
+    }
+    block_stack.pop_back();
+
     env_stack.pop_back();
-    return 0;
+    backtrace_stack.pop_back();
+
+    return trace;
   }
 
   Statement* Expand::operator()(Content* c)
@@ -719,18 +736,23 @@ namespace Sass {
     Env* env = environment();
     // convert @content directives into mixin calls to the underlying thunk
     if (!env->has("@content[m]")) return 0;
+
     if (block_stack.back()->is_root()) {
       selector_stack.push_back(0);
     }
+
     Mixin_Call* call = SASS_MEMORY_NEW(ctx.mem, Mixin_Call,
                                        c->pstate(),
                                        "@content",
                                        SASS_MEMORY_NEW(ctx.mem, Arguments, c->pstate()));
-    Statement* stm = call->perform(this);
+
+    Trace* trace = dynamic_cast<Trace*>(call->perform(this));
+
     if (block_stack.back()->is_root()) {
       selector_stack.pop_back();
     }
-    return stm;
+
+    return trace;
   }
 
   // produce an error if something is not implemented
