@@ -1248,6 +1248,10 @@ namespace Sass {
         if (index < 0 || index > len - 1) error("index out of bounds for `" + std::string(sig) + "`", pstate);
         // return (*sl)[static_cast<int>(index)];
         Listize listize(ctx.mem);
+        if (m) {
+          List* l = SASS_MEMORY_NEW(ctx.mem, List, pstate, 2);
+          *l << m->key(index) << m->value(index);
+        }
         return (*sl)[static_cast<int>(index)]->perform(&listize);
       }
       List* l = dynamic_cast<List*>(env["$list"]);
@@ -1265,8 +1269,8 @@ namespace Sass {
 
       if (m) {
         l = SASS_MEMORY_NEW(ctx.mem, List, pstate, 1);
-        *l << m->keys()[static_cast<unsigned int>(index)];
-        *l << m->at(m->keys()[static_cast<unsigned int>(index)]);
+        *l << m->key(index);
+        *l << m->value(index);
         return l;
       }
       else {
@@ -1280,27 +1284,58 @@ namespace Sass {
     BUILT_IN(set_nth)
     {
       List* l = dynamic_cast<List*>(env["$list"]);
+      Map* m = dynamic_cast<Map*>(env["$list"]);
       Number* n = ARG("$n", Number);
       Expression* v = ARG("$value", Expression);
-      if (!l) {
+      if (!m && !l) {
         l = SASS_MEMORY_NEW(ctx.mem, List, pstate, 1);
         *l << ARG("$list", Expression);
       }
-      if (l->empty()) error("argument `$list` of `" + std::string(sig) + "` must not be empty", pstate);
-      double index = std::floor(n->value() < 0 ? l->length() + n->value() : n->value() - 1);
-      if (index < 0 || index > l->length() - 1) error("index out of bounds for `" + std::string(sig) + "`", pstate);
-      List* result = SASS_MEMORY_NEW(ctx.mem, List, pstate, l->length(), l->separator());
-      for (size_t i = 0, L = l->length(); i < L; ++i) {
-        *result << ((i == index) ? v : (*l)[i]);
+      size_t len = m ? m->length() : l->length();
+      bool empty = m ? m->empty() : l->empty();
+      if (empty) error("argument `$list` of `" + std::string(sig) + "` must not be empty", pstate);
+      double index = std::floor(n->value() < 0 ? len + n->value() : n->value() - 1);
+      if (index < 0 || index > len - 1) error("index out of bounds for `" + std::string(sig) + "`", pstate);
+      if (m) {
+        m->value(index, v); // update the value
+        Listize listize(ctx.mem);
+        return m->perform(&listize);
       }
-      return result;
+      else {
+        List* result = SASS_MEMORY_NEW(ctx.mem, List, pstate, l->length(), l->separator());
+        for (size_t i = 0, L = l->length(); i < L; ++i) {
+          *result << ((i == index) ? v : (*l)[i]);
+        }
+        return result;
+      }
     }
 
     Signature index_sig = "index($list, $value)";
     BUILT_IN(index)
     {
+      Map* m = dynamic_cast<Map*>(env["$list"]);
       List* l = dynamic_cast<List*>(env["$list"]);
       Expression* v = ARG("$value", Expression);
+
+      if (m) {
+        if (List* vl = dynamic_cast<List*>(v)) {
+          if (vl->size() == 2 && vl->separator() == SASS_SPACE) {
+            for (size_t i = 0, L = m->length(); i < L; i ++) {
+              if (Eval::eq(m->key(i), vl->at(0))) {
+                if (Eval::eq(m->value(i), vl->at(1))) {
+                  // only return the index if the value matches too
+                  return SASS_MEMORY_NEW(ctx.mem, Number, pstate, (double)(i+1));
+                } else {
+                  // found key, which is unique
+                  // so nothing more to match
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+
       if (!l) {
         l = SASS_MEMORY_NEW(ctx.mem, List, pstate, 1);
         *l << ARG("$list", Expression);

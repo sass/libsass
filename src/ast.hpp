@@ -303,6 +303,7 @@ namespace Sass {
     std::vector<Expression*> list_;
   protected:
     size_t hash_;
+    std::deque<Expression*> ordered;
     Expression* duplicate_key_;
     void reset_hash() { hash_ = 0; }
     void reset_duplicate_key() { duplicate_key_ = 0; }
@@ -321,14 +322,23 @@ namespace Sass {
     Hashed& operator<<(std::pair<Expression*, Expression*> p)
     {
       reset_hash();
-
+      ordered.push_back(p.first);
+      ordered.push_back(p.second);
       if (!has(p.first)) list_.push_back(p.first);
       else if (!duplicate_key_) duplicate_key_ = p.first;
-
       elements_[p.first] = p.second;
-
       adjust_after_pushing(p);
       return *this;
+    }
+    Expression* key(size_t i) {
+      return ordered.at(i * 2);
+    }
+    Expression* value(size_t i) {
+      return ordered.at(i * 2 + 1);
+    }
+    Expression* value(size_t i, Expression* v) {
+      ordered[i * 2 + 1] = v;
+      return v;
     }
     Hashed& operator+=(Hashed* h)
     {
