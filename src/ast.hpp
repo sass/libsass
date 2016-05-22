@@ -2252,6 +2252,7 @@ namespace Sass {
     }
 
     Complex_Selector* to_complex(Memory_Manager& mem);
+    Compound_Selector* parentize(Selector_List* parents, Context& ctx);
     Compound_Selector* unify_with(Compound_Selector* rhs, Context& ctx);
     // virtual Selector_Placeholder* find_placeholder();
     virtual bool has_parent_ref();
