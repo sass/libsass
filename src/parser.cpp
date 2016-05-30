@@ -701,26 +701,26 @@ namespace Sass {
       }
     }
 
-    // add a parent selector if we are not in a root
-    // also skip adding parent ref if we only have refs
-    if (!sel->has_parent_ref() && !in_at_root && !in_root) {
-      // create the objects to wrap parent selector reference
-      Parent_Selector* parent = SASS_MEMORY_NEW(ctx.mem, Parent_Selector, pstate);
-      parent->media_block(last_media_block);
-      SimpleSequence_Selector* head = SASS_MEMORY_NEW(ctx.mem, SimpleSequence_Selector, pstate);
-      head->media_block(last_media_block);
-      // add simple selector
-      (*head) << parent;
-      // selector may not have any head yet
-      if (!sel->head()) { sel->head(head); }
-      // otherwise we need to create a new complex selector and set the old one as its tail
-      else {
-        sel = SASS_MEMORY_NEW(ctx.mem, Sequence_Selector, pstate, Sequence_Selector::ANCESTOR_OF, head, sel);
-        sel->media_block(last_media_block);
-      }
-      // peek for linefeed and remember result on head
-      // if (peek_newline()) head->has_line_break(true);
-    }
+    // // add a parent selector if we are not in a root
+    // // also skip adding parent ref if we only have refs
+    // if (!sel->has_parent_ref() && !in_at_root && !in_root) {
+    //   // create the objects to wrap parent selector reference
+    //   Parent_Selector* parent = SASS_MEMORY_NEW(ctx.mem, Parent_Selector, pstate);
+    //   parent->media_block(last_media_block);
+    //   SimpleSequence_Selector* head = SASS_MEMORY_NEW(ctx.mem, SimpleSequence_Selector, pstate);
+    //   head->media_block(last_media_block);
+    //   // add simple selector
+    //   (*head) << parent;
+    //   // selector may not have any head yet
+    //   if (!sel->head()) { sel->head(head); }
+    //   // otherwise we need to create a new complex selector and set the old one as its tail
+    //   else {
+    //     sel = SASS_MEMORY_NEW(ctx.mem, Sequence_Selector, pstate, Sequence_Selector::ANCESTOR_OF, head, sel);
+    //     sel->media_block(last_media_block);
+    //   }
+    //   // peek for linefeed and remember result on head
+    //   // if (peek_newline()) head->has_line_break(true);
+    // }
 
     // complex selector
     return sel;

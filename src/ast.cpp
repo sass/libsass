@@ -5,6 +5,7 @@
 #include "extend.hpp"
 #include "emitter.hpp"
 #include "color_maps.hpp"
+#include "debugger.hpp"
 #include <set>
 #include <iomanip>
 #include <iostream>
@@ -1091,22 +1092,54 @@ namespace Sass {
 
   }
 
-  CommaSequence_Selector* CommaSequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* ps, bool implicit_parent)
+  CommaSequence_Selector* CommaSequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* super_cseq, bool implicit_parent)
   {
-    if (!this->has_parent_ref()/* && !implicit_parent*/) return this;
-    CommaSequence_Selector* ss = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
-    for (size_t pi = 0, pL = ps->length(); pi < pL; ++pi) {
-      CommaSequence_Selector* list = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
-      *list << (*ps)[pi];
-      for (size_t si = 0, sL = this->length(); si < sL; ++si) {
-        *ss += (*this)[si]->resolve_parent_refs(ctx, list, implicit_parent);
+    if (!super_cseq) {
+      if (this->has_parent_ref()) {
+        error("Base-level rules cannot contain the parent-selector-referencing character '&'.", pstate());
       }
     }
+
+    CommaSequence_Selector* ss = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
+    for (Sequence_Selector* i : this->elements()) {
+      *ss += i->resolve_parent_refs(ctx, super_cseq, implicit_parent);
+    }
+    // for (size_t pi = 0, pL = ps->length(); pi < pL; ++pi) {
+    //   CommaSequence_Selector* list = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
+    //   *list << (*ps)[pi];
+    //   for (size_t si = 0, sL = this->length(); si < sL; ++si) {
+    //     *ss += (*this)[si]->resolve_parent_refs(ctx, list, implicit_parent);
+    //   }
+    // }
     return ss;
   }
 
   CommaSequence_Selector* Sequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* parents, bool implicit_parent)
   {
+    bool has_parent_ref = this->has_parent_ref();
+
+    if (!has_parent_ref && !implicit_parent) {
+      CommaSequence_Selector* ss = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
+      *ss << this;
+      return ss;
+    }
+
+    if (has_parent_ref) {
+      SimpleSequence_Selector* old_head = this->head();
+      Sequence_Selector* old_tail = this->tail();
+
+      SimpleSequence_Selector* new_head = SASS_MEMORY_NEW(ctx.mem, SimpleSequence_Selector, pstate());
+      *new_head << SASS_MEMORY_NEW(ctx.mem, Parent_Selector, pstate());
+      this->head(new_head);
+
+      Sequence_Selector* new_tail = SASS_MEMORY_NEW(ctx.mem, Sequence_Selector, pstate());
+      new_tail->tail(old_tail);
+      new_tail->head(old_head);
+      this->tail(new_tail);
+    }
+
+    debug_ast(this);
+
     Sequence_Selector* tail = this->tail();
     SimpleSequence_Selector* head = this->head();
 
