@@ -29,6 +29,7 @@
 #include "sass2scss.h"
 #include "prelexer.hpp"
 #include "emitter.hpp"
+#include "debugger.hpp"
 
 namespace Sass {
   using namespace Constants;
@@ -650,6 +651,7 @@ namespace Sass {
     Expand expand(*this, &global, &backtrace);
     Cssize cssize(*this, &backtrace);
     CheckNesting check_nesting;
+    debug_ast(root);
     // check nesting
     root->perform(&check_nesting)->block();
     // expand and eval the tree

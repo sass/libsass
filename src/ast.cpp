@@ -1094,10 +1094,22 @@ namespace Sass {
 
   CommaSequence_Selector* CommaSequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* super_cseq, bool implicit_parent)
   {
+    bool has_parent_ref = this->has_parent_ref();
+
+    std::cerr << " ============= " << std::endl;
+    std::cerr << "CommaSequence_Selector::resolve_parent_refs" << std::endl;
+    std::cerr << "super_cseq: " << (super_cseq ? "true" : "false") << std::endl;
+    std::cerr << "implicit_parent: " << (implicit_parent ? "true" : "false") << std::endl;
+    std::cerr << "has_parent_ref: " << (has_parent_ref ? "true" : "false") << std::endl;
+    debug_ast(this);
+    std::cerr << " ============= " << std::endl;
+
+
     if (!super_cseq) {
       if (this->has_parent_ref()) {
         error("Base-level rules cannot contain the parent-selector-referencing character '&'.", pstate());
       }
+      return this;
     }
 
     CommaSequence_Selector* ss = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
@@ -1114,17 +1126,26 @@ namespace Sass {
     return ss;
   }
 
-  CommaSequence_Selector* Sequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* parents, bool implicit_parent)
+  CommaSequence_Selector* Sequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* super_cseq, bool implicit_parent)
   {
-    bool has_parent_ref = this->has_parent_ref();
+    bool contains_parent_ref = this->has_parent_ref();
 
-    if (!has_parent_ref && !implicit_parent) {
+    // std::cerr << " ============= " << std::endl;
+    // std::cerr << "Sequence_Selector::resolve_parent_refs" << std::endl;
+    // std::cerr << "super_cseq: " << (super_cseq ? "true" : "false") << std::endl;
+    // std::cerr << "implicit_parent: " << (implicit_parent ? "true" : "false") << std::endl;
+    // std::cerr << "contains_parent_ref: " << (contains_parent_ref ? "true" : "false") << std::endl;
+    // debug_ast(this);
+    // std::cerr << " ============= " << std::endl;
+
+
+    if (!contains_parent_ref && !implicit_parent) {
       CommaSequence_Selector* ss = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
       *ss << this;
       return ss;
     }
 
-    if (has_parent_ref) {
+    if (!contains_parent_ref) {
       SimpleSequence_Selector* old_head = this->head();
       Sequence_Selector* old_tail = this->tail();
 
@@ -1143,8 +1164,8 @@ namespace Sass {
     Sequence_Selector* tail = this->tail();
     SimpleSequence_Selector* head = this->head();
 
-    // first resolve_parent_refs the tail (which may return an expanded list)
-    CommaSequence_Selector* tails = tail ? tail->resolve_parent_refs(ctx, parents, implicit_parent) : 0;
+    // // first resolve_parent_refs the tail (which may return an expanded list)
+    // CommaSequence_Selector* tails = tail ? tail->resolve_parent_refs(ctx, super_cseq, implicit_parent) : 0;
 
     if (head && head->length() > 0) {
 
@@ -1153,12 +1174,12 @@ namespace Sass {
       // mix parent complex selector into the compound list
       if (dynamic_cast<Parent_Selector*>((*head)[0])) {
         retval = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
-        if (parents && parents->length()) {
+        if (super_cseq && super_cseq->length()) {
           if (tails && tails->length() > 0) {
             for (size_t n = 0, nL = tails->length(); n < nL; ++n) {
-              for (size_t i = 0, iL = parents->length(); i < iL; ++i) {
+              for (size_t i = 0, iL = super_cseq->length(); i < iL; ++i) {
                 Sequence_Selector* t = (*tails)[n];
-                Sequence_Selector* parent = (*parents)[i];
+                Sequence_Selector* parent = (*super_cseq)[i];
                 Sequence_Selector* s = parent->cloneFully(ctx);
                 Sequence_Selector* ss = this->clone(ctx);
                 ss->tail(t ? t->clone(ctx) : 0);
@@ -1170,11 +1191,11 @@ namespace Sass {
               }
             }
           }
-          // have no tails but parents
+          // have no tails but super_cseq
           // loop above is inside out
           else {
-            for (size_t i = 0, iL = parents->length(); i < iL; ++i) {
-              Sequence_Selector* parent = (*parents)[i];
+            for (size_t i = 0, iL = super_cseq->length(); i < iL; ++i) {
+              Sequence_Selector* parent = (*super_cseq)[i];
               Sequence_Selector* s = parent->cloneFully(ctx);
               Sequence_Selector* ss = this->clone(ctx);
               // this is only if valid if the parent has no trailing op
@@ -1225,7 +1246,7 @@ namespace Sass {
       for (Simple_Selector* ss : *head) {
         if (Wrapped_Selector* ws = dynamic_cast<Wrapped_Selector*>(ss)) {
           if (CommaSequence_Selector* sl = dynamic_cast<CommaSequence_Selector*>(ws->selector())) {
-            if (parents) ws->selector(sl->resolve_parent_refs(ctx, parents, implicit_parent));
+            if (super_cseq) ws->selector(sl->resolve_parent_refs(ctx, super_cseq, implicit_parent));
           }
         }
       }
