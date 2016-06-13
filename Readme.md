@@ -88,5 +88,5 @@ Our MIT license is designed to be as simple, and liberal as possible.
 [@mgreter]: https://github.com/mgreter
 [@xzyfer]: https://github.com/xzyfer
 
-sass2scss was originally written by [Marcel Greter](@mgreter)
+sass2scss was originally written by [Marcel Greter](https://github.com/mgreter)
 and he happily agreed to have it merged into the project.
