@@ -1187,7 +1187,7 @@ namespace Sass {
 
     bar = Sass::Util.paths(foo);
 
-    CommaSequence_Selector* bam = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());;
+    CommaSequence_Selector* bam = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
     for (std::vector<SelOrComb> path : bar)
     {
       Sequence_Selector* baz = SASS_MEMORY_NEW(ctx.mem, Sequence_Selector, pstate());
@@ -1226,22 +1226,42 @@ namespace Sass {
 
   CommaSequence_Selector* SimpleSequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* super_cseq)
   {
-    // resolved_members = @members.map do |sel|
-    //   next sel unless sel.is_a?(Pseudo) && sel.selector
-    //   sel.with_selector(sel.selector.resolve_parent_refs(super_cseq, false))
-    // end.flatten
-
     std::vector<Simple_Selector*> resolved_members;
     for (auto sel : this->elements()) {
       if (Wrapped_Selector* w = dynamic_cast<Wrapped_Selector*>(sel)) {
-        CommaSequence_Selector* c = w->with_selector(w->selector()->resolve_parent_refs(super_cseq, false))
-        resolved_members.push_back();
+        std::vector<Simple_Selector*> ss = w->with_selector(w->selector()->resolve_parent_refs(super_cseq, false))
+        for (Simple_Selector* i : ss) {
+          resolved_members.push_back(i);
+        }
       }
       else
       {
         resolved_members.push_back(sel);
       }
     }
+
+    // Parent selector only appears as the first selector in the sequence
+    Parent_Selector* parent = dynamic_cast<Parent_Selector*>(resolved_members.first());
+    if (!parent) {
+      SimpleSequence_Selector* s = SASS_MEMORY_NEW(ctx.mem, SimpleSequence_Selector, pstate());
+      for (Simple_Selector* i : resolved_members) {
+        *s << i;
+      }
+
+      Sequence_Selector* ss = SASS_MEMORY_NEW(ctx.mem, Sequence_Selector, pstate());
+      *ss << s;
+
+      CommaSequence_Selector* ret = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
+      *ret << ss;
+
+      return ret;
+    }
+
+    if (this->size() == 1) {
+      return super_cseq
+    }
+
+
   }
 
   CommaSequence_Selector* Sequence_Selector::tails(Context& ctx, CommaSequence_Selector* tails)
