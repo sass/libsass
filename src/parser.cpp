@@ -2437,7 +2437,7 @@ namespace Sass {
       else if (peek < exactly<'('> >(q)) rv.found = q;
       // else if (peek < exactly<';'> >(q)) rv.found = q;
       // else if (peek < exactly<'}'> >(q)) rv.found = q;
-      if (rv.found || *p == 0) rv.error = 0;
+      if (rv.found) rv.error = 0;
     }
 
     rv.parsable = ! rv.has_interpolants;
