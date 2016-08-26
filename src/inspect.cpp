@@ -372,8 +372,6 @@ namespace Sass {
     // probably ruby sass eqivalent of element_needs_parens
     if (output_style() == TO_SASS &&
         list->length() == 1 &&
-        !list->from_selector() &&
-        !dynamic_cast<List*>((*list)[0]) &&
         !dynamic_cast<List*>((*list)[0]) &&
         !dynamic_cast<CommaSequence_Selector*>((*list)[0])) {
       append_string("(");
@@ -414,8 +412,6 @@ namespace Sass {
     // probably ruby sass eqivalent of element_needs_parens
     if (output_style() == TO_SASS &&
         list->length() == 1 &&
-        !list->from_selector() &&
-        !dynamic_cast<List*>((*list)[0]) &&
         !dynamic_cast<List*>((*list)[0]) &&
         !dynamic_cast<CommaSequence_Selector*>((*list)[0])) {
       append_string(",)");
