@@ -109,7 +109,7 @@ extern "C" {
       }
 
       JsonNode* json_err = json_mkobject();
-      json_append_member(json_err, "status", json_mknumber(1));
+      json_append_member(json_err, "status", json_mknumber(65));
       json_append_member(json_err, "file", json_mkstring(e.pstate.path));
       json_append_member(json_err, "line", json_mknumber((double)(e.pstate.line+1)));
       json_append_member(json_err, "column", json_mknumber((double)(e.pstate.column+1)));
@@ -118,7 +118,7 @@ extern "C" {
       try { c_ctx->error_json = json_stringify(json_err, "  "); } catch(...) {}
       c_ctx->error_message = sass_copy_string(msg_stream.str());
       c_ctx->error_text = sass_copy_c_string(e.what());
-      c_ctx->error_status = 1;
+      c_ctx->error_status = 65;
       c_ctx->error_file = sass_copy_c_string(e.pstate.path);
       c_ctx->error_line = e.pstate.line+1;
       c_ctx->error_column = e.pstate.column+1;
