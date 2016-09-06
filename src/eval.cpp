@@ -467,6 +467,7 @@ namespace Sass {
     }
     ll->is_interpolant(l->is_interpolant());
     ll->from_selector(l->from_selector());
+    ll->delimiter(l->delimiter());
     ll->is_expanded(true);
     return ll.detach();
   }
