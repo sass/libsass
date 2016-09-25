@@ -54,7 +54,7 @@ struct Sass_Options : Sass_Output_Options {
   // Directly inserted in source maps
   char* source_map_root;
 
-  // Custom functions that can be called from sccs code
+  // Custom functions that can be called from Sass code
   Sass_Function_List c_functions;
 
   // List of custom importers

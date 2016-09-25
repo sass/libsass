@@ -78,7 +78,7 @@ struct Sass_Options {
   // Directly inserted in source maps
   char* source_map_root;
 
-  // Custom functions that can be called from sccs code
+  // Custom functions that can be called from Sass code
   Sass_C_Function_List c_functions;
 
   // Callback to overload imports

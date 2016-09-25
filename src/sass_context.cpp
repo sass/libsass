@@ -362,6 +362,16 @@ extern "C" {
     return options;
   }
 
+  char* ADDCALL sass_copy_c_string (const char* input_string)
+  {
+    return sass_strdup(input_string);
+  }
+
+  void ADDCALL sass_free_c_string (char* input_string)
+  {
+    if (input_string)  free(input_string);
+  }
+
   Sass_File_Context* ADDCALL sass_make_file_context(const char* input_path)
   {
     struct Sass_File_Context* ctx = (struct Sass_File_Context*) calloc(1, sizeof(struct Sass_File_Context));

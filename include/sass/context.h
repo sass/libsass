@@ -30,6 +30,13 @@ enum Sass_Compiler_State {
 
 // Create and initialize an option struct
 ADDAPI struct Sass_Options* ADDCALL sass_make_options (void);
+
+// Create a copy of C string
+ADDAPI char* ADDCALL sass_copy_c_string (const char* input_string);
+
+// Delete a copied C string
+ADDAPI void ADDCALL sass_free_c_string (char* input_string);
+
 // Create and initialize a specific context
 ADDAPI struct Sass_File_Context* ADDCALL sass_make_file_context (const char* input_path);
 ADDAPI struct Sass_Data_Context* ADDCALL sass_make_data_context (char* source_string);
