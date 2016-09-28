@@ -1376,8 +1376,8 @@ namespace Sass {
     }
     else if (peek < sequence < one_plus < alternatives < css_whitespace, exactly<'-'>, exactly<'+'> > >, number > >()) {
       if (parse_number_prefix()) return parse_value(); // prefix is positive
-      Unary_Expression* ex = SASS_MEMORY_NEW(ctx.mem, Unary_Expression, pstate, Unary_Expression::MINUS, parse_value());;
-      if (ex->operand()) ex->is_delayed(ex->operand()->is_delayed());
+      Unary_Expression* ex = SASS_MEMORY_NEW(ctx.mem, Unary_Expression, pstate, Unary_Expression::MINUS, parse_value());
+      if (ex && ex->operand()) ex->is_delayed(ex->operand()->is_delayed());
       return ex;
     }
     else {
@@ -1636,7 +1636,7 @@ namespace Sass {
         if (lex< re_static_expression >()) {
           ex = SASS_MEMORY_NEW(ctx.mem, String_Constant, pstate, lexed);
         } else {
-          ex = parse_list();
+          ex = parse_list(DELAYED);
         }
         ex->is_interpolant(true);
         (*schema) << ex;
