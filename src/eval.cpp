@@ -1612,6 +1612,10 @@ namespace Sass {
     sl->is_optional(s->is_optional());
     sl->media_block(s->media_block());
     sl->is_optional(s->is_optional());
+
+    bool implicit_parent = !exp.old_at_root_without_rule;
+    return s->resolve_parent_refs(ctx, selector(), implicit_parent);
+
     for (size_t i = 0, iL = s->length(); i < iL; ++i) {
       rv.push_back(operator()((*s)[i]));
     }

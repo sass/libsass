@@ -2388,6 +2388,8 @@ namespace Sass {
     }
     virtual bool has_parent_ref();
 
+
+
     Sequence_Selector* skip_empty_reference()
     {
       if ((!head_ || !head_->length() || head_->is_empty_reference()) &&

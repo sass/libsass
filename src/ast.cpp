@@ -5,6 +5,7 @@
 #include "extend.hpp"
 #include "emitter.hpp"
 #include "color_maps.hpp"
+#include "debugger.hpp"
 #include <set>
 #include <iomanip>
 #include <iostream>
@@ -1091,122 +1092,176 @@ namespace Sass {
 
   }
 
-  CommaSequence_Selector* CommaSequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* ps, bool implicit_parent)
+  CommaSequence_Selector* CommaSequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* super_cseq, bool implicit_parent)
   {
-    if (!this->has_parent_ref()/* && !implicit_parent*/) return this;
-    CommaSequence_Selector* ss = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
-    for (size_t pi = 0, pL = ps->length(); pi < pL; ++pi) {
-      CommaSequence_Selector* list = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
-      *list << (*ps)[pi];
-      for (size_t si = 0, sL = this->length(); si < sL; ++si) {
-        *ss += (*this)[si]->resolve_parent_refs(ctx, list, implicit_parent);
+    bool has_parent_ref = this->has_parent_ref();
+
+    std::cerr << " ============= " << std::endl;
+    std::cerr << "CommaSequence_Selector::resolve_parent_refs" << std::endl;
+    std::cerr << "super_cseq: " << (super_cseq ? "true" : "false") << std::endl;
+    std::cerr << "implicit_parent: " << (implicit_parent ? "true" : "false") << std::endl;
+    std::cerr << "has_parent_ref: " << (has_parent_ref ? "true" : "false") << std::endl;
+    debug_ast(this);
+    std::cerr << " ============= " << std::endl;
+
+
+    if (!super_cseq) {
+      if (this->has_parent_ref()) {
+        error("Base-level rules cannot contain the parent-selector-referencing character '&'.", pstate());
       }
+      return this;
     }
+
+    CommaSequence_Selector* ss = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
+    for (Sequence_Selector* i : this->elements()) {
+      *ss += i->resolve_parent_refs(ctx, super_cseq, implicit_parent);
+    }
+    // for (size_t pi = 0, pL = ps->length(); pi < pL; ++pi) {
+    //   CommaSequence_Selector* list = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
+    //   *list << (*ps)[pi];
+    //   for (size_t si = 0, sL = this->length(); si < sL; ++si) {
+    //     *ss += (*this)[si]->resolve_parent_refs(ctx, list, implicit_parent);
+    //   }
+    // }
     return ss;
   }
 
-  CommaSequence_Selector* Sequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* parents, bool implicit_parent)
+  union SelOrComb {
+    SimpleSequence_Selector* sel;
+    Sequence_Selector::Combinator comb;
+  }
+
+  CommaSequence_Selector* Sequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* super_cseq, bool implicit_parent)
   {
+    bool contains_parent_ref = this->has_parent_ref();
+
+    // std::cerr << " ============= " << std::endl;
+    // std::cerr << "Sequence_Selector::resolve_parent_refs" << std::endl;
+    // std::cerr << "super_cseq: " << (super_cseq ? "true" : "false") << std::endl;
+    // std::cerr << "implicit_parent: " << (implicit_parent ? "true" : "false") << std::endl;
+    // std::cerr << "contains_parent_ref: " << (contains_parent_ref ? "true" : "false") << std::endl;
+    // debug_ast(this);
+    // std::cerr << " ============= " << std::endl;
+
+
+    if (!contains_parent_ref && !implicit_parent) {
+      CommaSequence_Selector* ss = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
+      *ss << this;
+      return ss;
+    }
+
+    if (!contains_parent_ref) {
+      SimpleSequence_Selector* old_head = this->head();
+      Sequence_Selector* old_tail = this->tail();
+
+      SimpleSequence_Selector* new_head = SASS_MEMORY_NEW(ctx.mem, SimpleSequence_Selector, pstate());
+      *new_head << SASS_MEMORY_NEW(ctx.mem, Parent_Selector, pstate());
+      this->head(new_head);
+
+      Sequence_Selector* new_tail = SASS_MEMORY_NEW(ctx.mem, Sequence_Selector, pstate());
+      new_tail->tail(old_tail);
+      new_tail->head(old_head);
+      this->tail(new_tail);
+    }
+
+    // debug_ast(this);
+
+    std::vector<std::vector<SelOrComb>> foo;
+
     Sequence_Selector* tail = this->tail();
-    SimpleSequence_Selector* head = this->head();
 
-    // first resolve_parent_refs the tail (which may return an expanded list)
-    CommaSequence_Selector* tails = tail ? tail->resolve_parent_refs(ctx, parents, implicit_parent) : 0;
-
-    if (head && head->length() > 0) {
-
-      CommaSequence_Selector* retval = 0;
-      // we have a parent selector in a simple compound list
-      // mix parent complex selector into the compound list
-      if (dynamic_cast<Parent_Selector*>((*head)[0])) {
-        retval = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
-        if (parents && parents->length()) {
-          if (tails && tails->length() > 0) {
-            for (size_t n = 0, nL = tails->length(); n < nL; ++n) {
-              for (size_t i = 0, iL = parents->length(); i < iL; ++i) {
-                Sequence_Selector* t = (*tails)[n];
-                Sequence_Selector* parent = (*parents)[i];
-                Sequence_Selector* s = parent->cloneFully(ctx);
-                Sequence_Selector* ss = this->clone(ctx);
-                ss->tail(t ? t->clone(ctx) : 0);
-                SimpleSequence_Selector* h = head_->clone(ctx);
-                if (h->length()) h->erase(h->begin());
-                ss->head(h->length() ? h : 0);
-                s->append(ctx, ss);
-                *retval << s;
-              }
-            }
-          }
-          // have no tails but parents
-          // loop above is inside out
-          else {
-            for (size_t i = 0, iL = parents->length(); i < iL; ++i) {
-              Sequence_Selector* parent = (*parents)[i];
-              Sequence_Selector* s = parent->cloneFully(ctx);
-              Sequence_Selector* ss = this->clone(ctx);
-              // this is only if valid if the parent has no trailing op
-              // otherwise we cannot append more simple selectors to head
-              if (parent->last()->combinator() != ANCESTOR_OF) {
-                throw Exception::InvalidParent(parent, ss);
-              }
-              ss->tail(tail ? tail->clone(ctx) : 0);
-              SimpleSequence_Selector* h = head_->clone(ctx);
-              if (h->length()) h->erase(h->begin());
-              ss->head(h->length() ? h : 0);
-              // \/ IMO ruby sass bug \/
-              ss->has_line_feed(false);
-              s->append(ctx, ss);
-              *retval << s;
-            }
-          }
-        }
-        // have no parent but some tails
-        else {
-          if (tails && tails->length() > 0) {
-            for (size_t n = 0, nL = tails->length(); n < nL; ++n) {
-              Sequence_Selector* cpy = this->clone(ctx);
-              cpy->tail((*tails)[n]->cloneFully(ctx));
-              cpy->head(SASS_MEMORY_NEW(ctx.mem, SimpleSequence_Selector, head->pstate()));
-              for (size_t i = 1, L = this->head()->length(); i < L; ++i)
-                *cpy->head() << (*this->head())[i];
-              if (!cpy->head()->length()) cpy->head(0);
-              *retval << cpy->skip_empty_reference();
-            }
-          }
-          // have no parent nor tails
-          else {
-            Sequence_Selector* cpy = this->clone(ctx);
-            cpy->head(SASS_MEMORY_NEW(ctx.mem, SimpleSequence_Selector, head->pstate()));
-            for (size_t i = 1, L = this->head()->length(); i < L; ++i)
-              *cpy->head() << (*this->head())[i];
-            if (!cpy->head()->length()) cpy->head(0);
-            *retval << cpy->skip_empty_reference();
-          }
-        }
+    while (tail) {
+      std::vector<SelOrComb> t;
+      if (tail->head()) {
+        CommaSequence_Selector* members = this->head()->resolve_parent_refs(ctx, super_cseq);
+        t = members->elements();
       }
-      // no parent selector in head
-      else {
-        retval = this->tails(ctx, tails);
+      else if (tail->combinator()) {
+        t.push_pack(tail->combinator());
       }
 
-      for (Simple_Selector* ss : *head) {
-        if (Wrapped_Selector* ws = dynamic_cast<Wrapped_Selector*>(ss)) {
-          if (CommaSequence_Selector* sl = dynamic_cast<CommaSequence_Selector*>(ws->selector())) {
-            if (parents) ws->selector(sl->resolve_parent_refs(ctx, parents, implicit_parent));
-          }
-        }
-      }
+      foo.push_back(f);
 
-      return retval;
-
-    }
-    // has no head
-    else {
-      return this->tails(ctx, tails);
+      tail = tail->tail();
     }
 
-    // unreachable
-    return 0;
+    bar = Sass::Util.paths(foo);
+
+    CommaSequence_Selector* bam = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
+    for (std::vector<SelOrComb> path : bar)
+    {
+      Sequence_Selector* baz = SASS_MEMORY_NEW(ctx.mem, Sequence_Selector, pstate());
+      Sequence_Selector* current = baz;
+
+      for (SelOrComb seq_or_op : path)
+      {
+        if (SimpleSequence_Selector* s = dynamic_cast<SimpleSequence_Selector*>(seq_or_op))
+        {
+          for (auto ss : s)
+          {
+            if (!current->head())
+            {
+              current->head(s);
+            }
+            else
+            {
+              current->tail(
+                SASS_MEMORY_NEW(ctx.mem, Sequence_Selector, pstate(), Sequence_Selector::ANCESTOR_OF, s);
+              );
+              current = current->tail();
+            }
+          }
+        }
+        else
+        {
+          current->comb(seq_or_op);
+        }
+      }
+
+      *bam << baz;
+    }
+
+    return bam;
+  }
+
+  CommaSequence_Selector* SimpleSequence_Selector::resolve_parent_refs(Context& ctx, CommaSequence_Selector* super_cseq)
+  {
+    std::vector<Simple_Selector*> resolved_members;
+    for (auto sel : this->elements()) {
+      if (Wrapped_Selector* w = dynamic_cast<Wrapped_Selector*>(sel)) {
+        std::vector<Simple_Selector*> ss = w->with_selector(w->selector()->resolve_parent_refs(super_cseq, false))
+        for (Simple_Selector* i : ss) {
+          resolved_members.push_back(i);
+        }
+      }
+      else
+      {
+        resolved_members.push_back(sel);
+      }
+    }
+
+    // Parent selector only appears as the first selector in the sequence
+    Parent_Selector* parent = dynamic_cast<Parent_Selector*>(resolved_members.first());
+    if (!parent) {
+      SimpleSequence_Selector* s = SASS_MEMORY_NEW(ctx.mem, SimpleSequence_Selector, pstate());
+      for (Simple_Selector* i : resolved_members) {
+        *s << i;
+      }
+
+      Sequence_Selector* ss = SASS_MEMORY_NEW(ctx.mem, Sequence_Selector, pstate());
+      *ss << s;
+
+      CommaSequence_Selector* ret = SASS_MEMORY_NEW(ctx.mem, CommaSequence_Selector, pstate());
+      *ret << ss;
+
+      return ret;
+    }
+
+    if (this->size() == 1) {
+      return super_cseq
+    }
+
+
   }
 
   CommaSequence_Selector* Sequence_Selector::tails(Context& ctx, CommaSequence_Selector* tails)

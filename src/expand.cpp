@@ -109,21 +109,21 @@ namespace Sass {
     LOCAL_FLAG(at_root_without_rule, false);
 
     // do some special checks for the base level rules
-    if (r->is_root()) {
-      if (CommaSequence_Selector* selector_list = dynamic_cast<CommaSequence_Selector*>(r->selector())) {
-        for (Sequence_Selector* complex_selector : selector_list->elements()) {
-          Sequence_Selector* tail = complex_selector;
-          while (tail) {
-            if (tail->head()) for (Simple_Selector* header : tail->head()->elements()) {
-              if (dynamic_cast<Parent_Selector*>(header) == NULL) continue; // skip all others
-              std::string sel_str(complex_selector->to_string(ctx.c_options));
-              error("Base-level rules cannot contain the parent-selector-referencing character '&'.", header->pstate(), backtrace());
-            }
-            tail = tail->tail();
-          }
-        }
-      }
-    }
+    // if (r->is_root()) {
+    //   if (CommaSequence_Selector* selector_list = dynamic_cast<CommaSequence_Selector*>(r->selector())) {
+    //     for (Sequence_Selector* complex_selector : selector_list->elements()) {
+    //       Sequence_Selector* tail = complex_selector;
+    //       while (tail) {
+    //         if (tail->head()) for (Simple_Selector* header : tail->head()->elements()) {
+    //           if (dynamic_cast<Parent_Selector*>(header) == NULL) continue; // skip all others
+    //           std::string sel_str(complex_selector->to_string(ctx.c_options));
+    //           error("Base-level rules cannot contain the parent-selector-referencing character '&'.", header->pstate(), backtrace());
+    //         }
+    //         tail = tail->tail();
+    //       }
+    //     }
+    //   }
+    // }
 
     Expression* ex = r->selector()->perform(&eval);
     CommaSequence_Selector* sel = dynamic_cast<CommaSequence_Selector*>(ex);
