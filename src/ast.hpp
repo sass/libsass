@@ -1888,7 +1888,7 @@ namespace Sass {
     virtual void set_media_block(Media_Block* mb) {
       media_block(mb);
     }
-    virtual bool has_wrapped_selector() {
+    virtual bool has_wrapped_selector(std::string name = "") {
       return false;
     }
     virtual bool has_placeholder() {
@@ -2238,9 +2238,9 @@ namespace Sass {
       if (!selector()) return false;
       return selector()->has_real_parent_ref();
     }
-    virtual bool has_wrapped_selector()
+    virtual bool has_wrapped_selector(std::string name = "")
     {
-      return true;
+      return name == "" || name == name_;
     }
     virtual unsigned long specificity()
     {
@@ -2328,11 +2328,11 @@ namespace Sass {
       return sum;
     }
 
-    virtual bool has_wrapped_selector()
+    virtual bool has_wrapped_selector(std::string name = "")
     {
       if (length() == 0) return false;
       if (Simple_Selector* ss = elements().front()) {
-        if (ss->has_wrapped_selector()) return true;
+        if (ss->has_wrapped_selector(name)) return true;
       }
       return false;
     }
@@ -2475,9 +2475,9 @@ namespace Sass {
       if (tail_) tail_->set_media_block(mb);
       if (head_) head_->set_media_block(mb);
     }
-    virtual bool has_wrapped_selector() {
-      if (head_ && head_->has_wrapped_selector()) return true;
-      if (tail_ && tail_->has_wrapped_selector()) return true;
+    virtual bool has_wrapped_selector(std::string name = "") {
+      if (head_ && head_->has_wrapped_selector(name)) return true;
+      if (tail_ && tail_->has_wrapped_selector(name)) return true;
       return false;
     }
     virtual bool has_placeholder() {
@@ -2594,9 +2594,9 @@ namespace Sass {
         cs->set_media_block(mb);
       }
     }
-    virtual bool has_wrapped_selector() {
+    virtual bool has_wrapped_selector(std::string name = "") {
       for (Sequence_Selector* cs : elements()) {
-        if (cs->has_wrapped_selector()) return true;
+        if (cs->has_wrapped_selector(name)) return true;
       }
       return false;
     }

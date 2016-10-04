@@ -1982,6 +1982,10 @@ namespace Sass {
                             dynamic_cast<Placeholder_Selector*>(ws_ss->first())
                           )) continue;
                         }
+                        if (ext_cs->first()->has_wrapped_selector(":not")) {
+                          // ignore this case here for now
+                          if (cpy_ws->name() == ":not") continue;
+                        }
                         *cpy_ws_sl << ext_cs->first();
                       }
                       // assign list to clone
