@@ -5,6 +5,9 @@
 #include "emitter.hpp"
 #include "utf8_string.hpp"
 
+#include <iostream>
+#include "debugger.hpp"
+
 namespace Sass {
 
   Emitter::Emitter(struct Sass_Output_Options& opt)
@@ -141,15 +144,24 @@ namespace Sass {
   // this adds source-mappings for node start and end
   void Emitter::append_token(const std::string& text, const AST_Node* node)
   {
+    // printf("node.open\n");
+    // debug_ast(node);
+
     flush_schedules();
     add_open_mapping(node);
     // hotfix for browser issues
     // this is pretty ugly indeed
     if (scheduled_mapping) {
-      add_open_mapping(scheduled_mapping);
+    //   add_open_mapping(scheduled_mapping);
       scheduled_mapping = 0;
     }
     append_string(text);
+
+    // printf("string\n");
+    // std::cout << text << std::endl;
+    //
+    // printf("node.close\n");
+    // debug_ast(node);
     add_close_mapping(node);
   }
 
@@ -241,10 +253,12 @@ namespace Sass {
 
   void Emitter::append_scope_opener(AST_Node* node)
   {
+    // printf("scope.open\n");
+    // debug_ast(node);
     scheduled_linefeed = 0;
     append_optional_space();
     flush_schedules();
-    if (node) add_open_mapping(node);
+    // if (node) add_open_mapping(node);
     append_string("{");
     append_optional_linefeed();
     // append_optional_space();
@@ -263,7 +277,9 @@ namespace Sass {
       append_optional_space();
     }
     append_string("}");
-    if (node) add_close_mapping(node);
+    // printf("scope.close\n");
+    // debug_ast(node);
+    // if (node) add_close_mapping(node);
     append_optional_linefeed();
     if (indentation != 0) return;
     if (output_style() != COMPRESSED)
