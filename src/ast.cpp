@@ -1146,7 +1146,7 @@ namespace Sass {
               for (size_t i = 0, iL = parents->length(); i < iL; ++i) {
                 Sequence_Selector* t = (*tails)[n];
                 Sequence_Selector* parent = (*parents)[i];
-                Sequence_Selector* s = parent->cloneFully(ctx);
+                Sequence_Selector* s = parent->cloneFullyScoped(ctx, this);
                 Sequence_Selector* ss = this->clone(ctx);
                 ss->tail(t ? t->clone(ctx) : 0);
                 SimpleSequence_Selector* h = head_->clone(ctx);
@@ -1162,7 +1162,7 @@ namespace Sass {
           else {
             for (size_t i = 0, iL = parents->length(); i < iL; ++i) {
               Sequence_Selector* parent = (*parents)[i];
-              Sequence_Selector* s = parent->cloneFully(ctx);
+              Sequence_Selector* s = parent->cloneFullyScoped(ctx, this);
               Sequence_Selector* ss = this->clone(ctx);
               // this is only if valid if the parent has no trailing op
               // otherwise we cannot append more simple selectors to head
@@ -1348,6 +1348,33 @@ namespace Sass {
 
     return cpy;
   }
+
+  Sequence_Selector* Sequence_Selector::cloneFullyScoped(Context& ctx, const Sequence_Selector *s) const
+  {
+    // when cloning a parent selector, the scope of the sequence selector must
+    // be preserved in order for sourcemaps to work, so the sequence selector
+    // of the current scope is used as an injection vector
+    Sequence_Selector* cpy = SASS_MEMORY_NEW(ctx.mem, Sequence_Selector, tail() ? *this : *s);
+    // set properties t the current node and reset tail by default
+    cpy->combinator(this->combinator());
+    cpy->reference(this->reference());
+    cpy->tail(0);
+    cpy->has_line_feed(this->has_line_feed());
+    cpy->has_line_break(this->has_line_break());
+
+    cpy->is_optional(this->is_optional());
+    cpy->media_block(this->media_block());
+    if (head()) {
+      cpy->head(head()->clone(ctx));
+    }
+
+    if (tail()) {
+      cpy->tail(tail()->cloneFullyScoped(ctx, s));
+    }
+
+    return cpy;
+  }
+
 
   SimpleSequence_Selector* SimpleSequence_Selector::clone(Context& ctx) const
   {
