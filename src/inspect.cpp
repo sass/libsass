@@ -63,7 +63,7 @@ namespace Sass {
   void Inspect::operator()(Media_Block* media_block)
   {
     append_indentation();
-    append_token("@media", media_block);
+    append_string("@media");
     append_mandatory_space();
     in_media_block = true;
     media_block->media_queries()->perform(this);
@@ -74,7 +74,7 @@ namespace Sass {
   void Inspect::operator()(Supports_Block* feature_block)
   {
     append_indentation();
-    append_token("@supports", feature_block);
+    append_string("@supports");
     append_mandatory_space();
     feature_block->condition()->perform(this);
     feature_block->block()->perform(this);
@@ -83,7 +83,7 @@ namespace Sass {
   void Inspect::operator()(At_Root_Block* at_root_block)
   {
     append_indentation();
-    append_token("@at-root ", at_root_block);
+    append_string("@at-root ");
     append_mandatory_space();
     if(at_root_block->expression()) at_root_block->expression()->perform(this);
     at_root_block->block()->perform(this);
@@ -92,7 +92,7 @@ namespace Sass {
   void Inspect::operator()(Directive* at_rule)
   {
     append_indentation();
-    append_token(at_rule->keyword(), at_rule);
+    append_string(at_rule->keyword());
     if (at_rule->selector()) {
       append_mandatory_space();
       bool was_wrapped = in_wrapped;
@@ -120,6 +120,7 @@ namespace Sass {
     if (output_style() == NESTED)
       indentation += dec->tabs();
     append_indentation();
+    add_open_mapping(dec);
     dec->property()->perform(this);
     append_colon_separator();
 
@@ -139,13 +140,12 @@ namespace Sass {
     if (output_style() == NESTED)
       indentation -= dec->tabs();
     in_declaration = was_decl;
-    // hotfix to fix wrong line offsets for declarations that use variables
     add_close_mapping(dec);
   }
 
   void Inspect::operator()(Assignment* assn)
   {
-    append_token(assn->variable(), assn);
+    append_string(assn->variable());
     append_colon_separator();
     assn->value()->perform(this);
     if (assn->is_default()) {
@@ -293,7 +293,7 @@ namespace Sass {
   void Inspect::operator()(Extension* extend)
   {
     append_indentation();
-    append_token("@extend", extend);
+    append_string("@extend");
     append_mandatory_space();
     extend->selector()->perform(this);
     append_delimiter();
@@ -303,10 +303,10 @@ namespace Sass {
   {
     append_indentation();
     if (def->type() == Definition::MIXIN) {
-      append_token("@mixin", def);
+      append_string("@mixin");
       append_mandatory_space();
     } else {
-      append_token("@function", def);
+      append_string("@function");
       append_mandatory_space();
     }
     append_string(def->name());
@@ -317,7 +317,7 @@ namespace Sass {
   void Inspect::operator()(Mixin_Call* call)
   {
     append_indentation();
-    append_token("@include", call);
+    append_string("@include");
     append_mandatory_space();
     append_string(call->name());
     if (call->arguments()) {
@@ -333,7 +333,7 @@ namespace Sass {
   void Inspect::operator()(Content* content)
   {
     append_indentation();
-    append_token("@content", content);
+    append_string("@content");
     append_delimiter();
   }
 
@@ -477,7 +477,7 @@ namespace Sass {
 
   void Inspect::operator()(Function_Call* call)
   {
-    append_token(call->name(), call);
+    append_string(call->name());
     call->arguments()->perform(this);
   }
 
@@ -489,12 +489,12 @@ namespace Sass {
 
   void Inspect::operator()(Variable* var)
   {
-    append_token(var->name(), var);
+    append_string(var->name());
   }
 
   void Inspect::operator()(Textual* txt)
   {
-    append_token(txt->value(), txt);
+    append_string(txt->value());
   }
 
   void Inspect::operator()(Number* n)
@@ -579,7 +579,7 @@ namespace Sass {
     res += n->unit();
 
     // output the final token
-    append_token(res, n);
+    append_string(res);
   }
 
   // helper function for serializing colors
@@ -638,7 +638,7 @@ namespace Sass {
 
     if (compressed && !c->is_delayed()) name = "";
     if (opt.output_style == INSPECT && a >= 1) {
-      append_token(hexlet.str(), c);
+      append_string(hexlet.str());
       return;
     }
 
@@ -672,14 +672,14 @@ namespace Sass {
       ss << a << ')';
     }
 
-    append_token(ss.str(), c);
+    append_string(ss.str());
 
   }
 
   void Inspect::operator()(Boolean* b)
   {
     // output the final token
-    append_token(b->value() ? "true" : "false", b);
+    append_string(b->value() ? "true" : "false");
   }
 
   void Inspect::operator()(String_Schema* ss)
@@ -695,28 +695,26 @@ namespace Sass {
 
   void Inspect::operator()(String_Constant* s)
   {
-    add_open_mapping(s);
-    append_token(s->value(), s);
-    add_close_mapping(s);
+    append_string(s->value());
   }
 
   void Inspect::operator()(String_Quoted* s)
   {
     if (const char q = s->quote_mark()) {
-      append_token(quote(s->value(), q), s);
+      append_string(quote(s->value(), q));
     } else {
-      append_token(s->value(), s);
+      append_string(s->value());
     }
   }
 
   void Inspect::operator()(Custom_Error* e)
   {
-    append_token(e->message(), e);
+    append_string(e->message());
   }
 
   void Inspect::operator()(Custom_Warning* w)
   {
-    append_token(w->message(), w);
+    append_string(w->message());
   }
 
   void Inspect::operator()(Supports_Operator* so)
@@ -728,11 +726,11 @@ namespace Sass {
 
     if (so->operand() == Supports_Operator::AND) {
       append_mandatory_space();
-      append_token("and", so);
+      append_string("and");
       append_mandatory_space();
     } else if (so->operand() == Supports_Operator::OR) {
       append_mandatory_space();
-      append_token("or", so);
+      append_string("or");
       append_mandatory_space();
     }
 
@@ -743,7 +741,7 @@ namespace Sass {
 
   void Inspect::operator()(Supports_Negation* sn)
   {
-    append_token("not", sn);
+    append_string("not");
     append_mandatory_space();
     if (sn->needs_parens(sn->condition())) append_string("(");
     sn->condition()->perform(this);
@@ -811,13 +809,13 @@ namespace Sass {
   void Inspect::operator()(Null* n)
   {
     // output the final token
-    append_token("null", n);
+    append_string("null");
   }
 
   // parameters and arguments
   void Inspect::operator()(Parameter* p)
   {
-    append_token(p->name(), p);
+    append_string(p->name());
     if (p->default_value()) {
       append_colon_separator();
       p->default_value()->perform(this);
@@ -843,7 +841,7 @@ namespace Sass {
   void Inspect::operator()(Argument* a)
   {
     if (!a->name().empty()) {
-      append_token(a->name(), a);
+      append_string(a->name());
       append_colon_separator();
     }
     // Special case: argument nulls can be ignored
@@ -885,7 +883,7 @@ namespace Sass {
 
   void Inspect::operator()(Placeholder_Selector* s)
   {
-    append_token(s->name(), s);
+    append_string(s->name());
     if (s->has_line_break()) append_optional_linefeed();
     if (s->has_line_break()) append_indentation();
 
@@ -893,7 +891,7 @@ namespace Sass {
 
   void Inspect::operator()(Element_Selector* s)
   {
-    append_token(s->ns_name(), s);
+    append_string(s->ns_name());
   }
 
   void Inspect::operator()(Class_Selector* s)
@@ -937,7 +935,7 @@ namespace Sass {
   {
     bool was = in_wrapped;
     in_wrapped = true;
-    append_token(s->name(), s);
+    append_string(s->name());
     append_string("(");
     bool was_comma_array = in_comma_array;
     in_comma_array = false;

@@ -27,7 +27,7 @@ namespace Sass {
       throw Exception::InvalidValue(*n);
     }
     // output the final token
-    append_token(res, n);
+    append_string(res);
   }
 
   void Output::operator()(Import* imp)
@@ -212,9 +212,11 @@ namespace Sass {
 
     if (output_style() == NESTED) indentation += f->tabs();
     append_indentation();
-    append_token("@supports", f);
+    add_open_mapping(f);
+    append_string("@supports");
     append_mandatory_space();
     c->perform(this);
+    add_close_mapping(f);
     append_scope_opener();
 
     for (size_t i = 0, L = b->length(); i < L; ++i) {
@@ -248,11 +250,13 @@ namespace Sass {
     }
     if (output_style() == NESTED) indentation += m->tabs();
     append_indentation();
-    append_token("@media", m);
+    add_open_mapping(m);
+    append_string("@media");
     append_mandatory_space();
     in_media_block = true;
     q->perform(this);
     in_media_block = false;
+    add_close_mapping(m);
     append_scope_opener();
 
     for (size_t i = 0, L = b->length(); i < L; ++i) {
@@ -272,7 +276,7 @@ namespace Sass {
     Block*      b     = a->block();
 
     append_indentation();
-    append_token(kwd, a);
+    append_string(kwd);
     if (s) {
       append_mandatory_space();
       in_wrapped = true;
@@ -282,7 +286,7 @@ namespace Sass {
     if (v) {
       append_mandatory_space();
       // ruby sass bug? should use options?
-      append_token(v->to_string(/* opt */), v);
+      append_string(v->to_string(/* opt */));
     }
     if (!b) {
       append_delimiter();
@@ -310,11 +314,11 @@ namespace Sass {
   void Output::operator()(String_Quoted* s)
   {
     if (s->quote_mark()) {
-      append_token(quote(s->value(), s->quote_mark()), s);
+      append_string(quote(s->value(), s->quote_mark()));
     } else if (!in_comment) {
-      append_token(string_to_output(s->value()), s);
+      append_string(string_to_output(s->value()));
     } else {
-      append_token(s->value(), s);
+      append_string(s->value());
     }
   }
 
@@ -325,9 +329,9 @@ namespace Sass {
       value.erase(std::remove_if(value.begin(), value.end(), ::isspace), value.end());
     }
     if (!in_comment) {
-      append_token(string_to_output(value), s);
+      append_string(string_to_output(value));
     } else {
-      append_token(value, s);
+      append_string(value);
     }
   }
 
