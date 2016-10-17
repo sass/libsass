@@ -27,7 +27,6 @@ namespace Sass {
       void set_filename(const std::string& str);
       void add_open_mapping(const AST_Node* node);
       void add_close_mapping(const AST_Node* node);
-      void schedule_mapping(const AST_Node* node);
       std::string render_srcmap(Context &ctx);
       ParserState remap(const ParserState& pstate);
 

@@ -54,7 +54,7 @@ namespace Sass {
   void Inspect::operator()(Bubble* bubble)
   {
     append_indentation();
-    append_token("::BUBBLE", bubble);
+    append_string("::BUBBLE");
     append_scope_opener();
     bubble->node()->perform(this);
     append_scope_closer();
@@ -156,7 +156,7 @@ namespace Sass {
   void Inspect::operator()(Import* import)
   {
     if (!import->urls().empty()) {
-      append_token("@import", import);
+      append_string("@import");
       append_mandatory_space();
 
       import->urls().front()->perform(this);
@@ -169,7 +169,7 @@ namespace Sass {
       append_delimiter();
       for (size_t i = 1, S = import->urls().size(); i < S; ++i) {
         append_mandatory_linefeed();
-        append_token("@import", import);
+        append_string("@import");
         append_mandatory_space();
 
         import->urls()[i]->perform(this);
@@ -187,7 +187,7 @@ namespace Sass {
   void Inspect::operator()(Import_Stub* import)
   {
     append_indentation();
-    append_token("@import", import);
+    append_string("@import");
     append_mandatory_space();
     append_string(import->imp_path());
     append_delimiter();
@@ -196,7 +196,7 @@ namespace Sass {
   void Inspect::operator()(Warning* warning)
   {
     append_indentation();
-    append_token("@warn", warning);
+    append_string("@warn");
     append_mandatory_space();
     warning->message()->perform(this);
     append_delimiter();
@@ -205,7 +205,7 @@ namespace Sass {
   void Inspect::operator()(Error* error)
   {
     append_indentation();
-    append_token("@error", error);
+    append_string("@error");
     append_mandatory_space();
     error->message()->perform(this);
     append_delimiter();
@@ -214,7 +214,7 @@ namespace Sass {
   void Inspect::operator()(Debug* debug)
   {
     append_indentation();
-    append_token("@debug", debug);
+    append_string("@debug");
     append_mandatory_space();
     debug->value()->perform(this);
     append_delimiter();
@@ -230,7 +230,7 @@ namespace Sass {
   void Inspect::operator()(If* cond)
   {
     append_indentation();
-    append_token("@if", cond);
+    append_string("@if");
     append_mandatory_space();
     cond->predicate()->perform(this);
     cond->block()->perform(this);
@@ -245,7 +245,7 @@ namespace Sass {
   void Inspect::operator()(For* loop)
   {
     append_indentation();
-    append_token("@for", loop);
+    append_string("@for");
     append_mandatory_space();
     append_string(loop->variable());
     append_string(" from ");
@@ -258,7 +258,7 @@ namespace Sass {
   void Inspect::operator()(Each* loop)
   {
     append_indentation();
-    append_token("@each", loop);
+    append_string("@each");
     append_mandatory_space();
     append_string(loop->variables()[0]);
     for (size_t i = 1, L = loop->variables().size(); i < L; ++i) {
@@ -273,7 +273,7 @@ namespace Sass {
   void Inspect::operator()(While* loop)
   {
     append_indentation();
-    append_token("@while", loop);
+    append_string("@while");
     append_mandatory_space();
     loop->predicate()->perform(this);
     loop->block()->perform(this);
@@ -282,7 +282,7 @@ namespace Sass {
   void Inspect::operator()(Return* ret)
   {
     append_indentation();
-    append_token("@return", ret);
+    append_string("@return");
     append_mandatory_space();
     ret->value()->perform(this);
     append_delimiter();
@@ -693,7 +693,9 @@ namespace Sass {
 
   void Inspect::operator()(String_Constant* s)
   {
+    add_open_mapping(s);
     append_token(s->value(), s);
+    add_close_mapping(s);
   }
 
   void Inspect::operator()(String_Quoted* s)
@@ -894,14 +896,14 @@ namespace Sass {
 
   void Inspect::operator()(Class_Selector* s)
   {
-    append_token(s->ns_name(), s);
+    append_string(s->ns_name());
     if (s->has_line_break()) append_optional_linefeed();
     if (s->has_line_break()) append_indentation();
   }
 
   void Inspect::operator()(Id_Selector* s)
   {
-    append_token(s->ns_name(), s);
+    append_string(s->ns_name());
     if (s->has_line_break()) append_optional_linefeed();
     if (s->has_line_break()) append_indentation();
   }
@@ -909,21 +911,19 @@ namespace Sass {
   void Inspect::operator()(Attribute_Selector* s)
   {
     append_string("[");
-    add_open_mapping(s);
-    append_token(s->ns_name(), s);
+    append_string(s->ns_name());
     if (!s->matcher().empty()) {
       append_string(s->matcher());
       if (s->value()) {
         s->value()->perform(this);
       }
     }
-    add_close_mapping(s);
     append_string("]");
   }
 
   void Inspect::operator()(Pseudo_Selector* s)
   {
-    append_token(s->ns_name(), s);
+    append_string(s->ns_name());
     if (s->expression()) {
       append_string("(");
       s->expression()->perform(this);
@@ -973,6 +973,11 @@ namespace Sass {
         append_optional_linefeed();
         append_indentation();
       }
+    }
+
+    if (scheduled_mapping) {
+      add_open_mapping(scheduled_mapping);
+      scheduled_mapping = 0;
     }
 
     if (head && head->length() != 0) head->perform(this);
@@ -1047,10 +1052,9 @@ namespace Sass {
     for (size_t i = 0, L = g->length(); i < L; ++i) {
       if (!in_wrapped && i == 0) append_indentation();
       if ((*g)[i] == 0) continue;
-      schedule_mapping((*g)[i]->last());
-      // add_open_mapping((*g)[i]->last());
+      scheduled_mapping = (*g)[i]->last();
       (*g)[i]->perform(this);
-      // add_close_mapping((*g)[i]->last());
+      add_close_mapping((*g)[i]->last());
       if (i < L - 1) {
         scheduled_space = 0;
         append_comma_separator();

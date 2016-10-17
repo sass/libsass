@@ -13,8 +13,6 @@
 #include <cctype>
 #include <locale>
 
-#include "debugger.hpp"
-
 namespace Sass {
 
   static Null sass_null(Sass::Null(ParserState("null")));
@@ -1055,24 +1053,24 @@ namespace Sass {
         SimpleSequence_Selector* rh = last()->head();
         size_t i = 0, L = h->length();
         if (dynamic_cast<Element_Selector*>(h->first())) {
-          if (dynamic_cast<Class_Selector*>(rh->last())) {
-            Class_Selector* sqs = new Class_Selector(
-              h->first()->pstate(), rh->last()->name() + (*h)[0]->name());
+          if (Class_Selector* sq = dynamic_cast<Class_Selector*>(rh->last())) {
+            Class_Selector* sqs = new Class_Selector(*sq);
+            sqs->name(sqs->name() + (*h)[0]->name());
             (*rh)[rh->length()-1] = sqs;
             for (i = 1; i < L; ++i) *rh << (*h)[i];
-          } else if (dynamic_cast<Id_Selector*>(rh->last())) {
-            Id_Selector* sqs = new Id_Selector(
-              h->first()->pstate(), rh->last()->name() + (*h)[0]->name());
+          } else if (Id_Selector* sq = dynamic_cast<Id_Selector*>(rh->last())) {
+            Id_Selector* sqs = new Id_Selector(*sq);
+            sqs->name(sqs->name() + (*h)[0]->name());
             (*rh)[rh->length()-1] = sqs;
             for (i = 1; i < L; ++i) *rh << (*h)[i];
-          } else if (dynamic_cast<Element_Selector*>(rh->last())) {
-            Element_Selector* tss = new Element_Selector(
-              h->first()->pstate(), rh->last()->name() + (*h)[0]->name());
+          } else if (Element_Selector* ts = dynamic_cast<Element_Selector*>(rh->last())) {
+            Element_Selector* tss = new Element_Selector(*ts);
+            tss->name(tss->name() + (*h)[0]->name());
             (*rh)[rh->length()-1] = tss;
             for (i = 1; i < L; ++i) *rh << (*h)[i];
-          } else if (dynamic_cast<Placeholder_Selector*>(rh->last())) {
-            Placeholder_Selector* pss = new Placeholder_Selector(
-              h->first()->pstate(), rh->last()->name() + (*h)[0]->name());
+          } else if (Placeholder_Selector* ps = dynamic_cast<Placeholder_Selector*>(rh->last())) {
+            Placeholder_Selector* pss = new Placeholder_Selector(*ps);
+            pss->name(pss->name() + (*h)[0]->name());
             (*rh)[rh->length()-1] = pss;
             for (i = 1; i < L; ++i) *rh << (*h)[i];
           } else {
@@ -1148,7 +1146,7 @@ namespace Sass {
               for (size_t i = 0, iL = parents->length(); i < iL; ++i) {
                 Sequence_Selector* t = (*tails)[n];
                 Sequence_Selector* parent = (*parents)[i];
-                Sequence_Selector* s = parent->cloneFully(ctx);
+                Sequence_Selector* s = parent->cloneFullyInto(ctx, this);
                 Sequence_Selector* ss = this->clone(ctx);
                 ss->tail(t ? t->clone(ctx) : 0);
                 SimpleSequence_Selector* h = head_->clone(ctx);
@@ -1164,7 +1162,7 @@ namespace Sass {
           else {
             for (size_t i = 0, iL = parents->length(); i < iL; ++i) {
               Sequence_Selector* parent = (*parents)[i];
-              Sequence_Selector* s = parent->cloneFully(ctx);
+              Sequence_Selector* s = parent->cloneFullyInto(ctx, this);
               Sequence_Selector* ss = this->clone(ctx);
               // this is only if valid if the parent has no trailing op
               // otherwise we cannot append more simple selectors to head
@@ -1346,6 +1344,32 @@ namespace Sass {
 
     if (tail()) {
       cpy->tail(tail()->cloneFully(ctx));
+    }
+
+    return cpy;
+  }
+
+  Sequence_Selector* Sequence_Selector::cloneFullyInto(Context& ctx, const Sequence_Selector *s) const
+  {
+    // when cloning a parent selector, the scope of the sequence selector must
+    // be preserved in order for sourcemaps to work, so the sequence selector
+    // of the current scope is used as an injection vector
+    Sequence_Selector* cpy = SASS_MEMORY_NEW(ctx.mem, Sequence_Selector, tail() ? *this : *s);
+    // set properties t the current node and reset tail by default
+    cpy->combinator(this->combinator());
+    cpy->reference(this->reference());
+    cpy->tail(0);
+    cpy->has_line_feed(this->has_line_feed());
+    cpy->has_line_break(this->has_line_break());
+
+    cpy->is_optional(this->is_optional());
+    cpy->media_block(this->media_block());
+    if (head()) {
+      cpy->head(head()->clone(ctx));
+    }
+
+    if (tail()) {
+      cpy->tail(tail()->cloneFullyInto(ctx, s));
     }
 
     return cpy;
