@@ -139,6 +139,8 @@ namespace Sass {
     if (output_style() == NESTED)
       indentation -= dec->tabs();
     in_declaration = was_decl;
+    // hotfix to fix wrong line offsets for declarations that use variables
+    add_close_mapping(dec);
   }
 
   void Inspect::operator()(Assignment* assn)
