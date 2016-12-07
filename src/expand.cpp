@@ -684,7 +684,8 @@ namespace Sass {
       c->pstate().path,
       c->pstate().line + 1,
       c->pstate().column + 1,
-      SASS_CALLEE_MIXIN
+      SASS_CALLEE_MIXIN,
+      { env, &ctx.mem }
     });
 
     Env new_env(def->environment());
