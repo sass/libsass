@@ -45,8 +45,6 @@ namespace Sass {
   void Emitter::set_filename(const std::string& str)
   { wbuf.smap.file = str; }
 
-  void Emitter::schedule_mapping(const AST_Node* node)
-  { scheduled_mapping = node; }
   void Emitter::add_open_mapping(const AST_Node* node)
   { wbuf.smap.add_open_mapping(node); }
   void Emitter::add_close_mapping(const AST_Node* node)
@@ -108,7 +106,6 @@ namespace Sass {
   // append some text or token to the buffer
   void Emitter::append_string(const std::string& text)
   {
-
     // write space/lf
     flush_schedules();
 
@@ -143,12 +140,6 @@ namespace Sass {
   {
     flush_schedules();
     add_open_mapping(node);
-    // hotfix for browser issues
-    // this is pretty ugly indeed
-    if (scheduled_mapping) {
-      add_open_mapping(scheduled_mapping);
-      scheduled_mapping = 0;
-    }
     append_string(text);
     add_close_mapping(node);
   }
@@ -244,7 +235,6 @@ namespace Sass {
     scheduled_linefeed = 0;
     append_optional_space();
     flush_schedules();
-    if (node) add_open_mapping(node);
     append_string("{");
     append_optional_linefeed();
     // append_optional_space();
@@ -263,7 +253,6 @@ namespace Sass {
       append_optional_space();
     }
     append_string("}");
-    if (node) add_close_mapping(node);
     append_optional_linefeed();
     if (indentation != 0) return;
     if (output_style() != COMPRESSED)

@@ -2546,6 +2546,7 @@ namespace Sass {
     }
     Sequence_Selector* clone(Context&) const;      // does not clone SimpleSequence_Selector*s
     Sequence_Selector* cloneFully(Context&) const; // clones SimpleSequence_Selector*s
+    Sequence_Selector* cloneFullyInto(Context&, const Sequence_Selector*) const; // clones SimpleSequence_Selector*s
     // std::vector<SimpleSequence_Selector*> to_vector();
     ATTACH_OPERATIONS()
   };
