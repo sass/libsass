@@ -3,7 +3,8 @@ os: Visual Studio 2013
 environment:
   CTEST_OUTPUT_ON_FAILURE: 1
   ruby_version: 22-x64
-  TargetPath: sassc/bin/sassc
+  DefaultTargetName: sassc.exe
+  RelativePath: sassc\bin
   matrix:
   - Compiler: msvc
     Config: Release
@@ -35,6 +36,8 @@ install:
 
 build_script:
   - ps: |
+      $env:OutDir = Join-Path $pwd.Path $env:RelativePath
+      $env:TargetPath = Join-Path $env:OutDir $env:DefaultTargetName
       if ($env:Compiler -eq "mingw") {
         mingw32-make -j4 sassc
       } else {
@@ -70,7 +73,6 @@ test_script:
       }
       Write-Host "Explicitly testing the case when cwd has Cyrillic characters: " -nonewline
       # See comments in gh-1774 for details.
-      $env:TargetPath =  Join-Path $pwd.Path $env:TargetPath
       cd sass-spec/spec/libsass/Sáss-UŢF8/
       &$env:TargetPath ./input.scss 2>&1>$null
       if(-not($?)) {
