@@ -306,7 +306,7 @@ namespace Sass {
       std::string filename = join_paths(root, file);
       // supported extensions
       const std::vector<std::string> exts = {
-        ".scss", ".sass", ".css"
+        ".sass", ".scss"
       };
       // split the filename
       std::string base(dir_name(file));
