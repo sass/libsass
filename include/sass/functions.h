@@ -11,12 +11,18 @@ extern "C" {
 
 
 // Forward declaration
+struct Sass_Env;
+struct Sass_Callee;
 struct Sass_Import;
 struct Sass_Options;
 struct Sass_Compiler;
 struct Sass_Importer;
 struct Sass_Function;
 
+// Typedef helpers for callee lists
+typedef struct Sass_Env (*Sass_Env_Frame);
+// Typedef helpers for callee lists
+typedef struct Sass_Callee (*Sass_Callee_Entry);
 // Typedef helpers for import lists
 typedef struct Sass_Import (*Sass_Import_Entry);
 typedef struct Sass_Import* (*Sass_Import_List);
@@ -34,6 +40,12 @@ typedef struct Sass_Function* (*Sass_Function_List);
 typedef union Sass_Value* (*Sass_Function_Fn)
   (const union Sass_Value*, Sass_Function_Entry cb, struct Sass_Compiler* compiler);
 
+// Type of function calls
+enum Sass_Callee_Type {
+  SASS_CALLEE_MIXIN,
+  SASS_CALLEE_FUNCTION,
+  SASS_CALLEE_C_FUNCTION,
+};
 
 // Creator for sass custom importer return argument list
 ADDAPI Sass_Importer_List ADDCALL sass_make_importer_list (size_t length);
@@ -65,6 +77,22 @@ ADDAPI Sass_Import_Entry ADDCALL sass_import_set_error(Sass_Import_Entry import,
 // Since we are dealing with pointers they should have a guaranteed and fixed size
 ADDAPI void ADDCALL sass_import_set_list_entry (Sass_Import_List list, size_t idx, Sass_Import_Entry entry);
 ADDAPI Sass_Import_Entry ADDCALL sass_import_get_list_entry (Sass_Import_List list, size_t idx);
+
+// Getters for callee entry
+ADDAPI const char* ADDCALL sass_callee_get_name (Sass_Callee_Entry);
+ADDAPI const char* ADDCALL sass_callee_get_path (Sass_Callee_Entry);
+ADDAPI size_t ADDCALL sass_callee_get_line (Sass_Callee_Entry);
+ADDAPI size_t ADDCALL sass_callee_get_column (Sass_Callee_Entry);
+ADDAPI enum Sass_Callee_Type ADDCALL sass_callee_get_type (Sass_Callee_Entry);
+ADDAPI Sass_Env_Frame ADDCALL sass_callee_get_env (Sass_Callee_Entry);
+
+// Getters and Setters for environments (lexical, local and global)
+ADDAPI union Sass_Value* ADDCALL sass_env_get_lexical (Sass_Env_Frame, const char*);
+ADDAPI void ADDCALL sass_env_set_lexical (Sass_Env_Frame, const char*, union Sass_Value*);
+ADDAPI union Sass_Value* ADDCALL sass_env_get_local (Sass_Env_Frame, const char*);
+ADDAPI void ADDCALL sass_env_set_local (Sass_Env_Frame, const char*, union Sass_Value*);
+ADDAPI union Sass_Value* ADDCALL sass_env_get_global (Sass_Env_Frame, const char*);
+ADDAPI void ADDCALL sass_env_set_global (Sass_Env_Frame, const char*, union Sass_Value*);
 
 // Getters for import entry
 ADDAPI const char* ADDCALL sass_import_get_imp_path (Sass_Import_Entry);

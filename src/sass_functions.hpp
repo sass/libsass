@@ -2,6 +2,8 @@
 #define SASS_SASS_FUNCTIONS_H
 
 #include "sass.h"
+#include "environment.hpp"
+#include "functions.hpp"
 
 // Struct to hold custom function callback
 struct Sass_Function {
@@ -20,6 +22,24 @@ struct Sass_Import {
   char* error;
   size_t line;
   size_t column;
+};
+
+// External environments
+struct Sass_Env {
+  // links to parent frames
+  Sass::Env* frame;
+  // to make copies in setters
+  Sass::Memory_Manager* mem;
+};
+
+// External call entry
+struct Sass_Callee {
+  const char* name;
+  const char* path;
+  size_t line;
+  size_t column;
+  enum Sass_Callee_Type type;
+  struct Sass_Env env;
 };
 
 // Struct to hold importer callback
