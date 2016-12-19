@@ -1016,14 +1016,21 @@ namespace Sass {
         String_Constant* s = ARG("$string", String_Constant);
         double start_at = ARG("$start-at", Number)->value();
         double end_at = ARG("$end-at", Number)->value();
+        String_Quoted* ss = dynamic_cast<String_Quoted*>(s);
 
         std::string str = unquote(s->value());
 
         size_t size = utf8::distance(str.begin(), str.end());
 
-        if (end_at < size * -1.0 && size > 1) {
-          end_at = 0;
+        if (!dynamic_cast<Number*>(env["$end-at"])) {
+          end_at = -1;
         }
+
+        if (end_at == 0 || (end_at + size) < 0) {
+          if (ss && ss->quote_mark()) newstr = quote("");
+          return SASS_MEMORY_NEW(ctx.mem, String_Quoted, pstate, newstr);
+        }
+
         if (end_at < 0) {
           end_at += size + 1;
           if (end_at == 0) end_at = 1;
