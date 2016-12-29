@@ -1652,9 +1652,17 @@ namespace Sass {
     Signature call_sig = "call($name, $args...)";
     BUILT_IN(call)
     {
-      std::string name = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
-      List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List));
+      String_Constant_Ptr s = SASS_MEMORY_CAST(String_Constant, env["$name"]);
+      std::string name = Util::normalize_underscores(unquote(s->value()));
 
+      if (s) {
+        std::cerr << "DEPRECATION WARNING: ";
+        std::cerr << "Passing a string to call() is deprecated and will be illegal " << std::endl;
+        std::cerr << "in Sass 4.0. Use call(get-function(" + quote(name) + ")) instead. " << std::endl;
+        std::cerr << std::endl;
+      }
+
+      List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List));
       Arguments_Obj args = SASS_MEMORY_NEW(Arguments, pstate);
       // std::string full_name(name + "[f]");
       // Definition_Ptr def = d_env.has(full_name) ? static_cast<Definition_Ptr>((d_env)[full_name]) : 0;
