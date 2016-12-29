@@ -364,7 +364,7 @@ namespace Sass {
   Definition_Obj Parser::parse_definition(Definition::Type which_type)
   {
     Scope parent = stack.empty() ? Scope::Rules : stack.back();
-    if (parent != Scope::Root && parent != Scope::Rules && parent != Scope::Function) {
+    if (parent != Scope::Root && parent != Scope::Rules && parent != Scope::Function && parent != Scope::Media) {
       if (which_type == Definition::FUNCTION) {
         error("Functions may not be defined within control directives or other mixins.", pstate);
       } else {
