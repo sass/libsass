@@ -1048,21 +1048,25 @@ namespace Sass {
     ADD_PROPERTY(enum Sass_Separator, separator)
     ADD_PROPERTY(bool, is_arglist)
     ADD_PROPERTY(bool, from_selector)
+    ADD_PROPERTY(enum Sass_List_Delimiter, delimiter)
   public:
     List(ParserState pstate,
-         size_t size = 0, enum Sass_Separator sep = SASS_SPACE, bool argl = false)
+         size_t size = 0, enum Sass_Separator sep = SASS_SPACE, bool argl = false,
+         enum Sass_List_Delimiter delimiter = SASS_NO_DELIMITER)
     : Value(pstate),
       Vectorized<Expression_Obj>(size),
       separator_(sep),
       is_arglist_(argl),
-      from_selector_(false)
+      from_selector_(false),
+      delimiter_(delimiter)
     { concrete_type(LIST); }
     List(const List* ptr)
     : Value(ptr),
       Vectorized<Expression_Obj>(*ptr),
       separator_(ptr->separator_),
       is_arglist_(ptr->is_arglist_),
-      from_selector_(ptr->from_selector_)
+      from_selector_(ptr->from_selector_),
+      delimiter_(ptr->delimiter_)
     { concrete_type(LIST); }
     std::string type() { return is_arglist_ ? "arglist" : "list"; }
     static std::string type_name() { return "list"; }
@@ -1070,7 +1074,8 @@ namespace Sass {
       return separator() == SASS_SPACE ?
         " " : (compressed ? "," : ", ");
     }
-    bool is_invisible() const { return empty(); }
+    bool is_bracketed() const { return delimiter() == SASS_BRACKETS; }
+    bool is_invisible() const { return !is_bracketed() && empty(); }
     Expression_Obj value_at_index(size_t i);
 
     virtual size_t size() const;
