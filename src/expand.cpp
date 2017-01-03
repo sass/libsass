@@ -626,11 +626,13 @@ namespace Sass {
 
   Statement* Expand::operator()(Extension_Ptr e)
   {
-    if (Selector_List_Ptr extender = selector()) {
-      Selector_List_Ptr sl = e->selector();
-      // abort on invalid selector
-      if (sl == NULL) return NULL;
-      if (Selector_Schema_Ptr schema = sl->schema()) {
+    if (Selector_List_Obj extender = SASS_MEMORY_CAST(Selector_List, selector())) {
+      Selector_Obj s = e->selector();
+      Selector_List_Obj sl;
+      // check if we already have a valid selector list
+      if ((sl = SASS_MEMORY_CAST(Selector_List, s))) {}
+      // convert selector schema to a selector list
+      else if (Selector_Schema_Obj schema = SASS_MEMORY_CAST(Selector_Schema, s)) {
         if (schema->has_real_parent_ref()) {
           // put root block on stack again (ignore parents)
           // selector schema must not connect in eval!
