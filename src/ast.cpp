@@ -403,9 +403,9 @@ namespace Sass {
   bool Selector_List::operator== (const Selector& rhs) const
   {
     // solve the double dispatch problem by using RTTI information via dynamic cast
-    if (Selector_List_Ptr_Const ls = Cast<Selector_List>(&rhs)) { return *this == *ls; }
-    else if (Complex_Selector_Ptr_Const ls = Cast<Complex_Selector>(&rhs)) { return *this == *ls; }
-    else if (Compound_Selector_Ptr_Const ls = Cast<Compound_Selector>(&rhs)) { return *this == *ls; }
+    if (Selector_List_Ptr_Const selector_list = dynamic_cast<Selector_List_Ptr_Const>(&rhs)) { return *this == *selector_list; }
+    else if (Complex_Selector_Ptr_Const complex_selector = dynamic_cast<Complex_Selector_Ptr_Const>(&rhs)) { return *this == *complex_selector; }
+    else if (Compound_Selector_Ptr_Const compound_selector = dynamic_cast<Compound_Selector_Ptr_Const>(&rhs)) { return *this == *compound_selector; }
     // no compare method
     return this == &rhs;
   }
@@ -829,9 +829,9 @@ namespace Sass {
 
     for (size_t i = 0, iL = length(); i < iL; ++i)
     {
-      Selector_Obj lhs = (*this)[i];
+      Selector_Obj wrapped_l = &(*this)[i];
       // very special case for wrapped matches selector
-      if (Wrapped_Selector_Obj wrapped = Cast<Wrapped_Selector>(lhs)) {
+      if (Wrapped_Selector_Obj wrapped = SASS_MEMORY_CAST(Wrapped_Selector, wrapped_l)) {
         if (wrapped->name() == ":not") {
           if (Selector_List_Obj not_list = Cast<Selector_List>(wrapped->selector())) {
             if (not_list->is_superselector_of(rhs, wrapped->name())) return false;
@@ -840,9 +840,9 @@ namespace Sass {
           }
         }
         if (wrapped->name() == ":matches" || wrapped->name() == ":-moz-any") {
-          lhs = wrapped->selector();
-          if (Selector_List_Obj list = Cast<Selector_List>(wrapped->selector())) {
-            if (Compound_Selector_Obj comp = Cast<Compound_Selector>(rhs)) {
+          wrapped_l = wrapped->selector();
+          if (Selector_List_Obj list = SASS_MEMORY_CAST(Selector_List, wrapped->selector())) {
+            if (Compound_Selector_Obj comp = SASS_MEMORY_CAST(Compound_Selector, rhs)) {
               if (!wrapping.empty() && wrapping != wrapped->name()) return false;
               if (wrapping.empty() || wrapping != wrapped->name()) {;
                 if (list->is_superselector_of(comp, wrapped->name())) return true;
@@ -860,7 +860,7 @@ namespace Sass {
         }
       }
       // match from here on as strings
-      lset.insert(lhs->to_string());
+      lset.insert(wrapped_l->to_string());
     }
 
     for (size_t n = 0, nL = rhs->length(); n < nL; ++n)
@@ -1116,15 +1116,15 @@ namespace Sass {
         size_t i;
         size_t L = h->length();
         if (SASS_MEMORY_CAST(Element_Selector, h->first())) {
-          if (Class_Selector_Ptr sq = SASS_MEMORY_CAST(Class_Selector, rh->last())) {
-            Class_Selector_Ptr sqs = SASS_MEMORY_COPY(sq);
+          if (Class_Selector_Ptr cs = SASS_MEMORY_CAST(Class_Selector, rh->last())) {
+            Class_Selector_Ptr sqs = SASS_MEMORY_COPY(cs);
             sqs->name(sqs->name() + (*h)[0]->name());
             sqs->pstate((*h)[0]->pstate());
             (*rh)[rh->length()-1] = sqs;
             rh->pstate(h->pstate());
-            for (i = 1; i < L; ++i) rh->append((*h)[i]);
-          } else if (Id_Selector_Ptr sq = Cast<Id_Selector>(rh->last())) {
-            Id_Selector_Ptr sqs = SASS_MEMORY_COPY(sq);
+            for (i = 1; i < L; ++i) rh->append(&(*h)[i]);
+          } else if (Id_Selector_Ptr is = SASS_MEMORY_CAST(Id_Selector, rh->last())) {
+            Id_Selector_Ptr sqs = SASS_MEMORY_COPY(is);
             sqs->name(sqs->name() + (*h)[0]->name());
             sqs->pstate((*h)[0]->pstate());
             (*rh)[rh->length()-1] = sqs;

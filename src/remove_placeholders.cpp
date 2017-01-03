@@ -43,9 +43,9 @@ namespace Sass {
             while (cs) {
               if (cs->head()) {
                 for (Simple_Selector_Obj& ss : cs->head()->elements()) {
-                  if (Wrapped_Selector_Ptr ws = Cast<Wrapped_Selector>(ss)) {
-                    if (Selector_List_Ptr sl = Cast<Selector_List>(ws->selector())) {
-                      Selector_List_Ptr clean = remove_placeholders(sl);
+                  if (Wrapped_Selector_Ptr ws = SASS_MEMORY_CAST(Wrapped_Selector, ss)) {
+                    if (Selector_List_Ptr ws_sl = SASS_MEMORY_CAST(Selector_List, ws->selector())) {
+                      Selector_List_Ptr clean = remove_placeholders(ws_sl);
                       // also clean superflous parent selectors
                       // probably not really the correct place
                       clean->remove_parent_selectors();

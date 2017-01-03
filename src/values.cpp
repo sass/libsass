@@ -25,8 +25,7 @@ namespace Sass {
       union Sass_Value* list = sass_make_list(l->size(), l->separator(), l->is_bracketed());
       for (size_t i = 0, L = l->length(); i < L; ++i) {
         Expression_Obj obj = l->at(i);
-        auto val = ast_node_to_sass_value(obj);
-        sass_list_set_value(list, i, val);
+        sass_list_set_value(list, i, ast_node_to_sass_value(&obj));
       }
       return list;
     }

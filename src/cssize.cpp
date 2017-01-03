@@ -115,10 +115,8 @@ namespace Sass {
       result->append(empty_node);
     }
 
-    Block_Obj db = rr->block();
-    if (db.isNull()) db = SASS_MEMORY_NEW(Block, rr->pstate());
-    Block_Obj ss = debubble(db, rr);
-    for (size_t i = 0, L = ss->length(); i < L; ++i) {
+    Block_Obj ss = debubble(rr->block() ? &rr->block() : SASS_MEMORY_NEW(Block, rr->pstate()), &rr);
+    for (size_t i = 0, len = ss->length(); i < len; ++i) {
       result->append(ss->at(i));
     }
 
@@ -174,9 +172,9 @@ namespace Sass {
 
     if (props->length())
     {
-      Block_Obj bb = SASS_MEMORY_NEW(Block, rr->block()->pstate());
-      bb->concat(props);
-      rr->block(bb);
+      Block_Obj props_block = SASS_MEMORY_NEW(Block, rr->block()->pstate());
+      props_block->concat(&props);
+      rr->block(props_block);
 
       for (size_t i = 0, L = rules->length(); i < L; i++)
       {
