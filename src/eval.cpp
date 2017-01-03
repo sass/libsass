@@ -1093,6 +1093,7 @@ namespace Sass {
                                    t->value());
         }
       } break;
+      default: break;
     }
     result->is_interpolant(t->is_interpolant());
     return result.detach();
@@ -1680,6 +1681,7 @@ namespace Sass {
       case SASS_WARNING: {
         error("Warning in C function: " + std::string(sass_warning_get_message(v)), pstate, backtrace);
       } break;
+      default: break;
     }
     return e;
   }
