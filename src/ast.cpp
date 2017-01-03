@@ -222,7 +222,6 @@ namespace Sass {
       // heads are not equal
       else return *l_h < *r_h;
     }
-    return true;
   }
 
   bool Complex_Selector::operator== (const Complex_Selector& rhs) const
@@ -326,7 +325,6 @@ namespace Sass {
     if (const Complex_Selector* cs = Cast<Complex_Selector>(&rhs)) return *this < *cs;
     if (const Compound_Selector* ch = Cast<Compound_Selector>(&rhs)) return *this < *ch;
     throw std::runtime_error("invalid selector base classes to compare");
-    return false;
   }
 
   bool Compound_Selector::operator== (const Selector& rhs) const
@@ -366,7 +364,6 @@ namespace Sass {
     if (const Complex_Selector* cs = Cast<Complex_Selector>(&rhs)) return *this < *cs;
     if (const Compound_Selector* ch = Cast<Compound_Selector>(&rhs)) return *this < *ch;
     throw std::runtime_error("invalid selector base classes to compare");
-    return false;
   }
 
   bool Simple_Selector::operator== (const Selector& rhs) const
@@ -452,8 +449,6 @@ namespace Sass {
       // advance
       ++i; ++n;
     }
-    // no mismatch
-    return true;
   }
 
   bool Selector_List::operator< (const Selector& rhs) const
@@ -861,8 +856,6 @@ namespace Sass {
           if (wrapped->name() == wrapped_r->name()) {
           if (wrapped->is_superselector_of(wrapped_r)) {
              continue;
-             rset.insert(lhs->to_string());
-
           }}
         }
       }
@@ -1010,8 +1003,6 @@ namespace Sass {
       // advance now
       ++i; ++n;
     }
-    // no mismatch
-    return true;
   }
 
   bool Complex_Selector::is_superselector_of(Compound_Selector_Obj rhs, std::string wrapping)
@@ -1091,12 +1082,7 @@ namespace Sass {
       { return false; }
       return lhs->tail()->is_superselector_of(marker->tail());
     }
-    else
-    {
-      return lhs->tail()->is_superselector_of(marker->tail());
-    }
-    // catch-all
-    return false;
+    return lhs->tail()->is_superselector_of(&marker->tail());
   }
 
   size_t Complex_Selector::length() const
@@ -1353,12 +1339,7 @@ namespace Sass {
 
     }
     // has no head
-    else {
-      return this->tails(ctx, tails);
-    }
-
-    // unreachable
-    return 0;
+    return this->tails(ctx, &tails);
   }
 
   Selector_List_Ptr Complex_Selector::tails(Context& ctx, Selector_List_Ptr tails)
