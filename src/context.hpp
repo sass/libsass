@@ -76,6 +76,7 @@ namespace Sass {
     void add_c_importer(Sass_Importer_Entry importer);
     void add_c_function(Sass_Function_Entry function);
 
+    const bool css_imports; // should @import consider .css files
     const std::string indent; // String to be used for indentation
     const std::string linefeed; // String to be used for line feeds
     const std::string input_path; // for relative paths in src-map
