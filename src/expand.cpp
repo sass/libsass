@@ -702,14 +702,15 @@ namespace Sass {
     Arguments_Obj args = Cast<Arguments>(rv);
     Backtrace new_bt(backtrace(), c->pstate(), ", in mixin `" + c->name() + "`");
     backtrace_stack.push_back(&new_bt);
-    ctx.callee_stack.push_back({
+    struct Sass_Callee callee = {
       c->name().c_str(),
       c->pstate().path,
       c->pstate().line + 1,
       c->pstate().column + 1,
       SASS_CALLEE_MIXIN,
       { env }
-    });
+    };
+    ctx.callee_stack.push_back(callee);
 
     Env new_env(def->environment());
     env_stack.push_back(&new_env);

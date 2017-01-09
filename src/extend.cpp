@@ -1928,7 +1928,7 @@ namespace Sass {
           recseen.insert(cur->head());
           // create a copy since we add multiple items if stuff get unwrapped
           Compound_Selector_Obj cpy_head = SASS_MEMORY_NEW(Compound_Selector, cur->pstate());
-          for (Simple_Selector_Obj hs : *cur->head()) {
+          for (Simple_Selector_Obj hs : cur->head()->elements()) {
             if (Wrapped_Selector_Obj ws = Cast<Wrapped_Selector>(hs)) {
               ws->selector(SASS_MEMORY_CLONE(ws->selector()));
               if (Selector_List_Obj sl = Cast<Selector_List>(ws->selector())) {
@@ -2068,7 +2068,8 @@ namespace Sass {
     // we set `extended` flag on extended selectors
     if (b->is_root()) {
       // debug_subset_map(subset_map);
-      for(auto const &it : subset_map.values()) {
+      auto values = subset_map.values();
+      for(auto it : values) {
         Complex_Selector_Ptr sel = NULL;
         Compound_Selector_Ptr ext = NULL;
         if (it.first) sel = it.first->first();

@@ -318,7 +318,7 @@ namespace Sass {
     do {
       while (lex< block_comment >());
       if (lex< quoted_string >()) {
-        to_import.push_back(std::pair<std::string,Function_Call_Obj>(std::string(lexed), 0));
+        to_import.push_back(std::pair<std::string,Function_Call_Obj>(std::string(lexed), (Function_Call*) NULL));
       }
       else if (lex< uri_prefix >()) {
         Arguments_Obj args = SASS_MEMORY_NEW(Arguments, pstate);
