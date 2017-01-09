@@ -30,6 +30,24 @@
 #include "wincrypt.h"
 #endif
 
+#if defined __GNUC__ && ! defined __llvm__
+  #define GCC_VERSION (__GNUC__ * 10000 \
+                       + __GNUC_MINOR__ * 100 \
+                       + __GNUC_PATCHLEVEL__)
+  #if GCC_VERSION < 40500
+    #include <tr1/random>
+    #define IMPLEMENT_TR1
+    #define tr1ns std::tr1
+    #define uniform_real_distribution uniform_real
+  #else
+    #include <random>
+    #define tr1ns std
+  #endif
+#else
+  #include <random>
+  #define tr1ns std
+#endif
+
 #define ARG(argname, argtype) get_arg<argtype>(argname, env, sig, pstate, backtrace)
 #define ARGR(argname, argtype, lo, hi) get_arg_r(argname, env, sig, pstate, lo, hi, backtrace)
 #define ARGM(argname, argtype, ctx) get_arg_m(argname, env, sig, pstate, backtrace, ctx)
@@ -215,9 +233,43 @@ namespace Sass {
     // random_device degrades sharply once the entropy pool
     // is exhausted. For practical use, random_device is
     // generally only used to seed a PRNG such as mt19937.
-    static std::mt19937 rand(static_cast<unsigned int>(GetSeed()));
+    static tr1ns::mt19937 rand(static_cast<unsigned int>(GetSeed()));
 
-    // features
+    tr1ns::uniform_real_distribution<> std_dist(0, 1);
+    #ifdef IMPLEMENT_TR1
+      tr1ns::variate_generator <
+        tr1ns::mt19937,
+        tr1ns::uniform_real_distribution <double>
+      > gen_std_dist(rand, std_dist);
+    #endif
+
+    // Using ULONG_MAX here seems to fail on Mac OSX Clang!?
+    tr1ns::uniform_real_distribution<> full_dist(0, 4294967296);
+    #ifdef IMPLEMENT_TR1
+      tr1ns::variate_generator <
+        tr1ns::mt19937,
+        tr1ns::uniform_real_distribution <double>
+      > gen_full_dist(rand, full_dist);
+    #endif
+
+    // helper function to retrieve a random number in interval
+    // works around some compiler issues with older gcc versions
+    static double random(double min, double max)
+    {
+      tr1ns::uniform_real_distribution<> distributor(min, max);
+      #ifdef IMPLEMENT_TR1
+        tr1ns::variate_generator <
+          tr1ns::mt19937,
+          tr1ns::uniform_real_distribution <>
+        > gen(rand, distributor);
+        distributor(rand);
+        return gen();
+      #else
+        return distributor(rand);
+      #endif
+    }
+
+    // supported features lookup table
     static std::set<std::string> features {
       "global-variable-shadowing",
       "extend-selector-pseudoclass",
@@ -1199,13 +1251,19 @@ namespace Sass {
           err << "Expected $limit to be an integer but got " << lv << " for `random'";
           error(err.str(), pstate);
         }
-        std::uniform_real_distribution<> distributor(1, lv + 1);
-        uint_fast32_t distributed = static_cast<uint_fast32_t>(distributor(rand));
+        // std::uniform_real_distribution<> distributor(1, lv + 1);
+        // uint_fast32_t distributed = static_cast<uint_fast32_t>(distributor(rand));
+        uint_fast32_t distributed = random(1, lv + 1);
         return SASS_MEMORY_NEW(Number, pstate, (double)distributed);
       }
       else if (b) {
-        std::uniform_real_distribution<> distributor(0, 1);
-        double distributed = static_cast<double>(distributor(rand));
+        // std::uniform_real_distribution<> distributor(0, 1);
+        // double distributed = static_cast<double>(distributor(rand));
+        #ifdef IMPLEMENT_TR1
+          double distributed = gen_std_dist();
+        #else
+          double distributed = std_dist(rand);
+        #endif
         return SASS_MEMORY_NEW(Number, pstate, distributed);
       } else if (v) {
         throw Exception::InvalidArgumentType(pstate, "random", "$limit", "number", v);
@@ -1973,8 +2031,11 @@ namespace Sass {
     BUILT_IN(unique_id)
     {
       std::stringstream ss;
-      std::uniform_real_distribution<> distributor(0, 4294967296); // 16^8
-      uint_fast32_t distributed = static_cast<uint_fast32_t>(distributor(rand));
+      #ifdef IMPLEMENT_TR1
+        uint_fast32_t distributed = gen_full_dist();
+      #else
+        uint_fast32_t distributed = full_dist(rand);
+      #endif
       ss << "u" << std::setfill('0') << std::setw(8) << std::hex << distributed;
       return SASS_MEMORY_NEW(String_Quoted, pstate, ss.str());
     }

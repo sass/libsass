@@ -100,10 +100,10 @@ namespace Sass {
     collect_plugin_paths(c_options.plugin_paths);
 
     // load plugins and register custom behaviors
-    for(auto plug : plugin_paths) plugins.load_plugins(plug);
-    for(auto fn : plugins.get_headers()) c_headers.push_back(fn);
-    for(auto fn : plugins.get_importers()) c_importers.push_back(fn);
-    for(auto fn : plugins.get_functions()) c_functions.push_back(fn);
+    for(auto plug : plugin_paths) { plugins.load_plugins(plug); }
+    for(auto fn : plugins.get_headers()) { c_headers.push_back(fn); }
+    for(auto fn : plugins.get_importers()) { c_importers.push_back(fn); }
+    for(auto fn : plugins.get_functions()) { c_functions.push_back(fn); }
 
     // sort the items by priority (lowest first)
     sort (c_headers.begin(), c_headers.end(), sort_importers);

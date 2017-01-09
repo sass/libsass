@@ -366,7 +366,7 @@ namespace Sass {
     : elements_(ExpressionMap(s)),
       list_(std::vector<Expression_Obj>()),
       hash_(0), duplicate_key_(NULL)
-    { elements_.reserve(s); list_.reserve(s); }
+    { list_.reserve(s); reset_duplicate_key(); }
     virtual ~Hashed();
     size_t length() const                  { return list_.size(); }
     bool empty() const                     { return list_.empty(); }
@@ -1478,7 +1478,7 @@ namespace Sass {
       if (hash_ == 0) {
         hash_ = std::hash<std::string>()(name());
         for (auto argument : arguments()->elements())
-          hash_combine(hash_, argument->hash());
+        { hash_combine(hash_, argument->hash()); }
       }
       return hash_;
     }
@@ -1583,9 +1583,9 @@ namespace Sass {
       if (hash_ == 0) {
         hash_ = std::hash<double>()(value_);
         for (const auto numerator : numerator_units())
-          hash_combine(hash_, std::hash<std::string>()(numerator));
+        { hash_combine(hash_, std::hash<std::string>()(numerator)); }
         for (const auto denominator : denominator_units())
-          hash_combine(hash_, std::hash<std::string>()(denominator));
+        { hash_combine(hash_, std::hash<std::string>()(denominator)); }
       }
       return hash_;
     }
@@ -1768,7 +1768,7 @@ namespace Sass {
     {
       if (hash_ == 0) {
         for (auto string : elements())
-          hash_combine(hash_, string->hash());
+        { hash_combine(hash_, string->hash()); }
       }
       return hash_;
     }

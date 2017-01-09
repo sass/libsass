@@ -337,15 +337,16 @@ namespace Sass {
     // try to use generic function
     if (env->has("@warn[f]")) {
 
-      // add call stack entry
-      ctx.callee_stack.push_back({
+      struct Sass_Callee callee = {
         "@warn",
         w->pstate().path,
         w->pstate().line + 1,
         w->pstate().column + 1,
         SASS_CALLEE_FUNCTION,
         { env }
-      });
+      };
+      // add call stack entry
+      ctx.callee_stack.push_back(callee);
 
       Definition_Ptr def = Cast<Definition>((*env)["@warn[f]"]);
       // Block_Obj          body   = def->block();
@@ -384,15 +385,16 @@ namespace Sass {
     // try to use generic function
     if (env->has("@error[f]")) {
 
-      // add call stack entry
-      ctx.callee_stack.push_back({
+      struct Sass_Callee callee = {
         "@error",
         e->pstate().path,
         e->pstate().line + 1,
         e->pstate().column + 1,
         SASS_CALLEE_FUNCTION,
         { env }
-      });
+      };
+      // add call stack entry
+      ctx.callee_stack.push_back(callee);
 
       Definition_Ptr def = Cast<Definition>((*env)["@error[f]"]);
       // Block_Obj          body   = def->block();
@@ -428,15 +430,16 @@ namespace Sass {
     // try to use generic function
     if (env->has("@debug[f]")) {
 
-      // add call stack entry
-      ctx.callee_stack.push_back({
+      struct Sass_Callee callee = {
         "@debug",
         d->pstate().path,
         d->pstate().line + 1,
         d->pstate().column + 1,
         SASS_CALLEE_FUNCTION,
         { env }
-      });
+      };
+      // add call stack entry
+      ctx.callee_stack.push_back(callee);
 
       Definition_Ptr def = Cast<Definition>((*env)["@debug[f]"]);
       // Block_Obj          body   = def->block();
@@ -1007,14 +1010,15 @@ namespace Sass {
       bind(std::string("Function"), c->name(), params, args, &ctx, &fn_env, this);
       Backtrace here(backtrace(), c->pstate(), ", in function `" + c->name() + "`");
       exp.backtrace_stack.push_back(&here);
-      ctx.callee_stack.push_back({
+      struct Sass_Callee callee = {
         c->name().c_str(),
         c->pstate().path,
         c->pstate().line + 1,
         c->pstate().column + 1,
         SASS_CALLEE_FUNCTION,
         { env }
-      });
+      };
+      ctx.callee_stack.push_back(callee);
 
       // eval the body if user-defined or special, invoke underlying CPP function if native
       if (body /* && !Prelexer::re_special_fun(name.c_str()) */) {
@@ -1048,14 +1052,15 @@ namespace Sass {
 
       Backtrace here(backtrace(), c->pstate(), ", in function `" + c->name() + "`");
       exp.backtrace_stack.push_back(&here);
-      ctx.callee_stack.push_back({
+      struct Sass_Callee callee = {
         c->name().c_str(),
         c->pstate().path,
         c->pstate().line + 1,
         c->pstate().column + 1,
         SASS_CALLEE_C_FUNCTION,
         { env }
-      });
+      };
+      ctx.callee_stack.push_back(callee);
 
       To_C to_c;
       union Sass_Value* c_args = sass_make_list(params->length(), SASS_COMMA);
@@ -1177,7 +1182,7 @@ namespace Sass {
       List_Obj ll = SASS_MEMORY_NEW(List, l->pstate(), 0, l->separator());
       // this fixes an issue with bourbon sample, not really sure why
       // if (l->size() && Cast<Null>((*l)[0])) { res += ""; }
-      for(Expression_Obj item : *l) {
+      for(Expression_Obj item : l->elements()) {
         item->is_interpolant(l->is_interpolant());
         std::string rl(""); interpolation(ctx, rl, item, into_quotes, l->is_interpolant());
         bool is_null = Cast<Null>(item) != 0; // rl != ""
