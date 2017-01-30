@@ -568,10 +568,8 @@ namespace Sass {
             return true;
           }
         }
-        else if (Media_Block_Ptr m = Cast<Media_Block>(stm)) {
-          if (isPrintable(m, style)) {
-            return true;
-          }
+        else if (dynamic_cast<Media_Block_Ptr>(&stm) && isPrintable((Media_Block_Ptr) &stm, style)) {
+          return true;
         }
         else if (Has_Block_Ptr b = Cast<Has_Block>(stm)) {
           if (isPrintable(b->block(), style)) {

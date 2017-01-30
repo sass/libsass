@@ -515,11 +515,11 @@ namespace Sass {
         list = Cast<List>(list);
       }
       for (size_t i = 0, L = list->length(); i < L; ++i) {
-        Expression_Obj e = list->at(i);
+        Expression_Obj item = list->at(i);
         // unwrap value if the expression is an argument
-        if (Argument_Obj arg = Cast<Argument>(e)) e = arg->value();
+        if (Argument_Obj arg = SASS_MEMORY_CAST(Argument, item)) item = arg->value();
         // check if we got passed a list of args (investigate)
-        if (List_Obj scalars = Cast<List>(e)) {
+        if (List_Obj scalars = SASS_MEMORY_CAST(List, item)) {
           if (variables.size() == 1) {
             List_Obj var = scalars;
             // if (arglist) var = (*scalars)[0];
@@ -534,7 +534,7 @@ namespace Sass {
           }
         } else {
           if (variables.size() > 0) {
-            env.set_local(variables.at(0), e);
+            env.set_local(variables.at(0), &item);
             for (size_t j = 1, K = variables.size(); j < K; ++j) {
               Expression_Obj res = SASS_MEMORY_NEW(Null, expr->pstate());
               env.set_local(variables[j], res);
@@ -626,11 +626,13 @@ namespace Sass {
 
   Statement* Expand::operator()(Extension_Ptr e)
   {
-    if (Selector_List_Ptr extender = selector()) {
-      Selector_List_Ptr sl = e->selector();
-      // abort on invalid selector
-      if (sl == NULL) return NULL;
-      if (Selector_Schema_Ptr schema = sl->schema()) {
+    if (Selector_List_Obj extender = SASS_MEMORY_CAST(Selector_List, selector())) {
+      Selector_Obj s = e->selector();
+      Selector_List_Obj sl;
+      // check if we already have a valid selector list
+      if ((sl = SASS_MEMORY_CAST(Selector_List, s))) {}
+      // convert selector schema to a selector list
+      else if (Selector_Schema_Obj schema = SASS_MEMORY_CAST(Selector_Schema, s)) {
         if (schema->has_real_parent_ref()) {
           // put root block on stack again (ignore parents)
           // selector schema must not connect in eval!

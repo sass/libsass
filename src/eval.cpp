@@ -266,11 +266,11 @@ namespace Sass {
         list = Cast<List>(list);
       }
       for (size_t i = 0, L = list->length(); i < L; ++i) {
-        Expression_Ptr e = list->at(i);
+        Expression_Ptr item = &list->at(i);
         // unwrap value if the expression is an argument
-        if (Argument_Ptr arg = Cast<Argument>(e)) e = arg->value();
+        if (Argument_Ptr arg = SASS_MEMORY_CAST_PTR(Argument, item)) item = &arg->value();
         // check if we got passed a list of args (investigate)
-        if (List_Ptr scalars = Cast<List>(e)) {
+        if (List_Ptr scalars = SASS_MEMORY_CAST_PTR(List, item)) {
           if (variables.size() == 1) {
             Expression_Ptr var = scalars;
             env.set_local(variables[0], var);
@@ -285,7 +285,7 @@ namespace Sass {
           }
         } else {
           if (variables.size() > 0) {
-            env.set_local(variables.at(0), e);
+            env.set_local(variables.at(0), item);
             for (size_t j = 1, K = variables.size(); j < K; ++j) {
               // XXX: this is never hit via spec tests
               Expression_Ptr res = SASS_MEMORY_NEW(Null, expr->pstate());
@@ -604,11 +604,11 @@ namespace Sass {
     switch (op_type) {
       case Sass_OP::AND: {
         return *lhs ? b->right()->perform(this) : lhs.detach();
-      } break;
+      }
 
       case Sass_OP::OR: {
         return *lhs ? lhs.detach() : b->right()->perform(this);
-      } break;
+      }
 
       default:
         break;
@@ -618,8 +618,8 @@ namespace Sass {
     AST_Node_Obj lu = lhs;
     AST_Node_Obj ru = rhs;
 
-    Expression::Concrete_Type l_type = lhs->concrete_type();
-    Expression::Concrete_Type r_type = rhs->concrete_type();
+    Expression::Concrete_Type l_type;
+    Expression::Concrete_Type r_type;
 
     // Is one of the operands an interpolant?
     String_Schema_Obj s1 = Cast<String_Schema>(b->left());
@@ -659,10 +659,8 @@ namespace Sass {
       }
 
       To_Value to_value(ctx);
-      Value_Obj v_l = Cast<Value>(lhs->perform(&to_value));
-      Value_Obj v_r = Cast<Value>(rhs->perform(&to_value));
-      l_type = lhs->concrete_type();
-      r_type = rhs->concrete_type();
+      Value_Obj v_l = dynamic_cast<Value_Ptr>(lhs->perform(&to_value));
+      Value_Obj v_r = dynamic_cast<Value_Ptr>(rhs->perform(&to_value));
 
       if (s2 && s2->has_interpolants() && s2->length()) {
         Textual_Obj front = Cast<Textual>(s2->elements().front());
@@ -710,7 +708,7 @@ namespace Sass {
 
     // ToDo: throw error in op functions
     // ToDo: then catch and re-throw them
-    Expression_Obj rv = 0;
+    Expression_Obj rv;
     try {
       ParserState pstate(b->pstate());
       if (l_type == Expression::NUMBER && r_type == Expression::NUMBER) {
@@ -793,40 +791,37 @@ namespace Sass {
       result->value(!result->value());
       return result;
     }
-    else if (Number_Obj nr = Cast<Number>(operand)) {
-      // negate value for minus unary expression
-      if (u->optype() == Unary_Expression::MINUS) {
-        Number_Obj cpy = SASS_MEMORY_COPY(nr);
-        cpy->value( - cpy->value() ); // negate value
-        return cpy.detach(); // return the copy
-      }
-      // nothing for positive
-      return nr.detach();
+    if (operand->concrete_type() == Expression::NUMBER) {
+      Number_Ptr result = SASS_MEMORY_NEW(Number, static_cast<Number_Ptr>(&operand));
+      result->value(u->type() == Unary_Expression::MINUS
+                    ? -result->value()
+                    :  result->value());
+      return result;
     }
-    else {
-      // Special cases: +/- variables which evaluate to null ouput just +/-,
-      // but +/- null itself outputs the string
-      if (operand->concrete_type() == Expression::NULL_VAL && Cast<Variable>(u->operand())) {
-        u->operand(SASS_MEMORY_NEW(String_Quoted, u->pstate(), ""));
-      }
-      // Never apply unary opertions on colors @see #2140
-      else if (Color_Ptr color = Cast<Color>(operand)) {
-        // Use the color name if this was eval with one
-        if (color->disp().length() > 0) {
-          operand = SASS_MEMORY_NEW(String_Constant, operand->pstate(), color->disp());
-          u->operand(operand);
-        }
-      }
-      else {
+
+    // Special cases: +/- variables which evaluate to null ouput just +/-,
+    // but +/- null itself outputs the string
+    if (operand->concrete_type() == Expression::NULL_VAL && SASS_MEMORY_CAST(Variable, u->operand())) {
+      u->operand(SASS_MEMORY_NEW(String_Quoted, u->pstate(), ""));
+    }
+    // Never apply unary opertions on colors @see #2140
+    else if (operand->concrete_type() == Expression::COLOR) {
+      Color_Ptr c = dynamic_cast<Color_Ptr>(&operand);
+
+      // Use the color name if this was eval with one
+      if (c->disp().length() > 0) {
+        operand = SASS_MEMORY_NEW(String_Constant, operand->pstate(), c->disp());
         u->operand(operand);
       }
-
-      return SASS_MEMORY_NEW(String_Quoted,
-                             u->pstate(),
-                             u->inspect());
     }
-    // unreachable
-    return u;
+    else {
+      u->operand(operand);
+    }
+
+    String_Constant_Ptr result = SASS_MEMORY_NEW(String_Quoted,
+                                                u->pstate(),
+                                                u->inspect());
+    return result;
   }
 
   Expression_Ptr Eval::operator()(Function_Call_Ptr c)
@@ -1098,6 +1093,7 @@ namespace Sass {
                                    t->value());
         }
       } break;
+      default: break;
     }
     result->is_interpolant(t->is_interpolant());
     return result.detach();
@@ -1517,8 +1513,6 @@ namespace Sass {
       v->value(ops[op](lv, r.value() * r.convert_factor(l)));
       // v->normalize();
       return v.detach();
-
-      v->value(ops[op](lv, tmp.value()));
     }
     v->normalize();
     return v.detach();
@@ -1536,7 +1530,7 @@ namespace Sass {
                                ops[op](lv, r.g()),
                                ops[op](lv, r.b()),
                                r.a());
-      } break;
+      }
       case Sass_OP::SUB:
       case Sass_OP::DIV: {
         std::string sep(op == Sass_OP::SUB ? "-" : "/");
@@ -1546,10 +1540,10 @@ namespace Sass {
                                l.to_string(opt)
                                + sep
                                + color);
-      } break;
+      }
       case Sass_OP::MOD: {
         throw Exception::UndefinedOperation(&l, &r, sass_op_to_name(op));
-      } break;
+      }
       default: break; // caller should ensure that we don't get here
     }
     // unreachable
@@ -1687,6 +1681,7 @@ namespace Sass {
       case SASS_WARNING: {
         error("Warning in C function: " + std::string(sass_warning_get_message(v)), pstate, backtrace);
       } break;
+      default: break;
     }
     return e;
   }
