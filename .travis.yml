@@ -16,6 +16,12 @@ sudo: false
 # built with coverage, clang and autotools
 # - AUTOTOOLS=yes COVERAGE=yes BUILD=shared
 
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "TpS3uet31wPj8l5yjKFMKNHOIHp1Z0W601mCyToSn1+Rp3c6TQAT8kxRmIqp7Etfq7vX+M+KLyEyJZhq0aqmcnov+jm7zvPjNTAV8VrnDL7XdE5cxwqXsxPKCpEnHOAvuCRP0bDYfcK4ds+SP+zIrlFNb83rb+JENHcnDUza5LE="
+
 matrix:
   include :
     - os: linux
@@ -40,6 +46,12 @@ matrix:
             - llvm-toolchain-precise-3.7
           packages:
             - clang-3.7
+        coverity_scan:
+          project:
+            name: "sass/libsass"
+          build_command_prepend: "<Your build preprocessing command here>"
+          build_command: ./script/ci-build-libsass
+          branch_pattern: coverity_scan
     - os: linux
       compiler: clang
       env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
