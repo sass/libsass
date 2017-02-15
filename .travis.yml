@@ -49,7 +49,6 @@ matrix:
         coverity_scan:
           project:
             name: "sass/libsass"
-          build_command_prepend: "<Your build preprocessing command here>"
           build_command: ./script/ci-build-libsass
           branch_pattern: coverity_scan
     - os: linux
