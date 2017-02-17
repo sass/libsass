@@ -178,6 +178,11 @@ namespace Sass {
       WRAPPED_SEL,
     };
   private:
+    // Force copy in eval if needed. This is only recognized by
+    // numbers at the moment. We want to avoid to make a separate
+    // ast node for every iteration. This effectively delayes that
+    // copy to the eval stage (where numbers are normaly static).
+    ADD_PROPERTY(bool, force_copy);
     // expressions in some contexts shouldn't be evaluated
     ADD_PROPERTY(bool, is_delayed)
     ADD_PROPERTY(bool, is_expanded)
@@ -187,6 +192,7 @@ namespace Sass {
     Expression(ParserState pstate,
                bool d = false, bool e = false, bool i = false, Concrete_Type ct = NONE)
     : AST_Node(pstate),
+      force_copy_(false),
       is_delayed_(d),
       is_expanded_(e),
       is_interpolant_(i),
@@ -194,6 +200,7 @@ namespace Sass {
     { }
     Expression(const Expression* ptr)
     : AST_Node(ptr),
+      force_copy_(ptr->force_copy_),
       is_delayed_(ptr->is_delayed_),
       is_expanded_(ptr->is_expanded_),
       is_interpolant_(ptr->is_interpolant_),
@@ -1608,7 +1615,10 @@ namespace Sass {
       numerator_units_(ptr->numerator_units_),
       denominator_units_(ptr->denominator_units_),
       hash_(ptr->hash_)
-    { concrete_type(NUMBER); }
+    {
+      is_expanded(true);
+      concrete_type(NUMBER);
+    }
 
     bool zero() { return zero_; }
     bool is_valid_css_unit() const;

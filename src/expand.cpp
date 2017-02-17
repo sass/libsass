@@ -435,12 +435,14 @@ namespace Sass {
     env_stack.push_back(&env);
     call_stack.push_back(f);
     Block_Ptr body = f->block();
+    Number_Obj it = SASS_MEMORY_NEW(Number, low->pstate(), start, sass_end->unit());
+    it->force_copy(true); // makes a copy in eval when used inside the block
     if (start < end) {
       if (f->is_inclusive()) ++end;
       for (double i = start;
            i < end;
            ++i) {
-        Number_Obj it = SASS_MEMORY_NEW(Number, low->pstate(), i, sass_end->unit());
+        it->value(i);
         env.set_local(variable, it);
         append_block(body);
       }
@@ -449,7 +451,7 @@ namespace Sass {
       for (double i = start;
            i > end;
            --i) {
-        Number_Obj it = SASS_MEMORY_NEW(Number, low->pstate(), i, sass_end->unit());
+        it->value(i);
         env.set_local(variable, it);
         append_block(body);
       }
