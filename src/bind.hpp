@@ -5,7 +5,8 @@
 #include "environment.hpp"
 #include "ast_fwd_decl.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
   void bind(std::string type, std::string name, Parameters_Obj, Arguments_Obj, Context*, Env*, Eval*);
 }

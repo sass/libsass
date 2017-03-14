@@ -1,7 +1,8 @@
 #include "sass.hpp"
 #include "base64vlq.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
   std::string Base64VLQ::encode(const int number) const
   {
@@ -9,10 +10,12 @@ namespace Sass {
 
     int vlq = to_vlq_signed(number);
 
-    do {
+    do
+    {
       int digit = vlq & VLQ_BASE_MASK;
       vlq >>= VLQ_BASE_SHIFT;
-      if (vlq > 0) {
+      if (vlq > 0)
+      {
         digit |= VLQ_CONTINUATION_BIT;
       }
       encoded += base64_encode(digit);
@@ -34,11 +37,11 @@ namespace Sass {
     return (number < 0) ? ((-number) << 1) + 1 : (number << 1) + 0;
   }
 
-  const char* Base64VLQ::CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const char* Base64VLQ::CHARACTERS =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
   const int Base64VLQ::VLQ_BASE_SHIFT = 5;
   const int Base64VLQ::VLQ_BASE = 1 << VLQ_BASE_SHIFT;
   const int Base64VLQ::VLQ_BASE_MASK = VLQ_BASE - 1;
   const int Base64VLQ::VLQ_CONTINUATION_BIT = VLQ_BASE;
-
 }

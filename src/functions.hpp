@@ -7,10 +7,12 @@
 #include "ast_fwd_decl.hpp"
 #include "sass/functions.h"
 
-#define BUILT_IN(name) Expression_Ptr \
-name(Env& env, Env& d_env, Context& ctx, Signature sig, ParserState pstate, Backtrace* backtrace, std::vector<Selector_List_Obj> selector_stack)
+#define BUILT_IN(name)                                                                       \
+  Expression_Ptr name(Env& env, Env& d_env, Context& ctx, Signature sig, ParserState pstate, \
+                      Backtrace* backtrace, std::vector<Selector_List_Obj> selector_stack)
 
-namespace Sass {
+namespace Sass
+{
   struct Backtrace;
   typedef const char* Signature;
   typedef Expression_Ptr (*Native_Function)(Env&, Env&, Context&, Signature, ParserState, Backtrace*, std::vector<Selector_List_Obj>);
@@ -20,7 +22,8 @@ namespace Sass {
 
   std::string function_name(Signature);
 
-  namespace Functions {
+  namespace Functions
+  {
 
     extern Signature rgb_sig;
     extern Signature rgba_4_sig;

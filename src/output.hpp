@@ -8,29 +8,31 @@
 #include "inspect.hpp"
 #include "operation.hpp"
 
-namespace Sass {
+namespace Sass
+{
   class Context;
 
   // Refactor to make it generic to find linefeed (look behind)
-  inline bool ends_with(std::string const & value, std::string const & ending)
+  inline bool ends_with(std::string const& value, std::string const& ending)
   {
     if (ending.size() > value.size()) return false;
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
   }
 
-  class Output : public Inspect {
-  protected:
+  class Output : public Inspect
+  {
+    protected:
     using Inspect::operator();
 
-  public:
+    public:
     Output(Sass_Output_Options& opt);
     virtual ~Output();
 
-  protected:
+    protected:
     std::string charset;
     std::vector<AST_Node_Ptr> top_nodes;
 
-  public:
+    public:
     OutputBuffer get_buffer(void);
 
     virtual void operator()(Map_Ptr);
@@ -46,9 +48,7 @@ namespace Sass {
     virtual void operator()(String_Constant_Ptr);
 
     void fallback_impl(AST_Node_Ptr n);
-
   };
-
 }
 
 #endif

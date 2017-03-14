@@ -7,9 +7,11 @@
 #include "sass/context.h"
 #include "ast_fwd_decl.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
-  namespace File {
+  namespace File
+  {
 
     // return the current directory
     // always with forward slashes
@@ -30,7 +32,7 @@ namespace Sass {
 
     // do a locigal clean up of the path
     // no physical check on the filesystem
-    std::string make_canonical_path (std::string path);
+    std::string make_canonical_path(std::string path);
 
     // join two path segments cleanly together
     // but only if right side is not absolute yet
@@ -41,11 +43,13 @@ namespace Sass {
     std::string path_for_console(const std::string& rel_path, const std::string& abs_path, const std::string& orig_path);
 
     // create an absolute path by resolving relative paths with cwd
-    std::string rel2abs(const std::string& path, const std::string& base = ".", const std::string& cwd = get_cwd());
+    std::string
+    rel2abs(const std::string& path, const std::string& base = ".", const std::string& cwd = get_cwd());
 
     // create a path that is relative to the given base directory
     // path and base will first be resolved against cwd to make them absolute
-    std::string abs2rel(const std::string& path, const std::string& base = ".", const std::string& cwd = get_cwd());
+    std::string
+    abs2rel(const std::string& path, const std::string& base = ".", const std::string& cwd = get_cwd());
 
     // helper function to resolve a filename
     // searching without variations in all paths
@@ -63,71 +67,78 @@ namespace Sass {
     // returned memory must be freed
     // will auto convert .sass files
     char* read_file(const std::string& file);
-
   }
 
   // requested import
-  class Importer {
+  class Importer
+  {
     public:
-      // requested import path
-      std::string imp_path;
-      // parent context path
-      std::string ctx_path;
-      // base derived from context path
-      // this really just acts as a cache
-      std::string base_path;
+    // requested import path
+    std::string imp_path;
+    // parent context path
+    std::string ctx_path;
+    // base derived from context path
+    // this really just acts as a cache
+    std::string base_path;
+
     public:
-      Importer(std::string imp_path, std::string ctx_path)
-      : imp_path(File::make_canonical_path(imp_path)),
-        ctx_path(File::make_canonical_path(ctx_path)),
-        base_path(File::dir_name(ctx_path))
-      { }
+    Importer(std::string imp_path, std::string ctx_path)
+    : imp_path(File::make_canonical_path(imp_path)), ctx_path(File::make_canonical_path(ctx_path)),
+      base_path(File::dir_name(ctx_path))
+    {
+    }
   };
 
   // a resolved include (final import)
-  class Include : public Importer {
+  class Include : public Importer
+  {
     public:
-      // resolved absolute path
-      std::string abs_path;
+    // resolved absolute path
+    std::string abs_path;
+
     public:
-      Include(const Importer& imp, std::string abs_path)
-      : Importer(imp), abs_path(abs_path)
-      { }
+    Include(const Importer& imp, std::string abs_path) : Importer(imp), abs_path(abs_path)
+    {
+    }
   };
 
   // a loaded resource
-  class Resource {
+  class Resource
+  {
     public:
-      // the file contents
-      char* contents;
-      // conected sourcemap
-      char* srcmap;
+    // the file contents
+    char* contents;
+    // conected sourcemap
+    char* srcmap;
+
     public:
-      Resource(char* contents, char* srcmap)
-      : contents(contents), srcmap(srcmap)
-      { }
+    Resource(char* contents, char* srcmap) : contents(contents), srcmap(srcmap)
+    {
+    }
   };
 
   // parsed stylesheet from loaded resource
-  class StyleSheet : public Resource {
+  class StyleSheet : public Resource
+  {
     public:
-      // parsed root block
-      Block_Obj root;
+    // parsed root block
+    Block_Obj root;
+
     public:
-      StyleSheet(const Resource& res, Block_Obj root)
-      : Resource(res), root(root)
-      { }
+    StyleSheet(const Resource& res, Block_Obj root) : Resource(res), root(root)
+    {
+    }
   };
 
-  namespace File {
+  namespace File
+  {
 
     static std::vector<std::string> defaultExtensions = { ".scss", ".sass", ".css" };
 
-    std::vector<Include> resolve_includes(const std::string& root, const std::string& file,
-      const std::vector<std::string>& exts = defaultExtensions);
-
+    std::vector<Include> resolve_includes(const std::string& root,
+                                          const std::string& file,
+                                          const std::vector<std::string>& exts = defaultExtensions);
   }
-
 }
 
 #endif

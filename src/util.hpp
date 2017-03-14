@@ -8,20 +8,23 @@
 #include "sass/base.h"
 #include "ast_fwd_decl.hpp"
 
-#define SASS_ASSERT(cond, msg) assert(cond && msg)
+#define SASS_ASSERT(cond, msg) assert(cond&& msg)
 
-namespace Sass {
+namespace Sass
+{
 
-  #define out_of_memory() do {            \
-      std::cerr << "Out of memory.\n";    \
-      exit(EXIT_FAILURE);                 \
-    } while (0)
+#define out_of_memory()              \
+  do                                 \
+  {                                  \
+    std::cerr << "Out of memory.\n"; \
+    exit(EXIT_FAILURE);              \
+  } while (0)
 
   double round(double val, size_t precision = 0);
   double sass_atof(const char* str);
-  const char* safe_str(const char *, const char* = "");
-  void free_string_array(char **);
-  char **copy_strings(const std::vector<std::string>&, char ***, int = 0);
+  const char* safe_str(const char*, const char* = "");
+  void free_string_array(char**);
+  char** copy_strings(const std::vector<std::string>&, char***, int = 0);
   std::string read_css_string(const std::string& str);
   std::string evacuate_escapes(const std::string& str);
   std::string string_to_output(const std::string& str);
@@ -37,7 +40,8 @@ namespace Sass {
 
   bool peek_linefeed(const char* start);
 
-  namespace Util {
+  namespace Util
+  {
 
     std::string rtrim(const std::string& str);
 
@@ -53,7 +57,6 @@ namespace Sass {
     bool isPrintable(String_Quoted_Ptr s, Sass_Output_Style style = NESTED);
     bool isPrintable(Declaration_Ptr d, Sass_Output_Style style = NESTED);
     bool isAscii(const char chr);
-
   }
 }
 #endif

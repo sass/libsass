@@ -15,7 +15,8 @@
 /////////////////////////////////////////////
 // Forward declarations for the AST visitors.
 /////////////////////////////////////////////
-namespace Sass {
+namespace Sass
+{
 
   class AST_Node;
   typedef AST_Node* AST_Node_Ptr;
@@ -252,19 +253,19 @@ namespace Sass {
 
   class Pseudo_Selector;
   typedef Pseudo_Selector* Pseudo_Selector_Ptr;
-  typedef Pseudo_Selector const * Pseudo_Selector_Ptr_Const;
+  typedef Pseudo_Selector const* Pseudo_Selector_Ptr_Const;
   class Wrapped_Selector;
   typedef Wrapped_Selector* Wrapped_Selector_Ptr;
-  typedef Wrapped_Selector const * Wrapped_Selector_Ptr_Const;
+  typedef Wrapped_Selector const* Wrapped_Selector_Ptr_Const;
   class Compound_Selector;
   typedef Compound_Selector* Compound_Selector_Ptr;
-  typedef Compound_Selector const * Compound_Selector_Ptr_Const;
+  typedef Compound_Selector const* Compound_Selector_Ptr_Const;
   class Complex_Selector;
   typedef Complex_Selector* Complex_Selector_Ptr;
-  typedef Complex_Selector const * Complex_Selector_Ptr_Const;
+  typedef Complex_Selector const* Complex_Selector_Ptr_Const;
   class Selector_List;
   typedef Selector_List* Selector_List_Ptr;
-  typedef Selector_List const * Selector_List_Ptr_Const;
+  typedef Selector_List const* Selector_List_Ptr_Const;
 
 
   // common classes
@@ -272,9 +273,9 @@ namespace Sass {
   class Expand;
   class Eval;
 
-  // declare classes that are instances of memory nodes
-  // #define IMPL_MEM_OBJ(type) using type##_Obj = SharedImpl<type>
-  #define IMPL_MEM_OBJ(type) typedef SharedImpl<type> type##_Obj
+// declare classes that are instances of memory nodes
+// #define IMPL_MEM_OBJ(type) using type##_Obj = SharedImpl<type>
+#define IMPL_MEM_OBJ(type) typedef SharedImpl<type> type##_Obj
 
   IMPL_MEM_OBJ(AST_Node);
   IMPL_MEM_OBJ(Statement);
@@ -357,26 +358,28 @@ namespace Sass {
   // Implement compare, order and hashing operations for AST Nodes
   // ###########################################################################
 
-  struct HashNodes {
-    template <class T>
-    size_t operator() (const T& ex) const {
+  struct HashNodes
+  {
+    template <class T> size_t operator()(const T& ex) const
+    {
       return ex.isNull() ? 0 : ex->hash();
     }
   };
-  struct OrderNodes {
-    template <class T>
-    bool operator() (const T& lhs, const T& rhs) const {
+  struct OrderNodes
+  {
+    template <class T> bool operator()(const T& lhs, const T& rhs) const
+    {
       return !lhs.isNull() && !rhs.isNull() && *lhs < *rhs;
     }
   };
-  struct CompareNodes {
-    template <class T>
-    bool operator() (const T& lhs, const T& rhs) const {
+  struct CompareNodes
+  {
+    template <class T> bool operator()(const T& lhs, const T& rhs) const
+    {
       // code around sass logic issue. 1px == 1 is true
       // but both items are still different keys in maps
       if (dynamic_cast<Number*>(lhs.ptr()))
-        if (dynamic_cast<Number*>(rhs.ptr()))
-          return lhs->hash() == rhs->hash();
+        if (dynamic_cast<Number*>(rhs.ptr())) return lhs->hash() == rhs->hash();
       return !lhs.isNull() && !rhs.isNull() && *lhs == *rhs;
     }
   };
@@ -385,17 +388,17 @@ namespace Sass {
   // some often used typedefs
   // ###########################################################################
 
-  typedef std::unordered_map<
-    Expression_Obj, // key
-    Expression_Obj, // value
-    HashNodes, // hasher
-    CompareNodes // compare
-  > ExpressionMap;
-  typedef std::unordered_set<
-    Expression_Obj, // value
-    HashNodes, // hasher
-    CompareNodes // compare
-  > ExpressionSet;
+  typedef std::unordered_map<Expression_Obj, // key
+                             Expression_Obj, // value
+                             HashNodes, // hasher
+                             CompareNodes // compare
+                             >
+  ExpressionMap;
+  typedef std::unordered_set<Expression_Obj, // value
+                             HashNodes, // hasher
+                             CompareNodes // compare
+                             >
+  ExpressionSet;
 
   typedef std::string SubSetMapKey;
   typedef std::vector<std::string> SubSetMapKeys;
@@ -414,25 +417,23 @@ namespace Sass {
   typedef std::set<Compound_Selector_Obj, OrderNodes> CompoundSelectorSet;
   typedef std::unordered_set<Simple_Selector_Obj, HashNodes, CompareNodes> SimpleSelectorDict;
 
-  // only to switch implementations for testing
-  #define environment_map std::map
+// only to switch implementations for testing
+#define environment_map std::map
 
   // ###########################################################################
   // explicit type conversion functions
   // ###########################################################################
 
-  template<class T>
-  T* Cast(AST_Node* ptr);
+  template <class T> T* Cast(AST_Node* ptr);
 
-  template<class T>
-  const T* Cast(const AST_Node* ptr);
+  template <class T> const T* Cast(const AST_Node* ptr);
 
-  // sometimes you know the class you want to cast to is final
-  // in this case a simple typeid check is faster and safe to use
+// sometimes you know the class you want to cast to is final
+// in this case a simple typeid check is faster and safe to use
 
-  #define DECLARE_BASE_CAST(T) \
-  template<> T* Cast(AST_Node* ptr); \
-  template<> const T* Cast(const AST_Node* ptr); \
+#define DECLARE_BASE_CAST(T)          \
+  template <> T* Cast(AST_Node* ptr); \
+  template <> const T* Cast(const AST_Node* ptr);
 
   // ###########################################################################
   // implement specialization for final classes
@@ -450,7 +451,6 @@ namespace Sass {
   DECLARE_BASE_CAST(Supports_Condition)
   DECLARE_BASE_CAST(Selector)
   DECLARE_BASE_CAST(Simple_Selector)
-
 }
 
 #endif

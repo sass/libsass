@@ -10,7 +10,8 @@
 #include "position.hpp"
 #include "prelexer.hpp"
 
-struct Lookahead {
+struct Lookahead
+{
   const char* found;
   const char* error;
   const char* position;
@@ -18,12 +19,22 @@ struct Lookahead {
   bool has_interpolants;
 };
 
-namespace Sass {
+namespace Sass
+{
 
-  class Parser : public ParserState {
-  public:
-
-    enum Scope { Root, Mixin, Function, Media, Control, Properties, Rules };
+  class Parser : public ParserState
+  {
+    public:
+    enum Scope
+    {
+      Root,
+      Mixin,
+      Function,
+      Media,
+      Control,
+      Properties,
+      Rules
+    };
 
     Context& ctx;
     std::vector<Block_Obj> block_stack;
@@ -41,23 +52,35 @@ namespace Sass {
     Token lexed;
 
     Parser(Context& ctx, const ParserState& pstate)
-    : ParserState(pstate), ctx(ctx), block_stack(), stack(0), last_media_block(),
-      source(0), position(0), end(0), before_token(pstate), after_token(pstate), pstate(pstate), indentation(0)
-    { stack.push_back(Scope::Root); }
+    : ParserState(pstate), ctx(ctx), block_stack(), stack(0), last_media_block(), source(0),
+      position(0), end(0), before_token(pstate), after_token(pstate), pstate(pstate), indentation(0)
+    {
+      stack.push_back(Scope::Root);
+    }
 
-    // static Parser from_string(const std::string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
-    static Parser from_c_str(const char* src, Context& ctx, ParserState pstate = ParserState("[CSTRING]"), const char* source = 0);
-    static Parser from_c_str(const char* beg, const char* end, Context& ctx, ParserState pstate = ParserState("[CSTRING]"), const char* source = 0);
-    static Parser from_token(Token t, Context& ctx, ParserState pstate = ParserState("[TOKEN]"), const char* source = 0);
+    // static Parser from_string(const std::string& src, Context& ctx, ParserState pstate =
+    // ParserState("[STRING]"));
+    static Parser
+    from_c_str(const char* src, Context& ctx, ParserState pstate = ParserState("[CSTRING]"), const char* source = 0);
+    static Parser from_c_str(const char* beg,
+                             const char* end,
+                             Context& ctx,
+                             ParserState pstate = ParserState("[CSTRING]"),
+                             const char* source = 0);
+    static Parser
+    from_token(Token t, Context& ctx, ParserState pstate = ParserState("[TOKEN]"), const char* source = 0);
     // special static parsers to convert strings into certain selectors
-    static Selector_List_Obj parse_selector(const char* src, Context& ctx, ParserState pstate = ParserState("[SELECTOR]"), const char* source = 0);
+    static Selector_List_Obj parse_selector(const char* src,
+                                            Context& ctx,
+                                            ParserState pstate = ParserState("[SELECTOR]"),
+                                            const char* source = 0);
 
 #ifdef __clang__
 
-    // lex and peak uses the template parameter to branch on the action, which
-    // triggers clangs tautological comparison on the single-comparison
-    // branches. This is not a bug, just a merging of behaviour into
-    // one function
+// lex and peak uses the template parameter to branch on the action, which
+// triggers clangs tautological comparison on the single-comparison
+// branches. This is not a bug, just a merging of behaviour into
+// one function
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-compare"
@@ -72,8 +95,7 @@ namespace Sass {
     bool peek_newline(const char* start = 0);
 
     // skip over spaces, tabs and line comments
-    template <Prelexer::prelexer mx>
-    const char* sneak(const char* start = 0)
+    template <Prelexer::prelexer mx> const char* sneak(const char* start = 0)
     {
       using namespace Prelexer;
 
@@ -81,14 +103,9 @@ namespace Sass {
       const char* it_position = start ? start : position;
 
       // skip white-space?
-      if (mx == spaces ||
-          mx == no_spaces ||
-          mx == css_comments ||
-          mx == css_whitespace ||
-          mx == optional_spaces ||
-          mx == optional_css_comments ||
-          mx == optional_css_whitespace
-      ) {
+      if (mx == spaces || mx == no_spaces || mx == css_comments || mx == css_whitespace ||
+          mx == optional_spaces || mx == optional_css_comments || mx == optional_css_whitespace)
+      {
         return it_position;
       }
 
@@ -96,13 +113,11 @@ namespace Sass {
       const char* pos = optional_css_whitespace(it_position);
       // always return a valid position
       return pos ? pos : it_position;
-
     }
 
     // peek will only skip over space, tabs and line comment
     // return the position where the lexer match will occur
-    template <Prelexer::prelexer mx>
-    const char* match(const char* start = 0)
+    template <Prelexer::prelexer mx> const char* match(const char* start = 0)
     {
       // match the given prelexer
       return mx(position);
@@ -110,20 +125,18 @@ namespace Sass {
 
     // peek will only skip over space, tabs and line comment
     // return the position where the lexer match will occur
-    template <Prelexer::prelexer mx>
-    const char* peek(const char* start = 0)
+    template <Prelexer::prelexer mx> const char* peek(const char* start = 0)
     {
 
       // sneak up to the actual token we want to lex
       // this should skip over white-space if desired
-      const char* it_before_token = sneak < mx >(start);
+      const char* it_before_token = sneak<mx>(start);
 
       // match the given prelexer
       const char* match = mx(it_before_token);
 
       // check if match is in valid range
       return match <= end ? match : 0;
-
     }
 
     // white-space handling is built into the lexer
@@ -132,8 +145,7 @@ namespace Sass {
     // we do not support start arg, since we manipulate
     // sourcemap offset and we modify the position pointer!
     // lex will only skip over space, tabs and line comment
-    template <Prelexer::prelexer mx>
-    const char* lex(bool lazy = true, bool force = false)
+    template <Prelexer::prelexer mx> const char* lex(bool lazy = true, bool force = false)
     {
 
       if (*position == 0) return 0;
@@ -145,7 +157,7 @@ namespace Sass {
 
       // sneak up to the actual token we want to lex
       // this should skip over white-space if desired
-      if (lazy) it_before_token = sneak < mx >(position);
+      if (lazy) it_before_token = sneak<mx>(position);
 
       // now call matcher to get position after token
       const char* it_after_token = mx(it_before_token);
@@ -154,7 +166,8 @@ namespace Sass {
       if (it_after_token > end) return 0;
 
       // maybe we want to update the parser state anyway?
-      if (force == false) {
+      if (force == false)
+      {
         // assertion that we got a valid match
         if (it_after_token == 0) return 0;
         // assertion that we actually lexed something
@@ -175,14 +188,12 @@ namespace Sass {
 
       // advance internal char iterator
       return position = it_after_token;
-
     }
 
     // lex_css skips over space, tabs, line and block comment
     // all block comments will be consumed and thrown away
     // source-map position will point to token after the comment
-    template <Prelexer::prelexer mx>
-    const char* lex_css()
+    template <Prelexer::prelexer mx> const char* lex_css()
     {
       // copy old token
       Token prev = lexed;
@@ -193,11 +204,12 @@ namespace Sass {
       ParserState op = pstate;
       // throw away comments
       // update srcmap position
-      lex < Prelexer::css_comments >();
+      lex<Prelexer::css_comments>();
       // now lex a new token
-      const char* pos = lex< mx >();
+      const char* pos = lex<mx>();
       // maybe restore prev state
-      if (pos == 0) {
+      if (pos == 0)
+      {
         pstate = op;
         lexed = prev;
         position = oldpos;
@@ -209,11 +221,10 @@ namespace Sass {
     }
 
     // all block comments will be skipped and thrown away
-    template <Prelexer::prelexer mx>
-    const char* peek_css(const char* start = 0)
+    template <Prelexer::prelexer mx> const char* peek_css(const char* start = 0)
     {
       // now peek a token (skip comments first)
-      return peek< mx >(peek < Prelexer::css_comments >(start));
+      return peek<mx>(peek<Prelexer::css_comments>(start));
     }
 
 #ifdef __clang__
@@ -225,9 +236,7 @@ namespace Sass {
     void error(std::string msg, Position pos);
     // generate message with given and expected sample
     // text before and in the middle are configurable
-    void css_error(const std::string& msg,
-                   const std::string& prefix = " after ",
-                   const std::string& middle = ", was: ");
+    void css_error(const std::string& msg, const std::string& prefix = " after ", const std::string& middle = ", was: ");
     void read_bom();
 
     Block_Obj parse();
@@ -325,53 +334,75 @@ namespace Sass {
     Lookahead lookahead_for_include(const char* start = 0);
 
     Expression_Obj fold_operands(Expression_Obj base, std::vector<Expression_Obj>& operands, Operand op);
-    Expression_Obj fold_operands(Expression_Obj base, std::vector<Expression_Obj>& operands, std::vector<Operand>& ops, size_t i = 0);
+    Expression_Obj fold_operands(Expression_Obj base,
+                                 std::vector<Expression_Obj>& operands,
+                                 std::vector<Operand>& ops,
+                                 size_t i = 0);
 
     void throw_syntax_error(std::string message, size_t ln = 0);
     void throw_read_error(std::string message, size_t ln = 0);
 
 
-    template <Prelexer::prelexer open, Prelexer::prelexer close>
-    Expression_Obj lex_interp()
+    template <Prelexer::prelexer open, Prelexer::prelexer close> Expression_Obj lex_interp()
     {
-      if (lex < open >(false)) {
+      if (lex<open>(false))
+      {
         String_Schema_Obj schema = SASS_MEMORY_NEW(String_Schema, pstate);
         // std::cerr << "LEX [[" << std::string(lexed) << "]]\n";
         schema->append(SASS_MEMORY_NEW(String_Constant, pstate, lexed));
-        if (position[0] == '#' && position[1] == '{') {
+        if (position[0] == '#' && position[1] == '{')
+        {
           Expression_Obj itpl = lex_interpolation();
           if (!itpl.isNull()) schema->append(itpl);
-          while (lex < close >(false)) {
+          while (lex<close>(false))
+          {
             // std::cerr << "LEX [[" << std::string(lexed) << "]]\n";
             schema->append(SASS_MEMORY_NEW(String_Constant, pstate, lexed));
-            if (position[0] == '#' && position[1] == '{') {
+            if (position[0] == '#' && position[1] == '{')
+            {
               Expression_Obj itpl = lex_interpolation();
               if (!itpl.isNull()) schema->append(itpl);
-            } else {
+            }
+            else
+            {
               return schema;
             }
           }
-        } else {
+        }
+        else
+        {
           return SASS_MEMORY_NEW(String_Constant, pstate, lexed);
         }
       }
       return 0;
     }
 
-  public:
+    public:
     static Number_Ptr lexed_number(const ParserState& pstate, const std::string& parsed);
     static Number_Ptr lexed_dimension(const ParserState& pstate, const std::string& parsed);
     static Number_Ptr lexed_percentage(const ParserState& pstate, const std::string& parsed);
     static Expression_Ptr lexed_hex_color(const ParserState& pstate, const std::string& parsed);
-  private:
-    Number_Ptr lexed_number(const std::string& parsed) { return lexed_number(pstate, parsed); };
-    Number_Ptr lexed_dimension(const std::string& parsed) { return lexed_dimension(pstate, parsed); };
-    Number_Ptr lexed_percentage(const std::string& parsed) { return lexed_percentage(pstate, parsed); };
-    Expression_Ptr lexed_hex_color(const std::string& parsed) { return lexed_hex_color(pstate, parsed); };
 
+    private:
+    Number_Ptr lexed_number(const std::string& parsed)
+    {
+      return lexed_number(pstate, parsed);
+    };
+    Number_Ptr lexed_dimension(const std::string& parsed)
+    {
+      return lexed_dimension(pstate, parsed);
+    };
+    Number_Ptr lexed_percentage(const std::string& parsed)
+    {
+      return lexed_percentage(pstate, parsed);
+    };
+    Expression_Ptr lexed_hex_color(const std::string& parsed)
+    {
+      return lexed_hex_color(pstate, parsed);
+    };
   };
 
-  size_t check_bom_chars(const char* src, const char *end, const unsigned char* bom, size_t len);
+  size_t check_bom_chars(const char* src, const char* end, const unsigned char* bom, size_t len);
 }
 
 #endif

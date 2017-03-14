@@ -8,16 +8,19 @@
 #include "backtrace.hpp"
 #include "error_handling.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
   Listize::Listize()
-  {  }
+  {
+  }
 
   Expression_Ptr Listize::operator()(Selector_List_Ptr sel)
   {
     List_Obj l = SASS_MEMORY_NEW(List, sel->pstate(), sel->length(), SASS_COMMA);
     l->from_selector(true);
-    for (size_t i = 0, L = sel->length(); i < L; ++i) {
+    for (size_t i = 0, L = sel->length(); i < L; ++i)
+    {
       if (!sel->at(i)) continue;
       l->append(sel->at(i)->perform(this));
     }
@@ -28,7 +31,8 @@ namespace Sass {
   Expression_Ptr Listize::operator()(Compound_Selector_Ptr sel)
   {
     std::string str;
-    for (size_t i = 0, L = sel->length(); i < L; ++i) {
+    for (size_t i = 0, L = sel->length(); i < L; ++i)
+    {
       Expression_Ptr e = (*sel)[i]->perform(this);
       if (e) str += e->to_string();
     }
@@ -46,25 +50,25 @@ namespace Sass {
       if (hh) l->append(hh);
     }
 
-    std::string reference = ! sel->reference() ? ""
-      : sel->reference()->to_string();
-    switch(sel->combinator())
+    std::string reference = !sel->reference() ? "" : sel->reference()->to_string();
+    switch (sel->combinator())
     {
-      case Complex_Selector::PARENT_OF:
-        l->append(SASS_MEMORY_NEW(String_Quoted, sel->pstate(), ">"));
+    case Complex_Selector::PARENT_OF:
+      l->append(SASS_MEMORY_NEW(String_Quoted, sel->pstate(), ">"));
       break;
-      case Complex_Selector::ADJACENT_TO:
-        l->append(SASS_MEMORY_NEW(String_Quoted, sel->pstate(), "+"));
+    case Complex_Selector::ADJACENT_TO:
+      l->append(SASS_MEMORY_NEW(String_Quoted, sel->pstate(), "+"));
       break;
-      case Complex_Selector::REFERENCE:
-        l->append(SASS_MEMORY_NEW(String_Quoted, sel->pstate(), "/" + reference + "/"));
+    case Complex_Selector::REFERENCE:
+      l->append(SASS_MEMORY_NEW(String_Quoted, sel->pstate(), "/" + reference + "/"));
       break;
-      case Complex_Selector::PRECEDES:
-        l->append(SASS_MEMORY_NEW(String_Quoted, sel->pstate(), "~"));
+    case Complex_Selector::PRECEDES:
+      l->append(SASS_MEMORY_NEW(String_Quoted, sel->pstate(), "~"));
       break;
-      case Complex_Selector::ANCESTOR_OF:
+    case Complex_Selector::ANCESTOR_OF:
       break;
-      default: break;
+    default:
+      break;
     }
 
     Complex_Selector_Obj tail = sel->tail();
@@ -72,7 +76,9 @@ namespace Sass {
     {
       Expression_Obj tt = tail->perform(this);
       if (List_Ptr ls = Cast<List>(tt))
-      { l->concat(ls); }
+      {
+        l->concat(ls);
+      }
     }
     if (l->length() == 0) return 0;
     return l.detach();
@@ -82,5 +88,4 @@ namespace Sass {
   {
     return Cast<Expression>(n);
   }
-
 }

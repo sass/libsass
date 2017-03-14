@@ -9,7 +9,8 @@ string toString(std::vector<std::string> v);
 string toString(std::vector<std::pair<std::string, std::vector<std::string>>> v);
 void assertEqual(string std::sExpected, std::string sResult);
 
-void setup() {
+void setup()
+{
   ssm.clear();
 
   //@ssm[Set[1, 2]] = "Foo"
@@ -51,16 +52,17 @@ void setup() {
   ssm.put(s6, "Thram");
 }
 
-void testEqualKeys() {
+void testEqualKeys()
+{
   std::cout << "testEqualKeys" << std::endl;
 
-  //assert_equal [["Foo", Set[1, 2]]], @ssm.get(Set[1, 2])
+  // assert_equal [["Foo", Set[1, 2]]], @ssm.get(Set[1, 2])
   std::vector<std::string> k1;
   k1.push_back("1");
   k1.push_back("2");
   assertEqual("[[Foo, Set[1, 2]]]", toString(ssm.get_kv(k1)));
 
-  //assert_equal [["Bar", Set["fizz", "fazz"]]], @ssm.get(Set["fizz", "fazz"])
+  // assert_equal [["Bar", Set["fizz", "fazz"]]], @ssm.get(Set["fizz", "fazz"])
   std::vector<std::string> k2;
   k2.push_back("fizz");
   k2.push_back("fazz");
@@ -69,17 +71,18 @@ void testEqualKeys() {
   std::cout << std::endl;
 }
 
-void testSubsetKeys() {
+void testSubsetKeys()
+{
   std::cout << "testSubsetKeys" << std::endl;
 
-  //assert_equal [["Foo", Set[1, 2]]], @ssm.get(Set[1, 2, "fuzz"])
+  // assert_equal [["Foo", Set[1, 2]]], @ssm.get(Set[1, 2, "fuzz"])
   std::vector<std::string> k1;
   k1.push_back("1");
   k1.push_back("2");
   k1.push_back("fuzz");
   assertEqual("[[Foo, Set[1, 2]]]", toString(ssm.get_kv(k1)));
 
-  //assert_equal [["Bar", Set["fizz", "fazz"]]], @ssm.get(Set["fizz", "fazz", 3])
+  // assert_equal [["Bar", Set["fizz", "fazz"]]], @ssm.get(Set["fizz", "fazz", 3])
   std::vector<std::string> k2;
   k2.push_back("fizz");
   k2.push_back("fazz");
@@ -89,25 +92,26 @@ void testSubsetKeys() {
   std::cout << std::endl;
 }
 
-void testSupersetKeys() {
+void testSupersetKeys()
+{
   std::cout << "testSupersetKeys" << std::endl;
 
-  //assert_equal [], @ssm.get(Set[1])
+  // assert_equal [], @ssm.get(Set[1])
   std::vector<std::string> k1;
   k1.push_back("1");
   assertEqual("[]", toString(ssm.get_kv(k1)));
 
-  //assert_equal [], @ssm.get(Set[2])
+  // assert_equal [], @ssm.get(Set[2])
   std::vector<std::string> k2;
   k2.push_back("2");
   assertEqual("[]", toString(ssm.get_kv(k2)));
 
-  //assert_equal [], @ssm.get(Set["fizz"])
+  // assert_equal [], @ssm.get(Set["fizz"])
   std::vector<std::string> k3;
   k3.push_back("fizz");
   assertEqual("[]", toString(ssm.get_kv(k3)));
 
-  //assert_equal [], @ssm.get(Set["fazz"])
+  // assert_equal [], @ssm.get(Set["fazz"])
   std::vector<std::string> k4;
   k4.push_back("fazz");
   assertEqual("[]", toString(ssm.get_kv(k4)));
@@ -115,22 +119,23 @@ void testSupersetKeys() {
   std::cout << std::endl;
 }
 
-void testDisjointKeys() {
+void testDisjointKeys()
+{
   std::cout << "testDisjointKeys" << std::endl;
 
-  //assert_equal [], @ssm.get(Set[3, 4])
+  // assert_equal [], @ssm.get(Set[3, 4])
   std::vector<std::string> k1;
   k1.push_back("3");
   k1.push_back("4");
   assertEqual("[]", toString(ssm.get_kv(k1)));
 
-  //assert_equal [], @ssm.get(Set["fuzz", "frizz"])
+  // assert_equal [], @ssm.get(Set["fuzz", "frizz"])
   std::vector<std::string> k2;
   k2.push_back("fuzz");
   k2.push_back("frizz");
   assertEqual("[]", toString(ssm.get_kv(k2)));
 
-  //assert_equal [], @ssm.get(Set["gran", 15])
+  // assert_equal [], @ssm.get(Set["gran", 15])
   std::vector<std::string> k3;
   k3.push_back("gran");
   k3.push_back("15");
@@ -139,22 +144,23 @@ void testDisjointKeys() {
   std::cout << std::endl;
 }
 
-void testSemiDisjointKeys() {
+void testSemiDisjointKeys()
+{
   std::cout << "testSemiDisjointKeys" << std::endl;
 
-  //assert_equal [], @ssm.get(Set[2, 3])
+  // assert_equal [], @ssm.get(Set[2, 3])
   std::vector<std::string> k1;
   k1.push_back("2");
   k1.push_back("3");
   assertEqual("[]", toString(ssm.get_kv(k1)));
 
-  //assert_equal [], @ssm.get(Set["fizz", "fuzz"])
+  // assert_equal [], @ssm.get(Set["fizz", "fuzz"])
   std::vector<std::string> k2;
   k2.push_back("fizz");
   k2.push_back("fuzz");
   assertEqual("[]", toString(ssm.get_kv(k2)));
 
-  //assert_equal [], @ssm.get(Set[1, "fazz"])
+  // assert_equal [], @ssm.get(Set[1, "fazz"])
   std::vector<std::string> k3;
   k3.push_back("1");
   k3.push_back("fazz");
@@ -163,32 +169,38 @@ void testSemiDisjointKeys() {
   std::cout << std::endl;
 }
 
-void testEmptyKeySet() {
+void testEmptyKeySet()
+{
   std::cout << "testEmptyKeySet" << std::endl;
 
-  //assert_raises(ArgumentError) {@ssm[Set[]] = "Fail"}
+  // assert_raises(ArgumentError) {@ssm[Set[]] = "Fail"}
   std::vector<std::string> s1;
-  try {
+  try
+  {
     ssm.put(s1, "Fail");
   }
-  catch (const char* &e) {
+  catch (const char*& e)
+  {
     assertEqual("internal error: subset map keys may not be empty", e);
   }
 }
 
-void testEmptyKeyGet() {
+void testEmptyKeyGet()
+{
   std::cout << "testEmptyKeyGet" << std::endl;
 
-  //assert_equal [], @ssm.get(Set[])
+  // assert_equal [], @ssm.get(Set[])
   std::vector<std::string> k1;
   assertEqual("[]", toString(ssm.get_kv(k1)));
 
   std::cout << std::endl;
 }
-void testMultipleSubsets() {
+void testMultipleSubsets()
+{
   std::cout << "testMultipleSubsets" << std::endl;
 
-  //assert_equal [["Foo", Set[1, 2]], ["Bar", Set["fizz", "fazz"]]], @ssm.get(Set[1, 2, "fizz", "fazz"])
+  // assert_equal [["Foo", Set[1, 2]], ["Bar", Set["fizz", "fazz"]]], @ssm.get(Set[1, 2, "fizz",
+  // "fazz"])
   std::vector<std::string> k1;
   k1.push_back("1");
   k1.push_back("2");
@@ -196,7 +208,8 @@ void testMultipleSubsets() {
   k1.push_back("fazz");
   assertEqual("[[Foo, Set[1, 2]], [Bar, Set[fizz, fazz]]]", toString(ssm.get_kv(k1)));
 
-  //assert_equal [["Foo", Set[1, 2]], ["Bar", Set["fizz", "fazz"]]], @ssm.get(Set[1, 2, 3, "fizz", "fazz", "fuzz"])
+  // assert_equal [["Foo", Set[1, 2]], ["Bar", Set["fizz", "fazz"]]], @ssm.get(Set[1, 2, 3, "fizz",
+  // "fazz", "fuzz"])
   std::vector<std::string> k2;
   k2.push_back("1");
   k2.push_back("2");
@@ -206,13 +219,14 @@ void testMultipleSubsets() {
   k2.push_back("fuzz");
   assertEqual("[[Foo, Set[1, 2]], [Bar, Set[fizz, fazz]]]", toString(ssm.get_kv(k2)));
 
-  //assert_equal [["Baz", Set[:foo, :bar]]], @ssm.get(Set[:foo, :bar])
+  // assert_equal [["Baz", Set[:foo, :bar]]], @ssm.get(Set[:foo, :bar])
   std::vector<std::string> k3;
   k3.push_back(":foo");
   k3.push_back(":bar");
   assertEqual("[[Baz, Set[:foo, :bar]]]", toString(ssm.get_kv(k3)));
 
-  //assert_equal [["Baz", Set[:foo, :bar]], ["Bang", Set[:foo, :bar, :baz]]], @ssm.get(Set[:foo, :bar, :baz])
+  // assert_equal [["Baz", Set[:foo, :bar]], ["Bang", Set[:foo, :bar, :baz]]], @ssm.get(Set[:foo,
+  // :bar, :baz])
   std::vector<std::string> k4;
   k4.push_back(":foo");
   k4.push_back(":bar");
@@ -221,17 +235,18 @@ void testMultipleSubsets() {
 
   std::cout << std::endl;
 }
-void testBracketBracket() {
+void testBracketBracket()
+{
   std::cout << "testBracketBracket" << std::endl;
 
-  //assert_equal ["Foo"], @ssm[Set[1, 2, "fuzz"]]
+  // assert_equal ["Foo"], @ssm[Set[1, 2, "fuzz"]]
   std::vector<std::string> k1;
   k1.push_back("1");
   k1.push_back("2");
   k1.push_back("fuzz");
   assertEqual("[Foo]", toString(ssm.get_v(k1)));
 
-  //assert_equal ["Baz", "Bang"], @ssm[Set[:foo, :bar, :baz]]
+  // assert_equal ["Baz", "Bang"], @ssm[Set[:foo, :bar, :baz]]
   std::vector<std::string> k2;
   k2.push_back(":foo");
   k2.push_back(":bar");
@@ -241,10 +256,11 @@ void testBracketBracket() {
   std::cout << std::endl;
 }
 
-void testKeyOrder() {
+void testKeyOrder()
+{
   std::cout << "testEqualKeys" << std::endl;
 
-  //assert_equal [["Foo", Set[1, 2]]], @ssm.get(Set[2, 1])
+  // assert_equal [["Foo", Set[1, 2]]], @ssm.get(Set[2, 1])
   std::vector<std::string> k1;
   k1.push_back("2");
   k1.push_back("1");
@@ -253,7 +269,8 @@ void testKeyOrder() {
   std::cout << std::endl;
 }
 
-void testOrderPreserved() {
+void testOrderPreserved()
+{
   std::cout << "testOrderPreserved" << std::endl;
   //@ssm[Set[10, 11, 12]] = 1
   std::vector<std::string> s1;
@@ -294,18 +311,22 @@ void testOrderPreserved() {
   s6.push_back("13");
   ssm.put(s6, "6");
 
-  //assert_equal([[1, Set[10, 11, 12]], [2, Set[10, 11]], [3, Set[11]], [4, Set[11, 12]], [5, Set[9, 10, 11, 12, 13]], [6, Set[10, 13]]], @ssm.get(Set[9, 10, 11, 12, 13]))
+  // assert_equal([[1, Set[10, 11, 12]], [2, Set[10, 11]], [3, Set[11]], [4, Set[11, 12]], [5,
+  // Set[9, 10, 11, 12, 13]], [6, Set[10, 13]]], @ssm.get(Set[9, 10, 11, 12, 13]))
   std::vector<std::string> k1;
   k1.push_back("9");
   k1.push_back("10");
   k1.push_back("11");
   k1.push_back("12");
   k1.push_back("13");
-  assertEqual("[[1, Set[10, 11, 12]], [2, Set[10, 11]], [3, Set[11]], [4, Set[11, 12]], [5, Set[9, 10, 11, 12, 13]], [6, Set[10, 13]]]", toString(ssm.get_kv(k1)));
+  assertEqual("[[1, Set[10, 11, 12]], [2, Set[10, 11]], [3, Set[11]], [4, Set[11, 12]], [5, Set[9, "
+              "10, 11, 12, 13]], [6, Set[10, 13]]]",
+              toString(ssm.get_kv(k1)));
 
   std::cout << std::endl;
 }
-void testMultipleEqualValues() {
+void testMultipleEqualValues()
+{
   std::cout << "testMultipleEqualValues" << std::endl;
   //@ssm[Set[11, 12]] = 1
   std::vector<std::string> s1;
@@ -331,14 +352,16 @@ void testMultipleEqualValues() {
   s4.push_back("15");
   ssm.put(s4, "1");
 
-  //assert_equal([[1, Set[11, 12]], [2, Set[12, 13]], [1, Set[13, 14]], [1, Set[14, 15]]], @ssm.get(Set[11, 12, 13, 14, 15]))
+  // assert_equal([[1, Set[11, 12]], [2, Set[12, 13]], [1, Set[13, 14]], [1, Set[14, 15]]],
+  // @ssm.get(Set[11, 12, 13, 14, 15]))
   std::vector<std::string> k1;
   k1.push_back("11");
   k1.push_back("12");
   k1.push_back("13");
   k1.push_back("14");
   k1.push_back("15");
-  assertEqual("[[1, Set[11, 12]], [2, Set[12, 13]], [1, Set[13, 14]], [1, Set[14, 15]]]", toString(ssm.get_kv(k1)));
+  assertEqual("[[1, Set[11, 12]], [2, Set[12, 13]], [1, Set[13, 14]], [1, Set[14, 15]]]",
+              toString(ssm.get_kv(k1)));
 
   std::cout << std::endl;
 }
@@ -366,10 +389,11 @@ int main()
   s4.push_back("2");
   s4.push_back("3");
 
-  std::vector<std::pair<string, std::vector<std::string> > > fetched(ssm.get_kv(s4));
+  std::vector<std::pair<string, std::vector<std::string>>> fetched(ssm.get_kv(s4));
 
   std::cout << "PRINTING RESULTS:" << std::endl;
-  for (size_t i = 0, S = fetched.size(); i < S; ++i) {
+  for (size_t i = 0, S = fetched.size(); i < S; ++i)
+  {
     std::cout << fetched[i].first << std::endl;
   }
 
@@ -378,10 +402,11 @@ int main()
   ssm2.put(s2, "bar");
   ssm2.put(s4, "hux");
 
-  std::vector<std::pair<string, std::vector<std::string> > > fetched2(ssm2.get_kv(s4));
+  std::vector<std::pair<string, std::vector<std::string>>> fetched2(ssm2.get_kv(s4));
 
   std::cout << std::endl << "PRINTING RESULTS:" << std::endl;
-  for (size_t i = 0, S = fetched2.size(); i < S; ++i) {
+  for (size_t i = 0, S = fetched2.size(); i < S; ++i)
+  {
     std::cout << fetched2[i].first << std::endl;
   }
 
@@ -398,9 +423,10 @@ int main()
   actual.push_back(".mine");
 
   sel_ssm.put(target, "has-aquarium");
-  std::vector<std::pair<string, std::vector<std::string> > > fetched3(sel_ssm.get_kv(actual));
+  std::vector<std::pair<string, std::vector<std::string>>> fetched3(sel_ssm.get_kv(actual));
   std::cout << "RESULTS:" << std::endl;
-  for (size_t i = 0, S = fetched3.size(); i < S; ++i) {
+  for (size_t i = 0, S = fetched3.size(); i < S; ++i)
+  {
     std::cout << fetched3[i].first << std::endl;
   }
 
@@ -433,17 +459,21 @@ string toString(std::vector<std::pair<string, std::vector<std::string>>> v)
 {
   std::stringstream buffer;
   buffer << "[";
-  for (size_t i = 0, S = v.size(); i < S; ++i) {
+  for (size_t i = 0, S = v.size(); i < S; ++i)
+  {
     buffer << "[" << v[i].first;
     buffer << ", Set[";
-    for (size_t j = 0, S = v[i].second.size(); j < S; ++j) {
+    for (size_t j = 0, S = v[i].second.size(); j < S; ++j)
+    {
       buffer << v[i].second[j];
-      if (j < S-1) {
+      if (j < S - 1)
+      {
         buffer << ", ";
       }
     }
     buffer << "]]";
-    if (i < S-1) {
+    if (i < S - 1)
+    {
       buffer << ", ";
     }
   }
@@ -455,9 +485,11 @@ string toString(std::vector<std::string> v)
 {
   std::stringstream buffer;
   buffer << "[";
-  for (size_t i = 0, S = v.size(); i < S; ++i) {
+  for (size_t i = 0, S = v.size(); i < S; ++i)
+  {
     buffer << v[i];
-    if (i < S-1) {
+    if (i < S - 1)
+    {
       buffer << ", ";
     }
   }
@@ -465,7 +497,8 @@ string toString(std::vector<std::string> v)
   return buffer.str();
 }
 
-void assertEqual(string sExpected, string sResult) {
+void assertEqual(string sExpected, string sResult)
+{
   std::cout << "Expected: " << sExpected << std::endl;
   std::cout << "Result:   " << sResult << std::endl;
   assert(sExpected == sResult);

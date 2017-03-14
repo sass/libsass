@@ -12,14 +12,16 @@
 #define VECTOR_PUSH(vec, ins) vec.insert(vec.end(), ins.begin(), ins.end())
 #define VECTOR_UNSHIFT(vec, ins) vec.insert(vec.begin(), ins.begin(), ins.end())
 
-namespace Sass {
+namespace Sass
+{
 
   class Context;
   class OutputBuffer;
 
-  class SourceMap {
+  class SourceMap
+  {
 
-  public:
+    public:
     std::vector<size_t> source_index;
     SourceMap();
     SourceMap(const std::string& file);
@@ -31,32 +33,33 @@ namespace Sass {
     void add_open_mapping(const AST_Node_Ptr node);
     void add_close_mapping(const AST_Node_Ptr node);
 
-    std::string render_srcmap(Context &ctx);
+    std::string render_srcmap(Context& ctx);
     ParserState remap(const ParserState& pstate);
 
-  private:
-
+    private:
     std::string serialize_mappings();
 
     std::vector<Mapping> mappings;
     Position current_position;
-public:
+
+    public:
     std::string file;
-private:
+
+    private:
     Base64VLQ base64vlq;
   };
 
-  class OutputBuffer {
+  class OutputBuffer
+  {
     public:
-      OutputBuffer(void)
-      : buffer(""),
-        smap()
-      { }
-    public:
-      std::string buffer;
-      SourceMap smap;
-  };
+    OutputBuffer(void) : buffer(""), smap()
+    {
+    }
 
+    public:
+    std::string buffer;
+    SourceMap smap;
+  };
 }
 
 #endif

@@ -5,22 +5,24 @@
 #include "sass/values.h"
 #include "ast_fwd_decl.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
-  class To_Value : public Operation_CRTP<Value_Ptr, To_Value> {
+  class To_Value : public Operation_CRTP<Value_Ptr, To_Value>
+  {
 
     Value_Ptr fallback_impl(AST_Node_Ptr n);
 
-  private:
-
+    private:
     Context& ctx;
 
-  public:
-
-    To_Value(Context& ctx)
-    : ctx(ctx)
-    { }
-    ~To_Value() { }
+    public:
+    To_Value(Context& ctx) : ctx(ctx)
+    {
+    }
+    ~To_Value()
+    {
+    }
     using Operation<Value_Ptr>::operator();
 
     Value_Ptr operator()(Argument_Ptr);
@@ -40,10 +42,11 @@ namespace Sass {
     Value_Ptr operator()(Binary_Expression_Ptr);
 
     // fallback throws error
-    template <typename U>
-    Value_Ptr fallback(U x) { return fallback_impl(x); }
+    template <typename U> Value_Ptr fallback(U x)
+    {
+      return fallback_impl(x);
+    }
   };
-
 }
 
 #endif

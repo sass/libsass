@@ -1,17 +1,18 @@
 #include "ast.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
-  #define IMPLEMENT_BASE_CAST(T) \
-  template<> \
-  T* Cast(AST_Node* ptr) { \
-    return dynamic_cast<T*>(ptr); \
-  }; \
-  \
-  template<> \
-  const T* Cast(const AST_Node* ptr) { \
-    return dynamic_cast<const T*>(ptr); \
-  }; \
+#define IMPLEMENT_BASE_CAST(T)                   \
+  template <> T* Cast(AST_Node* ptr)             \
+  {                                              \
+    return dynamic_cast<T*>(ptr);                \
+  };                                             \
+                                                 \
+  template <> const T* Cast(const AST_Node* ptr) \
+  {                                              \
+    return dynamic_cast<const T*>(ptr);          \
+  };
 
   IMPLEMENT_BASE_CAST(AST_Node)
   IMPLEMENT_BASE_CAST(Expression)
@@ -25,5 +26,4 @@ namespace Sass {
   IMPLEMENT_BASE_CAST(Supports_Condition)
   IMPLEMENT_BASE_CAST(Selector)
   IMPLEMENT_BASE_CAST(Simple_Selector)
-
 }

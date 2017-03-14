@@ -5,27 +5,31 @@
 #include "ast_fwd_decl.hpp"
 #include "ast_def_macros.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
   typedef environment_map<std::string, AST_Node_Obj>::iterator EnvIter;
 
-  class EnvResult {
+  class EnvResult
+  {
     public:
-      EnvIter it;
-      bool found;
+    EnvIter it;
+    bool found;
+
     public:
-      EnvResult(EnvIter it, bool found)
-      : it(it), found(found) {}
+    EnvResult(EnvIter it, bool found) : it(it), found(found)
+    {
+    }
   };
 
-  template <typename T>
-  class Environment {
+  template <typename T> class Environment
+  {
     // TODO: test with map
     environment_map<std::string, T> local_frame_;
     ADD_PROPERTY(Environment*, parent)
     ADD_PROPERTY(bool, is_shadow)
 
-  public:
+    public:
     Environment(bool is_shadow = false);
     Environment(Environment* env, bool is_shadow = false);
     Environment(Environment& env, bool is_shadow = false);
@@ -99,15 +103,13 @@ namespace Sass {
     // use array access for getter and setter functions
     T& operator[](const std::string& key);
 
-    #ifdef DEBUG
+#ifdef DEBUG
     size_t print(std::string prefix = "");
-    #endif
-
+#endif
   };
 
   // define typedef for our use case
   typedef Environment<AST_Node_Obj> Env;
-
 }
 
 #endif

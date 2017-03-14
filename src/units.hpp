@@ -5,11 +5,13 @@
 #include <string>
 #include <sstream>
 
-namespace Sass {
+namespace Sass
+{
 
   const double PI = std::acos(-1);
 
-  enum UnitClass {
+  enum UnitClass
+  {
     LENGTH = 0x000,
     ANGLE = 0x100,
     TIME = 0x200,
@@ -18,7 +20,8 @@ namespace Sass {
     INCOMMENSURABLE = 0x500
   };
 
-  enum UnitType {
+  enum UnitType
+  {
 
     // size units
     IN = UnitClass::LENGTH,
@@ -65,7 +68,6 @@ namespace Sass {
   std::string unit_to_class(const std::string&);
   // throws incompatibleUnits exceptions
   double conversion_factor(const std::string&, const std::string&, bool = true);
-
 }
 
 #endif

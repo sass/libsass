@@ -6,19 +6,20 @@
 
 #include <iostream>
 
-namespace Sass {
+namespace Sass
+{
 
-  namespace Exception {
+  namespace Exception
+  {
 
     Base::Base(ParserState pstate, std::string msg, std::vector<Sass_Import_Entry>* import_stack)
-    : std::runtime_error(msg), msg(msg),
-      prefix("Error"), pstate(pstate),
-      import_stack(import_stack)
-    { }
+    : std::runtime_error(msg), msg(msg), prefix("Error"), pstate(pstate), import_stack(import_stack)
+    {
+    }
 
-    InvalidSass::InvalidSass(ParserState pstate, std::string msg)
-    : Base(pstate, msg)
-    { }
+    InvalidSass::InvalidSass(ParserState pstate, std::string msg) : Base(pstate, msg)
+    {
+    }
 
 
     InvalidParent::InvalidParent(Selector_Ptr parent, Selector_Ptr selector)
@@ -34,7 +35,7 @@ namespace Sass {
     InvalidArgumentType::InvalidArgumentType(ParserState pstate, std::string fn, std::string arg, std::string type, const Value_Ptr value)
     : Base(pstate), fn(fn), arg(arg), type(type), value(value)
     {
-      msg  = arg + ": \"";
+      msg = arg + ": \"";
       if (value) msg += value->to_string(Sass_Inspect_Options());
       msg += "\" is not a " + type;
       msg += " for `" + fn + "'";
@@ -43,19 +44,20 @@ namespace Sass {
     MissingArgument::MissingArgument(ParserState pstate, std::string fn, std::string arg, std::string fntype)
     : Base(pstate), fn(fn), arg(arg), fntype(fntype)
     {
-      msg  = fntype + " " + fn;
+      msg = fntype + " " + fn;
       msg += " is missing argument ";
       msg += arg + ".";
     }
 
     InvalidSyntax::InvalidSyntax(ParserState pstate, std::string msg, std::vector<Sass_Import_Entry>* import_stack)
     : Base(pstate, msg, import_stack)
-    { }
+    {
+    }
 
     UndefinedOperation::UndefinedOperation(Expression_Ptr_Const lhs, Expression_Ptr_Const rhs, const std::string& op)
     : lhs(lhs), rhs(rhs), op(op)
     {
-      msg  = def_op_msg + ": \"";
+      msg = def_op_msg + ": \"";
       msg += lhs->to_string({ NESTED, 5 });
       msg += " " + op + " ";
       msg += rhs->to_string({ TO_SASS, 5 });
@@ -65,7 +67,7 @@ namespace Sass {
     InvalidNullOperation::InvalidNullOperation(Expression_Ptr_Const lhs, Expression_Ptr_Const rhs, const std::string& op)
     : UndefinedOperation(lhs, rhs, op)
     {
-      msg  = def_op_null_msg + ": \"";
+      msg = def_op_null_msg + ": \"";
       msg += lhs->inspect();
       msg += " " + op + " ";
       msg += rhs->inspect();
@@ -75,13 +77,13 @@ namespace Sass {
     ZeroDivisionError::ZeroDivisionError(const Expression& lhs, const Expression& rhs)
     : lhs(lhs), rhs(rhs)
     {
-      msg  = "divided by 0";
+      msg = "divided by 0";
     }
 
     DuplicateKeyError::DuplicateKeyError(const Map& dup, const Expression& org)
     : Base(org.pstate()), dup(dup), org(org)
     {
-      msg  = "Duplicate key ";
+      msg = "Duplicate key ";
       msg += dup.get_duplicate_key()->inspect();
       msg += " in map (";
       msg += org.inspect();
@@ -91,28 +93,26 @@ namespace Sass {
     TypeMismatch::TypeMismatch(const Expression& var, const std::string type)
     : Base(var.pstate()), var(var), type(type)
     {
-      msg  = var.to_string();
+      msg = var.to_string();
       msg += " is not an ";
       msg += type;
       msg += ".";
     }
 
-    InvalidValue::InvalidValue(const Expression& val)
-    : Base(val.pstate()), val(val)
+    InvalidValue::InvalidValue(const Expression& val) : Base(val.pstate()), val(val)
     {
-      msg  = val.to_string();
+      msg = val.to_string();
       msg += " isn't a valid CSS value.";
     }
 
-    StackError::StackError(const AST_Node& node)
-    : Base(node.pstate()), node(node)
+    StackError::StackError(const AST_Node& node) : Base(node.pstate()), node(node)
     {
-      msg  = "stack level too deep";
+      msg = "stack level too deep";
     }
 
     IncompatibleUnits::IncompatibleUnits(const Number& lhs, const Number& rhs)
     {
-      msg  = "Incompatible units: '";
+      msg = "Incompatible units: '";
       msg += rhs.unit();
       msg += "' and '";
       msg += lhs.unit();
@@ -121,17 +121,19 @@ namespace Sass {
 
     IncompatibleUnits::IncompatibleUnits(const UnitType lhs, const UnitType rhs)
     {
-      msg  = "Incompatible units: '";
+      msg = "Incompatible units: '";
       msg += unit_to_string(rhs);
       msg += "' and '";
       msg += unit_to_string(lhs);
       msg += "'.";
     }
 
-    AlphaChannelsNotEqual::AlphaChannelsNotEqual(Expression_Ptr_Const lhs, Expression_Ptr_Const rhs, const std::string& op)
+    AlphaChannelsNotEqual::AlphaChannelsNotEqual(Expression_Ptr_Const lhs,
+                                                 Expression_Ptr_Const rhs,
+                                                 const std::string& op)
     : lhs(lhs), rhs(rhs), op(op)
     {
-      msg  = "Alpha channels must be equal: ";
+      msg = "Alpha channels must be equal: ";
       msg += lhs->to_string({ NESTED, 5 });
       msg += " " + op + " ";
       msg += rhs->to_string({ NESTED, 5 });
@@ -145,13 +147,12 @@ namespace Sass {
       msg = err.what();
       prefix = err.errtype();
     }
-
   }
 
 
   void warn(std::string msg, ParserState pstate)
   {
-    std::cerr << "Warning: " << msg<< std::endl;
+    std::cerr << "Warning: " << msg << std::endl;
   }
 
   void warn(std::string msg, ParserState pstate, Backtrace* bt)
@@ -170,7 +171,7 @@ namespace Sass {
 
     std::cerr << "DEPRECATION WARNING: " << msg << std::endl;
     std::cerr << "will be an error in future versions of Sass." << std::endl;
-    std::cerr << "        on line " << pstate.line+1 << " of " << output_path << std::endl;
+    std::cerr << "        on line " << pstate.line + 1 << " of " << output_path << std::endl;
   }
 
   void deprecated(std::string msg, std::string msg2, ParserState pstate)
@@ -196,7 +197,7 @@ namespace Sass {
     std::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.path));
 
     std::cerr << "WARNING: " << msg << std::endl;
-    std::cerr << "        on line " << pstate.line+1 << " of " << output_path << std::endl;
+    std::cerr << "        on line " << pstate.line + 1 << " of " << output_path << std::endl;
     std::cerr << "This will be an error in future versions of Sass." << std::endl;
   }
 
@@ -211,5 +212,4 @@ namespace Sass {
     msg += "\n" + top.to_string();
     error(msg, pstate);
   }
-
 }

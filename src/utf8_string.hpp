@@ -4,15 +4,18 @@
 #include <string>
 #include "utf8.h"
 
-namespace Sass {
-  namespace UTF_8 {
+namespace Sass
+{
+  namespace UTF_8
+  {
 
     // naming conventions:
     // offset: raw byte offset (0 based)
     // position: code point offset (0 based)
     // index: code point offset (1 based or negative)
 
-    // function that will count the number of code points (utf-8 characters) from the beginning to the given end
+    // function that will count the number of code points (utf-8 characters) from the beginning to
+    // the given end
     size_t code_point_count(const std::string& str, size_t start, size_t end);
     size_t code_point_count(const std::string& str);
 
@@ -25,12 +28,11 @@ namespace Sass {
     // function that will return a normalized index, given a crazy one
     size_t normalize_index(int index, size_t len);
 
-    #ifdef _WIN32
+#ifdef _WIN32
     // functions to handle unicode paths on windows
     std::string convert_from_utf16(const std::wstring& wstr);
     std::wstring convert_to_utf16(const std::string& str);
-    #endif
-
+#endif
   }
 }
 

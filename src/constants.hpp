@@ -1,8 +1,10 @@
 #ifndef SASS_CONSTANTS_H
 #define SASS_CONSTANTS_H
 
-namespace Sass {
-  namespace Constants {
+namespace Sass
+{
+  namespace Constants
+  {
 
     // The maximum call stack that can be created
     extern const unsigned long MaxCallStack;
@@ -173,7 +175,6 @@ namespace Sass {
     extern const unsigned char scsu_bom[];
     extern const unsigned char bocu_1_bom[];
     extern const unsigned char gb_18030_bom[];
-
   }
 }
 

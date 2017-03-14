@@ -4,9 +4,11 @@
 #include <cstring>
 #include "lexer.hpp"
 
-namespace Sass {
+namespace Sass
+{
   // using namespace Lexer;
-  namespace Prelexer {
+  namespace Prelexer
+  {
 
     //####################################
     // KEYWORD "REGEX" MATCHERS
@@ -41,12 +43,13 @@ namespace Sass {
     //####################################
 
     // Match a sequence of characters delimited by the supplied chars.
-    template <char beg, char end, bool esc>
-    const char* delimited_by(const char* src) {
+    template <char beg, char end, bool esc> const char* delimited_by(const char* src)
+    {
       src = exactly<beg>(src);
       if (!src) return 0;
       const char* stop;
-      while (true) {
+      while (true)
+      {
         if (!*src) return 0;
         stop = exactly<end>(src);
         if (stop && (!esc || *(src - 1) != '\\')) return stop;
@@ -58,52 +61,61 @@ namespace Sass {
     // this will savely skip over all quoted strings
     // recursive skip stuff delimited by start/stop
     // first start/opener must be consumed already!
-    template<prelexer start, prelexer stop>
-    const char* skip_over_scopes(const char* src, const char* end) {
+    template <prelexer start, prelexer stop>
+    const char* skip_over_scopes(const char* src, const char* end)
+    {
 
       size_t level = 0;
       bool in_squote = false;
       bool in_dquote = false;
       // bool in_braces = false;
 
-      while (*src) {
+      while (*src)
+      {
 
         // check for abort condition
         if (end && src >= end) break;
 
         // has escaped sequence?
-        if (*src == '\\') {
-          ++ src; // skip this (and next)
+        if (*src == '\\')
+        {
+          ++src; // skip this (and next)
         }
-        else if (*src == '"') {
-          in_dquote = ! in_dquote;
+        else if (*src == '"')
+        {
+          in_dquote = !in_dquote;
         }
-        else if (*src == '\'') {
-          in_squote = ! in_squote;
+        else if (*src == '\'')
+        {
+          in_squote = !in_squote;
         }
-        else if (in_dquote || in_squote) {
+        else if (in_dquote || in_squote)
+        {
           // take everything literally
         }
 
         // find another opener inside?
-        else if (const char* pos = start(src)) {
-          ++ level; // increase counter
+        else if (const char* pos = start(src))
+        {
+          ++level; // increase counter
           src = pos - 1; // advance position
         }
 
         // look for the closer (maybe final, maybe not)
-        else if (const char* final = stop(src)) {
+        else if (const char* final = stop(src))
+        {
           // only close one level?
-          if (level > 0) -- level;
+          if (level > 0) --level;
           // return position at end of stop
           // delimiter may be multiple chars
-          else return final;
+          else
+            return final;
           // advance position
           src = final - 1;
         }
 
         // next
-        ++ src;
+        ++src;
       }
 
       return 0;
@@ -117,14 +129,14 @@ namespace Sass {
     // this will savely skip over all quoted strings
     // recursive skip stuff delimited by start/stop
     // first start/opener must be consumed already!
-    template<prelexer start, prelexer stop>
-    const char* skip_over_scopes(const char* src) {
+    template <prelexer start, prelexer stop> const char* skip_over_scopes(const char* src)
+    {
       return skip_over_scopes<start, stop>(src, 0);
     }
 
     // Match a sequence of characters delimited by the supplied chars.
-    template <prelexer start, prelexer stop>
-    const char* recursive_scopes(const char* src) {
+    template <prelexer start, prelexer stop> const char* recursive_scopes(const char* src)
+    {
       // parse opener
       src = start(src);
       // abort if not found
@@ -134,12 +146,13 @@ namespace Sass {
     }
 
     // Match a sequence of characters delimited by the supplied strings.
-    template <const char* beg, const char* end, bool esc>
-    const char* delimited_by(const char* src) {
+    template <const char* beg, const char* end, bool esc> const char* delimited_by(const char* src)
+    {
       src = exactly<beg>(src);
       if (!src) return 0;
       const char* stop;
-      while (true) {
+      while (true)
+      {
         if (!*src) return 0;
         stop = exactly<end>(src);
         if (stop && (!esc || *(src - 1) != '\\')) return stop;
@@ -148,13 +161,15 @@ namespace Sass {
     }
 
     // Tries to match a certain number of times (between the supplied interval).
-    template<prelexer mx, size_t lo, size_t hi>
-    const char* between(const char* src) {
-      for (size_t i = 0; i < lo; ++i) {
+    template <prelexer mx, size_t lo, size_t hi> const char* between(const char* src)
+    {
+      for (size_t i = 0; i < lo; ++i)
+      {
         src = mx(src);
         if (!src) return 0;
       }
-      for (size_t i = lo; i <= hi; ++i) {
+      for (size_t i = lo; i <= hi; ++i)
+      {
         const char* new_src = mx(src);
         if (!new_src) return src;
         src = new_src;
@@ -381,100 +396,121 @@ namespace Sass {
     const char* static_value(const char* src);
 
     // Utility functions for finding and counting characters in a string.
-    template<char c>
-    const char* find_first(const char* src) {
-      while (*src && *src != c) ++src;
+    template <char c> const char* find_first(const char* src)
+    {
+      while (*src && *src != c)
+        ++src;
       return *src ? src : 0;
     }
-    template<prelexer mx>
-    const char* find_first(const char* src) {
-      while (*src && !mx(src)) ++src;
+    template <prelexer mx> const char* find_first(const char* src)
+    {
+      while (*src && !mx(src))
+        ++src;
       return *src ? src : 0;
     }
-    template<prelexer mx>
-    const char* find_first_in_interval(const char* beg, const char* end) {
+    template <prelexer mx> const char* find_first_in_interval(const char* beg, const char* end)
+    {
       bool esc = false;
-      while ((beg < end) && *beg) {
-        if (esc) esc = false;
-        else if (*beg == '\\') esc = true;
-        else if (mx(beg)) return beg;
+      while ((beg < end) && *beg)
+      {
+        if (esc)
+          esc = false;
+        else if (*beg == '\\')
+          esc = true;
+        else if (mx(beg))
+          return beg;
         ++beg;
       }
       return 0;
     }
-    template<prelexer mx, prelexer skip>
-    const char* find_first_in_interval(const char* beg, const char* end) {
+    template <prelexer mx, prelexer skip>
+    const char* find_first_in_interval(const char* beg, const char* end)
+    {
       bool esc = false;
-      while ((beg < end) && *beg) {
-        if (esc) esc = false;
-        else if (*beg == '\\') esc = true;
-        else if (const char* pos = skip(beg)) beg = pos;
-        else if (mx(beg)) return beg;
+      while ((beg < end) && *beg)
+      {
+        if (esc)
+          esc = false;
+        else if (*beg == '\\')
+          esc = true;
+        else if (const char* pos = skip(beg))
+          beg = pos;
+        else if (mx(beg))
+          return beg;
         ++beg;
       }
       return 0;
     }
-    template <prelexer mx>
-    unsigned int count_interval(const char* beg, const char* end) {
+    template <prelexer mx> unsigned int count_interval(const char* beg, const char* end)
+    {
       unsigned int counter = 0;
       bool esc = false;
-      while (beg < end && *beg) {
+      while (beg < end && *beg)
+      {
         const char* p;
-        if (esc) {
+        if (esc)
+        {
           esc = false;
           ++beg;
-        } else if (*beg == '\\') {
+        }
+        else if (*beg == '\\')
+        {
           esc = true;
           ++beg;
-        } else if ((p = mx(beg))) {
+        }
+        else if ((p = mx(beg)))
+        {
           ++counter;
           beg = p;
         }
-        else {
+        else
+        {
           ++beg;
         }
       }
       return counter;
     }
 
-    template <size_t size, prelexer mx, prelexer pad>
-    const char* padded_token(const char* src)
+    template <size_t size, prelexer mx, prelexer pad> const char* padded_token(const char* src)
     {
       size_t got = 0;
       const char* pos = src;
-      while (got < size) {
+      while (got < size)
+      {
         if (!mx(pos)) break;
-        ++ pos; ++ got;
+        ++pos;
+        ++got;
       }
-      while (got < size) {
+      while (got < size)
+      {
         if (!pad(pos)) break;
-        ++ pos; ++ got;
+        ++pos;
+        ++got;
       }
       return got ? pos : 0;
     }
 
-    template <size_t min, size_t max, prelexer mx>
-    const char* minmax_range(const char* src)
+    template <size_t min, size_t max, prelexer mx> const char* minmax_range(const char* src)
     {
       size_t got = 0;
       const char* pos = src;
-      while (got < max) {
+      while (got < max)
+      {
         if (!mx(pos)) break;
-        ++ pos; ++ got;
+        ++pos;
+        ++got;
       }
       if (got < min) return 0;
       if (got > max) return 0;
       return pos;
     }
 
-    template <char min, char max>
-    const char* char_range(const char* src)
+    template <char min, char max> const char* char_range(const char* src)
     {
       if (*src < min) return 0;
       if (*src > max) return 0;
       return src + 1;
     }
-
   }
 }
 

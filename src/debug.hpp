@@ -4,10 +4,11 @@
 #include <stdint.h>
 
 #ifndef UINT32_MAX
-  #define UINT32_MAX 0xffffffffU
+#define UINT32_MAX 0xffffffffU
 #endif
 
-enum dbg_lvl_t : uint32_t {
+enum dbg_lvl_t : uint32_t
+{
   NONE = 0,
   TRIM = 1,
   CHUNKS = 2,
@@ -28,9 +29,21 @@ const uint32_t debug_lvl = UINT32_MAX;
 const uint32_t debug_lvl = (DEBUG_LVL);
 #endif // DEBUG_LVL
 
-#define DEBUG_PRINT(lvl, x) if((lvl) & debug_lvl) { std::cerr << x; }
-#define DEBUG_PRINTLN(lvl, x) if((lvl) & debug_lvl) { std::cerr << x << std::endl; }
-#define DEBUG_EXEC(lvl, x) if((lvl) & debug_lvl) { x; }
+#define DEBUG_PRINT(lvl, x) \
+  if ((lvl)&debug_lvl)      \
+  {                         \
+    std::cerr << x;         \
+  }
+#define DEBUG_PRINTLN(lvl, x)    \
+  if ((lvl)&debug_lvl)           \
+  {                              \
+    std::cerr << x << std::endl; \
+  }
+#define DEBUG_EXEC(lvl, x) \
+  if ((lvl)&debug_lvl)     \
+  {                        \
+    x;                     \
+  }
 
 #else // DEBUG
 
