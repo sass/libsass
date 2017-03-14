@@ -41,11 +41,11 @@ typedef struct JsonNode JsonNode;
 struct JsonNode
 {
   /* only if parent is an object or array (NULL otherwise) */
-  JsonNode *parent;
+  JsonNode* parent;
   JsonNode *prev, *next;
 
   /* only if parent is an object (NULL otherwise) */
-  char *key; /* Must be valid UTF-8. */
+  char* key; /* Must be valid UTF-8. */
 
   JsonTag tag;
   union {
@@ -53,14 +53,15 @@ struct JsonNode
     bool bool_;
 
     /* JSON_STRING */
-    char *string_; /* Must be valid UTF-8. */
+    char* string_; /* Must be valid UTF-8. */
 
     /* JSON_NUMBER */
     double number_;
 
     /* JSON_ARRAY */
     /* JSON_OBJECT */
-    struct {
+    struct
+    {
       JsonNode *head, *tail;
     } children;
   };
@@ -68,41 +69,39 @@ struct JsonNode
 
 /*** Encoding, decoding, and validation ***/
 
-JsonNode   *json_decode         (const char *json);
-char       *json_encode         (const JsonNode *node);
-char       *json_encode_string  (const char *str);
-char       *json_stringify      (const JsonNode *node, const char *space);
-void        json_delete         (JsonNode *node);
+JsonNode* json_decode(const char* json);
+char* json_encode(const JsonNode* node);
+char* json_encode_string(const char* str);
+char* json_stringify(const JsonNode* node, const char* space);
+void json_delete(JsonNode* node);
 
-bool        json_validate       (const char *json);
+bool json_validate(const char* json);
 
 /*** Lookup and traversal ***/
 
-JsonNode   *json_find_element   (JsonNode *array, int index);
-JsonNode   *json_find_member    (JsonNode *object, const char *key);
+JsonNode* json_find_element(JsonNode* array, int index);
+JsonNode* json_find_member(JsonNode* object, const char* key);
 
-JsonNode   *json_first_child    (const JsonNode *node);
+JsonNode* json_first_child(const JsonNode* node);
 
-#define json_foreach(i, object_or_array)            \
-  for ((i) = json_first_child(object_or_array);   \
-     (i) != NULL;                               \
-     (i) = (i)->next)
+#define json_foreach(i, object_or_array) \
+  for ((i) = json_first_child(object_or_array); (i) != NULL; (i) = (i)->next)
 
 /*** Construction and manipulation ***/
 
-JsonNode *json_mknull(void);
-JsonNode *json_mkbool(bool b);
-JsonNode *json_mkstring(const char *s);
-JsonNode *json_mknumber(double n);
-JsonNode *json_mkarray(void);
-JsonNode *json_mkobject(void);
+JsonNode* json_mknull(void);
+JsonNode* json_mkbool(bool b);
+JsonNode* json_mkstring(const char* s);
+JsonNode* json_mknumber(double n);
+JsonNode* json_mkarray(void);
+JsonNode* json_mkobject(void);
 
-void json_append_element(JsonNode *array, JsonNode *element);
-void json_prepend_element(JsonNode *array, JsonNode *element);
-void json_append_member(JsonNode *object, const char *key, JsonNode *value);
-void json_prepend_member(JsonNode *object, const char *key, JsonNode *value);
+void json_append_element(JsonNode* array, JsonNode* element);
+void json_prepend_element(JsonNode* array, JsonNode* element);
+void json_append_member(JsonNode* object, const char* key, JsonNode* value);
+void json_prepend_member(JsonNode* object, const char* key, JsonNode* value);
 
-void json_remove_from_parent(JsonNode *node);
+void json_remove_from_parent(JsonNode* node);
 
 /*** Debugging ***/
 
@@ -112,6 +111,6 @@ void json_remove_from_parent(JsonNode *node);
  * If a problem is detected, return false, writing a description of the problem
  * to errmsg (unless errmsg is NULL).
  */
-bool json_check(const JsonNode *node, char errmsg[256]);
+bool json_check(const JsonNode* node, char errmsg[256]);
 
 #endif

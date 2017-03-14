@@ -2,15 +2,16 @@
 #include "ast.hpp"
 #include "output.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
-  Output::Output(Sass_Output_Options& opt)
-  : Inspect(Emitter(opt)),
-    charset(""),
-    top_nodes(0)
-  {}
+  Output::Output(Sass_Output_Options& opt) : Inspect(Emitter(opt)), charset(""), top_nodes(0)
+  {
+  }
 
-  Output::~Output() { }
+  Output::~Output()
+  {
+  }
 
   void Output::fallback_impl(AST_Node_Ptr n)
   {
@@ -23,7 +24,8 @@ namespace Sass {
     std::string res = n->to_string(opt);
     // check for a valid unit here
     // includes result for reporting
-    if (!n->is_valid_css_unit()) {
+    if (!n->is_valid_css_unit())
+    {
       throw Exception::InvalidValue(*n);
     }
     // output the final token
@@ -48,7 +50,8 @@ namespace Sass {
     Inspect inspect(emitter);
 
     size_t size_nodes = top_nodes.size();
-    for (size_t i = 0; i < size_nodes; i++) {
+    for (size_t i = 0; i < size_nodes; i++)
+    {
       top_nodes[i]->perform(&inspect);
       inspect.append_mandatory_linefeed();
     }
@@ -59,21 +62,23 @@ namespace Sass {
     // prepend buffer on top
     prepend_output(inspect.output());
     // make sure we end with a linefeed
-    if (!ends_with(wbuf.buffer, opt.linefeed)) {
+    if (!ends_with(wbuf.buffer, opt.linefeed))
+    {
       // if the output is not completely empty
       if (!wbuf.buffer.empty()) append_string(opt.linefeed);
     }
 
     // search for unicode char
-    for(const char& chr : wbuf.buffer) {
+    for (const char& chr : wbuf.buffer)
+    {
       // skip all ascii chars
       // static cast to unsigned to handle `char` being signed / unsigned
       if (static_cast<unsigned>(chr) < 128) continue;
       // declare the charset
       if (output_style() != COMPRESSED)
-        charset = "@charset \"UTF-8\";"
-                + std::string(opt.linefeed);
-      else charset = "\xEF\xBB\xBF";
+        charset = "@charset \"UTF-8\";" + std::string(opt.linefeed);
+      else
+        charset = "\xEF\xBB\xBF";
       // abort search
       break;
     }
@@ -82,7 +87,6 @@ namespace Sass {
     if (!charset.empty()) prepend_string(charset);
 
     return wbuf;
-
   }
 
   void Output::operator()(Comment_Ptr c)
@@ -90,17 +94,24 @@ namespace Sass {
     std::string txt = c->text()->to_string(opt);
     // if (indentation && txt == "/**/") return;
     bool important = c->is_important();
-    if (output_style() != COMPRESSED || important) {
-      if (buffer().size() == 0) {
+    if (output_style() != COMPRESSED || important)
+    {
+      if (buffer().size() == 0)
+      {
         top_nodes.push_back(c);
-      } else {
+      }
+      else
+      {
         in_comment = true;
         append_indentation();
         c->text()->perform(this);
         in_comment = false;
-        if (indentation == 0) {
+        if (indentation == 0)
+        {
           append_mandatory_linefeed();
-        } else {
+        }
+        else
+        {
           append_optional_linefeed();
         }
       }
@@ -109,15 +120,19 @@ namespace Sass {
 
   void Output::operator()(Ruleset_Ptr r)
   {
-    Selector_Obj s     = r->selector();
-    Block_Obj    b     = r->block();
+    Selector_Obj s = r->selector();
+    Block_Obj b = r->block();
 
     // Filter out rulesets that aren't printable (process its children though)
-    if (!Util::isPrintable(r, output_style())) {
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
+    if (!Util::isPrintable(r, output_style()))
+    {
+      for (size_t i = 0, L = b->length(); i < L; ++i)
+      {
         const Statement_Obj& stm = b->at(i);
-        if (Cast<Has_Block>(stm)) {
-          if (!Cast<Declaration>(stm)) {
+        if (Cast<Has_Block>(stm))
+        {
+          if (!Cast<Declaration>(stm))
+          {
             stm->perform(this);
           }
         }
@@ -126,7 +141,8 @@ namespace Sass {
     }
 
     if (output_style() == NESTED) indentation += r->tabs();
-    if (opt.source_comments) {
+    if (opt.source_comments)
+    {
       std::stringstream ss;
       append_indentation();
       std::string path(File::abs2rel(r->pstate().path));
@@ -136,22 +152,29 @@ namespace Sass {
     }
     if (s) s->perform(this);
     append_scope_opener(b);
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
+    for (size_t i = 0, L = b->length(); i < L; ++i)
+    {
       Statement_Obj stm = b->at(i);
       bool bPrintExpression = true;
       // Check print conditions
-      if (Declaration_Ptr dec = Cast<Declaration>(stm)) {
-        if (String_Constant_Ptr valConst = Cast<String_Constant>(dec->value())) {
+      if (Declaration_Ptr dec = Cast<Declaration>(stm))
+      {
+        if (String_Constant_Ptr valConst = Cast<String_Constant>(dec->value()))
+        {
           std::string val(valConst->value());
-          if (String_Quoted_Ptr qstr = Cast<String_Quoted>(valConst)) {
-            if (!qstr->quote_mark() && val.empty()) {
+          if (String_Quoted_Ptr qstr = Cast<String_Quoted>(valConst))
+          {
+            if (!qstr->quote_mark() && val.empty())
+            {
               bPrintExpression = false;
             }
           }
         }
-        else if (List_Ptr list = Cast<List>(dec->value())) {
+        else if (List_Ptr list = Cast<List>(dec->value()))
+        {
           bool all_invisible = true;
-          for (size_t list_i = 0, list_L = list->length(); list_i < list_L; ++list_i) {
+          for (size_t list_i = 0, list_L = list->length(); list_i < list_L; ++list_i)
+          {
             Expression_Ptr item = list->at(list_i);
             if (!item->is_invisible()) all_invisible = false;
           }
@@ -159,30 +182,33 @@ namespace Sass {
         }
       }
       // Print if OK
-      if (bPrintExpression) {
+      if (bPrintExpression)
+      {
         stm->perform(this);
       }
     }
     if (output_style() == NESTED) indentation -= r->tabs();
     append_scope_closer(b);
-
   }
   void Output::operator()(Keyframe_Rule_Ptr r)
   {
     Block_Obj b = r->block();
     Selector_Obj v = r->name();
 
-    if (!v.isNull()) {
+    if (!v.isNull())
+    {
       v->perform(this);
     }
 
-    if (!b) {
+    if (!b)
+    {
       append_colon_separator();
       return;
     }
 
     append_scope_opener();
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
+    for (size_t i = 0, L = b->length(); i < L; ++i)
+    {
       Statement_Obj stm = b->at(i);
       stm->perform(this);
       if (i < L - 1) append_special_linefeed();
@@ -195,13 +221,16 @@ namespace Sass {
     if (f->is_invisible()) return;
 
     Supports_Condition_Obj c = f->condition();
-    Block_Obj b              = f->block();
+    Block_Obj b = f->block();
 
     // Filter out feature blocks that aren't printable (process its children though)
-    if (!Util::isPrintable(f, output_style())) {
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
+    if (!Util::isPrintable(f, output_style()))
+    {
+      for (size_t i = 0, L = b->length(); i < L; ++i)
+      {
         Statement_Obj stm = b->at(i);
-        if (Cast<Has_Block>(stm)) {
+        if (Cast<Has_Block>(stm))
+        {
           stm->perform(this);
         }
       }
@@ -215,7 +244,8 @@ namespace Sass {
     c->perform(this);
     append_scope_opener();
 
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
+    for (size_t i = 0, L = b->length(); i < L; ++i)
+    {
       Statement_Obj stm = b->at(i);
       stm->perform(this);
       if (i < L - 1) append_special_linefeed();
@@ -224,20 +254,22 @@ namespace Sass {
     if (output_style() == NESTED) indentation -= f->tabs();
 
     append_scope_closer();
-
   }
 
   void Output::operator()(Media_Block_Ptr m)
   {
     if (m->is_invisible()) return;
 
-    Block_Obj b     = m->block();
+    Block_Obj b = m->block();
 
     // Filter out media blocks that aren't printable (process its children though)
-    if (!Util::isPrintable(m, output_style())) {
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
+    if (!Util::isPrintable(m, output_style()))
+    {
+      for (size_t i = 0, L = b->length(); i < L; ++i)
+      {
         Statement_Obj stm = b->at(i);
-        if (Cast<Has_Block>(stm)) {
+        if (Cast<Has_Block>(stm))
+        {
           stm->perform(this);
         }
       }
@@ -252,9 +284,11 @@ namespace Sass {
     in_media_block = false;
     append_scope_opener();
 
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
-      if (b->at(i)) {
-      Statement_Obj stm = b->at(i);
+    for (size_t i = 0, L = b->length(); i < L; ++i)
+    {
+      if (b->at(i))
+      {
+        Statement_Obj stm = b->at(i);
         stm->perform(this);
       }
       if (i < L - 1) append_special_linefeed();
@@ -266,39 +300,45 @@ namespace Sass {
 
   void Output::operator()(Directive_Ptr a)
   {
-    std::string      kwd   = a->keyword();
-    Selector_Obj   s     = a->selector();
-    Expression_Obj v     = a->value();
-    Block_Obj      b     = a->block();
+    std::string kwd = a->keyword();
+    Selector_Obj s = a->selector();
+    Expression_Obj v = a->value();
+    Block_Obj b = a->block();
 
     append_indentation();
     append_token(kwd, a);
-    if (s) {
+    if (s)
+    {
       append_mandatory_space();
       in_wrapped = true;
       s->perform(this);
       in_wrapped = false;
     }
-    if (v) {
+    if (v)
+    {
       append_mandatory_space();
       // ruby sass bug? should use options?
       append_token(v->to_string(/* opt */), v);
     }
-    if (!b) {
+    if (!b)
+    {
       append_delimiter();
       return;
     }
 
-    if (b->is_invisible() || b->length() == 0) {
+    if (b->is_invisible() || b->length() == 0)
+    {
       append_optional_space();
       return append_string("{}");
     }
 
     append_scope_opener();
 
-    bool format = kwd != "@font-face";;
+    bool format = kwd != "@font-face";
+    ;
 
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
+    for (size_t i = 0, L = b->length(); i < L; ++i)
+    {
       Statement_Obj stm = b->at(i);
       stm->perform(this);
       if (i < L - 1 && format) append_special_linefeed();
@@ -309,11 +349,16 @@ namespace Sass {
 
   void Output::operator()(String_Quoted_Ptr s)
   {
-    if (s->quote_mark()) {
+    if (s->quote_mark())
+    {
       append_token(quote(s->value(), s->quote_mark()), s);
-    } else if (!in_comment) {
+    }
+    else if (!in_comment)
+    {
       append_token(string_to_output(s->value()), s);
-    } else {
+    }
+    else
+    {
       append_token(s->value(), s);
     }
   }
@@ -321,14 +366,17 @@ namespace Sass {
   void Output::operator()(String_Constant_Ptr s)
   {
     std::string value(s->value());
-    if (s->can_compress_whitespace() && output_style() == COMPRESSED) {
+    if (s->can_compress_whitespace() && output_style() == COMPRESSED)
+    {
       value.erase(std::remove_if(value.begin(), value.end(), ::isspace), value.end());
     }
-    if (!in_comment) {
+    if (!in_comment)
+    {
       append_token(string_to_output(value), s);
-    } else {
+    }
+    else
+    {
       append_token(value, s);
     }
   }
-
 }

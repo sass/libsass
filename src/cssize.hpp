@@ -6,22 +6,26 @@
 #include "operation.hpp"
 #include "environment.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
   struct Backtrace;
 
-  class Cssize : public Operation_CRTP<Statement_Ptr, Cssize> {
+  class Cssize : public Operation_CRTP<Statement_Ptr, Cssize>
+  {
 
-    Context&                    ctx;
-    std::vector<Block_Ptr>         block_stack;
-    std::vector<Statement_Ptr>     p_stack;
-    Backtrace*                  backtrace;
+    Context& ctx;
+    std::vector<Block_Ptr> block_stack;
+    std::vector<Statement_Ptr> p_stack;
+    Backtrace* backtrace;
 
     Statement_Ptr fallback_impl(AST_Node_Ptr n);
 
-  public:
+    public:
     Cssize(Context&, Backtrace*);
-    ~Cssize() { }
+    ~Cssize()
+    {
+    }
 
     Selector_List_Ptr selector();
 
@@ -66,12 +70,13 @@ namespace Sass {
     List_Ptr merge_media_queries(Media_Block_Ptr, Media_Block_Ptr);
     Media_Query_Ptr merge_media_query(Media_Query_Ptr, Media_Query_Ptr);
 
-    template <typename U>
-    Statement_Ptr fallback(U x) { return fallback_impl(x); }
+    template <typename U> Statement_Ptr fallback(U x)
+    {
+      return fallback_impl(x);
+    }
 
     void append_block(Block_Ptr, Block_Ptr);
   };
-
 }
 
 #endif

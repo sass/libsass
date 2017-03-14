@@ -8,43 +8,46 @@
 #include "operation.hpp"
 #include "environment.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
   class Listize;
   class Context;
   class Eval;
   struct Backtrace;
 
-  class Expand : public Operation_CRTP<Statement_Ptr, Expand> {
-  public:
-
+  class Expand : public Operation_CRTP<Statement_Ptr, Expand>
+  {
+    public:
     Env* environment();
     Selector_List_Obj selector();
     Backtrace* backtrace();
 
-    Context&          ctx;
-    Eval              eval;
-    size_t            recursions;
-    bool              in_keyframes;
-    bool              at_root_without_rule;
-    bool              old_at_root_without_rule;
+    Context& ctx;
+    Eval eval;
+    size_t recursions;
+    bool in_keyframes;
+    bool at_root_without_rule;
+    bool old_at_root_without_rule;
 
     // it's easier to work with vectors
-    std::vector<Env*>              env_stack;
-    std::vector<Block_Ptr>         block_stack;
-    std::vector<AST_Node_Obj>      call_stack;
+    std::vector<Env*> env_stack;
+    std::vector<Block_Ptr> block_stack;
+    std::vector<AST_Node_Obj> call_stack;
     std::vector<Selector_List_Obj> selector_stack;
-    std::vector<Media_Block_Ptr>   media_block_stack;
-    std::vector<Backtrace*>        backtrace_stack;
+    std::vector<Media_Block_Ptr> media_block_stack;
+    std::vector<Backtrace*> backtrace_stack;
 
     Statement_Ptr fallback_impl(AST_Node_Ptr n);
 
-  private:
+    private:
     void expand_selector_list(Selector_Obj, Selector_List_Obj extender);
 
-  public:
+    public:
     Expand(Context&, Env*, Backtrace*, std::vector<Selector_List_Obj>* stack = NULL);
-    ~Expand() { }
+    ~Expand()
+    {
+    }
 
     Block_Ptr operator()(Block_Ptr);
     Statement_Ptr operator()(Ruleset_Ptr);
@@ -70,12 +73,13 @@ namespace Sass {
     Statement_Ptr operator()(Mixin_Call_Ptr);
     Statement_Ptr operator()(Content_Ptr);
 
-    template <typename U>
-    Statement_Ptr fallback(U x) { return fallback_impl(x); }
+    template <typename U> Statement_Ptr fallback(U x)
+    {
+      return fallback_impl(x);
+    }
 
     void append_block(Block_Ptr);
   };
-
 }
 
 #endif

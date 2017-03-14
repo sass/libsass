@@ -2,7 +2,8 @@
 #include "ast.hpp"
 #include "to_value.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
   Value_Ptr To_Value::fallback_impl(AST_Node_Ptr n)
   {
@@ -56,12 +57,9 @@ namespace Sass {
   // List is a valid value
   Value_Ptr To_Value::operator()(List_Ptr l)
   {
-    List_Obj ll = SASS_MEMORY_NEW(List,
-                               l->pstate(),
-                               l->length(),
-                               l->separator(),
-                               l->is_arglist());
-    for (size_t i = 0, L = l->length(); i < L; ++i) {
+    List_Obj ll = SASS_MEMORY_NEW(List, l->pstate(), l->length(), l->separator(), l->is_arglist());
+    for (size_t i = 0, L = l->length(); i < L; ++i)
+    {
       ll->append((*l)[i]->perform(this));
     }
     return ll.detach();
@@ -89,17 +87,12 @@ namespace Sass {
   // Selector_List is converted to a string
   Value_Ptr To_Value::operator()(Selector_List_Ptr s)
   {
-    return SASS_MEMORY_NEW(String_Quoted,
-                           s->pstate(),
-                           s->to_string(ctx.c_options));
+    return SASS_MEMORY_NEW(String_Quoted, s->pstate(), s->to_string(ctx.c_options));
   }
 
   // Binary_Expression is converted to a string
   Value_Ptr To_Value::operator()(Binary_Expression_Ptr s)
   {
-    return SASS_MEMORY_NEW(String_Quoted,
-                           s->pstate(),
-                           s->to_string(ctx.c_options));
+    return SASS_MEMORY_NEW(String_Quoted, s->pstate(), s->to_string(ctx.c_options));
   }
-
 };

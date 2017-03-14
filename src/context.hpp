@@ -22,20 +22,31 @@
 
 struct Sass_Function;
 
-namespace Sass {
+namespace Sass
+{
 
-  class Context {
-  public:
-    void import_url (Import_Ptr imp, std::string load_path, const std::string& ctx_path);
+  class Context
+  {
+    public:
+    void import_url(Import_Ptr imp, std::string load_path, const std::string& ctx_path);
     bool call_headers(const std::string& load_path, const char* ctx_path, ParserState& pstate, Import_Ptr imp)
-    { return call_loader(load_path, ctx_path, pstate, imp, c_headers, false); };
+    {
+      return call_loader(load_path, ctx_path, pstate, imp, c_headers, false);
+    };
     bool call_importers(const std::string& load_path, const char* ctx_path, ParserState& pstate, Import_Ptr imp)
-    { return call_loader(load_path, ctx_path, pstate, imp, c_importers, true); };
+    {
+      return call_loader(load_path, ctx_path, pstate, imp, c_importers, true);
+    };
 
-  private:
-    bool call_loader(const std::string& load_path, const char* ctx_path, ParserState& pstate, Import_Ptr imp, std::vector<Sass_Importer_Entry> importers, bool only_one = true);
+    private:
+    bool call_loader(const std::string& load_path,
+                     const char* ctx_path,
+                     ParserState& pstate,
+                     Import_Ptr imp,
+                     std::vector<Sass_Importer_Entry> importers,
+                     bool only_one = true);
 
-  public:
+    public:
     const std::string CWD;
     struct Sass_Options& c_options;
     std::string entry_path;
@@ -62,9 +73,6 @@ namespace Sass {
 
     std::vector<std::string> plugin_paths; // relative paths to load plugins
     std::vector<std::string> include_paths; // lookup paths for includes
-
-
-
 
 
     void apply_custom_headers(Block_Obj root, const char* path, ParserState pstate);
@@ -95,10 +103,13 @@ namespace Sass {
     std::vector<Include> find_includes(const Importer& import);
     Include load_import(const Importer&, ParserState pstate);
 
-    Sass_Output_Style output_style() { return c_options.output_style; };
+    Sass_Output_Style output_style()
+    {
+      return c_options.output_style;
+    };
     std::vector<std::string> get_included_files(bool skip = false, size_t headers = 0);
 
-  private:
+    private:
     void collect_plugin_paths(const char* paths_str);
     void collect_plugin_paths(string_list* paths_array);
     void collect_include_paths(const char* paths_str);
@@ -112,35 +123,38 @@ namespace Sass {
     // void register_function(Signature sig, Native_Function f, size_t arity, Env* env);
     // void register_overload_stub(std::string name, Env* env);
 
-  public:
-    const std::string& cwd() { return CWD; };
+    public:
+    const std::string& cwd()
+    {
+      return CWD;
+    };
   };
 
-  class File_Context : public Context {
-  public:
-    File_Context(struct Sass_File_Context& ctx)
-    : Context(ctx)
-    { }
+  class File_Context : public Context
+  {
+    public:
+    File_Context(struct Sass_File_Context& ctx) : Context(ctx)
+    {
+    }
     virtual ~File_Context();
     virtual Block_Obj parse();
   };
 
-  class Data_Context : public Context {
-  public:
+  class Data_Context : public Context
+  {
+    public:
     char* source_c_str;
     char* srcmap_c_str;
-    Data_Context(struct Sass_Data_Context& ctx)
-    : Context(ctx)
+    Data_Context(struct Sass_Data_Context& ctx) : Context(ctx)
     {
-      source_c_str       = ctx.source_string;
-      srcmap_c_str       = ctx.srcmap_string;
+      source_c_str = ctx.source_string;
+      srcmap_c_str = ctx.srcmap_string;
       ctx.source_string = 0; // passed away
       ctx.srcmap_string = 0; // passed away
     }
     virtual ~Data_Context();
     virtual Block_Obj parse();
   };
-
 }
 
 #endif

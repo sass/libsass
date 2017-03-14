@@ -5,18 +5,19 @@
 #include "operation.hpp"
 #include "emitter.hpp"
 
-namespace Sass {
+namespace Sass
+{
   class Context;
 
-  class Inspect : public Operation_CRTP<void, Inspect>, public Emitter {
-  protected:
+  class Inspect : public Operation_CRTP<void, Inspect>, public Emitter
+  {
+    protected:
     // import all the class-specific methods and override as desired
     using Operation_CRTP<void, Inspect>::operator();
 
     void fallback_impl(AST_Node_Ptr n);
 
-  public:
-
+    public:
     Inspect(const Emitter& emi);
     virtual ~Inspect();
 
@@ -97,6 +98,5 @@ namespace Sass {
     // template <typename U>
     // void fallback(U x) { fallback_impl(reinterpret_cast<AST_Node_Ptr>(x)); }
   };
-
 }
 #endif

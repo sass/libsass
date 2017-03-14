@@ -5,9 +5,8 @@
 #include "node.hpp"
 #include "debug.hpp"
 
-namespace Sass {
-
-
+namespace Sass
+{
 
 
   /*
@@ -16,7 +15,8 @@ namespace Sass {
 
 
   /*
-    # Return a Node collection of all possible paths through the given Node collection of Node collections.
+    # Return a Node collection of all possible paths through the given Node collection of Node
+    collections.
     #
     # @param arrs [NodeCollection<NodeCollection<Node>>]
     # @return [NodeCollection<NodeCollection<Node>>]
@@ -32,15 +32,19 @@ namespace Sass {
 
 
   /*
-  This class is a default implementation of a Node comparator that can be passed to the lcs function below.
+  This class is a default implementation of a Node comparator that can be passed to the lcs function
+  below.
   It uses operator== for equality comparision. It then returns one if the Nodes are equal.
   */
-  class DefaultLcsComparator {
-  public:
-    bool operator()(const Node& one, const Node& two, Node& out) const {
+  class DefaultLcsComparator
+  {
+    public:
+    bool operator()(const Node& one, const Node& two, Node& out) const
+    {
       // TODO: Is this the correct C++ interpretation?
       // block ||= proc {|a, b| a == b && a}
-      if (one == two) {
+      if (one == two)
+      {
         out = one;
         return true;
       }
@@ -50,20 +54,23 @@ namespace Sass {
   };
 
 
-  typedef std::vector<std::vector<int> > LCSTable;
+  typedef std::vector<std::vector<int>> LCSTable;
 
 
   /*
   This is the equivalent of ruby's Sass::Util.lcs_backtrace.
 
   # Computes a single longest common subsequence for arrays x and y.
-  # Algorithm from http://en.wikipedia.org/wiki/Longest_common_subsequence_problem#Reading_out_an_LCS
+  # Algorithm from
+  http://en.wikipedia.org/wiki/Longest_common_subsequence_problem#Reading_out_an_LCS
   */
-  template<typename ComparatorType>
-  Node lcs_backtrace(const LCSTable& c, const Node& x, const Node& y, int i, int j, const ComparatorType& comparator) {
+  template <typename ComparatorType>
+  Node lcs_backtrace(const LCSTable& c, const Node& x, const Node& y, int i, int j, const ComparatorType& comparator)
+  {
     DEBUG_PRINTLN(LCS, "LCSBACK: X=" << x << " Y=" << y << " I=" << i << " J=" << j)
 
-    if (i == 0 || j == 0) {
+    if (i == 0 || j == 0)
+    {
       DEBUG_PRINTLN(LCS, "RETURNING EMPTY")
       return Node::createCollection();
     }
@@ -72,14 +79,16 @@ namespace Sass {
     NodeDeque& yChildren = *(y.collection());
 
     Node compareOut = Node::createNil();
-    if (comparator(xChildren[i], yChildren[j], compareOut)) {
+    if (comparator(xChildren[i], yChildren[j], compareOut))
+    {
       DEBUG_PRINTLN(LCS, "RETURNING AFTER ELEM COMPARE")
       Node result = lcs_backtrace(c, x, y, i - 1, j - 1, comparator);
       result.collection()->push_back(compareOut);
       return result;
     }
 
-    if (c[i][j - 1] > c[i - 1][j]) {
+    if (c[i][j - 1] > c[i - 1][j])
+    {
       DEBUG_PRINTLN(LCS, "RETURNING AFTER TABLE COMPARE")
       return lcs_backtrace(c, x, y, i, j - 1, comparator);
     }
@@ -93,10 +102,12 @@ namespace Sass {
   This is the equivalent of ruby's Sass::Util.lcs_table.
 
   # Calculates the memoization table for the Least Common Subsequence algorithm.
-  # Algorithm from http://en.wikipedia.org/wiki/Longest_common_subsequence_problem#Computing_the_length_of_the_LCS
+  # Algorithm from
+  http://en.wikipedia.org/wiki/Longest_common_subsequence_problem#Computing_the_length_of_the_LCS
   */
-  template<typename ComparatorType>
-  void lcs_table(const Node& x, const Node& y, const ComparatorType& comparator, LCSTable& out) {
+  template <typename ComparatorType>
+  void lcs_table(const Node& x, const Node& y, const ComparatorType& comparator, LCSTable& out)
+  {
     DEBUG_PRINTLN(LCS, "LCSTABLE: X=" << x << " Y=" << y)
 
     NodeDeque& xChildren = *(x.collection());
@@ -108,13 +119,18 @@ namespace Sass {
     // x.size.times {|i| c[i][0] = 0}
     // y.size.times {|j| c[0][j] = 0}
 
-    for (size_t i = 1; i < xChildren.size(); i++) {
-      for (size_t j = 1; j < yChildren.size(); j++) {
+    for (size_t i = 1; i < xChildren.size(); i++)
+    {
+      for (size_t j = 1; j < yChildren.size(); j++)
+      {
         Node compareOut = Node::createNil();
 
-        if (comparator(xChildren[i], yChildren[j], compareOut)) {
+        if (comparator(xChildren[i], yChildren[j], compareOut))
+        {
           c[i][j] = c[i - 1][j - 1] + 1;
-        } else {
+        }
+        else
+        {
           c[i][j] = std::max(c[i][j - 1], c[i - 1][j]);
         }
       }
@@ -138,8 +154,8 @@ namespace Sass {
 
   http://en.wikipedia.org/wiki/Longest_common_subsequence_problem
   */
-  template<typename ComparatorType>
-  Node lcs(Node& x, Node& y, const ComparatorType& comparator) {
+  template <typename ComparatorType> Node lcs(Node& x, Node& y, const ComparatorType& comparator)
+  {
     DEBUG_PRINTLN(LCS, "LCS: X=" << x << " Y=" << y)
 
     Node newX = Node::createCollection();
@@ -153,7 +169,8 @@ namespace Sass {
     LCSTable table;
     lcs_table(newX, newY, comparator, table);
 
-    return lcs_backtrace(table, newX, newY, static_cast<int>(newX.collection()->size()) - 1, static_cast<int>(newY.collection()->size()) - 1, comparator);
+    return lcs_backtrace(table, newX, newY, static_cast<int>(newX.collection()->size()) - 1,
+                         static_cast<int>(newY.collection()->size()) - 1, comparator);
   }
 
 
@@ -216,41 +233,49 @@ namespace Sass {
     end
 
   */
-  template<typename EnumType, typename KeyType, typename KeyFunctorType>
-  void group_by_to_a(std::vector<EnumType>& enumeration, KeyFunctorType& keyFunc, std::vector<std::pair<KeyType, std::vector<EnumType> > >& arr /*out*/) {
+  template <typename EnumType, typename KeyType, typename KeyFunctorType>
+  void group_by_to_a(std::vector<EnumType>& enumeration,
+                     KeyFunctorType& keyFunc,
+                     std::vector<std::pair<KeyType, std::vector<EnumType>>>& arr /*out*/)
+  {
 
     std::map<unsigned int, KeyType> order;
 
-    std::map<size_t, std::vector<EnumType> > grouped;
+    std::map<size_t, std::vector<EnumType>> grouped;
 
-    for (typename std::vector<EnumType>::iterator enumIter = enumeration.begin(), enumIterEnd = enumeration.end(); enumIter != enumIterEnd; enumIter++) {
+    for (typename std::vector<EnumType>::iterator enumIter = enumeration.begin(),
+                                                  enumIterEnd = enumeration.end();
+         enumIter != enumIterEnd; enumIter++)
+    {
       EnumType& e = *enumIter;
 
       KeyType key = keyFunc(e);
 
-      if (grouped.find(key->hash()) == grouped.end()) {
+      if (grouped.find(key->hash()) == grouped.end())
+      {
         order.insert(std::make_pair((unsigned int)order.size(), key));
 
         std::vector<EnumType> newCollection;
         newCollection.push_back(e);
         grouped.insert(std::make_pair(key->hash(), newCollection));
-      } else {
+      }
+      else
+      {
         std::vector<EnumType>& collection = grouped.at(key->hash());
         collection.push_back(e);
       }
     }
 
-    for (unsigned int index = 0; index < order.size(); index++) {
+    for (unsigned int index = 0; index < order.size(); index++)
+    {
       KeyType& key = order.at(index);
       std::vector<EnumType>& values = grouped.at(key->hash());
 
-      std::pair<KeyType, std::vector<EnumType> > grouping = std::make_pair(key, values);
+      std::pair<KeyType, std::vector<EnumType>> grouping = std::make_pair(key, values);
 
       arr.push_back(grouping);
     }
   }
-
-
 }
 
 #endif

@@ -9,10 +9,14 @@ using namespace Sass;
 Context ctx = Context::Data();
 
 Selector* selector(std::string src)
-{ return Parser::from_c_str(src.c_str(), ctx, "", Position()).parse_selector_list(); }
+{
+  return Parser::from_c_str(src.c_str(), ctx, "", Position()).parse_selector_list();
+}
 
 void spec(std::string sel)
-{ std::cout << sel << "\t::\t" << selector(sel + ";")->specificity() << std::endl; }
+{
+  std::cout << sel << "\t::\t" << selector(sel + ";")->specificity() << std::endl;
+}
 
 int main()
 {

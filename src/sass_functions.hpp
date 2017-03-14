@@ -6,16 +6,18 @@
 #include "functions.hpp"
 
 // Struct to hold custom function callback
-struct Sass_Function {
-  char*            signature;
+struct Sass_Function
+{
+  char* signature;
   Sass_Function_Fn function;
-  void*            cookie;
+  void* cookie;
 };
 
 // External import entry
-struct Sass_Import {
+struct Sass_Import
+{
   char* imp_path; // path as found in the import statement
-  char *abs_path; // path after importer has resolved it
+  char* abs_path; // path after importer has resolved it
   char* source;
   char* srcmap;
   // error handling
@@ -25,13 +27,15 @@ struct Sass_Import {
 };
 
 // External environments
-struct Sass_Env {
+struct Sass_Env
+{
   // links to parent frames
   Sass::Env* frame;
 };
 
 // External call entry
-struct Sass_Callee {
+struct Sass_Callee
+{
   const char* name;
   const char* path;
   size_t line;
@@ -41,10 +45,11 @@ struct Sass_Callee {
 };
 
 // Struct to hold importer callback
-struct Sass_Importer {
+struct Sass_Importer
+{
   Sass_Importer_Fn importer;
-  double           priority;
-  void*            cookie;
+  double priority;
+  void* cookie;
 };
 
 #endif

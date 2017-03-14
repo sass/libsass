@@ -5,11 +5,12 @@
 #include <map>
 #include "ast.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
   struct map_cmp_str
   {
-    bool operator()(char const *a, char const *b) const
+    bool operator()(char const* a, char const* b) const
     {
       return std::strcmp(a, b) < 0;
     }
@@ -168,7 +169,8 @@ namespace Sass {
     extern const char transparent[];
   }
 
-  namespace Colors {
+  namespace Colors
+  {
     extern const Color aliceblue;
     extern const Color antiquewhite;
     extern const Color cyan;
@@ -325,7 +327,6 @@ namespace Sass {
   const char* color_to_name(const int);
   const char* color_to_name(const Color&);
   const char* color_to_name(const double);
-
 }
 
 #endif

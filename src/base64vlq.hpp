@@ -3,16 +3,16 @@
 
 #include <string>
 
-namespace Sass {
+namespace Sass
+{
 
-  class Base64VLQ {
+  class Base64VLQ
+  {
 
-  public:
-
+    public:
     std::string encode(const int number) const;
 
-  private:
-
+    private:
     char base64_encode(const int number) const;
 
     int to_vlq_signed(const int number) const;
@@ -24,7 +24,6 @@ namespace Sass {
     static const int VLQ_BASE_MASK;
     static const int VLQ_CONTINUATION_BIT;
   };
-
 }
 
 #endif

@@ -10,31 +10,34 @@
 #include "subset_map.hpp"
 #include "ast_fwd_decl.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
   Node subweave(Node& one, Node& two);
 
-  class Extend : public Operation_CRTP<void, Extend> {
+  class Extend : public Operation_CRTP<void, Extend>
+  {
 
     Subset_Map& subset_map;
 
-    void fallback_impl(AST_Node_Ptr n) { }
+    void fallback_impl(AST_Node_Ptr n)
+    {
+    }
 
-  private:
+    private:
+    std::unordered_map<Selector_List_Obj, // key
+                       Selector_List_Obj, // value
+                       HashNodes, // hasher
+                       CompareNodes // compare
+                       >
+    memoizeList;
 
-    std::unordered_map<
-      Selector_List_Obj, // key
-      Selector_List_Obj, // value
-      HashNodes, // hasher
-      CompareNodes // compare
-    > memoizeList;
-
-    std::unordered_map<
-      Complex_Selector_Obj, // key
-      Node, // value
-      HashNodes, // hasher
-      CompareNodes // compare
-    > memoizeComplex;
+    std::unordered_map<Complex_Selector_Obj, // key
+                       Node, // value
+                       HashNodes, // hasher
+                       CompareNodes // compare
+                       >
+    memoizeComplex;
 
     /* this turned out to be too much overhead
        re-evaluate once we store an ast selector
@@ -53,20 +56,27 @@ namespace Sass {
     Node trim(Node& seqses, bool isReplace);
     Node weave(Node& path);
 
-  public:
-    Selector_List_Ptr extendSelectorList(Selector_List_Obj pSelectorList, bool isReplace, bool& extendedSomething, CompoundSelectorSet& seen);
-    Selector_List_Ptr extendSelectorList(Selector_List_Obj pSelectorList, bool isReplace = false) {
+    public:
+    Selector_List_Ptr extendSelectorList(Selector_List_Obj pSelectorList,
+                                         bool isReplace,
+                                         bool& extendedSomething,
+                                         CompoundSelectorSet& seen);
+    Selector_List_Ptr extendSelectorList(Selector_List_Obj pSelectorList, bool isReplace = false)
+    {
       bool extendedSomething = false;
       CompoundSelectorSet seen;
       return extendSelectorList(pSelectorList, isReplace, extendedSomething, seen);
     }
-    Selector_List_Ptr extendSelectorList(Selector_List_Obj pSelectorList, CompoundSelectorSet& seen) {
+    Selector_List_Ptr extendSelectorList(Selector_List_Obj pSelectorList, CompoundSelectorSet& seen)
+    {
       bool isReplace = false;
       bool extendedSomething = false;
       return extendSelectorList(pSelectorList, isReplace, extendedSomething, seen);
     }
     Extend(Subset_Map&);
-    ~Extend() { }
+    ~Extend()
+    {
+    }
 
     void operator()(Block_Ptr);
     void operator()(Ruleset_Ptr);
@@ -74,10 +84,11 @@ namespace Sass {
     void operator()(Media_Block_Ptr);
     void operator()(Directive_Ptr);
 
-    template <typename U>
-    void fallback(U x) { return fallback_impl(x); }
+    template <typename U> void fallback(U x)
+    {
+      return fallback_impl(x);
+    }
   };
-
 }
 
 #endif

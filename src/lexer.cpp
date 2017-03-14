@@ -6,24 +6,50 @@
 #include "constants.hpp"
 
 
-namespace Sass {
+namespace Sass
+{
   using namespace Constants;
 
-  namespace Prelexer {
+  namespace Prelexer
+  {
 
     //####################################
     // BASIC CHARACTER MATCHERS
     //####################################
 
     // Match standard control chars
-    const char* kwd_at(const char* src) { return exactly<'@'>(src); }
-    const char* kwd_dot(const char* src) { return exactly<'.'>(src); }
-    const char* kwd_comma(const char* src) { return exactly<','>(src); };
-    const char* kwd_colon(const char* src) { return exactly<':'>(src); };
-    const char* kwd_star(const char* src) { return exactly<'*'>(src); };
-    const char* kwd_plus(const char* src) { return exactly<'+'>(src); };
-    const char* kwd_minus(const char* src) { return exactly<'-'>(src); };
-    const char* kwd_slash(const char* src) { return exactly<'/'>(src); };
+    const char* kwd_at(const char* src)
+    {
+      return exactly<'@'>(src);
+    }
+    const char* kwd_dot(const char* src)
+    {
+      return exactly<'.'>(src);
+    }
+    const char* kwd_comma(const char* src)
+    {
+      return exactly<','>(src);
+    };
+    const char* kwd_colon(const char* src)
+    {
+      return exactly<':'>(src);
+    };
+    const char* kwd_star(const char* src)
+    {
+      return exactly<'*'>(src);
+    };
+    const char* kwd_plus(const char* src)
+    {
+      return exactly<'+'>(src);
+    };
+    const char* kwd_minus(const char* src)
+    {
+      return exactly<'-'>(src);
+    };
+    const char* kwd_slash(const char* src)
+    {
+      return exactly<'/'>(src);
+    };
 
     //####################################
     // implement some function that do exist in the standard
@@ -33,8 +59,7 @@ namespace Sass {
 
     bool is_alpha(const char& chr)
     {
-      return unsigned(chr - 'A') <= 'Z' - 'A' ||
-             unsigned(chr - 'a') <= 'z' - 'a';
+      return unsigned(chr - 'A') <= 'Z' - 'A' || unsigned(chr - 'a') <= 'z' - 'a';
     }
 
     bool is_space(const char& chr)
@@ -52,8 +77,7 @@ namespace Sass {
     bool is_xdigit(const char& chr)
     {
       // adapted the technique from is_alpha
-      return unsigned(chr - '0') <= '9' - '0' ||
-             unsigned(chr - 'a') <= 'f' - 'a' ||
+      return unsigned(chr - '0') <= '9' - '0' || unsigned(chr - 'a') <= 'f' - 'a' ||
              unsigned(chr - 'A') <= 'F' - 'A';
     }
 
@@ -79,19 +103,15 @@ namespace Sass {
     // but with specific ranges (copied from Ruby Sass)
     bool is_nonascii(const char& chr)
     {
-      return (
-        (unsigned(chr) >= 128 && unsigned(chr) <= 15572911) ||
-        (unsigned(chr) >= 15630464 && unsigned(chr) <= 15712189) ||
-        (unsigned(chr) >= 4036001920)
-      );
+      return ((unsigned(chr) >= 128 && unsigned(chr) <= 15572911) ||
+              (unsigned(chr) >= 15630464 && unsigned(chr) <= 15712189) || (unsigned(chr) >= 4036001920));
     }
 
     // check if char is within a reduced ascii range
     // valid in a uri (copied from Ruby Sass)
     bool is_uri_character(const char& chr)
     {
-      return (unsigned(chr) > 41 && unsigned(chr) < 127) ||
-             unsigned(chr) == ':' || unsigned(chr) == '/';
+      return (unsigned(chr) > 41 && unsigned(chr) < 127) || unsigned(chr) == ':' || unsigned(chr) == '/';
     }
 
     // check if char is within a reduced ascii range
@@ -113,33 +133,90 @@ namespace Sass {
     //####################################
 
     // create matchers that advance the position
-    const char* space(const char* src) { return is_space(*src) ? src + 1 : 0; }
-    const char* alpha(const char* src) { return is_alpha(*src) ? src + 1 : 0; }
-    const char* unicode(const char* src) { return is_unicode(*src) ? src + 1 : 0; }
-    const char* nonascii(const char* src) { return is_nonascii(*src) ? src + 1 : 0; }
-    const char* digit(const char* src) { return is_digit(*src) ? src + 1 : 0; }
-    const char* xdigit(const char* src) { return is_xdigit(*src) ? src + 1 : 0; }
-    const char* alnum(const char* src) { return is_alnum(*src) ? src + 1 : 0; }
-    const char* punct(const char* src) { return is_punct(*src) ? src + 1 : 0; }
-    const char* hyphen(const char* src) { return *src && *src == '-' ? src + 1 : 0; }
-    const char* character(const char* src) { return is_character(*src) ? src + 1 : 0; }
-    const char* uri_character(const char* src) { return is_uri_character(*src) ? src + 1 : 0; }
-    const char* escapable_character(const char* src) { return is_escapable_character(*src) ? src + 1 : 0; }
+    const char* space(const char* src)
+    {
+      return is_space(*src) ? src + 1 : 0;
+    }
+    const char* alpha(const char* src)
+    {
+      return is_alpha(*src) ? src + 1 : 0;
+    }
+    const char* unicode(const char* src)
+    {
+      return is_unicode(*src) ? src + 1 : 0;
+    }
+    const char* nonascii(const char* src)
+    {
+      return is_nonascii(*src) ? src + 1 : 0;
+    }
+    const char* digit(const char* src)
+    {
+      return is_digit(*src) ? src + 1 : 0;
+    }
+    const char* xdigit(const char* src)
+    {
+      return is_xdigit(*src) ? src + 1 : 0;
+    }
+    const char* alnum(const char* src)
+    {
+      return is_alnum(*src) ? src + 1 : 0;
+    }
+    const char* punct(const char* src)
+    {
+      return is_punct(*src) ? src + 1 : 0;
+    }
+    const char* hyphen(const char* src)
+    {
+      return *src && *src == '-' ? src + 1 : 0;
+    }
+    const char* character(const char* src)
+    {
+      return is_character(*src) ? src + 1 : 0;
+    }
+    const char* uri_character(const char* src)
+    {
+      return is_uri_character(*src) ? src + 1 : 0;
+    }
+    const char* escapable_character(const char* src)
+    {
+      return is_escapable_character(*src) ? src + 1 : 0;
+    }
 
     // Match multiple ctype characters.
-    const char* spaces(const char* src) { return one_plus<space>(src); }
-    const char* digits(const char* src) { return one_plus<digit>(src); }
-    const char* hyphens(const char* src) { return one_plus<hyphen>(src); }
+    const char* spaces(const char* src)
+    {
+      return one_plus<space>(src);
+    }
+    const char* digits(const char* src)
+    {
+      return one_plus<digit>(src);
+    }
+    const char* hyphens(const char* src)
+    {
+      return one_plus<hyphen>(src);
+    }
 
     // Whitespace handling.
-    const char* no_spaces(const char* src) { return negate< space >(src); }
-    const char* optional_spaces(const char* src) { return zero_plus< space >(src); }
+    const char* no_spaces(const char* src)
+    {
+      return negate<space>(src);
+    }
+    const char* optional_spaces(const char* src)
+    {
+      return zero_plus<space>(src);
+    }
 
     // Match any single character.
-    const char* any_char(const char* src) { return *src ? src + 1 : src; }
+    const char* any_char(const char* src)
+    {
+      return *src ? src + 1 : src;
+    }
 
     // Match word boundary (zero-width lookahead).
-    const char* word_boundary(const char* src) { return is_character(*src) || *src == '#' ? 0 : src; }
+    const char* word_boundary(const char* src)
+    {
+      return is_character(*src) || *src == '#' ? 0 : src;
+    }
 
     // Match linefeed /(?:\n|\r\n?)/
     const char* re_linebreak(const char* src)
@@ -167,6 +244,5 @@ namespace Sass {
       // end of file or unix linefeed return here
       return *src == 0 ? src : 0;
     }
-
   }
 }

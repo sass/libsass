@@ -6,7 +6,8 @@
 #include "ast_fwd_decl.hpp"
 
 // sass config options structure
-struct Sass_Options : Sass_Output_Options {
+struct Sass_Options : Sass_Output_Options
+{
 
   // embed sourceMappingUrl as data uri
   bool source_map_embed;
@@ -64,7 +65,6 @@ struct Sass_Options : Sass_Output_Options {
 
   // List of custom headers
   Sass_Importer_List c_headers;
-
 };
 
 
@@ -94,28 +94,28 @@ struct Sass_Context : Sass_Options
 
   // report imported files
   char** included_files;
-
 };
 
 // struct for file compilation
-struct Sass_File_Context : Sass_Context {
+struct Sass_File_Context : Sass_Context
+{
 
   // no additional fields required
   // input_path is already on options
-
 };
 
 // struct for data compilation
-struct Sass_Data_Context : Sass_Context {
+struct Sass_Data_Context : Sass_Context
+{
 
   // provided source string
   char* source_string;
   char* srcmap_string;
-
 };
 
 // link c and cpp context
-struct Sass_Compiler {
+struct Sass_Compiler
+{
   // progress status
   Sass_Compiler_State state;
   // original c context

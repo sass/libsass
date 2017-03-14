@@ -14,31 +14,31 @@
 // aplies to MSVC and MinGW
 #ifdef _WIN32
 // we do not want the ERROR macro
-# define NOGDI
+#define NOGDI
 // we do not want the min/max macro
-# define NOMINMAX
+#define NOMINMAX
 // we do not want the IN/OUT macro
-# define _NO_W32_PSEUDO_MODIFIERS
+#define _NO_W32_PSEUDO_MODIFIERS
 #endif
 
 
 // should we be case insensitive
 // when dealing with files or paths
 #ifndef FS_CASE_SENSITIVE
-# ifdef _WIN32
-#  define FS_CASE_SENSITIVE 0
-# else
-#  define FS_CASE_SENSITIVE 1
-# endif
+#ifdef _WIN32
+#define FS_CASE_SENSITIVE 0
+#else
+#define FS_CASE_SENSITIVE 1
+#endif
 #endif
 
 // path separation char
 #ifndef PATH_SEP
-# ifdef _WIN32
-#  define PATH_SEP ';'
-# else
-#  define PATH_SEP ':'
-# endif
+#ifdef _WIN32
+#define PATH_SEP ';'
+#else
+#define PATH_SEP ':'
+#endif
 #endif
 
 
@@ -49,7 +49,8 @@
 #include <string>
 
 // output behaviours
-namespace Sass {
+namespace Sass
+{
 
   // create some C++ aliases for the most used options
   const static Sass_Output_Style NESTED = SASS_STYLE_NESTED;
@@ -63,11 +64,11 @@ namespace Sass {
   // helper to aid dreaded MSVC debug mode
   // see implementation for more details
   char* sass_copy_string(std::string str);
-
 }
 
 // input behaviours
-enum Sass_Input_Style {
+enum Sass_Input_Style
+{
   SASS_CONTEXT_NULL,
   SASS_CONTEXT_FILE,
   SASS_CONTEXT_DATA,
@@ -75,13 +76,15 @@ enum Sass_Input_Style {
 };
 
 // simple linked list
-struct string_list {
+struct string_list
+{
   string_list* next;
   char* string;
 };
 
 // sass config options structure
-struct Sass_Inspect_Options {
+struct Sass_Inspect_Options
+{
 
   // Output style for the generated css code
   // A value from above SASS_STYLE_* constants
@@ -91,15 +94,15 @@ struct Sass_Inspect_Options {
   int precision;
 
   // initialization list (constructor with defaults)
-  Sass_Inspect_Options(Sass_Output_Style style = Sass::NESTED,
-                       int precision = 5)
+  Sass_Inspect_Options(Sass_Output_Style style = Sass::NESTED, int precision = 5)
   : output_style(style), precision(precision)
-  { }
-
+  {
+  }
 };
 
 // sass config options structure
-struct Sass_Output_Options : Sass_Inspect_Options {
+struct Sass_Output_Options : Sass_Inspect_Options
+{
 
   // String to be used for indentation
   const char* indent;
@@ -115,10 +118,9 @@ struct Sass_Output_Options : Sass_Inspect_Options {
                       const char* indent = "  ",
                       const char* linefeed = "\n",
                       bool source_comments = false)
-  : Sass_Inspect_Options(opt),
-    indent(indent), linefeed(linefeed),
-    source_comments(source_comments)
-  { }
+  : Sass_Inspect_Options(opt), indent(indent), linefeed(linefeed), source_comments(source_comments)
+  {
+  }
 
   // initialization list (constructor with defaults)
   Sass_Output_Options(Sass_Output_Style style = Sass::NESTED,
@@ -126,11 +128,10 @@ struct Sass_Output_Options : Sass_Inspect_Options {
                       const char* indent = "  ",
                       const char* linefeed = "\n",
                       bool source_comments = false)
-  : Sass_Inspect_Options(style, precision),
-    indent(indent), linefeed(linefeed),
+  : Sass_Inspect_Options(style, precision), indent(indent), linefeed(linefeed),
     source_comments(source_comments)
-  { }
-
+  {
+  }
 };
 
 #endif

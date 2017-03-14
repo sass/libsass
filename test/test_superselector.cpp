@@ -8,31 +8,25 @@ using namespace Sass;
 Context ctx = Context(Context::Data());
 
 Compound_Selector* compound_selector(std::string src)
-{ return Parser::from_c_str(src.c_str(), ctx, "", Position()).parse_compound_selector(); }
+{
+  return Parser::from_c_str(src.c_str(), ctx, "", Position()).parse_compound_selector();
+}
 
 Complex_Selector* complex_selector(std::string src)
-{ return Parser::from_c_str(src.c_str(), ctx, "", Position()).parse_complex_selector(false); }
+{
+  return Parser::from_c_str(src.c_str(), ctx, "", Position()).parse_complex_selector(false);
+}
 
 void check_compound(std::string s1, std::string s2)
 {
-  std::cout << "Is "
-       << s1
-       << " a superselector of "
-       << s2
-       << "?\t"
-       << compound_selector(s1 + ";")->is_superselector_of(compound_selector(s2 + ";"))
-       << std::endl;
+  std::cout << "Is " << s1 << " a superselector of " << s2 << "?\t"
+            << compound_selector(s1 + ";")->is_superselector_of(compound_selector(s2 + ";")) << std::endl;
 }
 
 void check_complex(std::string s1, std::string s2)
 {
-  std::cout << "Is "
-       << s1
-       << " a superselector of "
-       << s2
-       << "?\t"
-       << complex_selector(s1 + ";")->is_superselector_of(complex_selector(s2 + ";"))
-       << std::endl;
+  std::cout << "Is " << s1 << " a superselector of " << s2 << "?\t"
+            << complex_selector(s1 + ";")->is_superselector_of(complex_selector(s2 + ";")) << std::endl;
 }
 
 int main()
@@ -65,5 +59,3 @@ int main()
 
   return 0;
 }
-
-

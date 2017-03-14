@@ -6,7 +6,8 @@
 // gcc: g++ -shared plugin.cpp -o plugin.so -fPIC -Llib -lsass
 // mingw: g++ -shared plugin.cpp -o plugin.dll -Llib -lsass
 
-extern "C" const char* ADDCALL libsass_get_version() {
+extern "C" const char* ADDCALL libsass_get_version()
+{
   return libsass_version();
 }
 
@@ -24,8 +25,7 @@ union Sass_Value* custom_function(const union Sass_Value* s_args, Sass_Function_
 extern "C" Sass_Function_List ADDCALL libsass_load_functions()
 {
   // allocate a custom function caller
-  Sass_Function_Entry c_func =
-    sass_make_function("foo()", custom_function, (void*)42);
+  Sass_Function_Entry c_func = sass_make_function("foo()", custom_function, (void*)42);
   // create list of all custom functions
   Sass_Function_List fn_list = sass_make_function_list(1);
   // put the only function in this plugin to the list
@@ -49,8 +49,7 @@ Sass_Import_List custom_importer(const char* cur_path, Sass_Importer_Entry cb, s
 extern "C" Sass_Importer_List ADDCALL libsass_load_importers()
 {
   // allocate a custom function caller
-  Sass_Importer_Entry c_imp =
-    sass_make_importer(custom_importer, - 99, (void*)42);
+  Sass_Importer_Entry c_imp = sass_make_importer(custom_importer, -99, (void*)42);
   // create list of all custom functions
   Sass_Importer_List imp_list = sass_make_importer_list(1);
   // put the only function in this plugin to the list

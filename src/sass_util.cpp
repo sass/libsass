@@ -1,7 +1,8 @@
 #include "sass.hpp"
 #include "node.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
 
   /*
@@ -23,7 +24,8 @@ namespace Sass {
    should be able to drop it into ruby 3.2.19 and get the same results from ruby sass.
 
     def paths(arrs)
-        // I changed the inject and maps to an iterative approach to make it easier to implement in C++
+        // I changed the inject and maps to an iterative approach to make it easier to implement in
+   C++
       loopStart = [[]]
 
       for arr in arrs do
@@ -37,25 +39,30 @@ namespace Sass {
       end
     end
   */
-  Node paths(const Node& arrs) {
+  Node paths(const Node& arrs)
+  {
 
     Node loopStart = Node::createCollection();
     loopStart.collection()->push_back(Node::createCollection());
 
     for (NodeDeque::iterator arrsIter = arrs.collection()->begin(), arrsEndIter = arrs.collection()->end();
-    	arrsIter != arrsEndIter; ++arrsIter) {
+         arrsIter != arrsEndIter; ++arrsIter)
+    {
 
       Node& arr = *arrsIter;
 
       Node permutations = Node::createCollection();
 
       for (NodeDeque::iterator arrIter = arr.collection()->begin(), arrIterEnd = arr.collection()->end();
-      	arrIter != arrIterEnd; ++arrIter) {
+           arrIter != arrIterEnd; ++arrIter)
+      {
 
         Node& e = *arrIter;
 
-        for (NodeDeque::iterator loopStartIter = loopStart.collection()->begin(), loopStartIterEnd = loopStart.collection()->end();
-          loopStartIter != loopStartIterEnd; ++loopStartIter) {
+        for (NodeDeque::iterator loopStartIter = loopStart.collection()->begin(),
+                                 loopStartIterEnd = loopStart.collection()->end();
+             loopStartIter != loopStartIterEnd; ++loopStartIter)
+        {
 
           Node& path = *loopStartIter;
 
@@ -108,8 +115,10 @@ namespace Sass {
     return flattened
   end
   */
-  Node flatten(Node& arr, int n) {
-    if (n != -1 && n == 0) {
+  Node flatten(Node& arr, int n)
+  {
+    if (n != -1 && n == 0)
+    {
       return arr;
     }
 
@@ -117,30 +126,36 @@ namespace Sass {
     if (arr.got_line_feed) flattened.got_line_feed = true;
 
     for (NodeDeque::iterator iter = arr.collection()->begin(), iterEnd = arr.collection()->end();
-    	iter != iterEnd; iter++) {
-    	Node& e = *iter;
+         iter != iterEnd; iter++)
+    {
+      Node& e = *iter;
 
       // e has the lf set
-      if (e.isCollection()) {
+      if (e.isCollection())
+      {
 
-      	// e.collection().got_line_feed = e.got_line_feed;
-      	Node recurseFlattened = flatten(e, n - 1);
+        // e.collection().got_line_feed = e.got_line_feed;
+        Node recurseFlattened = flatten(e, n - 1);
 
-      	if(e.got_line_feed) {
-      		 flattened.got_line_feed = e.got_line_feed;
-      	  recurseFlattened.got_line_feed = e.got_line_feed;
-      	}
+        if (e.got_line_feed)
+        {
+          flattened.got_line_feed = e.got_line_feed;
+          recurseFlattened.got_line_feed = e.got_line_feed;
+        }
 
-      	for(auto i : (*recurseFlattened.collection())) {
-          if (recurseFlattened.got_line_feed) {
+        for (auto i : (*recurseFlattened.collection()))
+        {
+          if (recurseFlattened.got_line_feed)
+          {
 
             i.got_line_feed = true;
           }
           flattened.collection()->push_back(i);
-      	}
-
-      } else {
-      	flattened.collection()->push_back(e);
+        }
+      }
+      else
+      {
+        flattened.collection()->push_back(e);
       }
     }
 

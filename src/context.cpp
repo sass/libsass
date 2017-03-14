@@ -30,13 +30,16 @@
 #include "prelexer.hpp"
 #include "emitter.hpp"
 
-namespace Sass {
+namespace Sass
+{
   using namespace Constants;
   using namespace File;
   using namespace Sass;
 
-  inline bool sort_importers (const Sass_Importer_Entry& i, const Sass_Importer_Entry& j)
-  { return sass_importer_get_priority(i) > sass_importer_get_priority(j); }
+  inline bool sort_importers(const Sass_Importer_Entry& i, const Sass_Importer_Entry& j)
+  {
+    return sass_importer_get_priority(i) > sass_importer_get_priority(j);
+  }
 
   static std::string safe_input(const char* in_path)
   {
@@ -50,7 +53,8 @@ namespace Sass {
   {
     std::string safe_path(out_path ? out_path : "");
     // maybe we can extract an output path from input path
-    if (safe_path == "" && input_path != "") {
+    if (safe_path == "" && input_path != "")
+    {
       int lastindex = static_cast<int>(input_path.find_last_of("."));
       return (lastindex > -1 ? input_path.substr(0, lastindex) : input_path) + ".css";
     }
@@ -60,37 +64,26 @@ namespace Sass {
   }
 
   Context::Context(struct Sass_Context& c_ctx)
-  : CWD(File::get_cwd()),
-    c_options(c_ctx),
-    entry_path(""),
-    head_imports(0),
-    plugins(),
-    emitter(c_options),
+  : CWD(File::get_cwd()), c_options(c_ctx), entry_path(""), head_imports(0), plugins(), emitter(c_options),
 
-    strings(),
-    resources(),
-    sheets(),
-    subset_map(),
-    import_stack(),
-    callee_stack(),
-    c_compiler(NULL),
+    strings(), resources(), sheets(), subset_map(), import_stack(), callee_stack(), c_compiler(NULL),
 
-    c_headers               (std::vector<Sass_Importer_Entry>()),
-    c_importers             (std::vector<Sass_Importer_Entry>()),
-    c_functions             (std::vector<Sass_Function_Entry>()),
+    c_headers(std::vector<Sass_Importer_Entry>()), c_importers(std::vector<Sass_Importer_Entry>()),
+    c_functions(std::vector<Sass_Function_Entry>()),
 
-    indent                  (safe_str(c_options.indent, "  ")),
-    linefeed                (safe_str(c_options.linefeed, "\n")),
+    indent(safe_str(c_options.indent, "  ")), linefeed(safe_str(c_options.linefeed, "\n")),
 
-    input_path              (make_canonical_path(safe_input(c_options.input_path))),
-    output_path             (make_canonical_path(safe_output(c_options.output_path, input_path))),
-    source_map_file         (make_canonical_path(safe_str(c_options.source_map_file, ""))),
-    source_map_root         (make_canonical_path(safe_str(c_options.source_map_root, "")))
+    input_path(make_canonical_path(safe_input(c_options.input_path))),
+    output_path(make_canonical_path(safe_output(c_options.output_path, input_path))),
+    source_map_file(make_canonical_path(safe_str(c_options.source_map_file, ""))),
+    source_map_root(make_canonical_path(safe_str(c_options.source_map_root, "")))
 
   {
 
-    // Sass 3.4: The current working directory will no longer be placed onto the Sass load path by default.
-    // If you need the current working directory to be available, set SASS_PATH=. in your shell's environment.
+    // Sass 3.4: The current working directory will no longer be placed onto the Sass load path by
+    // default.
+    // If you need the current working directory to be available, set SASS_PATH=. in your shell's
+    // environment.
     // include_paths.push_back(CWD);
 
     // collect more paths from different options
@@ -100,17 +93,20 @@ namespace Sass {
     collect_plugin_paths(c_options.plugin_paths);
 
     // load plugins and register custom behaviors
-    for(auto plug : plugin_paths) plugins.load_plugins(plug);
-    for(auto fn : plugins.get_headers()) c_headers.push_back(fn);
-    for(auto fn : plugins.get_importers()) c_importers.push_back(fn);
-    for(auto fn : plugins.get_functions()) c_functions.push_back(fn);
+    for (auto plug : plugin_paths)
+      plugins.load_plugins(plug);
+    for (auto fn : plugins.get_headers())
+      c_headers.push_back(fn);
+    for (auto fn : plugins.get_importers())
+      c_importers.push_back(fn);
+    for (auto fn : plugins.get_functions())
+      c_functions.push_back(fn);
 
     // sort the items by priority (lowest first)
-    sort (c_headers.begin(), c_headers.end(), sort_importers);
-    sort (c_importers.begin(), c_importers.end(), sort_importers);
+    sort(c_headers.begin(), c_headers.end(), sort_importers);
+    sort(c_importers.begin(), c_importers.end(), sort_importers);
 
     emitter.set_filename(abs2rel(output_path, source_map_file, CWD));
-
   }
 
   void Context::add_c_function(Sass_Function_Entry function)
@@ -121,33 +117,37 @@ namespace Sass {
   {
     c_headers.push_back(header);
     // need to sort the array afterwards (no big deal)
-    sort (c_headers.begin(), c_headers.end(), sort_importers);
+    sort(c_headers.begin(), c_headers.end(), sort_importers);
   }
   void Context::add_c_importer(Sass_Importer_Entry importer)
   {
     c_importers.push_back(importer);
     // need to sort the array afterwards (no big deal)
-    sort (c_importers.begin(), c_importers.end(), sort_importers);
+    sort(c_importers.begin(), c_importers.end(), sort_importers);
   }
 
   Context::~Context()
   {
     // resources were allocated by strdup or malloc
-    for (size_t i = 0; i < resources.size(); ++i) {
+    for (size_t i = 0; i < resources.size(); ++i)
+    {
       free(resources[i].contents);
       free(resources[i].srcmap);
     }
     // free all strings we kept alive during compiler execution
-    for (size_t n = 0; n < strings.size(); ++n) free(strings[n]);
+    for (size_t n = 0; n < strings.size(); ++n)
+      free(strings[n]);
     // everything that gets put into sources will be freed by us
     // this shouldn't have anything in it anyway!?
-    for (size_t m = 0; m < import_stack.size(); ++m) {
+    for (size_t m = 0; m < import_stack.size(); ++m)
+    {
       sass_import_take_source(import_stack[m]);
       sass_import_take_srcmap(import_stack[m]);
       sass_delete_import(import_stack[m]);
     }
     // clear inner structures (vectors) and input source
-    resources.clear(); import_stack.clear();
+    resources.clear();
+    import_stack.clear();
     subset_map.clear(), sheets.clear();
   }
 
@@ -166,13 +166,16 @@ namespace Sass {
 
   void Context::collect_include_paths(const char* paths_str)
   {
-    if (paths_str) {
+    if (paths_str)
+    {
       const char* beg = paths_str;
       const char* end = Prelexer::find_first<PATH_SEP>(beg);
 
-      while (end) {
+      while (end)
+      {
         std::string path(beg, end - beg);
-        if (!path.empty()) {
+        if (!path.empty())
+        {
           if (*path.rbegin() != '/') path += '/';
           include_paths.push_back(path);
         }
@@ -181,7 +184,8 @@ namespace Sass {
       }
 
       std::string path(beg);
-      if (!path.empty()) {
+      if (!path.empty())
+      {
         if (*path.rbegin() != '/') path += '/';
         include_paths.push_back(path);
       }
@@ -199,13 +203,16 @@ namespace Sass {
 
   void Context::collect_plugin_paths(const char* paths_str)
   {
-    if (paths_str) {
+    if (paths_str)
+    {
       const char* beg = paths_str;
       const char* end = Prelexer::find_first<PATH_SEP>(beg);
 
-      while (end) {
+      while (end)
+      {
         std::string path(beg, end - beg);
-        if (!path.empty()) {
+        if (!path.empty())
+        {
           if (*path.rbegin() != '/') path += '/';
           plugin_paths.push_back(path);
         }
@@ -214,7 +221,8 @@ namespace Sass {
       }
 
       std::string path(beg);
-      if (!path.empty()) {
+      if (!path.empty())
+      {
         if (*path.rbegin() != '/') path += '/';
         plugin_paths.push_back(path);
       }
@@ -279,12 +287,8 @@ namespace Sass {
     srcmap_links.push_back(abs2rel(inc.abs_path, source_map_file, CWD));
 
     // get pointer to the loaded content
-    Sass_Import_Entry import = sass_make_import(
-      inc.imp_path.c_str(),
-      inc.abs_path.c_str(),
-      res.contents,
-      res.srcmap
-    );
+    Sass_Import_Entry import =
+    sass_make_import(inc.imp_path.c_str(), inc.abs_path.c_str(), res.contents, res.srcmap);
     // add the entry to the stack
     import_stack.push_back(import);
 
@@ -297,13 +301,16 @@ namespace Sass {
     ParserState pstate(strings.back(), contents, idx);
 
     // check existing import stack for possible recursion
-    for (size_t i = 0; i < import_stack.size() - 2; ++i) {
+    for (size_t i = 0; i < import_stack.size() - 2; ++i)
+    {
       auto parent = import_stack[i];
-      if (std::strcmp(parent->abs_path, import->abs_path) == 0) {
+      if (std::strcmp(parent->abs_path, import->abs_path) == 0)
+      {
         std::string stack("An @import loop has been found:");
-        for (size_t n = 1; n < i + 2; ++n) {
-          stack += "\n    " + std::string(import_stack[n]->imp_path) +
-            " imports " + std::string(import_stack[n+1]->imp_path);
+        for (size_t n = 1; n < i + 2; ++n)
+        {
+          stack += "\n    " + std::string(import_stack[n]->imp_path) + " imports " +
+                   std::string(import_stack[n + 1]->imp_path);
         }
         // implement error throw directly until we
         // decided how to handle full stack traces
@@ -325,11 +332,9 @@ namespace Sass {
     // remove current stack frame
     import_stack.pop_back();
     // create key/value pair for ast node
-    std::pair<const std::string, StyleSheet>
-      ast_pair(inc.abs_path, { res, root });
+    std::pair<const std::string, StyleSheet> ast_pair(inc.abs_path, { res, root });
     // register resulting resource
     sheets.insert(ast_pair);
-
   }
 
   // Add a new import to the context (called from `import_url`)
@@ -341,25 +346,33 @@ namespace Sass {
     const std::vector<Include> resolved(find_includes(imp));
 
     // error nicely on ambiguous imp_path
-    if (resolved.size() > 1) {
+    if (resolved.size() > 1)
+    {
       std::stringstream msg_stream;
       msg_stream << "It's not clear which file to import for ";
-      msg_stream << "'@import \"" << imp.imp_path << "\"'." << "\n";
-      msg_stream << "Candidates:" << "\n";
+      msg_stream << "'@import \"" << imp.imp_path << "\"'."
+                 << "\n";
+      msg_stream << "Candidates:"
+                 << "\n";
       for (size_t i = 0, L = resolved.size(); i < L; ++i)
-      { msg_stream << "  " << resolved[i].imp_path << "\n"; }
-      msg_stream << "Please delete or rename all but one of these files." << "\n";
+      {
+        msg_stream << "  " << resolved[i].imp_path << "\n";
+      }
+      msg_stream << "Please delete or rename all but one of these files."
+                 << "\n";
       error(msg_stream.str(), pstate);
     }
 
     // process the resolved entry
-    else if (resolved.size() == 1) {
+    else if (resolved.size() == 1)
+    {
       bool use_cache = c_importers.size() == 0;
       // use cache for the resource loading
       if (use_cache && sheets.count(resolved[0].abs_path)) return resolved[0];
       // try to read the content of the resolved file entry
       // the memory buffer returned must be freed by us!
-      if (char* contents = read_file(resolved[0].abs_path)) {
+      if (char* contents = read_file(resolved[0].abs_path))
+      {
         // register the newly resolved file resource
         register_resource(resolved[0], { contents, 0 }, &pstate);
         // return resolved entry
@@ -369,17 +382,18 @@ namespace Sass {
 
     // nothing found
     return { imp, "" };
-
   }
 
-  void Context::import_url (Import_Ptr imp, std::string load_path, const std::string& ctx_path) {
+  void Context::import_url(Import_Ptr imp, std::string load_path, const std::string& ctx_path)
+  {
 
     ParserState pstate(imp->pstate());
     std::string imp_path(unquote(load_path));
     std::string protocol("file");
 
     using namespace Prelexer;
-    if (const char* proto = sequence< identifier, exactly<':'>, exactly<'/'>, exactly<'/'> >(imp_path.c_str())) {
+    if (const char* proto = sequence<identifier, exactly<':'>, exactly<'/'>, exactly<'/'>>(imp_path.c_str()))
+    {
 
       protocol = std::string(imp_path.c_str(), proto - 3);
       // if (protocol.compare("file") && true) { }
@@ -387,10 +401,12 @@ namespace Sass {
 
     // add urls (protocol other than file) and urls without procotol to `urls` member
     // ToDo: if ctx_path is already a file resource, we should not add it here?
-    if (imp->import_queries() || protocol != "file" || imp_path.substr(0, 2) == "//") {
+    if (imp->import_queries() || protocol != "file" || imp_path.substr(0, 2) == "//")
+    {
       imp->urls().push_back(SASS_MEMORY_NEW(String_Quoted, imp->pstate(), load_path));
     }
-    else if (imp_path.length() > 4 && imp_path.substr(imp_path.length() - 4, 4) == ".css") {
+    else if (imp_path.length() > 4 && imp_path.substr(imp_path.length() - 4, 4) == ".css")
+    {
       String_Constant_Ptr loc = SASS_MEMORY_NEW(String_Constant, pstate, unquote(load_path));
       Argument_Obj loc_arg = SASS_MEMORY_NEW(Argument, pstate, loc);
       Arguments_Obj loc_args = SASS_MEMORY_NEW(Arguments, pstate);
@@ -398,39 +414,49 @@ namespace Sass {
       Function_Call_Ptr new_url = SASS_MEMORY_NEW(Function_Call, pstate, "url", loc_args);
       imp->urls().push_back(new_url);
     }
-    else {
+    else
+    {
       const Importer importer(imp_path, ctx_path);
       Include include(load_import(importer, pstate));
-      if (include.abs_path.empty()) {
+      if (include.abs_path.empty())
+      {
         error("File to import not found or unreadable: " + imp_path + ".\nParent style sheet: " + ctx_path, pstate);
       }
       imp->incs().push_back(include);
     }
-
   }
 
 
-  // call custom importers on the given (unquoted) load_path and eventually parse the resulting style_sheet
-  bool Context::call_loader(const std::string& load_path, const char* ctx_path, ParserState& pstate, Import_Ptr imp, std::vector<Sass_Importer_Entry> importers, bool only_one)
+  // call custom importers on the given (unquoted) load_path and eventually parse the resulting
+  // style_sheet
+  bool Context::call_loader(const std::string& load_path,
+                            const char* ctx_path,
+                            ParserState& pstate,
+                            Import_Ptr imp,
+                            std::vector<Sass_Importer_Entry> importers,
+                            bool only_one)
   {
     // unique counter
     size_t count = 0;
     // need one correct import
     bool has_import = false;
     // process all custom importers (or custom headers)
-    for (Sass_Importer_Entry& importer_ent : importers) {
+    for (Sass_Importer_Entry& importer_ent : importers)
+    {
       // int priority = sass_importer_get_priority(importer);
       Sass_Importer_Fn fn = sass_importer_get_function(importer_ent);
       // skip importer if it returns NULL
-      if (Sass_Import_List includes =
-          fn(load_path.c_str(), importer_ent, c_compiler)
-      ) {
+      if (Sass_Import_List includes = fn(load_path.c_str(), importer_ent, c_compiler))
+      {
         // get c pointer copy to iterate over
         Sass_Import_List it_includes = includes;
-        while (*it_includes) { ++count;
+        while (*it_includes)
+        {
+          ++count;
           // create unique path to use as key
           std::string uniq_path = load_path;
-          if (!only_one && count) {
+          if (!only_one && count)
+          {
             std::stringstream path_strm;
             path_strm << uniq_path << ":" << count;
             uniq_path = path_strm.str();
@@ -443,16 +469,21 @@ namespace Sass {
           char* srcmap = sass_import_take_srcmap(include_ent);
           size_t line = sass_import_get_error_line(include_ent);
           size_t column = sass_import_get_error_column(include_ent);
-          const char *abs_path = sass_import_get_abs_path(include_ent);
+          const char* abs_path = sass_import_get_abs_path(include_ent);
           // handle error message passed back from custom importer
           // it may (or may not) override the line and column info
-          if (const char* err_message = sass_import_get_error_message(include_ent)) {
-            if (source || srcmap) register_resource({ importer, uniq_path }, { source, srcmap }, &pstate);
-            if (line == std::string::npos && column == std::string::npos) error(err_message, pstate);
-            else error(err_message, ParserState(ctx_path, source, Position(line, column)));
+          if (const char* err_message = sass_import_get_error_message(include_ent))
+          {
+            if (source || srcmap)
+              register_resource({ importer, uniq_path }, { source, srcmap }, &pstate);
+            if (line == std::string::npos && column == std::string::npos)
+              error(err_message, pstate);
+            else
+              error(err_message, ParserState(ctx_path, source, Position(line, column)));
           }
           // content for import was set
-          else if (source) {
+          else if (source)
+          {
             // resolved abs_path should be set by custom importer
             // use the created uniq_path as fallback (maybe enforce)
             std::string path_key(abs_path ? abs_path : uniq_path);
@@ -465,7 +496,8 @@ namespace Sass {
           }
           // only a path was retuned
           // try to load it like normal
-          else if(abs_path) {
+          else if (abs_path)
+          {
             // checks some urls to preserve
             // `http://`, `https://` and `//`
             // or dispatchs to `import_file`
@@ -508,14 +540,17 @@ namespace Sass {
     // get the resulting buffer from stream
     OutputBuffer emitted = emitter.get_buffer();
     // should we append a source map url?
-    if (!c_options.omit_source_map_url) {
+    if (!c_options.omit_source_map_url)
+    {
       // generate an embeded source map
-      if (c_options.source_map_embed) {
+      if (c_options.source_map_embed)
+      {
         emitted.buffer += linefeed;
         emitted.buffer += format_embedded_source_map();
       }
       // or just link the generated one
-      else if (source_map_file != "") {
+      else if (source_map_file != "")
+      {
         emitted.buffer += linefeed;
         emitted.buffer += format_source_mapping_url(source_map_file);
       }
@@ -537,7 +572,8 @@ namespace Sass {
     // add the statement if we have urls
     if (!imp->urls().empty()) root->append(imp);
     // process all other resources (add Import_Stub nodes)
-    for (size_t i = 0, S = imp->incs().size(); i < S; ++i) {
+    for (size_t i = 0, S = imp->incs().size(); i < S; ++i)
+    {
       root->append(SASS_MEMORY_NEW(Import_Stub, pstate, imp->incs()[i]));
     }
   }
@@ -557,7 +593,8 @@ namespace Sass {
 
     // alternatively also look inside each include path folder
     // I think this differs from ruby sass (IMO too late to remove)
-    for (size_t i = 0, S = include_paths.size(); contents == 0 && i < S; ++i) {
+    for (size_t i = 0, S = include_paths.size(); contents == 0 && i < S; ++i)
+    {
       // build absolute path for this include path entry
       abs_path = rel2abs(input_path, include_paths[i]);
       // try to load the resulting path
@@ -571,21 +608,15 @@ namespace Sass {
     entry_path = abs_path;
 
     // create entry only for import stack
-    Sass_Import_Entry import = sass_make_import(
-      input_path.c_str(),
-      entry_path.c_str(),
-      contents,
-      0
-    );
+    Sass_Import_Entry import = sass_make_import(input_path.c_str(), entry_path.c_str(), contents, 0);
     // add the entry to the stack
     import_stack.push_back(import);
 
     // create the source entry for file entry
-    register_resource({{ input_path, "." }, abs_path }, { contents, 0 });
+    register_resource({ { input_path, "." }, abs_path }, { contents, 0 });
 
     // create root ast tree node
     return compile();
-
   }
 
   Block_Obj Data_Context::parse()
@@ -595,13 +626,15 @@ namespace Sass {
     if (!source_c_str) return 0;
 
     // convert indented sass syntax
-    if(c_options.is_indented_syntax_src) {
+    if (c_options.is_indented_syntax_src)
+    {
       // call sass2scss to convert the string
-      char * converted = sass2scss(source_c_str,
-        // preserve the structure as much as possible
-        SASS2SCSS_PRETTIFY_1 | SASS2SCSS_KEEP_COMMENT);
+      char* converted = sass2scss(source_c_str,
+                                  // preserve the structure as much as possible
+                                  SASS2SCSS_PRETTIFY_1 | SASS2SCSS_KEEP_COMMENT);
       // replace old source_c_str with converted
-      free(source_c_str); source_c_str = converted;
+      free(source_c_str);
+      source_c_str = converted;
     }
 
     // remember entry path (defaults to stdin for string)
@@ -613,22 +646,16 @@ namespace Sass {
     strings.push_back(abs_path_c_str);
 
     // create entry only for the import stack
-    Sass_Import_Entry import = sass_make_import(
-      entry_path.c_str(),
-      abs_path_c_str,
-      source_c_str,
-      srcmap_c_str
-    );
+    Sass_Import_Entry import = sass_make_import(entry_path.c_str(), abs_path_c_str, source_c_str, srcmap_c_str);
     // add the entry to the stack
     import_stack.push_back(import);
 
     // register a synthetic resource (path does not really exist, skip in includes)
-    register_resource({{ input_path, "." }, input_path }, { source_c_str, srcmap_c_str });
+    register_resource({ { input_path, "." }, input_path }, { source_c_str, srcmap_c_str });
 
     // create root ast tree node
     return compile();
   }
-
 
 
   // parse root block from includes
@@ -645,7 +672,9 @@ namespace Sass {
     register_built_in_functions(*this, &global);
     // register custom functions (defined via C-API)
     for (size_t i = 0, S = c_functions.size(); i < S; ++i)
-    { register_c_function(*this, &global, c_functions[i]); }
+    {
+      register_c_function(*this, &global, c_functions[i]);
+    }
     // create initial backtrace entry
     Backtrace backtrace(0, ParserState("", 0), "");
     // create crtp visitor objects
@@ -661,7 +690,8 @@ namespace Sass {
     // merge and bubble certain rules
     root = cssize(root);
     // should we extend something?
-    if (!subset_map.empty()) {
+    if (!subset_map.empty())
+    {
       // create crtp visitor object
       Extend extend(subset_map);
       // extend tree nodes
@@ -680,7 +710,7 @@ namespace Sass {
   std::string Context::format_embedded_source_map()
   {
     std::string map = emitter.render_srcmap(*this);
-    std::istringstream is( map );
+    std::istringstream is(map);
     std::ostringstream buffer;
     base64::encoder E;
     E.encode(is, buffer);
@@ -707,14 +737,20 @@ namespace Sass {
   // we probably always want to skip the header includes?
   std::vector<std::string> Context::get_included_files(bool skip, size_t headers)
   {
-      // create a copy of the vector for manipulations
-      std::vector<std::string> includes = included_files;
-      if (includes.size() == 0) return includes;
-      if (skip) { includes.erase( includes.begin(), includes.begin() + 1 + headers); }
-      else { includes.erase( includes.begin() + 1, includes.begin() + 1 + headers); }
-      includes.erase( std::unique( includes.begin(), includes.end() ), includes.end() );
-      std::sort( includes.begin() + (skip ? 0 : 1), includes.end() );
-      return includes;
+    // create a copy of the vector for manipulations
+    std::vector<std::string> includes = included_files;
+    if (includes.size() == 0) return includes;
+    if (skip)
+    {
+      includes.erase(includes.begin(), includes.begin() + 1 + headers);
+    }
+    else
+    {
+      includes.erase(includes.begin() + 1, includes.begin() + 1 + headers);
+    }
+    includes.erase(std::unique(includes.begin(), includes.end()), includes.end());
+    std::sort(includes.begin() + (skip ? 0 : 1), includes.end());
+    return includes;
   }
 
   void register_function(Context& ctx, Signature sig, Native_Function f, Env* env)
@@ -735,13 +771,8 @@ namespace Sass {
 
   void register_overload_stub(Context& ctx, std::string name, Env* env)
   {
-    Definition_Ptr stub = SASS_MEMORY_NEW(Definition,
-                                       ParserState("[built-in function]"),
-                                       0,
-                                       name,
-                                       0,
-                                       0,
-                                       true);
+    Definition_Ptr stub =
+    SASS_MEMORY_NEW(Definition, ParserState("[built-in function]"), 0, name, 0, 0, true);
     (*env)[name + "[f]"] = stub;
   }
 
@@ -850,7 +881,8 @@ namespace Sass {
 
   void register_c_functions(Context& ctx, Env* env, Sass_Function_List descrs)
   {
-    while (descrs && *descrs) {
+    while (descrs && *descrs)
+    {
       register_c_function(ctx, env, *descrs);
       ++descrs;
     }
@@ -861,5 +893,4 @@ namespace Sass {
     def->environment(env);
     (*env)[def->name() + "[f]"] = def;
   }
-
 }

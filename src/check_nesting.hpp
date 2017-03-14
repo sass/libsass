@@ -4,35 +4,40 @@
 #include "ast.hpp"
 #include "operation.hpp"
 
-namespace Sass {
+namespace Sass
+{
 
-  class CheckNesting : public Operation_CRTP<Statement_Ptr, CheckNesting> {
+  class CheckNesting : public Operation_CRTP<Statement_Ptr, CheckNesting>
+  {
 
-    std::vector<Statement_Ptr>  parents;
-    Statement_Ptr               parent;
-    Definition_Ptr              current_mixin_definition;
+    std::vector<Statement_Ptr> parents;
+    Statement_Ptr parent;
+    Definition_Ptr current_mixin_definition;
 
     Statement_Ptr fallback_impl(Statement_Ptr);
     Statement_Ptr before(Statement_Ptr);
     Statement_Ptr visit_children(Statement_Ptr);
 
-  public:
+    public:
     CheckNesting();
-    ~CheckNesting() { }
+    ~CheckNesting()
+    {
+    }
 
     Statement_Ptr operator()(Block_Ptr);
     Statement_Ptr operator()(Definition_Ptr);
 
-    template <typename U>
-    Statement_Ptr fallback(U x) {
+    template <typename U> Statement_Ptr fallback(U x)
+    {
       Statement_Ptr n = Cast<Statement>(x);
-      if (this->should_visit(n)) {
+      if (this->should_visit(n))
+      {
         return fallback_impl(n);
       }
       return NULL;
     }
 
-  private:
+    private:
     void invalid_content_parent(Statement_Ptr);
     void invalid_charset_parent(Statement_Ptr);
     void invalid_extend_parent(Statement_Ptr);
@@ -56,7 +61,6 @@ namespace Sass {
     bool is_at_root_node(Statement_Ptr);
     bool is_directive_node(Statement_Ptr);
   };
-
 }
 
 #endif

@@ -5,16 +5,21 @@
 #include "operation.hpp"
 #include "sass/values.h"
 
-namespace Sass {
+namespace Sass
+{
 
-  class To_C : public Operation_CRTP<union Sass_Value*, To_C> {
+  class To_C : public Operation_CRTP<union Sass_Value*, To_C>
+  {
     // override this to define a catch-all
     union Sass_Value* fallback_impl(AST_Node_Ptr n);
 
-  public:
-
-    To_C() { }
-    ~To_C() { }
+    public:
+    To_C()
+    {
+    }
+    ~To_C()
+    {
+    }
 
     union Sass_Value* operator()(Boolean_Ptr);
     union Sass_Value* operator()(Number_Ptr);
@@ -31,9 +36,10 @@ namespace Sass {
 
     // dispatch to fallback implementation
     union Sass_Value* fallback(AST_Node_Ptr x)
-    { return fallback_impl(x); }
+    {
+      return fallback_impl(x);
+    }
   };
-
 }
 
 #endif
