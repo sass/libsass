@@ -2875,7 +2875,7 @@ namespace Sass {
   }
 
   // print a css parsing error with actual context information from parsed source
-  void Parser::css_error(const std::string& msg, const std::string& prefix, const std::string& middle)
+  void Parser::css_error(const std::string& msg, const std::string& prefix, const std::string& middle, const bool trim)
   {
     int max_len = 18;
     const char* end = this->end;
@@ -2887,7 +2887,7 @@ namespace Sass {
       utf8::prior(last_pos, source);
     }
     // backup position to last significant char
-    while (last_pos > source && last_pos < end) {
+    while (trim && last_pos > source && last_pos < end) {
       if (!Prelexer::is_space(*last_pos)) break;
       utf8::prior(last_pos, source);
     }
