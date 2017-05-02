@@ -2142,6 +2142,10 @@ namespace Sass {
     While_Obj call = SASS_MEMORY_NEW(While, pstate, 0, 0);
     // parse mandatory predicate
     Expression_Obj predicate = parse_list();
+    List_Obj l = Cast<List>(predicate);
+    if (!predicate || (l && !l->length())) {
+      css_error("Invalid CSS", " after ", ": expected expression (e.g. 1px, bold), was ", false);
+    }
     call->predicate(predicate);
     // parse mandatory block
     call->block(parse_block(root));
