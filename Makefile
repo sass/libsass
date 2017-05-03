@@ -3,7 +3,7 @@ CC       ?= gcc
 CXX      ?= g++
 RM       ?= rm -f
 CP       ?= cp -a
-MKDIR    ?= mkdir
+MKDIR    ?= mkdir -p
 RMDIR    ?= rmdir
 WINDRES  ?= windres
 # Solaris/Illumos flavors
