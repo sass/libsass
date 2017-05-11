@@ -2008,6 +2008,24 @@ namespace Sass {
       return result->perform(&listize);
     }
 
+    Signature selector_is_eq_sig = "selector-is-eq($selector1, $selector2)";
+    BUILT_IN(selector_is_eq)
+    {
+      Listize listize(ctx);
+      Selector_List* selector1 = ARGSEL("$selector1", Selector_List, p_contextualize);
+      Selector_List* selector2 = ARGSEL("$selector2", Selector_List, p_contextualize);
+      return new (ctx.mem) Boolean(pstate, *selector1 == *selector2);
+    }
+
+    Signature selector_is_lt_sig = "selector-is-lt($selector1, $selector2)";
+    BUILT_IN(selector_is_lt)
+    {
+      Listize listize(ctx);
+      Selector_List* selector1 = ARGSEL("$selector1", Selector_List, p_contextualize);
+      Selector_List* selector2 = ARGSEL("$selector2", Selector_List, p_contextualize);
+      return new (ctx.mem) Boolean(pstate, *selector1 < *selector2);
+    }
+
     Signature simple_selectors_sig = "simple-selectors($selector)";
     BUILT_IN(simple_selectors)
     {
