@@ -37,7 +37,7 @@ namespace Sass {
 
         if (warning) {
           ss << std::endl
-             << "\t"
+             << "         "
              << (++i == 0 ? "on" : "from")
              << " line "
              << this_point->pstate.line + 1
@@ -45,7 +45,7 @@ namespace Sass {
              << rel_path;
         } else {
           ss << std::endl
-             << "\t"
+             << "         "
              << rel_path
              << ":"
              << this_point->pstate.line + 1
