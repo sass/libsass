@@ -377,6 +377,7 @@ extern "C" {
     options->precision = 5;
     options->indent = "  ";
     options->linefeed = LFEED;
+    options->list_delim = ' ';
   }
 
   Sass_Options* ADDCALL sass_make_options (void)
@@ -702,6 +703,7 @@ extern "C" {
   IMPLEMENT_SASS_OPTION_ACCESSOR(Sass_Importer_List, c_headers);
   IMPLEMENT_SASS_OPTION_ACCESSOR(const char*, indent);
   IMPLEMENT_SASS_OPTION_ACCESSOR(const char*, linefeed);
+  IMPLEMENT_SASS_OPTION_ACCESSOR(char, list_delim);
   IMPLEMENT_SASS_OPTION_STRING_SETTER(const char*, plugin_path, 0);
   IMPLEMENT_SASS_OPTION_STRING_SETTER(const char*, include_path, 0);
   IMPLEMENT_SASS_OPTION_STRING_ACCESSOR(const char*, input_path, 0);
