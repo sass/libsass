@@ -79,6 +79,7 @@ ADDAPI bool ADDCALL sass_option_get_omit_source_map_url (struct Sass_Options* op
 ADDAPI bool ADDCALL sass_option_get_is_indented_syntax_src (struct Sass_Options* options);
 ADDAPI const char* ADDCALL sass_option_get_indent (struct Sass_Options* options);
 ADDAPI const char* ADDCALL sass_option_get_linefeed (struct Sass_Options* options);
+ADDAPI char ADDCALL sass_option_get_list_delim (struct Sass_Options* options);
 ADDAPI const char* ADDCALL sass_option_get_input_path (struct Sass_Options* options);
 ADDAPI const char* ADDCALL sass_option_get_output_path (struct Sass_Options* options);
 ADDAPI const char* ADDCALL sass_option_get_source_map_file (struct Sass_Options* options);
@@ -98,6 +99,7 @@ ADDAPI void ADDCALL sass_option_set_omit_source_map_url (struct Sass_Options* op
 ADDAPI void ADDCALL sass_option_set_is_indented_syntax_src (struct Sass_Options* options, bool is_indented_syntax_src);
 ADDAPI void ADDCALL sass_option_set_indent (struct Sass_Options* options, const char* indent);
 ADDAPI void ADDCALL sass_option_set_linefeed (struct Sass_Options* options, const char* linefeed);
+ADDAPI void ADDCALL sass_option_set_list_delim (struct Sass_Options* options, char list_delim);
 ADDAPI void ADDCALL sass_option_set_input_path (struct Sass_Options* options, const char* input_path);
 ADDAPI void ADDCALL sass_option_set_output_path (struct Sass_Options* options, const char* output_path);
 ADDAPI void ADDCALL sass_option_set_plugin_path (struct Sass_Options* options, const char* plugin_path);

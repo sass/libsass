@@ -82,6 +82,7 @@ namespace Sass {
 
     const std::string indent; // String to be used for indentation
     const std::string linefeed; // String to be used for line feeds
+    char list_delim; // Character used to delimit CSS lists
     const std::string input_path; // for relative paths in src-map
     const std::string output_path; // for relative paths to the output
     const std::string source_map_file; // path to source map file (enables feature)

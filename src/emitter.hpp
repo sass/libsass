@@ -75,6 +75,7 @@ namespace Sass {
     public: // syntax sugar
       void append_indentation();
       void append_optional_space(void);
+      void append_optional_newline(void);
       void append_mandatory_space(void);
       void append_special_linefeed(void);
       void append_optional_linefeed(void);

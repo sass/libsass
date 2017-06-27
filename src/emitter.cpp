@@ -186,7 +186,11 @@ namespace Sass {
   {
     // scheduled_space = 0;
     append_string(",");
-    append_optional_space();
+    if (opt.list_delim == ' ') {
+      append_optional_space();
+    } else if (opt.list_delim == '\n') {
+      append_optional_newline();
+    }
   }
 
   void Emitter::append_colon_separator()
@@ -207,6 +211,16 @@ namespace Sass {
       unsigned char lst = buffer().at(buffer().length() - 1);
       if (!isspace(lst) || scheduled_delimiter) {
         append_mandatory_space();
+      }
+    }
+  }
+
+  void Emitter::append_optional_newline()
+  {
+    if ((output_style() != COMPRESSED) && buffer().size()) {
+      unsigned char lst = buffer().at(buffer().length() - 1);
+      if (!isspace(lst) || scheduled_delimiter) {
+          scheduled_linefeed = 1;
       }
     }
   }

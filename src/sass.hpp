@@ -105,6 +105,8 @@ struct Sass_Output_Options : Sass_Inspect_Options {
   const char* indent;
   // String to be used to for line feeds
   const char* linefeed;
+  // String used to separate CSS lists
+  char list_delim;
 
   // Emit comments in the generated CSS indicating
   // the corresponding source line.
@@ -114,9 +116,10 @@ struct Sass_Output_Options : Sass_Inspect_Options {
   Sass_Output_Options(struct Sass_Inspect_Options opt,
                       const char* indent = "  ",
                       const char* linefeed = "\n",
+                      char list_delim = ' ',
                       bool source_comments = false)
   : Sass_Inspect_Options(opt),
-    indent(indent), linefeed(linefeed),
+    indent(indent), linefeed(linefeed), list_delim(list_delim),
     source_comments(source_comments)
   { }
 
@@ -125,9 +128,10 @@ struct Sass_Output_Options : Sass_Inspect_Options {
                       int precision = 5,
                       const char* indent = "  ",
                       const char* linefeed = "\n",
+                      char list_delim = ' ',
                       bool source_comments = false)
   : Sass_Inspect_Options(style, precision),
-    indent(indent), linefeed(linefeed),
+    indent(indent), linefeed(linefeed), list_delim(list_delim),
     source_comments(source_comments)
   { }
 

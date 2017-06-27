@@ -82,6 +82,7 @@ namespace Sass {
 
     indent                  (safe_str(c_options.indent, "  ")),
     linefeed                (safe_str(c_options.linefeed, "\n")),
+    list_delim              (c_options.list_delim),
 
     input_path              (make_canonical_path(safe_input(c_options.input_path))),
     output_path             (make_canonical_path(safe_output(c_options.output_path, input_path))),
