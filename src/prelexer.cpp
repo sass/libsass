@@ -1631,7 +1631,13 @@ namespace Sass {
                 sequence <
                   optional < pseudo_prefix >,
                   // fix libsass issue 2376
-                  negate < uri_prefix >
+                  negate <
+                    sequence <
+                      exactly < url_kwd >,
+                      // fix libsass issue 2456
+                      exactly <'('>
+                    >
+                  >
                 >
               >,
               // accept hypens in token
