@@ -1844,11 +1844,20 @@ namespace Sass {
         Expression_Obj ex;
         if (lex< re_static_expression >()) {
           ex = SASS_MEMORY_NEW(String_Constant, pstate, lexed);
+          ex->is_interpolant(true);
+          schema->append(ex);
         } else {
-          ex = parse_list();
+          while (! peek < exactly < rbrace > >()) {
+            if (peek < exactly <';'> >()) break;
+            lex < comment >();
+            ex = parse_list();
+            if (List_Ptr ls = Cast<List>(ex)) {
+              if (ls->length() == 0) break;
+            }
+            ex->is_interpolant(true);
+            schema->append(ex);
+          }
         }
-        ex->is_interpolant(true);
-        schema->append(ex);
         if (!lex < exactly < rbrace > >()) {
           css_error("Invalid CSS", " after ", ": expected \"}\", was ");
         }

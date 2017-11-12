@@ -289,11 +289,15 @@ namespace Sass {
     const char* block_comment_prefix(const char* src) {
       return exactly<slash_star>(src);
     }
+    */
+
     // Match either comment.
     const char* comment(const char* src) {
-      return line_comment(src);
+      return alternatives<
+        block_comment,
+        line_comment
+      >(src);
     }
-    */
 
     // Match zero plus white-space or line_comments
     const char* optional_css_whitespace(const char* src) {
