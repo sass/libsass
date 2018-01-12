@@ -613,7 +613,7 @@ namespace Sass {
   Color_Ptr_Const name_to_color(const std::string& key)
   {
     // case insensitive lookup.  See #2462
-    std::string lower{key};
+    std::string lower(key);
     std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
 
     auto p = names_to_colors.find(lower.c_str());

@@ -100,10 +100,13 @@ namespace Sass {
     collect_plugin_paths(c_options.plugin_paths);
 
     // load plugins and register custom behaviors
-    for(auto plug : plugin_paths) plugins.load_plugins(plug);
-    for(auto fn : plugins.get_headers()) c_headers.push_back(fn);
-    for(auto fn : plugins.get_importers()) c_importers.push_back(fn);
-    for(auto fn : plugins.get_functions()) c_functions.push_back(fn);
+    for(auto plug : plugin_paths) { plugins.load_plugins(plug); }
+    const std::vector<Sass_Importer_Entry> headers = plugins.get_headers();
+    const std::vector<Sass_Importer_Entry> importers = plugins.get_importers();
+    const std::vector<Sass_Function_Entry> functions = plugins.get_functions();
+    for(Sass_Importer_Entry fn : headers) { c_headers.push_back(fn); }
+    for(Sass_Importer_Entry fn : importers) { c_importers.push_back(fn); }
+    for(Sass_Function_Entry fn : functions) { c_functions.push_back(fn); }
 
     // sort the items by priority (lowest first)
     sort (c_headers.begin(), c_headers.end(), sort_importers);

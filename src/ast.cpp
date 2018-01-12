@@ -168,7 +168,7 @@ namespace Sass {
 
   bool Compound_Selector::has_parent_ref() const
   {
-    for (Simple_Selector_Obj s : *this) {
+    for (Simple_Selector_Obj s : elements()) {
       if (s && s->has_parent_ref()) return true;
     }
     return false;
@@ -176,7 +176,7 @@ namespace Sass {
 
   bool Compound_Selector::has_real_parent_ref() const
   {
-    for (Simple_Selector_Obj s : *this) {
+    for (Simple_Selector_Obj s : elements()) {
       if (s && s->has_real_parent_ref()) return true;
     }
     return false;

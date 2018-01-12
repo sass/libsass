@@ -318,7 +318,7 @@ namespace Sass {
     do {
       while (lex< block_comment >());
       if (lex< quoted_string >()) {
-        to_import.push_back(std::pair<std::string,Function_Call_Obj>(std::string(lexed), 0));
+        to_import.push_back(std::pair<std::string,Function_Call_Obj>(std::string(lexed), (Function_Call*) NULL));
       }
       else if (lex< uri_prefix >()) {
         Arguments_Obj args = SASS_MEMORY_NEW(Arguments, pstate);
@@ -2967,6 +2967,7 @@ namespace Sass {
     if (left_subpos && ellipsis_left) left = ellipsis + left.substr(left_subpos);
     if (right_subpos && ellipsis_right) right = right.substr(right_subpos) + ellipsis;
     // now pass new message to the more generic error function
+    if (source == NULL || *source == 0) source = pstate.src;
     error(msg + prefix + quote(left) + middle + quote(right), pstate);
   }
 
