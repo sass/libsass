@@ -32,7 +32,7 @@ namespace Sass {
   bool Selector_List::find ( bool (*f)(AST_Node_Obj) )
   {
     // check children first
-    for (Complex_Selector_Obj sel : elements()) {
+    for (auto __sel = (elements()).begin(); __sel != (elements()).end(); ++__sel) { Complex_Selector_Obj sel = *(__sel);
       if (sel->find(f)) return true;
     }
     // execute last
@@ -42,7 +42,7 @@ namespace Sass {
   bool Compound_Selector::find ( bool (*f)(AST_Node_Obj) )
   {
     // check children first
-    for (Simple_Selector_Obj sel : elements()) {
+    for (auto __sel = (elements()).begin(); __sel != (elements()).end(); ++__sel) { Simple_Selector_Obj sel = *(__sel);
       if (sel->find(f)) return true;
     }
     // execute last
@@ -95,7 +95,7 @@ namespace Sass {
 
   void Arguments::set_delayed(bool delayed)
   {
-    for (Argument_Obj arg : elements()) {
+    for (auto __arg = (elements()).begin(); __arg != (elements()).end(); ++__arg) { Argument_Obj arg = *(__arg);
       if (arg) arg->set_delayed(delayed);
     }
     is_delayed(delayed);
@@ -168,7 +168,7 @@ namespace Sass {
 
   bool Compound_Selector::has_parent_ref() const
   {
-    for (Simple_Selector_Obj s : elements()) {
+    for (auto __s = (elements()).begin(); __s != (elements()).end(); ++__s) { Simple_Selector_Obj s = *(__s);
       if (s && s->has_parent_ref()) return true;
     }
     return false;
@@ -176,7 +176,7 @@ namespace Sass {
 
   bool Compound_Selector::has_real_parent_ref() const
   {
-    for (Simple_Selector_Obj s : elements()) {
+    for (auto __s = (elements()).begin(); __s != (elements()).end(); ++__s) { Simple_Selector_Obj s = *(__s);
       if (s && s->has_real_parent_ref()) return true;
     }
     return false;
@@ -843,7 +843,7 @@ namespace Sass {
 
   bool Compound_Selector::is_superselector_of(Selector_List_Obj rhs, std::string wrapped)
   {
-    for (Complex_Selector_Obj item : rhs->elements()) {
+    for (auto __item = (rhs->elements()).begin(); __item != (rhs->elements()).end(); ++__item) { Complex_Selector_Obj item = *(__item);
       if (is_superselector_of(item, wrapped)) return true;
     }
     return false;
@@ -960,8 +960,8 @@ namespace Sass {
       rset.insert(r->to_string());
     }
 
-    //for (auto l : lset) { cerr << "l: " << l << endl; }
-    //for (auto r : rset) { cerr << "r: " << r << endl; }
+    //for (auto __l = (lset).begin(); __l != (lset).end(); ++__l) { auto l = *(__l); cerr << "l: " << l << endl; }
+    //for (auto __r = (rset).begin(); __r != (rset).end(); ++__r) { auto r = *(__r); cerr << "r: " << r << endl; }
 
     if (lset.empty()) return true;
     // return true if rset contains all the elements of lset
@@ -1403,7 +1403,7 @@ namespace Sass {
         retval = this->tails(tails);
       }
 
-      for (Simple_Selector_Obj ss : head->elements()) {
+      for (auto __ss = (head->elements()).begin(); __ss != (head->elements()).end(); ++__ss) { Simple_Selector_Obj ss = *(__ss);
         if (Wrapped_Selector_Ptr ws = Cast<Wrapped_Selector>(ss)) {
           if (Selector_List_Ptr sl = Cast<Selector_List>(ws->selector())) {
             if (parents) ws->selector(sl->resolve_parent_refs(pstack, implicit_parent));
@@ -1563,7 +1563,7 @@ namespace Sass {
 
   bool Selector_List::has_parent_ref() const
   {
-    for (Complex_Selector_Obj s : elements()) {
+    for (auto __s = (elements()).begin(); __s != (elements()).end(); ++__s) { Complex_Selector_Obj s = *(__s);
       if (s && s->has_parent_ref()) return true;
     }
     return false;
@@ -1571,7 +1571,7 @@ namespace Sass {
 
   bool Selector_List::has_real_parent_ref() const
   {
-    for (Complex_Selector_Obj s : elements()) {
+    for (auto __s = (elements()).begin(); __s != (elements()).end(); ++__s) { Complex_Selector_Obj s = *(__s);
       if (s && s->has_real_parent_ref()) return true;
     }
     return false;
@@ -1672,7 +1672,7 @@ namespace Sass {
   {
 
     Selector_List_Ptr extender = this;
-    for (auto complex_sel : extendee->elements()) {
+    for (auto __complex_sel = (extendee->elements()).begin(); __complex_sel != (extendee->elements()).end(); ++__complex_sel) { auto complex_sel = *(__complex_sel);
       Complex_Selector_Obj c = complex_sel;
 
 
@@ -1741,7 +1741,7 @@ namespace Sass {
   Argument_Obj Arguments::get_rest_argument()
   {
     if (this->has_rest_argument()) {
-      for (Argument_Obj arg : this->elements()) {
+      for (auto __arg = (this->elements()).begin(); __arg != (this->elements()).end(); ++__arg) { Argument_Obj arg = *(__arg);
         if (arg->is_rest_argument()) {
           return arg;
         }
@@ -1753,7 +1753,7 @@ namespace Sass {
   Argument_Obj Arguments::get_keyword_argument()
   {
     if (this->has_keyword_argument()) {
-      for (Argument_Obj arg : this->elements()) {
+      for (auto __arg = (this->elements()).begin(); __arg != (this->elements()).end(); ++__arg) { Argument_Obj arg = *(__arg);
         if (arg->is_keyword_argument()) {
           return arg;
         }
@@ -1924,8 +1924,7 @@ namespace Sass {
     denominator_units_.clear();
 
     // build them by iterating over the exponents
-    for (auto exp : exponents)
-    {
+    for (auto __exp = (exponents).begin(); __exp != (exponents).end(); ++__exp) { auto exp = *(__exp);
       // maybe there is more effecient way to push
       // the same item multiple times to a vector?
       for(size_t i = 0, S = abs(exp.second); i < S; ++i)
@@ -2136,8 +2135,7 @@ namespace Sass {
     denominator_units_.clear();
 
     // build them by iterating over the exponents
-    for (auto exp : exponents)
-    {
+    for (auto __exp = (exponents).begin(); __exp != (exponents).end(); ++__exp) { auto exp = *(__exp);
       // maybe there is more effecient way to push
       // the same item multiple times to a vector?
       for(size_t i = 0, S = abs(exp.second); i < S; ++i)
@@ -2312,7 +2310,7 @@ namespace Sass {
   {
     if (Map_Ptr_Const r = Cast<Map>(&rhs)) {
       if (length() != r->length()) return false;
-      for (auto key : keys()) {
+      for (auto __key = (keys()).begin(); __key != (keys()).end(); ++__key) { auto key = *(__key);
         Expression_Obj lv = at(key);
         Expression_Obj rv = r->at(key);
         if (!rv || !lv) return false;
@@ -2405,7 +2403,7 @@ namespace Sass {
   List_Obj Map::to_list(ParserState& pstate) {
     List_Obj ret = SASS_MEMORY_NEW(List, pstate, length(), SASS_COMMA);
 
-    for (auto key : keys()) {
+    for (auto __key = (keys()).begin(); __key != (keys()).end(); ++__key) { auto key = *(__key);
       List_Obj l = SASS_MEMORY_NEW(List, pstate, 2);
       l->append(key);
       l->append(at(key));

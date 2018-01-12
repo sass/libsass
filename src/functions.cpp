@@ -1546,7 +1546,7 @@ namespace Sass {
     {
       Map_Obj m = ARGM("$map", Map, ctx);
       List_Ptr result = SASS_MEMORY_NEW(List, pstate, m->length(), SASS_COMMA);
-      for ( auto key : m->keys()) {
+      for (auto __key = (m->keys()).begin(); __key != (m->keys()).end(); ++__key) { auto key = *(__key);
         result->append(key);
       }
       return result;
@@ -1557,7 +1557,7 @@ namespace Sass {
     {
       Map_Obj m = ARGM("$map", Map, ctx);
       List_Ptr result = SASS_MEMORY_NEW(List, pstate, m->length(), SASS_COMMA);
-      for ( auto key : m->keys()) {
+      for (auto __key = (m->keys()).begin(); __key != (m->keys()).end(); ++__key) { auto key = *(__key);
         result->append(m->at(key));
       }
       return result;
@@ -1584,7 +1584,7 @@ namespace Sass {
       Map_Obj m = ARGM("$map", Map, ctx);
       List_Obj arglist = ARG("$keys", List);
       Map_Ptr result = SASS_MEMORY_NEW(Map, pstate, 1);
-      for (auto key : m->keys()) {
+      for (auto __key = (m->keys()).begin(); __key != (m->keys()).end(); ++__key) { auto key = *(__key);
         remove = false;
         for (size_t j = 0, K = arglist->length(); j < K && !remove; ++j) {
           remove = Eval::eq(key, arglist->value_at_index(j));

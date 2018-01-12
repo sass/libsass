@@ -39,10 +39,10 @@ namespace Sass {
           // Set the new placeholder selector list
           r->selector(remove_placeholders(sl));
           // Remove placeholders in wrapped selectors
-          for (Complex_Selector_Obj cs : sl->elements()) {
+          for (auto __cs = (sl->elements()).begin(); __cs != (sl->elements()).end(); ++__cs) { Complex_Selector_Obj cs = *(__cs);
             while (cs) {
               if (cs->head()) {
-                for (Simple_Selector_Obj& ss : cs->head()->elements()) {
+                for (auto __ss = (cs->head()->elements()).begin(); __ss != (cs->head()->elements()).end(); ++__ss) { Simple_Selector_Obj& ss = *(__ss);
                   if (Wrapped_Selector_Ptr ws = Cast<Wrapped_Selector>(ss)) {
                     if (Selector_List_Ptr wsl = Cast<Selector_List>(ws->selector())) {
                       Selector_List_Ptr clean = remove_placeholders(wsl);

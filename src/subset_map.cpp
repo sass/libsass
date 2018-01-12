@@ -24,9 +24,9 @@ namespace Sass {
         continue;
       }
       const std::vector<std::pair<Compound_Selector_Obj, size_t> >& subsets = hash_[(*sel)[i]];
-      for (const auto& item : subsets) {
+      for (auto __item = (subsets).begin(); __item != (subsets).end(); ++__item) { const auto& item = *(__item);
         bool include = true;
-        for (const Simple_Selector_Obj& it : item.first->elements()) {
+        for (auto __it = (item.first->elements()).begin(); __it != (item.first->elements()).end(); ++__it) { const Simple_Selector_Obj& it = *(__it);
           auto found = dict.find(it);
           if (found == dict.end()) {
             include = false;

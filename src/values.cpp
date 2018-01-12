@@ -34,7 +34,7 @@ namespace Sass {
     {
       Map_Ptr_Const m = Cast<Map>(val);
       union Sass_Value* map = sass_make_map(m->length());
-      size_t i = 0; for (Expression_Obj key : m->keys()) {
+      size_t i = 0; for (auto __key = (m->keys()).begin(); __key != (m->keys()).end(); ++__key) { Expression_Obj key = *(__key);
         sass_map_set_key(map, i, ast_node_to_sass_value(key));
         sass_map_set_value(map, i, ast_node_to_sass_value(m->at(key)));
         ++ i;

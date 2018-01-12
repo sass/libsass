@@ -71,7 +71,7 @@ namespace Sass {
                                               rest->separator(),
                                               true);
               // wrap each item from list as an argument
-              for (Expression_Obj item : rest->elements()) {
+              for (auto __item = (rest->elements()).begin(); __item != (rest->elements()).end(); ++__item) { Expression_Obj item = *(__item);
                 if (Argument_Obj arg = Cast<Argument>(item)) {
                   arglist->append(SASS_MEMORY_COPY(arg)); // copy
                 } else {
@@ -96,7 +96,7 @@ namespace Sass {
           List_Ptr arglist = SASS_MEMORY_NEW(List, p->pstate(), 0, SASS_COMMA, true);
           env->local_frame()[p->name()] = arglist;
           Map_Obj argmap = Cast<Map>(a->value());
-          for (auto key : argmap->keys()) {
+          for (auto __key = (argmap->keys()).begin(); __key != (argmap->keys()).end(); ++__key) { auto key = *(__key);
             if (String_Constant_Obj str = Cast<String_Constant>(key)) {
               std::string param = unquote(str->value());
               arglist->append(SASS_MEMORY_NEW(Argument,
@@ -217,7 +217,7 @@ namespace Sass {
       } else if (a->is_keyword_argument()) {
         Map_Obj argmap = Cast<Map>(a->value());
 
-        for (auto key : argmap->keys()) {
+        for (auto __key = (argmap->keys()).begin(); __key != (argmap->keys()).end(); ++__key) { auto key = *(__key);
           String_Constant_Ptr val = Cast<String_Constant>(key);
           if (val == NULL) throw Exception::InvalidVarKwdType(key->pstate(), key->inspect(), a);
           std::string param = "$" + unquote(val->value());

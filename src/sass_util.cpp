@@ -131,7 +131,7 @@ namespace Sass {
       	  recurseFlattened.got_line_feed = e.got_line_feed;
       	}
 
-      	for(auto i : (*recurseFlattened.collection())) {
+      	for (auto __i = ((*recurseFlattened.collection())).begin(); __i != ((*recurseFlattened.collection())).end(); ++__i) { auto i = *(__i);
           if (recurseFlattened.got_line_feed) {
 
             i.got_line_feed = true;

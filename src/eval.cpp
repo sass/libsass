@@ -246,7 +246,7 @@ namespace Sass {
     Expression_Obj val = 0;
 
     if (map) {
-      for (Expression_Obj key : map->keys()) {
+      for (auto __key = (map->keys()).begin(); __key != (map->keys()).end(); ++__key) { Expression_Obj key = *(__key);
         Expression_Obj value = map->at(key);
 
         if (variables.size() == 1) {
@@ -523,7 +523,7 @@ namespace Sass {
     Map_Obj mm = SASS_MEMORY_NEW(Map,
                                 m->pstate(),
                                 m->length());
-    for (auto key : m->keys()) {
+    for (auto __key = (m->keys()).begin(); __key != (m->keys()).end(); ++__key) { auto key = *(__key);
       Expression_Ptr ex_key = key->perform(this);
       Expression_Ptr ex_val = m->at(key);
       if (ex_val == NULL) continue;
@@ -947,7 +947,7 @@ namespace Sass {
     Env* env = environment();
     if (!env->has(full_name) || (!c->via_call() && Prelexer::re_special_fun(name.c_str()))) {
       if (!env->has("*[f]")) {
-        for (Argument_Obj arg : args->elements()) {
+        for (auto __arg = (args->elements()).begin(); __arg != (args->elements()).end(); ++__arg) { Argument_Obj arg = *(__arg);
           if (List_Obj ls = Cast<List>(arg->value())) {
             if (ls->size() == 0) error("() isn't a valid CSS value.", c->pstate());
           }
@@ -1146,7 +1146,7 @@ namespace Sass {
 
     if (Arguments_Ptr args = Cast<Arguments>(ex)) {
       List_Ptr ll = SASS_MEMORY_NEW(List, args->pstate(), 0, SASS_COMMA);
-      for(auto arg : args->elements()) {
+      for (auto __arg = (args->elements()).begin(); __arg != (args->elements()).end(); ++__arg) { auto arg = *(__arg);
         ll->append(arg->value());
       }
       ll->is_interpolant(args->is_interpolant());
@@ -1182,7 +1182,7 @@ namespace Sass {
       List_Obj ll = SASS_MEMORY_NEW(List, l->pstate(), 0, l->separator());
       // this fixes an issue with bourbon sample, not really sure why
       // if (l->size() && Cast<Null>((*l)[0])) { res += ""; }
-      for(Expression_Obj item : l->elements()) {
+      for (auto __item = (l->elements()).begin(); __item != (l->elements()).end(); ++__item) { Expression_Obj item = *(__item);
         item->is_interpolant(l->is_interpolant());
         std::string rl(""); interpolation(ctx, rl, item, into_quotes, l->is_interpolant());
         bool is_null = Cast<Null>(item) != 0; // rl != ""

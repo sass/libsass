@@ -353,7 +353,7 @@ namespace Sass {
       imp->import_queries(import_queries);
     }
 
-    for(auto location : to_import) {
+    for (auto __location = (to_import).begin(); __location != (to_import).end(); ++__location) { auto location = *(__location);
       if (location.second) {
         imp->urls().push_back(location.second);
       }

@@ -63,7 +63,7 @@ namespace Sass {
     }
 
     if (b) {
-      for (auto n : b->elements()) {
+      for (auto __n = (b->elements()).begin(); __n != (b->elements()).end(); ++__n) { auto n = *(__n);
         n->perform(this);
       }
     }
@@ -179,7 +179,7 @@ namespace Sass {
 
   // void CheckNesting::invalid_import_parent(Statement_Ptr parent)
   // {
-  //   for (auto pp : this->parents) {
+  //   for (auto __pp = (this->parents).begin(); __pp != (this->parents).end(); ++__pp) { auto pp = *(__pp);
   //     if (
   //         Cast<Each>(pp) ||
   //         Cast<For>(pp) ||
@@ -210,7 +210,7 @@ namespace Sass {
 
   void CheckNesting::invalid_mixin_definition_parent(Statement_Ptr parent)
   {
-    for (Statement_Ptr pp : this->parents) {
+    for (auto __pp = (this->parents).begin(); __pp != (this->parents).end(); ++__pp) { Statement_Ptr pp = *(__pp);
       if (
           Cast<Each>(pp) ||
           Cast<For>(pp) ||
@@ -230,7 +230,7 @@ namespace Sass {
 
   void CheckNesting::invalid_function_parent(Statement_Ptr parent)
   {
-    for (Statement_Ptr pp : this->parents) {
+    for (auto __pp = (this->parents).begin(); __pp != (this->parents).end(); ++__pp) { Statement_Ptr pp = *(__pp);
       if (
           Cast<Each>(pp) ||
           Cast<For>(pp) ||

@@ -100,13 +100,13 @@ namespace Sass {
     collect_plugin_paths(c_options.plugin_paths);
 
     // load plugins and register custom behaviors
-    for(auto plug : plugin_paths) { plugins.load_plugins(plug); }
+    for (auto __plug = (plugin_paths).begin(); __plug != (plugin_paths).end(); ++__plug) { auto plug = *(__plug); plugins.load_plugins(plug); }
     const std::vector<Sass_Importer_Entry> headers = plugins.get_headers();
     const std::vector<Sass_Importer_Entry> importers = plugins.get_importers();
     const std::vector<Sass_Function_Entry> functions = plugins.get_functions();
-    for(Sass_Importer_Entry fn : headers) { c_headers.push_back(fn); }
-    for(Sass_Importer_Entry fn : importers) { c_importers.push_back(fn); }
-    for(Sass_Function_Entry fn : functions) { c_functions.push_back(fn); }
+    for (auto __fn = (headers).begin(); __fn != (headers).end(); ++__fn) { Sass_Importer_Entry fn = *(__fn); c_headers.push_back(fn); }
+    for (auto __fn = (importers).begin(); __fn != (importers).end(); ++__fn) { Sass_Importer_Entry fn = *(__fn); c_importers.push_back(fn); }
+    for (auto __fn = (functions).begin(); __fn != (functions).end(); ++__fn) { Sass_Function_Entry fn = *(__fn); c_functions.push_back(fn); }
 
     // sort the items by priority (lowest first)
     sort (c_headers.begin(), c_headers.end(), sort_importers);
@@ -421,7 +421,7 @@ namespace Sass {
     // need one correct import
     bool has_import = false;
     // process all custom importers (or custom headers)
-    for (Sass_Importer_Entry& importer_ent : importers) {
+    for (auto __importer_ent = (importers).begin(); __importer_ent != (importers).end(); ++__importer_ent) { Sass_Importer_Entry& importer_ent = *(__importer_ent);
       // int priority = sass_importer_get_priority(importer);
       Sass_Importer_Fn fn = sass_importer_get_function(importer_ent);
       // skip importer if it returns NULL

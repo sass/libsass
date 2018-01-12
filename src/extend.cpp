@@ -187,7 +187,7 @@ namespace Sass {
     }
     bool first = true;
     std::cerr << "[";
-    for(SubSetMapLookup& pair : collection) {
+    for (auto __pair = (collection).begin(); __pair != (collection).end(); ++__pair) { SubSetMapLookup& pair = *(__pair);
       if (first) {
         first = false;
       } else {
@@ -1545,7 +1545,7 @@ namespace Sass {
     SubSetMapLookups holder;
 
     // for each (EXTENDER, TARGET) in MAP.get(COMPOUND):
-    for (SubSetMapResult& groupedPair : arr) {
+    for (auto __groupedPair = (arr).begin(); __groupedPair != (arr).end(); ++__groupedPair) { SubSetMapResult& groupedPair = *(__groupedPair);
 
       Complex_Selector_Obj seq = groupedPair.first;
       SubSetMapPairs& group = groupedPair.second;
@@ -1553,7 +1553,7 @@ namespace Sass {
       DEBUG_EXEC(EXTEND_COMPOUND, printComplexSelector(seq, "SEQ: "))
 
       Compound_Selector_Obj pSels = SASS_MEMORY_NEW(Compound_Selector, pSelector->pstate());
-      for (SubSetMapPair& pair : group) {
+      for (auto __pair = (group).begin(); __pair != (group).end(); ++__pair) { SubSetMapPair& pair = *(__pair);
         pair.second->extended(true);
         pSels->concat(pair.second);
       }
@@ -1639,7 +1639,7 @@ namespace Sass {
     }
 
 
-    for (SubSetMapLookup& pair : holder) {
+    for (auto __pair = (holder).begin(); __pair != (holder).end(); ++__pair) { SubSetMapLookup& pair = *(__pair);
 
       Compound_Selector_Obj pSels = pair.first;
       Complex_Selector_Obj pNewSelector = pair.second;
@@ -1696,7 +1696,7 @@ namespace Sass {
 
       if (pHead) {
         SubSetMapPairs entries = subset_map.get_v(pHead);
-        for (SubSetMapPair ext : entries) {
+        for (auto __ext = (entries).begin(); __ext != (entries).end(); ++__ext) { SubSetMapPair ext = *(__ext);
           // check if both selectors have the same media block parent
           // if (ext.first->media_block() == pComplexSelector->media_block()) continue;
           if (ext.second->media_block() == 0) continue;
@@ -1759,7 +1759,7 @@ namespace Sass {
     Node choices = Node::createCollection();
 
     // for each compound selector COMPOUND in COMPLEX:
-    for (Node& sseqOrOp : *complexSelector.collection()) {
+    for (auto __sseqOrOp = (*complexSelector.collection()).begin(); __sseqOrOp != (*complexSelector.collection()).end(); ++__sseqOrOp) { Node& sseqOrOp = *(__sseqOrOp);
 
       DEBUG_PRINTLN(EXTEND_COMPLEX, "LOOP: " << sseqOrOp)
 
@@ -1799,7 +1799,7 @@ namespace Sass {
 
       bool isSuperselector = false;
       // if no complex selector in EXTENDED is a superselector of COMPOUND:
-      for (Node& childNode : *extended.collection()) {
+      for (auto __childNode = (*extended.collection()).begin(); __childNode != (*extended.collection()).end(); ++__childNode) { Node& childNode = *(__childNode);
         Complex_Selector_Obj pExtensionSelector = nodeToComplexSelector(childNode);
         if (pExtensionSelector->is_superselector_of(sseqSel)) {
           isSuperselector = true;
@@ -1834,7 +1834,7 @@ namespace Sass {
     Node weaves = Node::createCollection();
 
     // for each list of complex selectors PATH in paths(CHOICES):
-    for (Node& path : *paths.collection()) {
+    for (auto __path = (*paths.collection()).begin(); __path != (*paths.collection()).end(); ++__path) { Node& path = *(__path);
       // add weave(PATH) to WEAVES
       Node weaved = weave(path); // slow(12%)!
       weaved.got_line_feed = path.got_line_feed;
@@ -1911,7 +1911,7 @@ namespace Sass {
       }
 
       bool doReplace = isReplace;
-      for (Node& childNode : *extendedSelectors.collection()) {
+      for (auto __childNode = (*extendedSelectors.collection()).begin(); __childNode != (*extendedSelectors.collection()).end(); ++__childNode) { Node& childNode = *(__childNode);
         // When it is a replace, skip the first one, unless there is only one
         if(doReplace && extendedSelectors.collection()->size() > 1 ) {
           doReplace = false;
@@ -1927,7 +1927,7 @@ namespace Sass {
     pNewSelectors = remove_placeholders.remove_placeholders(pNewSelectors);
 
     // unwrap all wrapped selectors with inner lists
-    for (Complex_Selector_Obj cur : pNewSelectors->elements()) {
+    for (auto __cur = (pNewSelectors->elements()).begin(); __cur != (pNewSelectors->elements()).end(); ++__cur) { Complex_Selector_Obj cur = *(__cur);
       // process tails
       while (cur) {
         // process header
@@ -1936,7 +1936,7 @@ namespace Sass {
           recseen.insert(cur->head());
           // create a copy since we add multiple items if stuff get unwrapped
           Compound_Selector_Obj cpy_head = SASS_MEMORY_NEW(Compound_Selector, cur->pstate());
-          for (Simple_Selector_Obj hs : cur->head()->elements()) {
+          for (auto __hs = (cur->head()->elements()).begin(); __hs != (cur->head()->elements()).end(); ++__hs) { Simple_Selector_Obj hs = *(__hs);
             if (Wrapped_Selector_Obj ws = Cast<Wrapped_Selector>(hs)) {
               ws->selector(SASS_MEMORY_CLONE(ws->selector()));
               if (Selector_List_Obj sl = Cast<Selector_List>(ws->selector())) {
@@ -2086,7 +2086,7 @@ namespace Sass {
     if (b->is_root()) {
       // debug_subset_map(subset_map);
       auto values = subset_map.values();
-      for(auto it : values) {
+      for (auto __it = (values).begin(); __it != (values).end(); ++__it) { auto it = *(__it);
         Complex_Selector_Ptr sel = NULL;
         Compound_Selector_Ptr ext = NULL;
         if (it.first) sel = it.first->first();

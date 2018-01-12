@@ -17,13 +17,13 @@ namespace Sass {
   Plugins::Plugins(void) { }
   Plugins::~Plugins(void)
   {
-    for (auto function : functions) {
+    for (auto __function = (functions).begin(); __function != (functions).end(); ++__function) { auto function = *(__function);
       sass_delete_function(function);
     }
-    for (auto importer : importers) {
+    for (auto __importer = (importers).begin(); __importer != (importers).end(); ++__importer) { auto importer = *(__importer);
       sass_delete_importer(importer);
     }
-    for (auto header : headers) {
+    for (auto __header = (headers).begin(); __header != (headers).end(); ++__header) { auto header = *(__header);
       sass_delete_importer(header);
     }
   }

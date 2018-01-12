@@ -326,13 +326,13 @@ namespace Sass {
       abs_path = join_paths(root, rel_path);
       if (file_exists(abs_path)) includes.push_back({{ rel_path, root }, abs_path });
       // next test exts plus underscore
-      for(auto ext : exts) {
+      for (auto __ext = (exts).begin(); __ext != (exts).end(); ++__ext) { auto ext = *(__ext);
         rel_path = join_paths(base, "_" + name + ext);
         abs_path = join_paths(root, rel_path);
         if (file_exists(abs_path)) includes.push_back({{ rel_path, root }, abs_path });
       }
       // next test plain name with exts
-      for(auto ext : exts) {
+      for (auto __ext = (exts).begin(); __ext != (exts).end(); ++__ext) { auto ext = *(__ext);
         rel_path = join_paths(base, name + ext);
         abs_path = join_paths(root, rel_path);
         if (file_exists(abs_path)) includes.push_back({{ rel_path, root }, abs_path });
@@ -344,7 +344,7 @@ namespace Sass {
     std::vector<std::string> find_files(const std::string& file, const std::vector<std::string> paths)
     {
       std::vector<std::string> includes;
-      for (std::string path : paths) {
+      for (auto __path = (paths).begin(); __path != (paths).end(); ++__path) { std::string path = *(__path);
         std::string abs_path(join_paths(path, file));
         if (file_exists(abs_path)) includes.push_back(abs_path);
       }

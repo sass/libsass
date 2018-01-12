@@ -119,10 +119,10 @@ namespace Sass {
     // check for parent selectors in base level rules
     if (r->is_root() || (block_stack.back() && block_stack.back()->is_root())) {
       if (Selector_List_Ptr selector_list = Cast<Selector_List>(r->selector())) {
-        for (Complex_Selector_Obj complex_selector : selector_list->elements()) {
+        for (auto __complex_selector = (selector_list->elements()).begin(); __complex_selector != (selector_list->elements()).end(); ++__complex_selector) { Complex_Selector_Obj complex_selector = *(__complex_selector);
           Complex_Selector_Ptr tail = complex_selector;
           while (tail) {
-            if (tail->head()) for (Simple_Selector_Obj header : tail->head()->elements()) {
+            if (tail->head()) for (auto __header = (tail->head()->elements()).begin(); __header != (tail->head()->elements()).end(); ++__header) { Simple_Selector_Obj header = *(__header);
               Parent_Selector_Ptr ptr = Cast<Parent_Selector>(header);
               if (ptr == NULL || (!ptr->real() || has_parent_selector)) continue;
               std::string sel_str(complex_selector->to_string(ctx.c_options));
@@ -503,7 +503,7 @@ namespace Sass {
     Block_Ptr body = e->block();
 
     if (map) {
-      for (auto key : map->keys()) {
+      for (auto __key = (map->keys()).begin(); __key != (map->keys()).end(); ++__key) { auto key = *(__key);
         Expression_Obj k = key->perform(&eval);
         Expression_Obj v = map->at(key)->perform(&eval);
 
@@ -586,10 +586,10 @@ namespace Sass {
   void Expand::expand_selector_list(Selector_Obj s, Selector_List_Obj extender) {
 
     if (Selector_List_Obj sl = Cast<Selector_List>(s)) {
-      for (Complex_Selector_Obj complex_selector : sl->elements()) {
+      for (auto __complex_selector = (sl->elements()).begin(); __complex_selector != (sl->elements()).end(); ++__complex_selector) { Complex_Selector_Obj complex_selector = *(__complex_selector);
         Complex_Selector_Obj tail = complex_selector;
         while (tail) {
-          if (tail->head()) for (Simple_Selector_Obj header : tail->head()->elements()) {
+          if (tail->head()) for (auto __header = (tail->head()->elements()).begin(); __header != (tail->head()->elements()).end(); ++__header) { Simple_Selector_Obj header = *(__header);
             if (Cast<Parent_Selector>(header) == NULL) continue; // skip all others
             std::string sel_str(complex_selector->to_string(ctx.c_options));
             error("Can't extend " + sel_str + ": can't extend parent selectors", header->pstate(), backtrace());
@@ -602,7 +602,7 @@ namespace Sass {
 
     Selector_List_Obj contextualized = Cast<Selector_List>(s->perform(&eval));
     if (contextualized == false) return;
-    for (auto complex_sel : contextualized->elements()) {
+    for (auto __complex_sel = (contextualized->elements()).begin(); __complex_sel != (contextualized->elements()).end(); ++__complex_sel) { auto complex_sel = *(__complex_sel);
       Complex_Selector_Obj c = complex_sel;
       if (!c->head() || c->tail()) {
         std::string sel_str(contextualized->to_string(ctx.c_options));
@@ -653,7 +653,7 @@ namespace Sass {
           selector_stack.pop_back();
         }
       }
-      for (Complex_Selector_Obj cs : sl->elements()) {
+      for (auto __cs = (sl->elements()).begin(); __cs != (sl->elements()).end(); ++__cs) { Complex_Selector_Obj cs = *(__cs);
         if (!cs.isNull() && !cs->head().isNull()) {
           cs->head()->media_block(media_block_stack.back());
         }
@@ -749,7 +749,7 @@ namespace Sass {
       trace_block->is_root(pr->is_root());
     }
     block_stack.push_back(trace_block);
-    for (auto bb : body->elements()) {
+    for (auto __bb = (body->elements()).begin(); __bb != (body->elements()).end(); ++__bb) { auto bb = *(__bb);
       if (Ruleset_Ptr r = Cast<Ruleset>(bb)) {
         r->is_root(trace_block->is_root());
       }

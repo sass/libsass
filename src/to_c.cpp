@@ -47,7 +47,7 @@ namespace Sass {
   {
     union Sass_Value* v = sass_make_map(m->length());
     int i = 0;
-    for (auto key : m->keys()) {
+    for (auto __key = (m->keys()).begin(); __key != (m->keys()).end(); ++__key) { auto key = *(__key);
       sass_map_set_key(v, i, key->perform(this));
       sass_map_set_value(v, i, m->at(key)->perform(this));
       i++;

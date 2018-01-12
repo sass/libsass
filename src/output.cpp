@@ -65,7 +65,7 @@ namespace Sass {
     }
 
     // search for unicode char
-    for(const char& chr : wbuf.buffer) {
+    for (auto __chr = (wbuf.buffer).begin(); __chr != (wbuf.buffer).end(); ++__chr) { const char& chr = *(__chr);
       // skip all ascii chars
       // static cast to unsigned to handle `char` being signed / unsigned
       if (static_cast<unsigned>(chr) < 128) continue;
