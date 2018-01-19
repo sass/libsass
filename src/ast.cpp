@@ -666,10 +666,9 @@ namespace Sass {
 
   bool Attribute_Selector::operator< (const Simple_Selector& rhs) const
   {
-    if (Attribute_Selector_Ptr_Const w = Cast<Attribute_Selector>(&rhs))
-    {
-      return *this < *w;
-    }
+    if (Cast<Element_Selector>(&rhs)) { return true; }
+    if (Attribute_Selector_Ptr_Const w = Cast<Attribute_Selector>(&rhs)) { return *this < *w; }
+    // better to throw an error here!?
     if (is_ns_eq(rhs))
     { return name() < rhs.name(); }
     return ns() < rhs.ns();
@@ -712,16 +711,21 @@ namespace Sass {
   bool Element_Selector::operator< (const Element_Selector& rhs) const
   {
     if (is_ns_eq(rhs))
-    { return name() < rhs.name(); }
+    { 
+      if (rhs.has_ns_ && has_ns_)
+        return name() < rhs.name();
+      if (!rhs.has_ns_ && !has_ns_)
+        return name() < rhs.name();
+      return true;
+    }
     return ns() < rhs.ns();
   }
 
   bool Element_Selector::operator< (const Simple_Selector& rhs) const
   {
-    if (Element_Selector_Ptr_Const w = Cast<Element_Selector>(&rhs))
-    {
-      return *this < *w;
-    }
+    if (Cast<Attribute_Selector>(&rhs)) { return false; }
+    if (Element_Selector_Ptr_Const w = Cast<Element_Selector>(&rhs)) { return *this < *w; }
+    // better to throw an error here!?
     if (is_ns_eq(rhs))
     { return name() < rhs.name(); }
     return ns() < rhs.ns();
@@ -911,7 +915,7 @@ namespace Sass {
             throw std::runtime_error("wrapped not selector is not a list");
           }
         }
-        if (wrapped->name() == ":matches" || wrapped->name() == ":-moz-any") {
+        if (wrapped->name() == ":matches" || (wrapped->name()[0] == ':' && ends_with(wrapped->name(), "-any"))) {
           wlhs = wrapped->selector();
           if (Selector_List_Obj list = Cast<Selector_List>(wrapped->selector())) {
             if (Compound_Selector_Obj comp = Cast<Compound_Selector>(rhs)) {
@@ -945,7 +949,7 @@ namespace Sass {
             if (is_superselector_of(ls, wrapped->name())) return false;
           }
         }
-        if (wrapped->name() == ":matches" || wrapped->name() == ":-moz-any") {
+        if (wrapped->name() == ":matches" || (wrapped->name()[0] == ':' && ends_with(wrapped->name(), "-any"))) {
           if (!wrapping.empty()) {
             if (wrapping != wrapped->name()) return false;
           }
