@@ -312,6 +312,7 @@ namespace Sass {
     T& operator[](size_t i) { return elements_[i]; }
     virtual const T& at(size_t i) const { return elements_.at(i); }
     virtual T& at(size_t i) { return elements_.at(i); }
+    const T& get(size_t i) const { return elements_[i]; }
     const T& operator[](size_t i) const { return elements_[i]; }
     virtual void append(T element)
     {
