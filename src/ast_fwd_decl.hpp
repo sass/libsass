@@ -268,6 +268,12 @@ namespace Sass {
   class Selector_List;
   typedef Selector_List* Selector_List_Ptr;
   typedef Selector_List const * Selector_List_Ptr_Const;
+  class Selector_Group;
+  typedef Selector_Group* Selector_Group_Ptr;
+  typedef Selector_Group const * Selector_Group_Ptr_Const;
+  class Selector_Groups;
+  typedef Selector_Groups* Selector_Groups_Ptr;
+  typedef Selector_Groups const * Selector_Groups_Ptr_Const;
 
 
   // common classes
@@ -356,6 +362,8 @@ namespace Sass {
   IMPL_MEM_OBJ(Compound_Selector);
   IMPL_MEM_OBJ(Complex_Selector);
   IMPL_MEM_OBJ(Selector_List);
+  IMPL_MEM_OBJ(Selector_Group);
+  IMPL_MEM_OBJ(Selector_Groups);
 
   // ###########################################################################
   // Implement compare, order and hashing operations for AST Nodes
@@ -384,6 +392,21 @@ namespace Sass {
       return !lhs.isNull() && !rhs.isNull() && *lhs == *rhs;
     }
   };
+
+  template <class T>
+  bool SetsAreEqual(const T& lhs, const T& rhs) {
+    if (lhs.size() != rhs.size()) return false;
+    auto lit = lhs.begin(), lend = lhs.end();
+    auto rit = rhs.begin() /* , rend = rhs.end() */;
+    return std::equal(lit, lend, rit, CompareNodes());
+  }
+
+  template <class T>
+  bool SetContains(const T& lhs, const T& rhs) {
+    auto lit = lhs.begin(), lend = lhs.end();
+    auto rit = rhs.begin(), rend = rhs.end();
+    return std::includes(lit, lend, rit, rend, OrderNodes());
+  }
 
   // ###########################################################################
   // some often used typedefs

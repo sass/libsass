@@ -13,6 +13,7 @@
 
 namespace Sass {
 
+  Node weave(Node& path);
   Node subweave(Node& one, Node& two);
 
   class Extend : public Operation_CRTP<void, Extend> {
@@ -53,7 +54,6 @@ namespace Sass {
     Node extendCompoundSelector(Compound_Selector_Ptr sel, CompoundSelectorSet& seen, bool isReplace);
     bool complexSelectorHasExtension(Complex_Selector_Ptr selector, CompoundSelectorSet& seen);
     Node trim(Node& seqses, bool isReplace);
-    Node weave(Node& path);
 
   public:
     void setEval(Eval& eval);

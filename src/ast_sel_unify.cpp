@@ -4,7 +4,6 @@
 #include "node.hpp"
 #include "eval.hpp"
 #include "extend.hpp"
-#include "debugger.hpp"
 #include "emitter.hpp"
 #include "color_maps.hpp"
 #include "ast_fwd_decl.hpp"
@@ -167,64 +166,58 @@ namespace Sass {
 
   bool Compound_Selector::is_superselector_of(Compound_Selector_Obj rhs, std::string wrapping)
   {
-    Compound_Selector_Ptr lhs = this;
-    Simple_Selector_Ptr lbase = lhs->base();
-    Simple_Selector_Ptr rbase = rhs->base();
+    // replaced compare without stringification
+    // https://github.com/sass/sass/issues/2229
+    SimpleSelectorSet lpset, rpset;
 
-    // Check if pseudo-elements are the same between the selectors
-
-    std::set<Simple_Selector*> lpsuedoset, rpsuedoset;
+    // Check if pseudo-elements are the same
+    // otherwise this is not a superselector
     for (size_t i = 0, L = length(); i < L; ++i)
     {
       if (get(i)->is_pseudo_element()) {
-        lpsuedoset.insert(get(i));
+        lpset.insert(get(i));
       }
     }
     for (size_t i = 0, L = rhs->length(); i < L; ++i)
     {
       if (rhs->get(i)->is_pseudo_element()) {
-        rpsuedoset.insert(rhs->get(i));
+        rpset.insert(rhs->get(i));
       }
     }
-    if (lpsuedoset != rpsuedoset) {
-      return false;
-    }
+    if (!SetsAreEqual(rpset, lpset)) return false;
 
     // replaced compare without stringification
     // https://github.com/sass/sass/issues/2229
-    SelectorSet lset, rset;
+    SimpleSelectorSet lset, rset;
+
+    Simple_Selector_Ptr lbase = base();
+    Simple_Selector_Ptr rbase = rhs->base();
 
     if (lbase && rbase)
     {
       if (*lbase == *rbase) {
-        // create ordered sets for includes query
+        // create ordered sets for contains query
         lset.insert(this->begin(), this->end());
         rset.insert(rhs->begin(), rhs->end());
-        return includes(rset.begin(), rset.end(), lset.begin(), lset.end());
+        return SetContains(rset, lset);
       }
       return false;
     }
 
     for (size_t i = 0, iL = length(); i < iL; ++i)
     {
-      Selector_Ptr wlhs = (*this)[i];
+      Simple_Selector_Ptr wlhs = (*this)[i];
       // very special case for wrapped matches selector
       if (Wrapped_Selector_Ptr wrapped = Cast<Wrapped_Selector>(wlhs)) {
         if (wrapped->name() == ":not") {
-          if (Selector_List_Ptr not_list = Cast<Selector_List>(wrapped->selector())) {
-            if (not_list->is_superselector_of(rhs, wrapped->name())) return false;
-          } else {
-            throw std::runtime_error("wrapped not selector is not a list");
-          }
+          if (wrapped->selector()->is_superselector_of(rhs, wrapped->name())) return false;
         }
         if (wrapped->name() == ":matches" || (wrapped->name()[0] == ':' && ends_with(wrapped->name(), "-any"))) {
-          wlhs = wrapped->selector();
-          if (Selector_List_Ptr list = Cast<Selector_List>(wrapped->selector())) {
-            if (Compound_Selector_Ptr comp = Cast<Compound_Selector>(rhs)) {
-              if (!wrapping.empty() && wrapping != wrapped->name()) return false;
-              if (wrapping.empty() || wrapping != wrapped->name()) {;
-                if (list->is_superselector_of(comp, wrapped->name())) return true;
-              }
+          // wlhs = wrapped->selector();
+          if (Selector_List_Ptr list = wrapped->selector()) {
+            if (!wrapping.empty() && wrapping != wrapped->name()) return false;
+            if (wrapping.empty() || wrapping != wrapped->name()) {;
+              if (list->is_superselector_of(rhs, wrapped->name())) return true;
             }
           }
         }
@@ -243,7 +236,7 @@ namespace Sass {
 
     for (size_t n = 0, nL = rhs->length(); n < nL; ++n)
     {
-      Selector_Ptr r = (*rhs)[n];
+      Simple_Selector_Ptr r = (*rhs)[n];
       if (Wrapped_Selector_Ptr wrapped = Cast<Wrapped_Selector>(r)) {
         if (wrapped->name() == ":not") {
           if (Selector_List_Ptr ls = Cast<Selector_List>(wrapped->selector())) {
@@ -264,12 +257,10 @@ namespace Sass {
       rset.insert(r);
     }
 
-    //for (auto l : lset) { cerr << "l: " << l << endl; }
-    //for (auto r : rset) { cerr << "r: " << r << endl; }
-
     if (lset.empty()) return true;
+    if (rset.empty()) return false;
     // return true if rset contains all the elements of lset
-    return includes(rset.begin(), rset.end(), lset.begin(), lset.end());
+    return SetContains(rset, lset);
 
   }
 
@@ -284,12 +275,13 @@ namespace Sass {
   /*#########################################################################*/
   /*#########################################################################*/
 
-  Selector_List_Ptr Complex_Selector::unify_with(Complex_Selector_Ptr other)
+  Selector_List_Ptr Complex_Selector::unify_with(Complex_Selector_Ptr rhs)
   {
+
 
     // get last tails (on the right side)
     Complex_Selector_Obj l_last = this->last();
-    Complex_Selector_Obj r_last = other->last();
+    Complex_Selector_Obj r_last = rhs->last();
 
     // check valid pointers (assertion)
     SASS_ASSERT(l_last, "lhs is null");
@@ -328,7 +320,7 @@ namespace Sass {
 
     // create nodes from both selectors
     Node lhsNode = complexSelectorToNode(this);
-    Node rhsNode = complexSelectorToNode(other);
+    Node rhsNode = complexSelectorToNode(rhs);
 
     // overwrite universal base
     if (!is_universal)
@@ -352,14 +344,16 @@ namespace Sass {
 
   }
 
-  Selector_List_Ptr Selector_List::unify_with(Selector_List_Ptr rhs) {
+  Selector_List_Ptr Selector_List::unify_with(Selector_List_Ptr rhs)
+  {
+
     std::vector<Complex_Selector_Obj> unified_complex_selectors;
+
     // Unify all of children with RHS's children, storing the results in `unified_complex_selectors`
     for (size_t lhs_i = 0, lhs_L = length(); lhs_i < lhs_L; ++lhs_i) {
-      Complex_Selector_Obj seq1 = (*this)[lhs_i];
+      Complex_Selector_Obj seq1 = this->get(lhs_i);
       for(size_t rhs_i = 0, rhs_L = rhs->length(); rhs_i < rhs_L; ++rhs_i) {
-        Complex_Selector_Ptr seq2 = rhs->at(rhs_i);
-
+        Complex_Selector_Ptr seq2 = rhs->get(rhs_i);
         Selector_List_Obj result = seq1->unify_with(seq2);
         if( result ) {
           for(size_t i = 0, L = result->length(); i < L; ++i) {
@@ -404,7 +398,8 @@ namespace Sass {
     {
       for (i = 0, L = rhs->length(); i < L; ++i)
       {
-        if ((Cast<Pseudo_Selector>((*rhs)[i]) || Cast<Wrapped_Selector>((*rhs)[i]) || Cast<Attribute_Selector>((*rhs)[i])) && (*rhs)[L-1]->is_pseudo_element())
+        // is_pseudo_element check is needed to preserve the correct order!??
+        if ((Cast<Pseudo_Selector>((*rhs)[i])) && (*rhs)[L-1]->is_pseudo_element())
         { found = true; break; }
       }
     }
@@ -523,19 +518,320 @@ namespace Sass {
 
   Compound_Selector_Ptr Pseudo_Selector::unify_with(Compound_Selector_Ptr rhs)
   {
-    if (is_pseudo_element())
-    {
-      for (size_t i = 0, L = rhs->length(); i < L; ++i)
-      {
-        if (Pseudo_Selector_Ptr sel = Cast<Pseudo_Selector>(rhs->at(i))) {
-          if (sel->is_pseudo_element() && sel->name() != name()) return 0;
-        }
-      }
-    }
     return Simple_Selector::unify_with(rhs);
   }
 
   /*#########################################################################*/
   /*#########################################################################*/
+
+  Selector_List_Ptr Compound_Selector::weaver(Selector_List_Ptr rhs)
+  {
+    throw std::runtime_error("not yet implemented");
+  }
+
+  // https://www.geeksforgeeks.org/longest-common-subsequence/
+  // https://www.geeksforgeeks.org/printing-longest-common-subsequence/
+  std::vector<Selector_Group_Obj> lcs(Selector_Groups& X, Selector_Groups& Y)
+  {
+
+    size_t m = X.length() - 1;
+    size_t n = Y.length() - 1;
+
+    #define L(i,j) l[ (i) * m + j ]
+    size_t* l = new size_t[(m+1)*(n+1)];
+
+    /* Following steps build L[m+1][n+1] in bottom up fashion. Note
+      that L[i][j] contains length of LCS of X[0..i-1] and Y[0..j-1] */
+    for (size_t i = 0; i <= m; i++)
+    {
+      for (size_t j = 0; j <= n; j++)
+      {
+        if (i == 0 || j == 0)
+          L(i, j) = 0;
+        else if (*X[i-1] == *Y[j-1])
+          L(i, j) = L(i-1, j-1) + 1;
+        else
+          L(i, j) = std::max(L(i-1, j), L(i, j-1));
+      }
+    }
+
+    // Following code is used to print LCS
+    size_t index = L(m, n);
+
+    // Create an array to store the lcs groups
+    std::vector<Selector_Group_Obj> lcs(index);
+
+    // Start from the right-most-bottom-most corner and
+    // one by one store objects in lcs[]
+    size_t i = m, j = n;
+    while (i > 0 && j > 0)
+    {
+
+      // If current objects in X[] and Y are same, then
+      // current object is part of LCS
+      if (*X[i-1] == *Y[j-1])
+      {
+          lcs[index-1] = X[i-1]; // Put current object in result
+          i--; j--; index--;     // reduce values of i, j and index
+      }
+
+      // If not same, then find the larger of two and
+      // go in the direction of larger value
+      else if (L(i-1, j) > L(i, j-1))
+          i--;
+      else
+          j--;
+    }
+
+    delete[] l;
+    return lcs;
+
+  }
+
+  // make static obj to always hold on to the pointer
+  Complex_Selector_Obj base = (SASS_MEMORY_NEW(Placeholder_Selector,
+    ParserState("[TMP]"), "<temp>"))->toComplexSelector();
+
+  bool parent_superselector(Selector_Group_Obj lhs, Selector_Group_Obj rhs)
+  {
+    lhs = lhs->copy(); lhs->append(base);
+    rhs = rhs->copy(); rhs->append(base);
+    Complex_Selector_Obj lhcs = lhs->toComplexSelector();
+    Complex_Selector_Obj rhcs = rhs->toComplexSelector();
+    return lhcs->is_superselector_of(rhcs);
+  }
+
+  /*
+  def chunks(seq1, seq2)
+    chunk1 = []
+    chunk1 << seq1.shift until yield seq1
+    chunk2 = []
+    chunk2 << seq2.shift until yield seq2
+    return [] if chunk1.empty? && chunk2.empty?
+    return [chunk2] if chunk1.empty?
+    return [chunk1] if chunk2.empty?
+    [chunk1 + chunk2, chunk2 + chunk1]
+  end
+  */
+
+  Selector_Groups_Obj chunks(Selector_Groups_Ptr seq1, Selector_Groups_Ptr seq2, std::vector<Selector_Group_Obj> lcs)
+  {
+    auto chunks = SASS_MEMORY_NEW(Selector_Groups, ParserState("[TMP]"));
+    auto chunks1 = SASS_MEMORY_NEW(Selector_Group, ParserState("[TMP]"));
+    auto chunks2 = SASS_MEMORY_NEW(Selector_Group, ParserState("[TMP]"));
+
+    while (!seq1->empty()) {
+      Selector_Group_Obj s1 = seq1->first();
+      if (parent_superselector(s1, lcs.front())) break;
+      seq1->erase(seq1->begin());
+      chunks1->concat(s1);
+    }
+    while (!seq2->empty()) {
+      Selector_Group_Obj s2 = seq2->first();
+      if (parent_superselector(s2, lcs.front())) break;
+      seq2->erase(seq2->begin());
+      chunks2->concat(s2);
+    }
+
+    if (chunks1->empty() && chunks2->empty()) { return chunks; }
+    else if (chunks2->empty() && !chunks1->empty()) { chunks->append(chunks1); }
+    else if (chunks1->empty() && !chunks2->empty()) { chunks->append(chunks2); }
+    else if (!chunks1->empty() && !chunks2->empty()) {
+      auto lhs = chunks1->copy();
+      auto rhs = chunks2->copy();
+      lhs->concat(chunks2);
+      rhs->concat(chunks1);
+      chunks->append(lhs);
+      chunks->append(rhs);
+    }
+
+    return chunks;
+  }
+
+  /*
+  def group_selectors(seq)
+    newseq = []
+    tail = seq.dup
+    until tail.empty?
+      head = []
+      begin
+        head << tail.shift
+      end while !tail.empty? && head.last.is_a?(String) || tail.first.is_a?(String)
+      newseq << head
+    end
+    newseq
+  end
+  */
+
+  Selector_Groups_Obj group_selectors(Complex_Selector_Ptr s)
+  {
+    Complex_Selector_Ptr current = s->first();
+    auto groups = SASS_MEMORY_NEW(Selector_Groups, s->pstate());
+    if (current->empty()) return groups;
+    auto sg = SASS_MEMORY_NEW(Selector_Group, s->pstate());
+    while (current) {
+      sg->append(current);
+      if (current->is_ancestor()) {
+        groups->append(sg);
+        sg = SASS_MEMORY_NEW(Selector_Group, s->pstate());
+      }
+      current = current->tail();
+    }
+    groups->append(sg);
+    return groups;
+  }
+
+  /*
+  def paths(arrs)
+    arrs.inject([[]]) do |paths, arr|
+      arr.map {|e| paths.map {|path| path + [e]}}.flatten(1)
+    end
+  end
+  */
+
+  Selector_Groups_Ptr paths(const std::vector<Selector_Groups_Obj>& arrs)
+  {
+
+    ParserState pstate("[NA]");
+    Selector_Groups_Obj paths =
+      SASS_MEMORY_NEW(Selector_Groups, pstate);
+
+    // declare loop variables
+    size_t parts = arrs.size();
+    size_t* idx = new size_t[parts]();
+    size_t* lens = new size_t[parts]();
+
+    // loop iteration variables
+    size_t perms = 1, perm = 0;
+
+    // prepare some loop variables
+    for (size_t i = 0; i < parts; i++) {
+      // store length for easy access
+      lens[i] = arrs[i]->length();
+      // calculate permutations
+      perms *= lens[i];
+    }
+
+    // create all permutations
+    while (perm ++ < perms) {
+
+      // create current permutation
+      Selector_Group_Obj path =
+        SASS_MEMORY_NEW(Selector_Group, pstate);
+      for (size_t i = 0; i < parts; i++) {
+        path->concat(arrs[i]->get(idx[i]));
+      }
+      paths->append(path);
+
+      // increment for all permutations
+      for (size_t i = 0; i < parts; i ++) {
+        if (idx[i] + 1 == lens[i]) {
+          idx[i] = 0;
+        } else {
+          idx[i] ++;
+          break;
+        }
+      }
+
+    }
+
+    delete[] idx;
+    delete[] lens;
+    return paths.detach();
+
+  }
+
+  /*
+  def subweave(seq1, seq2)
+    return [seq2] if seq1.empty?
+    return [seq1] if seq2.empty?
+
+    seq1, seq2 = seq1.dup, seq2.dup
+    return unless (init = merge_initial_ops(seq1, seq2))
+    return unless (fin = merge_final_ops(seq1, seq2))
+
+
+    # Make sure there's only one root selector in the output.
+    root1 = has_root?(seq1.first) && seq1.shift
+    root2 = has_root?(seq2.first) && seq2.shift
+    if root1 && root2
+      return unless (root = root1.unify(root2))
+      seq1.unshift root
+      seq2.unshift root
+    elsif root1
+      seq2.unshift root1
+    elsif root2
+      seq1.unshift root2
+    end
+
+    seq1 = group_selectors(seq1)
+    seq2 = group_selectors(seq2)
+    lcs = Sass::Util.lcs(seq2, seq1) do |s1, s2|
+      next s1 if s1 == s2
+      next unless s1.first.is_a?(SimpleSequence) && s2.first.is_a?(SimpleSequence)
+      next s2 if parent_superselector?(s1, s2)
+      next s1 if parent_superselector?(s2, s1)
+      next unless must_unify?(s1, s2)
+      next unless (unified = Sequence.new(s1).unify(Sequence.new(s2)))
+      unified.members.first.members if unified.members.length == 1
+    end
+
+    diff = [[init]]
+
+    until lcs.empty?
+      diff << chunks(seq1, seq2) {|s| parent_superselector?(s.first, lcs.first)} << [lcs.shift]
+      seq1.shift
+      seq2.shift
+    end
+    diff << chunks(seq1, seq2) {|s| s.empty?}
+    diff += fin.map {|sel| sel.is_a?(Array) ? sel : [sel]}
+    diff.reject! {|c| c.empty?}
+    # diff = diff.map {|sel| sel.map {|sel| sel.is_a?(Array) ? sel.flatten : sel} }
+    Sass::Util.paths(diff).map {|p| p.flatten}.reject {|p| path_has_two_subjects?(p)}
+  end
+  */
+
+  Selector_List_Ptr Complex_Selector::subweaver(Complex_Selector_Ptr rhs)
+  {
+
+    if (empty()) { return rhs->toSelectorList(); }
+    if (rhs->empty()) { return toSelectorList(); }
+
+    // return unless (init = merge_initial_ops(seq1, seq2))
+    // return unless (fin = merge_final_ops(seq1, seq2))
+
+    // root1 = has_root?(seq1.first) && seq1.shift
+    // root2 = has_root?(seq2.first) && seq2.shift
+    // ...........................................
+
+    auto seq1 = group_selectors(this);
+    auto seq2 = group_selectors(rhs);
+
+    // so far only equality test is done!
+    // ruby sass has additional checks!
+    auto LCS = lcs(*seq1, *seq2);
+    
+    Selector_Groups_Obj init = SASS_MEMORY_NEW(Selector_Groups, rhs->pstate());
+    std::vector<Selector_Groups_Obj> diff;
+
+    if (!init->empty()) diff.push_back(init);
+
+    while (!LCS.empty()) {
+      auto chks = chunks(seq1, seq2, LCS);
+      if (!chks->empty()) diff.push_back(chks);
+      auto lcsfirst = LCS.front();
+      auto lcg = SASS_MEMORY_NEW(Selector_Groups, rhs->pstate());
+      lcg->append(lcsfirst);
+      diff.push_back(lcg);
+      seq2->erase(seq2->begin());
+      seq1->erase(seq1->begin());
+      LCS.erase(LCS.begin());
+    }
+
+    Selector_Groups_Obj path = paths(diff);
+
+    return path->toSelectorList();
+
+  }
 
 }

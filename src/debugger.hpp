@@ -90,6 +90,43 @@ inline void debug_ast(AST_Node_Ptr node, std::string ind, Env* env)
     std::cerr << std::endl;
     debug_ast(root_block->expression(), ind + ":", env);
     debug_ast(root_block->block(), ind + " ", env);
+  } else if (Cast<Selector_Group>(node)) {
+    Selector_Group_Ptr selector = Cast<Selector_Group>(node);
+    std::cerr << ind << "Selector_Group " << selector;
+    std::cerr << " (" << pstate_source_position(node) << ")";
+    // std::cerr << " <" << selector->hash() << ">";
+    // std::cerr << (selector->is_invisible() ? " [INVISIBLE]": " -");
+    // std::cerr << (selector->has_placeholder() ? " [PLACEHOLDER]": " -");
+    // std::cerr << (selector->is_optional() ? " [is_optional]": " -");
+    // std::cerr << (selector->has_parent_ref() ? " [has-parent]": " -");
+    // std::cerr << (selector->has_line_break() ? " [line-break]": " -");
+    // std::cerr << (selector->has_line_feed() ? " [line-feed]": " -");
+    std::cerr << std::endl;
+    for (Complex_Selector_Ptr sel : *selector) {
+      std::cerr << ind << " Complex Selector " << sel << " <<";
+      if (sel->head()) std::cerr << sel->head()->to_string();
+      switch (sel->combinator()) {
+        case Complex_Selector::Combinator::ANCESTOR_OF: std::cerr << " "; break;
+        case Complex_Selector::Combinator::PARENT_OF: std::cerr << " > "; break;
+        case Complex_Selector::Combinator::PRECEDES: std::cerr << " ~ "; break;
+        case Complex_Selector::Combinator::ADJACENT_TO: std::cerr << " + "; break;
+        case Complex_Selector::Combinator::REFERENCE: std::cerr << " / "; break;
+      }
+      std::cerr << ">>" << std::endl;
+    }
+  } else if (Cast<Selector_Groups>(node)) {
+    Selector_Groups_Ptr selector = Cast<Selector_Groups>(node);
+    std::cerr << ind << "Selector_Groups " << selector;
+    std::cerr << " (" << pstate_source_position(node) << ")";
+    // std::cerr << " <" << selector->hash() << ">";
+    // std::cerr << (selector->is_invisible() ? " [INVISIBLE]": " -");
+    // std::cerr << (selector->has_placeholder() ? " [PLACEHOLDER]": " -");
+    // std::cerr << (selector->is_optional() ? " [is_optional]": " -");
+    // std::cerr << (selector->has_parent_ref() ? " [has-parent]": " -");
+    // std::cerr << (selector->has_line_break() ? " [line-break]": " -");
+    // std::cerr << (selector->has_line_feed() ? " [line-feed]": " -");
+    std::cerr << std::endl;
+    for (Selector_Group_Ptr group : *selector) debug_ast(group, ind + " ", env);
   } else if (Cast<Selector_List>(node)) {
     Selector_List_Ptr selector = Cast<Selector_List>(node);
     std::cerr << ind << "Selector_List " << selector;

@@ -122,6 +122,7 @@ namespace Sass {
     virtual ~AST_Node() = 0;
     virtual size_t hash() { return 0; }
     ATTACH_VIRTUAL_AST_OPERATIONS(AST_Node);
+    operator ParserState() const { return pstate_; }
     virtual std::string inspect() const { return to_string({ INSPECT, 5 }); }
     virtual std::string to_sass() const { return to_string({ TO_SASS, 5 }); }
     virtual const std::string to_string(Sass_Inspect_Options opt) const;
@@ -130,6 +131,10 @@ namespace Sass {
     // generic find function (not fully implemented yet)
     // ToDo: add specific implementions to all children
     virtual bool find ( bool (*f)(AST_Node_Obj) ) { return f(this); };
+    // virtual bool operator==(const AST_Node& rhs) const { return (this == &rhs); }
+    // virtual bool operator<(const AST_Node& rhs) const { return this < &rhs; };
+    // inline bool operator!=(const AST_Node& rhs) const { return !(rhs == *this); }
+    // inline bool operator>(const AST_Node& rhs) const { return rhs < *this; };
   public:
     void update_pstate(const ParserState& pstate);
   public:
@@ -219,6 +224,7 @@ namespace Sass {
     virtual bool is_false() { return false; }
     // virtual bool is_true() { return !is_false(); }
     virtual bool operator== (const Expression& rhs) const { return false; }
+    inline bool operator!=(const Expression& rhs) const { return !(rhs == *this); }
     virtual bool eq(const Expression& rhs) const { return *this == rhs; };
     virtual void set_delayed(bool delayed) { is_delayed(delayed); }
     virtual bool has_interpolant() const { return is_interpolant(); }
@@ -2310,8 +2316,8 @@ namespace Sass {
     // dispatch to correct handlers
     virtual bool operator<(const Selector& rhs) const = 0;
     virtual bool operator==(const Selector& rhs) const = 0;
-    virtual bool operator>(const Selector& rhs) const { return rhs < *this; };
-    virtual bool operator!=(const Selector& rhs) const { return ! (rhs == *this); };
+    inline bool operator>(const Selector& rhs) const { return rhs < *this; };
+    inline bool operator!=(const Selector& rhs) const { return ! (rhs == *this); };
     ATTACH_VIRTUAL_AST_OPERATIONS(Selector);
   };
   inline Selector::~Selector() { }
@@ -2440,6 +2446,8 @@ namespace Sass {
     }
 
     virtual ~Simple_Selector() = 0;
+    Complex_Selector_Ptr toComplexSelector();
+    Compound_Selector_Ptr toCompoundSelector();
     virtual Compound_Selector_Ptr unify_with(Compound_Selector_Ptr);
     virtual bool has_parent_ref() const { return false; };
     virtual bool has_real_parent_ref() const  { return false; };
@@ -2457,8 +2465,6 @@ namespace Sass {
     bool operator==(const Compound_Selector& rhs) const;
     bool operator<(const Simple_Selector& rhs) const;
     bool operator==(const Simple_Selector& rhs) const;
-
-    inline bool operator!=(const Simple_Selector& rhs) const { return !(*this == rhs); }
 
     // default implementation should work for most of the simple selectors (otherwise overload)
     ATTACH_VIRTUAL_AST_OPERATIONS(Simple_Selector);
@@ -2772,6 +2778,8 @@ namespace Sass {
       return length() == 1 && (*this)[0]->is_universal();
     }
 
+    Selector_List_Ptr weaver(Selector_List_Ptr path);
+
     Complex_Selector_Obj to_complex();
     Compound_Selector_Ptr unify_with(Compound_Selector_Ptr rhs);
     // virtual Placeholder_Selector_Ptr find_placeholder();
@@ -2831,11 +2839,10 @@ namespace Sass {
     bool operator<(const Simple_Selector& rhs) const;
     bool operator==(const Simple_Selector& rhs) const;
 
-    inline bool operator!=(const Compound_Selector& rhs) const { return !(*this == rhs); }
-
     ComplexSelectorSet& sources() { return sources_; }
     void clearSources() { sources_.clear(); }
     void mergeSources(ComplexSelectorSet& sources);
+    Complex_Selector_Ptr toComplexSelector();
 
     Compound_Selector_Ptr minus(Compound_Selector_Ptr rhs);
     virtual void cloneChildren();
@@ -2880,10 +2887,15 @@ namespace Sass {
     {};
     bool empty() const {
       return (!tail() || tail()->empty())
-        && (!head() || head()->empty());
+        && (!head() || head()->empty())
+        && combinator_ == ANCESTOR_OF;
     }
     virtual bool has_parent_ref() const;
     virtual bool has_real_parent_ref() const;
+
+    bool is_ancestor() const {
+      return combinator() == Combinator::ANCESTOR_OF;
+    }
 
     Complex_Selector_Obj skip_empty_reference()
     {
@@ -2897,6 +2909,8 @@ namespace Sass {
       }
       return this;
     }
+
+    Selector_List_Ptr subweaver(Complex_Selector_Ptr rhs);
 
     // can still have a tail
     bool is_empty_ancestor() const
@@ -2965,7 +2979,6 @@ namespace Sass {
     bool operator<(const Simple_Selector& rhs) const;
     bool operator==(const Simple_Selector& rhs) const;
 
-    inline bool operator!=(const Complex_Selector& rhs) const { return !(*this == rhs); }
     const ComplexSelectorSet sources()
     {
       //s = Set.new
@@ -3016,6 +3029,7 @@ namespace Sass {
     }
 
     virtual void cloneChildren();
+    Selector_List_Ptr toSelectorList();
     ATTACH_AST_OPERATIONS(Complex_Selector)
     ATTACH_OPERATIONS()
   };
@@ -3101,6 +3115,74 @@ namespace Sass {
     bool operator==(const Expression& rhs) const;
     virtual void cloneChildren();
     ATTACH_AST_OPERATIONS(Selector_List)
+    ATTACH_OPERATIONS()
+  };
+
+  //////////////////////////////////////////////////////////////////////
+  // Special class to group complex selectors
+  // Basically replaces the tail linked lists
+  //////////////////////////////////////////////////////////////////////
+  class Selector_Group : public Selector, public Vectorized<Complex_Selector_Obj> {
+  public:
+    Selector_Group(ParserState pstate, size_t s = 0)
+    : Selector(pstate),
+      Vectorized<Complex_Selector_Obj>(s)
+    { }
+    Selector_Group(const Selector_Group* ptr)
+    : Selector(ptr),
+      Vectorized<Complex_Selector_Obj>(*ptr)
+    { }
+    size_t hash()
+    {
+      return 0;
+    }
+    unsigned long specificity() const
+    {
+      return 0;
+    }
+    std::string type() const { return "group"; }
+    bool operator<(const Selector& rhs) const { return false; }
+    bool operator==(const Selector& rhs) const { return false; }
+    bool operator<(const Selector_Group& rhs) const;
+    bool operator==(const Selector_Group& rhs) const;
+    Selector_Group_Ptr unify_with(Selector_Group_Ptr) { return this; }
+    Complex_Selector_Ptr toComplexSelector();
+    void cloneChildren() {}
+    ATTACH_AST_OPERATIONS(Selector_Group)
+    ATTACH_OPERATIONS()
+  };
+
+  //////////////////////////////////////////////////////////////////////
+  // Special class to group complex selectors
+  // Basically replaces the selector lists
+  //////////////////////////////////////////////////////////////////////
+  class Selector_Groups : public Selector, public Vectorized<Selector_Group_Obj> {
+  public:
+    Selector_Groups(ParserState pstate, size_t s = 0)
+    : Selector(pstate),
+      Vectorized<Selector_Group_Obj>(s)
+    { }
+    Selector_Groups(const Selector_Groups* ptr)
+    : Selector(ptr),
+      Vectorized<Selector_Group_Obj>(*ptr)
+    { }
+    size_t hash()
+    {
+      return 0;
+    }
+    unsigned long specificity() const
+    {
+      return 0;
+    }
+    std::string type() const { return "group"; }
+    bool operator<(const Selector& rhs) const { return false; }
+    bool operator==(const Selector& rhs) const { return false; }
+    bool operator<(const Selector_Groups& rhs) const;
+    bool operator==(const Selector_Groups& rhs) const;
+    Selector_Groups_Ptr unify_with(Selector_Groups_Ptr) { return this; }
+    Selector_List_Ptr toSelectorList();
+    void cloneChildren() {}
+    ATTACH_AST_OPERATIONS(Selector_Groups)
     ATTACH_OPERATIONS()
   };
 

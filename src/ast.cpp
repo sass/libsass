@@ -4,7 +4,6 @@
 #include "node.hpp"
 #include "eval.hpp"
 #include "extend.hpp"
-#include "debugger.hpp"
 #include "emitter.hpp"
 #include "color_maps.hpp"
 #include "ast_fwd_decl.hpp"
@@ -148,6 +147,32 @@ namespace Sass {
       else return ns() == r.ns();
     }
     return false;
+  }
+
+  Compound_Selector_Ptr Simple_Selector::toCompoundSelector()
+  {
+    Compound_Selector_Ptr sel = SASS_MEMORY_NEW(Compound_Selector, pstate());
+    sel->append(this);
+    return sel;
+  }
+
+  Complex_Selector_Ptr Compound_Selector::toComplexSelector()
+  {
+    Complex_Selector_Ptr sel = SASS_MEMORY_NEW(Complex_Selector, pstate());
+    sel->head(this);
+    return sel;
+  }
+
+  Complex_Selector_Ptr Simple_Selector::toComplexSelector()
+  {
+    return toCompoundSelector()->toComplexSelector();
+  }
+
+  Selector_List_Ptr Complex_Selector::toSelectorList()
+  {
+    Selector_List_Ptr sel = SASS_MEMORY_NEW(Selector_List, pstate());
+    sel->append(this);
+    return sel;
   }
 
   bool Compound_Selector::has_parent_ref() const
@@ -480,6 +505,9 @@ namespace Sass {
       head = cur->head_;
       // abort (and return) if it is not a parent selector
       if (!head || head->length() != 1 || !Cast<Parent_Selector>((*head)[0])) {
+        // should propably make an empty clone
+        // we need to preserve the combinator!
+        if (combinator() != ANCESTOR_OF) break;
         break;
       }
       // advance to next
@@ -1184,4 +1212,6 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(Placeholder_Selector);
   IMPLEMENT_AST_OPERATORS(Definition);
   IMPLEMENT_AST_OPERATORS(Declaration);
+  IMPLEMENT_AST_OPERATORS(Selector_Group);
+  IMPLEMENT_AST_OPERATORS(Selector_Groups);
 }

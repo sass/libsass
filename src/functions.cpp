@@ -2101,6 +2101,17 @@ namespace Sass {
       return result->perform(&listize);
     }
 
+    Signature selector_subweave_sig = "selector-subweave($selector1, $selector2)";
+    BUILT_IN(selector_subweave)
+    {
+      Selector_List_Obj selector1 = ARGSEL("$selector1", Selector_List_Obj, p_contextualize);
+      Selector_List_Obj selector2 = ARGSEL("$selector2", Selector_List_Obj, p_contextualize);
+
+      Selector_List_Obj result = selector1->get(0)->subweaver(selector2->get(0));
+      Listize listize;
+      return result->perform(&listize);
+    }
+
     Signature simple_selectors_sig = "simple-selectors($selector)";
     BUILT_IN(simple_selectors)
     {

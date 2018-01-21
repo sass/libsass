@@ -4,7 +4,6 @@
 #include "node.hpp"
 #include "eval.hpp"
 #include "extend.hpp"
-#include "debugger.hpp"
 #include "emitter.hpp"
 #include "color_maps.hpp"
 #include "ast_fwd_decl.hpp"
@@ -150,7 +149,7 @@ namespace Sass {
     size_t i = 0, n = 0;
     size_t iL = length();
     size_t nL = rhs.length();
-    // create temporary vectors and sort them
+    // create temporary vectors to sort them for compare
     std::vector<Complex_Selector_Obj> l_lst = this->elements();
     std::vector<Complex_Selector_Obj> r_lst = rhs.elements();
     std::sort(l_lst.begin(), l_lst.end(), OrderNodes());
@@ -161,19 +160,19 @@ namespace Sass {
       // first check for valid index
       if (i == iL) return iL == nL;
       else if (n == nL) return iL == nL;
-      // the access the vector items
+      // access the vector items
       Complex_Selector_Ptr l = l_lst[i];
       Complex_Selector_Ptr r = r_lst[n];
       // skip nulls
       if (!l) ++i;
       else if (!r) ++n;
       // do the check
-      else if (*l != *r)
-      { return false; }
+      else if (*l != *r) break;
       // advance
       ++i; ++n;
     }
-    // there is no break?!
+    // not equal
+    return false;
   }
 
   bool Compound_Selector::operator< (const Compound_Selector& rhs) const
@@ -657,8 +656,21 @@ namespace Sass {
 
   bool Pseudo_Selector::operator== (const Pseudo_Selector& rhs) const
   {
+    std::string lname = name();
+    std::string rname = rhs.name();
+    if (is_pseudo_class_element(lname)) {
+      if (rname[0] == ':' && rname[1] == ':') {
+        lname = lname.substr(1, std::string::npos);
+      }
+    }
+    // right hand is special pseudo (single colon)
+    if (is_pseudo_class_element(rname)) {
+      if (lname[0] == ':' && lname[1] == ':') {
+        lname = lname.substr(1, std::string::npos);
+      }
+    }
     // Pseudo has no namespacing
-    if (name() != rhs.name()) return false;
+    if (lname != rname) return false;
     String_Obj lhs_ex = expression();
     String_Obj rhs_ex = rhs.expression();
     if (rhs_ex && lhs_ex) return *lhs_ex == *rhs_ex;
@@ -893,9 +905,22 @@ namespace Sass {
 
   bool Pseudo_Selector::operator< (const Pseudo_Selector& rhs) const
   {
+    std::string lname = name();
+    std::string rname = rhs.name();
+    if (is_pseudo_class_element(lname)) {
+      if (rname[0] == ':' && rname[1] == ':') {
+        lname = lname.substr(1, std::string::npos);
+      }
+    }
+    // right hand is special pseudo (single colon)
+    if (is_pseudo_class_element(rname)) {
+      if (lname[0] == ':' && lname[1] == ':') {
+        lname = lname.substr(1, std::string::npos);
+      }
+    }
     // Peudo has no namespacing
-    if (name() != rhs.name())
-    { return name() < rhs.name(); }
+    if (lname != rname)
+    { return lname < rname; }
     String_Obj lhs_ex = expression();
     String_Obj rhs_ex = rhs.expression();
     if (rhs_ex && lhs_ex) return *lhs_ex < *rhs_ex;
@@ -934,5 +959,89 @@ namespace Sass {
 
   /*#########################################################################*/
   /*#########################################################################*/
+
+  bool Selector_Groups::operator<(const Selector_Groups& rhs) const
+  {
+    if (length() < rhs.length()) return true;
+    if (length() > rhs.length()) return false;
+    for (size_t i = 0, L = length(); i < L; ++ i) {
+      if (*get(i) < *rhs.get(i)) return true;
+      if (*rhs.get(i) < *get(i)) return false;
+    }
+    return false;
+  }
+
+  bool Selector_Groups::operator==(const Selector_Groups& rhs) const
+  {
+    if (length() != rhs.length()) return false;
+    for (size_t i = 0, L = length(); i < L; ++ i) {
+      if (!(*get(i) == *rhs.get(i))) return false;
+    }
+    return true;
+  }
+
+  bool Selector_Group::operator<(const Selector_Group& rhs) const
+  {
+    if (length() < rhs.length()) return true;
+    if (length() > rhs.length()) return false;
+    for (size_t i = 0, L = length(); i < L; ++ i) {
+      Complex_Selector_Ptr sel1 = get(i);
+      Complex_Selector_Ptr sel2 = rhs.get(i);
+      if (sel1->length() < sel2->length()) return true;
+      if (sel2->length() < sel1->length()) return false;
+      // special implementation not following tails
+      if (sel1->combinator() < sel2->combinator()) return false;
+      if (sel1->combinator() < sel2->combinator()) return false;
+      if (sel1->head() && !sel2->head()) return false;
+      if (sel2->head() && !sel1->head()) return false;
+      if (*sel1->head() < *sel2->head()) return false;
+      if (*sel2->head() < *sel1->head()) return false;
+    }
+    return false;
+  }
+
+  bool Selector_Group::operator==(const Selector_Group& rhs) const
+  {
+    if (length() < rhs.length()) return false;
+    if (length() > rhs.length()) return false;
+    for (size_t i = 0, L = length(); i < L; ++ i) {
+      Complex_Selector_Ptr sel1 = get(i);
+      Complex_Selector_Ptr sel2 = rhs.get(i);
+      if (sel1->length() != sel2->length()) return false;
+      // special implementation not following tails
+      if (sel1->head() && !sel2->head()) return false;
+      if (sel2->head() && !sel1->head()) return false;
+      if (sel1->combinator() != sel2->combinator()) return false;
+      if (sel1->head() && sel2->head()) {
+        if (!(*sel1->head() == *sel2->head())) return false;
+      }
+    }
+    return true;
+  }
+
+  /*#########################################################################*/
+  /*#########################################################################*/
+
+  Selector_List_Ptr Selector_Groups::toSelectorList()
+  {
+    auto list = SASS_MEMORY_NEW(Selector_List, ParserState("[NA]"));
+    for (size_t i = 0, L = length(); i < L; ++ i) {
+      list->append(get(i)->toComplexSelector());
+    }
+    return list;
+  }
+
+  Complex_Selector_Ptr Selector_Group::toComplexSelector()
+  {
+    if (empty()) return NULL;
+    auto cs = get(0)->copy(), root = cs;
+    for (size_t i = 1, L = length(); i < L; ++ i) {
+      auto cpy = get(i)->copy();
+      cs->tail(cpy);
+      cs = cpy;
+    }
+    cs->tail(0);
+    return root;
+  }
 
 }

@@ -847,6 +847,7 @@ namespace Sass {
     register_function(ctx, selector_extend_sig, selector_extend, env);
     register_function(ctx, selector_replace_sig, selector_replace, env);
     register_function(ctx, selector_unify_sig, selector_unify, env);
+    register_function(ctx, selector_subweave_sig, selector_subweave, env);
     register_function(ctx, is_superselector_sig, is_superselector, env);
     register_function(ctx, simple_selectors_sig, simple_selectors, env);
     register_function(ctx, selector_parse_sig, selector_parse, env);
