@@ -2915,8 +2915,14 @@ namespace Sass {
     // can still have a tail
     bool is_empty_ancestor() const
     {
-      return (!head() || head()->length() == 0) &&
-             combinator() == Combinator::ANCESTOR_OF;
+      return (!head() || head()->empty())
+        && combinator() == Combinator::ANCESTOR_OF;
+    }
+
+    bool is_bare_combinator() const
+    {
+      return (!head() || head()->empty())
+        && combinator() != Combinator::ANCESTOR_OF;
     }
 
     Selector_List_Ptr tails(Selector_List_Ptr tails);
@@ -3147,6 +3153,7 @@ namespace Sass {
     bool operator==(const Selector_Group& rhs) const;
     Selector_Group_Ptr unify_with(Selector_Group_Ptr) { return this; }
     Complex_Selector_Ptr toComplexSelector();
+    Selector_Groups_Ptr toSelectorGroups();
     void cloneChildren() {}
     ATTACH_AST_OPERATIONS(Selector_Group)
     ATTACH_OPERATIONS()

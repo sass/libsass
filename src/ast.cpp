@@ -505,9 +505,13 @@ namespace Sass {
       head = cur->head_;
       // abort (and return) if it is not a parent selector
       if (!head || head->length() != 1 || !Cast<Parent_Selector>((*head)[0])) {
-        // should propably make an empty clone
-        // we need to preserve the combinator!
-        if (combinator() != ANCESTOR_OF) break;
+        break;
+      }
+      // should propably make an empty clone
+      // we need to preserve the combinator!
+      if (combinator() != ANCESTOR_OF) {
+        cur = cur->copy();
+        cur->head(0);
         break;
       }
       // advance to next

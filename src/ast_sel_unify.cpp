@@ -3,6 +3,7 @@
 #include "context.hpp"
 #include "node.hpp"
 #include "eval.hpp"
+#include "debugger.hpp"
 #include "extend.hpp"
 #include "emitter.hpp"
 #include "color_maps.hpp"
@@ -742,6 +743,60 @@ namespace Sass {
   }
 
   /*
+  def merge_initial_ops(seq1, seq2)
+    ops1, ops2 = [], []
+    ops1 << seq1.shift while seq1.first.is_a?(String)
+    ops2 << seq2.shift while seq2.first.is_a?(String)
+    STDERR.puts "SEQ #{ops1}"
+    newline = false
+    newline ||= !!ops1.shift if ops1.first == "\n"
+    newline ||= !!ops2.shift if ops2.first == "\n"
+
+    # If neither sequence is a subsequence of the other, they cannot be
+    # merged successfully
+    lcs = Sass::Util.lcs(ops1, ops2)
+    return unless lcs == ops1 || lcs == ops2
+    (newline ? ["\n"] : []) + (ops1.size > ops2.size ? ops1 : ops2)
+  end
+  */
+
+//    Selector_Groups_Obj init = SASS_MEMORY_NEW(Selector_Groups, rh.pstate());
+
+  Selector_Group_Ptr merge_initial_ops(Complex_Selector_Ptr* lhsptr, Complex_Selector_Ptr* rhsptr)
+  {
+
+    Complex_Selector_Ptr lhs = *lhsptr, rhs = *rhsptr;
+
+    Selector_Group_Obj ops1 = SASS_MEMORY_NEW(Selector_Group, lhs->pstate());
+    Selector_Group_Obj ops2 = SASS_MEMORY_NEW(Selector_Group, rhs->pstate());
+
+    // extract all bare combinators (no heads)
+    while (lhs && lhs->is_bare_combinator()) {
+      ops1->append(lhs);
+      lhs = lhs->tail();
+    }
+    while (rhs && rhs->is_bare_combinator()) {
+      ops2->append(rhs);
+      rhs = rhs->tail();
+    }
+
+    size_t min = std::min(ops1->length(), ops2->length());
+    for (size_t i = 0; i < min; i ++) {
+      auto lh = ops1->get(i), rh = ops2->get(i);
+      if (lh->combinator() != rh->combinator()) {
+        return NULL; // sequences do not match
+      }
+    }
+
+    *lhsptr = lhs, *rhsptr = rhs;
+
+    // return the bigger sequence
+    return ops1->length() > ops2->length()
+      ? ops1.detach() : ops2.detach();
+
+  }
+
+  /*
   def subweave(seq1, seq2)
     return [seq2] if seq1.empty?
     return [seq1] if seq2.empty?
@@ -797,6 +852,24 @@ namespace Sass {
     if (empty()) { return rhs->toSelectorList(); }
     if (rhs->empty()) { return toSelectorList(); }
 
+    // first returns an object
+    // need to keep it therefore
+    // ToDO: make it more elegant
+    Complex_Selector_Obj olhs;
+    Complex_Selector_Obj orhs;
+    Complex_Selector_Ptr lhs;
+    olhs = this->first();
+    orhs = rhs->first();
+    lhs = olhs, rhs = orhs;
+
+    auto init = merge_initial_ops(&lhs, &rhs);
+    if (init == NULL) return NULL;
+
+    // this one will be tricky, as we probably
+    // need to create copies to cut them off
+    // auto fin = merge_final_ops(lh, rh);
+    // if (fin == NULL) return NULL;
+
     // return unless (init = merge_initial_ops(seq1, seq2))
     // return unless (fin = merge_final_ops(seq1, seq2))
 
@@ -804,23 +877,22 @@ namespace Sass {
     // root2 = has_root?(seq2.first) && seq2.shift
     // ...........................................
 
-    auto seq1 = group_selectors(this);
+    auto seq1 = group_selectors(lhs);
     auto seq2 = group_selectors(rhs);
 
     // so far only equality test is done!
     // ruby sass has additional checks!
     auto LCS = lcs(*seq1, *seq2);
-    
-    Selector_Groups_Obj init = SASS_MEMORY_NEW(Selector_Groups, rhs->pstate());
+
     std::vector<Selector_Groups_Obj> diff;
 
-    if (!init->empty()) diff.push_back(init);
+    if (!init->empty()) diff.push_back(init->toSelectorGroups());
 
     while (!LCS.empty()) {
       auto chks = chunks(seq1, seq2, LCS);
       if (!chks->empty()) diff.push_back(chks);
       auto lcsfirst = LCS.front();
-      auto lcg = SASS_MEMORY_NEW(Selector_Groups, rhs->pstate());
+      auto lcg = SASS_MEMORY_NEW(Selector_Groups, /* rh. */pstate());
       lcg->append(lcsfirst);
       diff.push_back(lcg);
       seq2->erase(seq2->begin());
@@ -829,7 +901,6 @@ namespace Sass {
     }
 
     Selector_Groups_Obj path = paths(diff);
-
     return path->toSelectorList();
 
   }

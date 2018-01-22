@@ -1,6 +1,7 @@
 #include "sass.hpp"
 #include "ast.hpp"
 #include "context.hpp"
+#include "debugger.hpp"
 #include "node.hpp"
 #include "eval.hpp"
 #include "extend.hpp"
@@ -1024,11 +1025,20 @@ namespace Sass {
 
   Selector_List_Ptr Selector_Groups::toSelectorList()
   {
-    auto list = SASS_MEMORY_NEW(Selector_List, ParserState("[NA]"));
+    auto list = SASS_MEMORY_NEW(Selector_List, pstate());
     for (size_t i = 0, L = length(); i < L; ++ i) {
-      list->append(get(i)->toComplexSelector());
+      auto sel = get(i)->toComplexSelector();
+      if (sel == NULL) continue;
+      list->append(sel);
     }
     return list;
+  }
+
+  Selector_Groups_Ptr Selector_Group::toSelectorGroups()
+  {
+    auto groups = SASS_MEMORY_NEW(Selector_Groups, pstate());
+    groups->append(this);
+    return groups;
   }
 
   Complex_Selector_Ptr Selector_Group::toComplexSelector()
