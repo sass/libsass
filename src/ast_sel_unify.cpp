@@ -595,8 +595,8 @@ namespace Sass {
 
   bool parent_superselector(Selector_Group_Obj lhs, Selector_Group_Obj rhs)
   {
-    lhs = lhs->copy(); lhs->append(base);
-    rhs = rhs->copy(); rhs->append(base);
+    lhs = SASS_MEMORY_COPY(lhs); lhs->append(base);
+    rhs = SASS_MEMORY_COPY(rhs); rhs->append(base);
     Complex_Selector_Obj lhcs = lhs->toComplexSelector();
     Complex_Selector_Obj rhcs = rhs->toComplexSelector();
     return lhcs->is_superselector_of(rhcs);
@@ -638,8 +638,8 @@ namespace Sass {
     else if (chunks2->empty() && !chunks1->empty()) { chunks->append(chunks1); }
     else if (chunks1->empty() && !chunks2->empty()) { chunks->append(chunks2); }
     else if (!chunks1->empty() && !chunks2->empty()) {
-      auto lhs = chunks1->copy();
-      auto rhs = chunks2->copy();
+      auto lhs = SASS_MEMORY_COPY(chunks1);
+      auto rhs = SASS_MEMORY_COPY(chunks2);
       lhs->concat(chunks2);
       rhs->concat(chunks1);
       chunks->append(lhs);
@@ -873,6 +873,7 @@ namespace Sass {
     // return unless (init = merge_initial_ops(seq1, seq2))
     // return unless (fin = merge_final_ops(seq1, seq2))
 
+    // this feature seems not very high prio
     // root1 = has_root?(seq1.first) && seq1.shift
     // root2 = has_root?(seq2.first) && seq2.shift
     // ...........................................

@@ -1044,9 +1044,9 @@ namespace Sass {
   Complex_Selector_Ptr Selector_Group::toComplexSelector()
   {
     if (empty()) return NULL;
-    auto cs = get(0)->copy(), root = cs;
+    auto cs = SASS_MEMORY_COPY(get(0)), root = cs;
     for (size_t i = 1, L = length(); i < L; ++ i) {
-      auto cpy = get(i)->copy();
+      auto cpy = SASS_MEMORY_COPY(get(i));
       cs->tail(cpy);
       cs = cpy;
     }

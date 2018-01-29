@@ -74,6 +74,11 @@ namespace Sass {
       if (e.pstate.line != std::string::npos && e.pstate.column != std::string::npos) {
         size_t lines = e.pstate.line;
         const char* line_beg = e.pstate.src;
+        // const char* end = e.pstate.src;
+        // while (*end != 0) end ++;
+        // if (!utf8::is_valid(line_beg, end)) {
+        //   std::cerr << "THIS NOT VALID\n";
+        // }
         // scan through src until target line
         // move line_beg pointer to line start
         while (line_beg && *line_beg && lines != 0) {

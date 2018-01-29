@@ -510,7 +510,7 @@ namespace Sass {
       // should propably make an empty clone
       // we need to preserve the combinator!
       if (combinator() != ANCESTOR_OF) {
-        cur = cur->copy();
+        cur = SASS_MEMORY_COPY(cur);
         cur->head(0);
         break;
       }
