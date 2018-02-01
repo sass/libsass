@@ -1889,7 +1889,7 @@ namespace Sass {
       if (skip_unquoting == false) {
         value_ = unquote(value_, &quote_mark_, keep_utf8_escapes, strict_unquoting);
       }
-      if (q && quote_mark_) quote_mark_ = q;
+      if (q /* && quote_mark_ */) quote_mark_ = q;
     }
     String_Quoted(const String_Quoted* ptr)
     : String_Constant(ptr)

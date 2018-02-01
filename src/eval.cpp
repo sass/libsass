@@ -1695,7 +1695,7 @@ namespace Sass {
       } break;
       case SASS_STRING: {
         if (sass_string_is_quoted(v))
-          e = SASS_MEMORY_NEW(String_Quoted, pstate, sass_string_get_value(v));
+          e = SASS_MEMORY_NEW(String_Quoted, pstate, sass_string_get_value(v), '*');
         else {
           e = SASS_MEMORY_NEW(String_Constant, pstate, sass_string_get_value(v));
         }

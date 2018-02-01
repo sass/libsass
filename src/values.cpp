@@ -88,7 +88,8 @@ namespace Sass {
         if (sass_string_is_quoted(val)) {
           return SASS_MEMORY_NEW(String_Quoted,
                                  ParserState("[C-VALUE]"),
-                                 sass_string_get_value(val));
+                                 sass_string_get_value(val),
+                                 '*');
         }
         return SASS_MEMORY_NEW(String_Constant,
                                  ParserState("[C-VALUE]"),
