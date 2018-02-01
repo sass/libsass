@@ -11,6 +11,7 @@
 #include "ast.hpp"
 #include "bind.hpp"
 #include "util.hpp"
+#include "debugger.hpp"
 #include "inspect.hpp"
 #include "environment.hpp"
 #include "position.hpp"
@@ -1079,6 +1080,7 @@ namespace Sass {
         error("warning in C function " + c->name() + ": " + sass_warning_get_message(c_val), c->pstate(), backtrace());
       }
       result = cval_to_astnode(c_val, backtrace(), c->pstate());
+        debug_ast(result);
 
       exp.backtrace_stack.pop_back();
       ctx.callee_stack.pop_back();
@@ -1695,7 +1697,7 @@ namespace Sass {
       } break;
       case SASS_STRING: {
         if (sass_string_is_quoted(v))
-          e = SASS_MEMORY_NEW(String_Quoted, pstate, sass_string_get_value(v));
+          e = SASS_MEMORY_NEW(String_Quoted, pstate, sass_string_get_value(v), '*');
         else {
           e = SASS_MEMORY_NEW(String_Constant, pstate, sass_string_get_value(v));
         }

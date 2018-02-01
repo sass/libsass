@@ -8,6 +8,7 @@
 
 #include "ast.hpp"
 #include "util.hpp"
+#include "debugger.hpp"
 #include "sass.h"
 #include "context.hpp"
 #include "plugins.hpp"
@@ -656,7 +657,9 @@ namespace Sass {
     // check nesting
     check_nesting(root);
     // expand and eval the tree
+    debug_ast(root);
     root = expand(root);
+    debug_ast(root);
     // check nesting
     check_nesting(root);
     // merge and bubble certain rules

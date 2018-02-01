@@ -1,6 +1,7 @@
 #include "sass.hpp"
 #include "sass.h"
 #include "values.hpp"
+#include "debugger.hpp"
 
 #include <stdint.h>
 
@@ -67,6 +68,7 @@ namespace Sass {
   // convert value from C-API to C++ side
   Value_Ptr sass_value_to_ast_node (const union Sass_Value* val)
   {
+    std::cerr << "CONVERT BACK\n";
     switch (sass_value_get_tag(val)) {
       case SASS_NUMBER:
         return SASS_MEMORY_NEW(Number,
@@ -86,9 +88,12 @@ namespace Sass {
                                sass_color_get_a(val));
       case SASS_STRING:
         if (sass_string_is_quoted(val)) {
-          return SASS_MEMORY_NEW(String_Quoted,
+          auto a = SASS_MEMORY_NEW(String_Quoted,
                                  ParserState("[C-VALUE]"),
-                                 sass_string_get_value(val));
+                                 "hubba qw",
+                                 '*');
+                                 debug_ast(a);
+                                 return a;
         }
         return SASS_MEMORY_NEW(String_Constant,
                                  ParserState("[C-VALUE]"),

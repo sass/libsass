@@ -319,6 +319,10 @@ namespace Sass {
       r_last->head(unified);
     }
 
+    // Complex_Selector_Obj r = rhs;
+    // Selector_List_Obj sl = this->subweaver(rhs);
+    // r.detach(); return sl.detach();
+
     // create nodes from both selectors
     Node lhsNode = complexSelectorToNode(this);
     Node rhsNode = complexSelectorToNode(rhs);
@@ -376,10 +380,15 @@ namespace Sass {
   {
     if (empty()) return rhs;
     Compound_Selector_Obj unified = SASS_MEMORY_COPY(rhs);
-    for (size_t i = 0, L = length(); i < L; ++i)
-    {
-      if (unified.isNull()) break;
-      unified = at(i)->unify_with(unified);
+    if (rhs->length() == 1 && rhs->get(0)->is_universal()) {
+      unified = rhs->get(0)->unify_with(this);
+    }
+    else {
+      for (size_t i = 0, L = length(); i < L; ++i)
+      {
+        if (unified.isNull()) break;
+        unified = at(i)->unify_with(unified);
+      }
     }
     return unified.detach();
   }
@@ -538,6 +547,10 @@ namespace Sass {
     size_t m = X.length() - 1;
     size_t n = Y.length() - 1;
 
+    std::vector<Selector_Group_Obj> lcs;
+    if (m == std::string::npos) return lcs;
+    if (n == std::string::npos) return lcs;
+
     #define L(i,j) l[ (i) * m + j ]
     size_t* l = new size_t[(m+1)*(n+1)];
 
@@ -560,7 +573,7 @@ namespace Sass {
     size_t index = L(m, n);
 
     // Create an array to store the lcs groups
-    std::vector<Selector_Group_Obj> lcs(index);
+    // std::vector<Selector_Group_Obj> lcs(index);
 
     // Start from the right-most-bottom-most corner and
     // one by one store objects in lcs[]
@@ -877,7 +890,6 @@ namespace Sass {
     // root1 = has_root?(seq1.first) && seq1.shift
     // root2 = has_root?(seq2.first) && seq2.shift
     // ...........................................
-
     auto seq1 = group_selectors(lhs);
     auto seq2 = group_selectors(rhs);
 
@@ -902,6 +914,7 @@ namespace Sass {
     }
 
     Selector_Groups_Obj path = paths(diff);
+
     return path->toSelectorList();
 
   }
