@@ -1151,7 +1151,9 @@ namespace Sass {
       ex = ll;
     }
     if (Number_Ptr nr = Cast<Number>(ex)) {
-      if (!nr->is_valid_css_unit()) {
+      Number reduced(nr);
+      reduced.reduce();
+      if (!reduced.is_valid_css_unit()) {
         throw Exception::InvalidValue(*nr);
       }
     }
