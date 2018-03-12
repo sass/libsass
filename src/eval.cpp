@@ -1557,6 +1557,7 @@ namespace Sass {
       v->value(ops[op](lv, rn.value() * f));
     }
 
+    v->reduce();
     v->pstate(pstate);
     return v.detach();
   }
