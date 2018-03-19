@@ -877,6 +877,11 @@ namespace Sass {
     else if (peek< pseudo_not >()) {
       return parse_negated_selector();
     }
+    else if (lex< re_nth_pseudo >()) {
+      return parse_nth_selector();
+    }
+    // this returns a wrapped selector
+    // ToDo: we should split parsing
     else if (peek< re_pseudo_selector >()) {
       return parse_pseudo_selector();
     }
@@ -911,6 +916,25 @@ namespace Sass {
     return SASS_MEMORY_NEW(Wrapped_Selector, nsource_position, name, negated);
   }
 
+  Simple_Selector_Obj Parser::parse_nth_selector() {
+    auto sel = SASS_MEMORY_NEW(Pseudo_Selector, pstate, lexed);
+    // pseudo selector (':XYZ') without parentheses
+    if (lex< exactly < '(' > >() == NULL) return sel;
+    // if we have parentheses we expect a strict match
+    if (lex < re_nth_argument >() == NULL) {
+      css_error("Invalid CSS", " after ", ": expected An+B expression, was ");
+    }
+    // expression inside paretheses matched our expectations
+    // ToDo: sass compresses optional spaces around plus sign
+    sel->expression(SASS_MEMORY_NEW(String_Constant, pstate, lexed));
+    // ensure that they are also closed properly
+    if (lex< exactly < ')' > >() == NULL) {
+      css_error("Invalid CSS", " after ", ": expected \")\", was ");
+    }
+    // return selector
+    return sel;
+  }
+
   // a pseudo selector often starts with one or two colons
   // it can contain more selectors inside parentheses
   Simple_Selector_Obj Parser::parse_pseudo_selector() {
@@ -931,16 +955,13 @@ namespace Sass {
       // ToDo: really everything static?
       if (peek_css <
             sequence <
-              alternatives <
-                static_value,
-                binomial
-              >,
+              static_value,
               optional_css_whitespace,
               exactly<')'>
             >
           >()
       ) {
-        lex_css< alternatives < static_value, binomial > >();
+        lex_css< static_value >();
         String_Constant_Obj expr = SASS_MEMORY_NEW(String_Constant, pstate, lexed);
         if (lex_css< exactly<')'> >()) {
           expr->can_compress_whitespace(true);

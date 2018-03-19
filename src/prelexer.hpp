@@ -261,6 +261,7 @@ namespace Sass {
     const char* kwd_each_directive(const char* src);
     const char* kwd_in(const char* src);
 
+    const char* kwd_nth_child(const char* src);
     const char* kwd_while_directive(const char* src);
 
     const char* re_nothing(const char* src);
@@ -299,6 +300,7 @@ namespace Sass {
     // Match CSS numeric constants.
     const char* op(const char* src);
     const char* sign(const char* src);
+    const char* signint(const char* src);
     const char* unsigned_number(const char* src);
     const char* number(const char* src);
     const char* coefficient(const char* src);
@@ -326,6 +328,11 @@ namespace Sass {
     const char* re_pseudo_selector(const char* src);
     const char* functional_schema(const char* src);
     const char* pseudo_not(const char* src);
+
+    // nth pseudo names (without opening brace)
+    const char* re_nth_pseudo(const char* src);
+    const char* re_nth_argument(const char* src);
+
     // Match CSS 'odd' and 'even' keywords for functional pseudo-classes.
     const char* even(const char* src);
     const char* odd(const char* src);

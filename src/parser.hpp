@@ -263,6 +263,8 @@ namespace Sass {
     Simple_Selector_Obj parse_simple_selector();
     Wrapped_Selector_Obj parse_negated_selector();
     Simple_Selector_Obj parse_pseudo_selector();
+    Simple_Selector_Obj parse_nth_selector();
+    
     Attribute_Selector_Obj parse_attribute_selector();
     Block_Obj parse_block(bool is_root = false);
     Block_Obj parse_css_block(bool is_root = false);

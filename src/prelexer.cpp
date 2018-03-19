@@ -872,6 +872,22 @@ namespace Sass {
       return word<in_kwd>(src);
     }
 
+    const char* kwd_nth_child(const char* src) {
+      return word<nth_child_kwd>(src);
+    }
+
+    const char* kwd_nth_of_child(const char* src) {
+      return word<nth_of_child_kwd>(src);
+    }
+
+    const char* kwd_nth_last_child(const char* src) {
+      return word<nth_last_child_kwd>(src);
+    }
+
+    const char* kwd_nth_last_of_child(const char* src) {
+      return word<nth_last_of_child_kwd>(src);
+    }
+
     const char* kwd_while_directive(const char* src) {
       return word<while_kwd>(src);
     }
@@ -991,6 +1007,14 @@ namespace Sass {
     const char* sign(const char* src) {
       return class_char<sign_chars>(src);
     }
+    // positive or negative integer
+    const char* signint(const char* src)
+    {
+      return sequence<
+        optional < sign >,
+        one_plus < digit >
+      >(src);
+    }
     const char* unsigned_number(const char* src) {
       return alternatives<sequence< zero_plus<digits>,
                                     exactly<'.'>,
@@ -1014,17 +1038,7 @@ namespace Sass {
       return alternatives< sequence< optional<sign>, digits >,
                            sign >(src);
     }
-    const char* binomial(const char* src) {
-      return sequence <
-               optional < sign >,
-               optional < digits >,
-               exactly <'n'>,
-               zero_plus < sequence <
-                 optional_css_whitespace, sign,
-                 optional_css_whitespace, digits
-               > >
-             >(src);
-    }
+
     const char* percentage(const char* src) {
       return sequence< number, exactly<'%'> >(src);
     }
@@ -1169,17 +1183,57 @@ namespace Sass {
     const char* re_pseudo_selector(const char* src) {
       return sequence< identifier, optional < block_comment >, exactly<'('> >(src);
     }
+
+    // Match CSS 'odd' and 'even' keywords.
+    const char* odd(const char* src) {
+      return word<odd_kwd>(src);
+    }
+    const char* even(const char* src) {
+      return word<even_kwd>(src);
+    }
+
+    // pseudo keywords (without opening brace)
+    // wants 2n+1 binomials, odd/even or number
+    const char* re_nth_pseudo(const char* src) {
+      return sequence<
+        exactly <':'>,
+        alternatives <
+          kwd_nth_child,
+          kwd_nth_of_child,
+          kwd_nth_last_child,
+          kwd_nth_last_of_child
+        >
+      >(src);
+    }
+
+    // ['-'|'+']? INTEGER? {N} [ S* ['-'|'+'] S* INTEGER ]?
+    const char* binomial(const char* src) {
+      return sequence <
+               optional_css_comments,
+               optional < sign >,
+               optional < digits >,
+               insensitive < 'n' >,
+               optional < sequence <
+                 optional_css_comments, sign,
+                 optional_css_comments, digits
+               > >,
+               optional_css_comments
+             >(src);
+    }
+
+    // parse special arguments for nth selectors
+    // ['-'|'+']? INTEGER? {N} [ S* ['-'|'+'] S* INTEGER ]?
+    // | ['-'|'+']? INTEGER | {O}{D}{D} | {E}{V}{E}{N}
+    const char* re_nth_argument(const char* src) {
+      // can be binomial (Xn+Y), integer or odd/even
+      return alternatives < binomial, signint, odd, even >(src);
+    }
+
     // Match the CSS negation pseudo-class.
     const char* pseudo_not(const char* src) {
       return word< pseudo_not_fn_kwd >(src);
     }
-    // Match CSS 'odd' and 'even' keywords for functional pseudo-classes.
-    const char* even(const char* src) {
-      return word<even_kwd>(src);
-    }
-    const char* odd(const char* src) {
-      return word<odd_kwd>(src);
-    }
+
     // Match CSS attribute-matching operators.
     const char* exact_match(const char* src) { return exactly<'='>(src); }
     const char* class_match(const char* src) { return exactly<tilde_equal>(src); }
@@ -1707,7 +1761,7 @@ namespace Sass {
                   identifier,
                   variable,
                   percentage,
-                  binomial,
+                  re_nth_argument,
                   dimension,
                   alnum
                 >
