@@ -93,8 +93,10 @@ namespace Sass {
     extern const char even_kwd[]         = "even";
     // some specific pseudo selectors
     extern const char nth_child_kwd[]    = "nth-child";
+    extern const char nth_of_type_kwd[]  = "nth-of-type";
     extern const char nth_of_child_kwd[] = "nth-of-child";
     extern const char nth_last_child_kwd[]    = "nth-last-child";
+    extern const char nth_last_of_type_kwd[]  = "nth-last-of-type";
     extern const char nth_last_of_child_kwd[] = "nth-last-of-child";
 
     extern const char almost_any_value_class[] = "\"'#!;{}";

@@ -93,8 +93,10 @@ namespace Sass {
     extern const char even_kwd[];
     // some specific pseudo selectors
     extern const char nth_child_kwd[];
+    extern const char nth_of_type_kwd[];
     extern const char nth_of_child_kwd[];
     extern const char nth_last_child_kwd[];
+    extern const char nth_last_of_type_kwd[];
     extern const char nth_last_of_child_kwd[];
 
     // char classes for "regular expressions"

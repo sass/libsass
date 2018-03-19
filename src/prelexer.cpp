@@ -876,12 +876,20 @@ namespace Sass {
       return word<nth_child_kwd>(src);
     }
 
+    const char* kwd_nth_of_type(const char* src) {
+      return word<nth_of_type_kwd>(src);
+    }
+
     const char* kwd_nth_of_child(const char* src) {
       return word<nth_of_child_kwd>(src);
     }
 
     const char* kwd_nth_last_child(const char* src) {
       return word<nth_last_child_kwd>(src);
+    }
+
+    const char* kwd_nth_last_of_type(const char* src) {
+      return word<nth_last_of_type_kwd>(src);
     }
 
     const char* kwd_nth_last_of_child(const char* src) {
@@ -1199,8 +1207,10 @@ namespace Sass {
         exactly <':'>,
         alternatives <
           kwd_nth_child,
+          kwd_nth_of_type,
           kwd_nth_of_child,
           kwd_nth_last_child,
+          kwd_nth_last_of_type,
           kwd_nth_last_of_child
         >
       >(src);
