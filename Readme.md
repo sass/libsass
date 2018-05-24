@@ -2,7 +2,7 @@ LibSass - Sass compiler written in C++
 ======================================
 
 Currently maintained by Marcel Greter ([@mgreter]) and Michael Mifsud ([@xzyfer])  
-Originally created by Aaron Leung ([@akhleung]) and Hampton Catlin ([@hcatlin])
+Originally created at [Moovweb](http://www.moovweb.com) by Aaron Leung ([@akhleung]) and Hampton Catlin ([@hcatlin])
 
 [![Unix CI](https://travis-ci.org/sass/libsass.svg?branch=master)](https://travis-ci.org/sass/libsass "Travis CI")
 [![Windows CI](https://ci.appveyor.com/api/projects/status/github/sass/libsass?svg=true)](https://ci.appveyor.com/project/sass/libsass/branch/master "Appveyor CI")
@@ -75,9 +75,6 @@ Compatibility
 For all intents and purposes LibSass is fully compatible with the Sass language spec. Any known
 differences can be found as open issues.
 
-
-
-
 About Sass
 ----------
 
@@ -89,8 +86,6 @@ Most of the language has been the result of years of work by Natalie Weizenbaum 
 Chris Eppstein ([@chriseppstein]).
 
 For more information about Sass itself, please visit http://sass-lang.com
-
-Initial development of LibSass by Aaron Leung and Hampton Catlin was supported by [Moovweb](http://www.moovweb.com).
 
 Licensing
 ---------
