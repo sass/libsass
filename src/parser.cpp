@@ -2167,6 +2167,7 @@ namespace Sass {
       while (pp && peek< exactly< hash_lbrace > >(pp)) {
         pp = sequence< interpolant, real_uri_value >(pp);
       }
+      if (!pp) return 0;
       position = pp;
       return parse_interpolated_chunk(Token(p, position));
     }
