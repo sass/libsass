@@ -81,7 +81,12 @@ namespace Sass {
         while (line_end && *line_end && *line_end != '\n') {
           if (*line_end == '\n') break;
           if (*line_end == '\r') break;
+          const char* before = line_end;
           utf8::unchecked::next(line_end);
+          if (!utf8::is_valid(line_beg, line_end)) {
+            line_end = before;
+            break;
+          }
         }
         if (line_end && *line_end != 0) ++ line_end;
         size_t line_len = line_end - line_beg;
