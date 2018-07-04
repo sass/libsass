@@ -33,30 +33,35 @@ namespace Sass {
 
     bool is_alpha(const char& chr)
     {
+      if (!chr) return false;
       return unsigned(chr - 'A') <= 'Z' - 'A' ||
              unsigned(chr - 'a') <= 'z' - 'a';
     }
 
     bool is_space(const char& chr)
     {
+      if (!chr) return false;
       // adapted the technique from is_alpha
       return chr == ' ' || unsigned(chr - '\t') <= '\r' - '\t';
     }
 
     bool is_digit(const char& chr)
     {
+      if (!chr) return false;
       // adapted the technique from is_alpha
       return unsigned(chr - '0') <= '9' - '0';
     }
 
     bool is_number(const char& chr)
     {
+      if (!chr) return false;
       // adapted the technique from is_alpha
       return is_digit(chr) || chr == '-' || chr == '+';
     }
 
     bool is_xdigit(const char& chr)
     {
+      if (!chr) return false;
       // adapted the technique from is_alpha
       return unsigned(chr - '0') <= '9' - '0' ||
              unsigned(chr - 'a') <= 'f' - 'a' ||
@@ -65,6 +70,7 @@ namespace Sass {
 
     bool is_punct(const char& chr)
     {
+      if (!chr) return false;
       // locale independent
       return chr == '.';
     }
@@ -77,6 +83,7 @@ namespace Sass {
     // check if char is outside ascii range
     bool is_unicode(const char& chr)
     {
+      if (!chr) return false;
       // check for unicode range
       return unsigned(chr) > 127;
     }
@@ -85,6 +92,7 @@ namespace Sass {
     // but with specific ranges (copied from Ruby Sass)
     bool is_nonascii(const char& chr)
     {
+      if (!chr) return false;
       unsigned int cmp = unsigned(chr);
       return (
         (cmp >= 128 && cmp <= 15572911) ||
@@ -97,6 +105,7 @@ namespace Sass {
     // valid in a uri (copied from Ruby Sass)
     bool is_uri_character(const char& chr)
     {
+      if (!chr) return false;
       unsigned int cmp = unsigned(chr);
       return (cmp > 41 && cmp < 127) ||
              cmp == ':' || cmp == '/';
@@ -106,6 +115,7 @@ namespace Sass {
     // valid for escaping (copied from Ruby Sass)
     bool is_escapable_character(const char& chr)
     {
+      if (!chr) return false;
       unsigned int cmp = unsigned(chr);
       return cmp > 31 && cmp < 127;
     }
@@ -113,6 +123,7 @@ namespace Sass {
     // Match word character (look ahead)
     bool is_character(const char& chr)
     {
+      if (!chr) return false;
       // valid alpha, numeric or unicode char (plus hyphen)
       return is_alnum(chr) || is_unicode(chr) || chr == '-';
     }
@@ -148,7 +159,7 @@ namespace Sass {
     const char* any_char(const char* src) { return *src ? src + 1 : src; }
 
     // Match word boundary (zero-width lookahead).
-    const char* word_boundary(const char* src) { return is_character(*src) || *src == '#' ? 0 : src; }
+    const char* word_boundary(const char* src) { return (*src && (is_character(*src) || *src == '#')) ? 0 : src; }
 
     // Match linefeed /(?:\n|\r\n?)/
     const char* re_linebreak(const char* src)
