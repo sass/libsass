@@ -270,7 +270,7 @@ $(DESTDIR)$(PREFIX)/include/sass: | $(DESTDIR)$(PREFIX)/include
 
 $(DESTDIR)$(PREFIX)/include/%.h: include/%.h \
                                  | $(DESTDIR)$(PREFIX)/include \
-                                 | $(DESTDIR)$(PREFIX)/include/sass
+                                 $(DESTDIR)$(PREFIX)/include/sass
 	$(INSTALL) -v -m0644 "$<" "$@"
 
 install-headers: $(DESTDIR)$(PREFIX)/include/sass.h \
