@@ -40,6 +40,7 @@ GNUmakefile
 /script/install-sh
 /script/ltmain.sh
 /script/missing
+/script/print-compiler-family
 /script/test-driver
 /src/stamp-h1
 /src/Makefile.in

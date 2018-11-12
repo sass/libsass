@@ -24,7 +24,14 @@ else
   CXXFLAGS += -O1 -fno-omit-frame-pointer
   LDFLAGS  += -O1 -fno-omit-frame-pointer
 endif
-LDFLAGS  += -Wl,-undefined,error
+
+COMPILER_FAMILY := $(shell $(CC) script/print-compiler-family.c -o script/print-compiler-family && script/print-compiler-family)
+ifeq (clang, $(COMPILER_FAMILY))
+	LDFLAGS += -Wl,-undefined,error
+else ifeq (gcc, $(COMPILER_FAMILY))
+	LDFLAGS += -Wl,--no-undefined
+endif
+
 CAT      ?= $(if $(filter $(OS),Windows_NT),type,cat)
 
 ifneq (,$(findstring /cygdrive/,$(PATH)))
