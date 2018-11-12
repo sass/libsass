@@ -12,8 +12,7 @@ int main()
       "other"
 #endif
       "\n");
-  if (code < 0)
-  {
+  if (code < 0) {
     fprintf(stderr, "error: printf returned %d\n", code);
     return 1;
   }
