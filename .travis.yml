@@ -1,5 +1,5 @@
 language: cpp
-sudo: false
+sudo: required
 
 
 # don't create redundant code coverage reports
