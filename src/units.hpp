@@ -87,11 +87,11 @@ namespace Sass {
     double convert_factor(const Units&) const;
   };
 
-  extern const double size_conversion_factors[6][6];
-  extern const double angle_conversion_factors[4][4];
-  extern const double time_conversion_factors[2][2];
-  extern const double frequency_conversion_factors[2][2];
-  extern const double resolution_conversion_factors[3][3];
+  static const double size_conversion_factors[6][6];
+  static const double angle_conversion_factors[4][4];
+  static const double time_conversion_factors[2][2];
+  static const double frequency_conversion_factors[2][2];
+  static const double resolution_conversion_factors[3][3];
 
   UnitType get_main_unit(const UnitClass unit);
   enum Sass::UnitType string_to_unit(const std::string&);
