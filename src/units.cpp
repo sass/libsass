@@ -10,7 +10,7 @@ namespace Sass {
   /* if you go right, the factor is for the denominator (divide) */
   /* and yes, we actually use both, not sure why, but why not!? */
 
-  const double size_conversion_factors[6][6] =
+  static const double size_conversion_factors[6][6] =
   {
              /*  in         cm         pc         mm         pt         px        */
     /* in   */ { 1,         2.54,      6,         25.4,      72,        96,       },
@@ -21,7 +21,7 @@ namespace Sass {
     /* px   */ { 1.0/96.0,  2.54/96.0, 6.0/96.0,  25.4/96.0, 72.0/96.0, 1,        }
   };
 
-  const double angle_conversion_factors[4][4] =
+  static const double angle_conversion_factors[4][4] =
   {
              /*  deg        grad       rad        turn      */
     /* deg  */ { 1,         40.0/36.0, PI/180.0,  1.0/360.0 },
@@ -30,19 +30,19 @@ namespace Sass {
     /* turn */ { 360.0,     400.0,     2.0*PI,    1         }
   };
 
-  const double time_conversion_factors[2][2] =
+  static const double time_conversion_factors[2][2] =
   {
              /*  s          ms        */
     /* s    */ { 1,         1000.0    },
     /* ms   */ { 1/1000.0,  1         }
   };
-  const double frequency_conversion_factors[2][2] =
+  static const double frequency_conversion_factors[2][2] =
   {
              /*  Hz         kHz       */
     /* Hz   */ { 1,         1/1000.0  },
     /* kHz  */ { 1000.0,    1         }
   };
-  const double resolution_conversion_factors[3][3] =
+  static const double resolution_conversion_factors[3][3] =
   {
              /*  dpi        dpcm       dppx     */
     /* dpi  */ { 1,         1/2.54,    1/96.0   },
