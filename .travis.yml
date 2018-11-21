@@ -19,36 +19,36 @@ sudo: required
 # - AUTOTOOLS=yes COVERAGE=yes BUILD=shared
 
 matrix:
-  include :
-    - os: linux
-      compiler: gcc
-      env: AUTOTOOLS=no COVERAGE=yes BUILD=static
-    - os: linux
-      compiler: g++-5
-      env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
+  include:
+    # - os: linux
+    #   compiler: gcc
+    #   env: AUTOTOOLS=no COVERAGE=yes BUILD=static
+    # - os: linux
+    #   compiler: g++-5
+    #   env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
+    #   addons:
+    #     apt:
+    #       sources:
+    #         - ubuntu-toolchain-r-test
+    #       packages:
+    #         - g++-5
     - os: linux
       compiler: clang
       # This build runs with ASan and we set `detect_odr_violation=0`
       # to work around https://bugs.llvm.org/show_bug.cgi?id=37545.
       env: AUTOTOOLS=no COVERAGE=no BUILD=static ASAN_OPTIONS=detect_odr_violation=0
-    - os: linux
-      compiler: clang
-      env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
-    - os: osx
-      compiler: clang
-      env: AUTOTOOLS=no COVERAGE=no BUILD=shared
-    - os: osx
-      compiler: clang
-      env: AUTOTOOLS=no COVERAGE=yes BUILD=static
-    - os: osx
-      compiler: clang
-      env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
+    # - os: linux
+    #   compiler: clang
+    #   env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
+    # - os: osx
+    #   compiler: clang
+    #   env: AUTOTOOLS=no COVERAGE=no BUILD=shared
+    # - os: osx
+    #   compiler: clang
+    #   env: AUTOTOOLS=no COVERAGE=yes BUILD=static
+    # - os: osx
+    #   compiler: clang
+    #   env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
 
 script:
   - ./script/ci-build-libsass
