@@ -41,9 +41,9 @@ install:
 build_script:
   - ps: |
       if ($env:Compiler -eq "mingw") {
-        mingw32-make -j4 sassc
+        mingw32-make -j2 sassc
       } else {
-        msbuild /m:4 /p:"Configuration=$env:Config;Platform=$env:Platform" sassc\win\sassc.sln
+        msbuild /m:2 /p:"Configuration=$env:Config;Platform=$env:Platform" sassc\win\sassc.sln
       }
 
       # print the branding art
