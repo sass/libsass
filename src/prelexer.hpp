@@ -380,6 +380,7 @@ namespace Sass {
     const char* static_component(const char* src);
     const char* static_property(const char* src);
     const char* static_value(const char* src);
+    const char* static_value_decimal_trailing_zeros(const char* src);
 
     const char* css_variable_value(const char* src);
     const char* css_variable_top_level_value(const char* src);

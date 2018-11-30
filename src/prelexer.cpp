@@ -1010,6 +1010,12 @@ namespace Sass {
           >
         >(src);
     }
+    const char* static_value_decimal_trailing_zeros(const char* src) {
+      return  sequence< sequence< zero_plus<digits>,
+                                  exactly<'.'>,
+                                  one_plus<exactly<'0'>>>,
+                        unit_identifier>(src);
+    }
     const char* coefficient(const char* src) {
       return alternatives< sequence< optional<sign>, digits >,
                            sign >(src);

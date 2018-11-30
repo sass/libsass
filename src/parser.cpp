@@ -1071,7 +1071,7 @@ namespace Sass {
       return SASS_MEMORY_NEW(Declaration, prop->pstate(), prop, parse_css_variable_value(), false, true);
     }
     lex < css_comments >(false);
-    if (peek_css< static_value >()) {
+    if (!peek_css< static_value_decimal_trailing_zeros >() && peek_css< static_value >()) {
       return SASS_MEMORY_NEW(Declaration, prop->pstate(), prop, parse_static_value()/*, lex<kwd_important>()*/);
     }
     else {
