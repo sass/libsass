@@ -202,7 +202,7 @@ namespace Sass {
     if (ae) ae = ae->perform(&eval);
     else ae = SASS_MEMORY_NEW(At_Root_Query, a->pstate());
 
-    LOCAL_FLAG(at_root_without_rule, true);
+    LOCAL_FLAG(at_root_without_rule, Cast<At_Root_Query>(ae)->exclude("rule"));
     LOCAL_FLAG(in_keyframes, false);
 
                                        ;
@@ -640,7 +640,7 @@ namespace Sass {
 
   Statement* Expand::operator()(Extension_Ptr e)
   {
-    if (Selector_List_Ptr extender = selector()) {
+    if (Selector_List_Obj extender = selector()) {
       Selector_List_Ptr sl = e->selector();
       // abort on invalid selector
       if (sl == NULL) return NULL;
