@@ -106,7 +106,7 @@ namespace Sass {
     // so we need to break before keywords
     for (size_t i = 0, L = length(); i < L; ++i) {
       Expression_Obj obj = this->at(i);
-      if (Argument_Ptr arg = Cast<Argument>(obj)) {
+      if (Argument* arg = Cast<Argument>(obj)) {
         if (!arg->name().empty()) return i;
       }
     }
@@ -117,7 +117,7 @@ namespace Sass {
   Expression_Obj List::value_at_index(size_t i) {
     Expression_Obj obj = this->at(i);
     if (is_arglist_) {
-      if (Argument_Ptr arg = Cast<Argument>(obj)) {
+      if (Argument* arg = Cast<Argument>(obj)) {
         return arg->value();
       } else {
         return obj;
@@ -551,7 +551,7 @@ namespace Sass {
     return hash_;
   }
 
-  Color_HSLA_Ptr Color_RGBA::toHSLA(bool copy)
+  Color_HSLA* Color_RGBA::toHSLA(bool copy)
   {
 
     // Algorithm from http://en.wikipedia.org/wiki/wHSL_and_HSV#Conversion_from_RGB_to_HSL_or_HSV
@@ -589,7 +589,7 @@ namespace Sass {
     );
   }
 
-  Color_RGBA_Ptr Color_RGBA::toRGBA(bool copy)
+  Color_RGBA* Color_RGBA::toRGBA(bool copy)
   {
     return copy ? SASS_MEMORY_COPY(this) : this;
   }
@@ -646,7 +646,7 @@ namespace Sass {
     return m1;
   }
 
-  Color_RGBA_Ptr Color_HSLA::toRGBA(bool copy)
+  Color_RGBA* Color_HSLA::toRGBA(bool copy)
   {
 
     double h = absmod(h_ / 360.0, 1.0);
@@ -668,7 +668,7 @@ namespace Sass {
     );
   }
 
-  Color_HSLA_Ptr Color_HSLA::toHSLA(bool copy)
+  Color_HSLA* Color_HSLA::toHSLA(bool copy)
   {
     return copy ? SASS_MEMORY_COPY(this) : this;
   }
@@ -768,7 +768,7 @@ namespace Sass {
   void String_Schema::rtrim()
   {
     if (!empty()) {
-      if (String_Ptr str = Cast<String>(last())) str->rtrim();
+      if (String* str = Cast<String>(last())) str->rtrim();
     }
   }
 

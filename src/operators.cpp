@@ -66,12 +66,12 @@ namespace Sass {
     }
 
     /* static function, throws OperationError, has no traces but optional pstate for returned value */
-    Value_Ptr op_strings(Sass::Operand operand, Value& lhs, Value& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
+    Value* op_strings(Sass::Operand operand, Value& lhs, Value& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
     {
       enum Sass_OP op = operand.operand;
 
-      String_Quoted_Ptr lqstr = Cast<String_Quoted>(&lhs);
-      String_Quoted_Ptr rqstr = Cast<String_Quoted>(&rhs);
+      String_Quoted* lqstr = Cast<String_Quoted>(&lhs);
+      String_Quoted* rqstr = Cast<String_Quoted>(&rhs);
 
       std::string lstr(lqstr ? lqstr->value() : lhs.to_string(opt));
       std::string rstr(rqstr ? rqstr->value() : rhs.to_string(opt));
@@ -117,7 +117,7 @@ namespace Sass {
 
     /* ToDo: allow to operate also with hsla colors */
     /* static function, throws OperationError, has no traces but optional pstate for returned value */
-    Value_Ptr op_colors(enum Sass_OP op, const Color_RGBA& lhs, const Color_RGBA& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
+    Value* op_colors(enum Sass_OP op, const Color_RGBA& lhs, const Color_RGBA& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
     {
 
       if (lhs.a() != rhs.a()) {
@@ -138,7 +138,7 @@ namespace Sass {
     }
 
     /* static function, throws OperationError, has no traces but optional pstate for returned value */
-    Value_Ptr op_numbers(enum Sass_OP op, const Number& lhs, const Number& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
+    Value* op_numbers(enum Sass_OP op, const Number& lhs, const Number& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
     {
       double lval = lhs.value();
       double rval = rhs.value();
@@ -161,7 +161,7 @@ namespace Sass {
         if (l_n_units + l_d_units <= 1 && r_n_units + r_d_units <= 1) {
           if (lhs.numerators == rhs.numerators) {
             if (lhs.denominators == rhs.denominators) {
-              Number_Ptr v = SASS_MEMORY_COPY(&lhs);
+              Number* v = SASS_MEMORY_COPY(&lhs);
               v->value(ops[op](lval, rval));
               return v;
             }
@@ -208,7 +208,7 @@ namespace Sass {
     }
 
     /* static function, throws OperationError, has no traces but optional pstate for returned value */
-    Value_Ptr op_number_color(enum Sass_OP op, const Number& lhs, const Color_RGBA& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
+    Value* op_number_color(enum Sass_OP op, const Number& lhs, const Color_RGBA& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
     {
       double lval = lhs.value();
 
@@ -239,7 +239,7 @@ namespace Sass {
     }
 
     /* static function, throws OperationError, has no traces but optional pstate for returned value */
-    Value_Ptr op_color_number(enum Sass_OP op, const Color_RGBA& lhs, const Number& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
+    Value* op_color_number(enum Sass_OP op, const Color_RGBA& lhs, const Number& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
     {
       double rval = rhs.value();
 
