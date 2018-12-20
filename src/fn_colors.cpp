@@ -122,7 +122,7 @@ namespace Sass {
 
     Signature red_sig = "red($color)";
     BUILT_IN(red)
-    { 
+    {
       Color_RGBA_Obj color = ARG("$color", Color)->toRGBA();
       return SASS_MEMORY_NEW(Number, pstate, color->r());
     }
@@ -273,7 +273,7 @@ namespace Sass {
     {
       Color_Ptr col = ARG("$color", Color);
       double degrees = ARGVAL("$degrees");
-      Color_HSLA_Obj copy = col->toHSLA(true);
+      Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->h(absmod(copy->h() + degrees, 360.0));
       return copy.detach();
     }
@@ -283,7 +283,7 @@ namespace Sass {
     {
       Color_Ptr col = ARG("$color", Color);
       double amount = DARG_U_PRCT("$amount");
-      Color_HSLA_Obj copy = col->toHSLA(true);
+      Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->l(clip(copy->l() + amount, 0.0, 100.0));
       return copy.detach();
 
@@ -294,7 +294,7 @@ namespace Sass {
     {
       Color_Ptr col = ARG("$color", Color);
       double amount = DARG_U_PRCT("$amount");
-      Color_HSLA_Obj copy = col->toHSLA(true);
+      Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->l(clip(copy->l() - amount, 0.0, 100.0));
       return copy.detach();
     }
@@ -309,7 +309,7 @@ namespace Sass {
 
       Color_Ptr col = ARG("$color", Color);
       double amount = DARG_U_PRCT("$amount");
-      Color_HSLA_Obj copy = col->toHSLA(true);
+      Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->s(clip(copy->s() + amount, 0.0, 100.0));
       return copy.detach();
     }
@@ -319,7 +319,7 @@ namespace Sass {
     {
       Color_Ptr col = ARG("$color", Color);
       double amount = DARG_U_PRCT("$amount");
-      Color_HSLA_Obj copy = col->toHSLA(true);
+      Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->s(clip(copy->s() - amount, 0.0, 100.0));
       return copy.detach();
     }
@@ -334,7 +334,7 @@ namespace Sass {
       }
 
       Color_Ptr col = ARG("$color", Color);
-      Color_HSLA_Obj copy = col->toHSLA(true);
+      Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->s(0.0); // just reset saturation
       return copy.detach();
     }
@@ -347,7 +347,7 @@ namespace Sass {
     BUILT_IN(complement)
     {
       Color_Ptr col = ARG("$color", Color);
-      Color_HSLA_Obj copy = col->toHSLA(true);
+      Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->h(absmod(copy->h() - 180.0, 360.0));
       return copy.detach();
     }
@@ -363,7 +363,7 @@ namespace Sass {
 
       Color_Ptr col = ARG("$color", Color);
       double weight = DARG_U_PRCT("$weight");
-      Color_RGBA_Obj inv = col->toRGBA(true);
+      Color_RGBA_Obj inv = col->copyAsRGBA();
       inv->r(clip(255.0 - inv->r(), 0.0, 255.0));
       inv->g(clip(255.0 - inv->g(), 0.0, 255.0));
       inv->b(clip(255.0 - inv->b(), 0.0, 255.0));
@@ -437,7 +437,7 @@ namespace Sass {
         error("Cannot specify HSL and RGB values for a color at the same time for `adjust-color'", pstate, traces);
       }
       else if (rgb) {
-        Color_RGBA_Obj c = col->toRGBA(true);
+        Color_RGBA_Obj c = col->copyAsRGBA();
         if (r) c->r(c->r() + DARG_R_BYTE("$red"));
         if (g) c->g(c->g() + DARG_R_BYTE("$green"));
         if (b) c->b(c->b() + DARG_R_BYTE("$blue"));
@@ -445,7 +445,7 @@ namespace Sass {
         return c.detach();
       }
       else if (hsl) {
-        Color_HSLA_Obj c = col->toHSLA(true);
+        Color_HSLA_Obj c = col->copyAsHSLA();
         if (h) c->h(c->h() + absmod(h->value(), 360.0));
         if (s) c->s(c->s() + DARG_R_PRCT("$saturation"));
         if (l) c->l(c->l() + DARG_R_PRCT("$lightness"));
@@ -482,7 +482,7 @@ namespace Sass {
         error("Cannot specify HSL and RGB values for a color at the same time for `scale-color'", pstate, traces);
       }
       else if (rgb) {
-        Color_RGBA_Obj c = col->toRGBA(true);
+        Color_RGBA_Obj c = col->copyAsRGBA();
         double rscale = (r ? DARG_R_PRCT("$red") : 0.0) / 100.0;
         double gscale = (g ? DARG_R_PRCT("$green") : 0.0) / 100.0;
         double bscale = (b ? DARG_R_PRCT("$blue") : 0.0) / 100.0;
@@ -494,7 +494,7 @@ namespace Sass {
         return c.detach();
       }
       else if (hsl) {
-        Color_HSLA_Obj c = col->toHSLA(true);
+        Color_HSLA_Obj c = col->copyAsHSLA();
         double hscale = (h ? DARG_R_PRCT("$hue") : 0.0) / 100.0;
         double sscale = (s ? DARG_R_PRCT("$saturation") : 0.0) / 100.0;
         double lscale = (l ? DARG_R_PRCT("$lightness") : 0.0) / 100.0;
@@ -536,7 +536,7 @@ namespace Sass {
         error("Cannot specify HSL and RGB values for a color at the same time for `change-color'", pstate, traces);
       }
       else if (rgb) {
-        Color_RGBA_Obj c = col->toRGBA(true);
+        Color_RGBA_Obj c = col->copyAsRGBA();
         if (r) c->r(DARG_U_BYTE("$red"));
         if (g) c->g(DARG_U_BYTE("$green"));
         if (b) c->b(DARG_U_BYTE("$blue"));
@@ -544,7 +544,7 @@ namespace Sass {
         return c.detach();
       }
       else if (hsl) {
-        Color_HSLA_Obj c = col->toHSLA(true);
+        Color_HSLA_Obj c = col->copyAsHSLA();
         if (h) c->h(absmod(h->value(), 360.0));
         if (s) c->s(DARG_U_PRCT("$saturation"));
         if (l) c->l(DARG_U_PRCT("$lightness"));
