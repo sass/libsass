@@ -237,10 +237,10 @@ namespace Sass {
   //////////
   class Color : public Value {
     ADD_CONSTREF(std::string, disp)
-    HASH_PROPERTY(double, a)
-  protected:
+   protected:
+    double a_;
     mutable size_t hash_;
-  public:
+   public:
     Color(ParserState pstate, double a = 1, const std::string disp = "");
 
     std::string type() const override { return "color"; }
@@ -250,8 +250,15 @@ namespace Sass {
 
     bool operator== (const Expression& rhs) const override;
 
-    virtual Color_RGBA_Ptr toRGBA(bool copy = false) = 0;
-    virtual Color_HSLA_Ptr toHSLA(bool copy = false) = 0;
+    virtual Color_RGBA_Ptr toRGBA() const = 0;
+    virtual Color_HSLA_Ptr toHSLA() const = 0;
+
+    double a() const { return a_; }
+    void a(double val) {
+      hash_ = 0;
+      disp_ = "";
+      a_ = val;
+    }
 
     ATTACH_VIRTUAL_AST_OPERATIONS(Color)
   };
@@ -260,20 +267,42 @@ namespace Sass {
   // Colors.
   //////////
   class Color_RGBA final : public Color {
-    HASH_PROPERTY(double, r)
-    HASH_PROPERTY(double, g)
-    HASH_PROPERTY(double, b)
-  public:
+   protected:
+    double r_;
+    double g_;
+    double b_;
+   public:
     Color_RGBA(ParserState pstate, double r, double g, double b, double a = 1, const std::string disp = "");
 
     std::string type() const override { return "color"; }
     static std::string type_name() { return "color"; }
 
     size_t hash() const override;
-    Color_RGBA_Ptr toRGBA(bool copy = false) override;
-    Color_HSLA_Ptr toHSLA(bool copy = false) override;
+    Color_RGBA_Ptr toRGBA() const override;
+    Color_HSLA_Ptr toHSLA() const override;
 
     bool operator== (const Expression& rhs) const override;
+
+    double r() const { return r_; }
+    void r(double val) {
+      hash_ = 0;
+      disp_ = "";
+      r_ = val;
+    }
+
+    double g() const { return g_; }
+    void g(double val) {
+      hash_ = 0;
+      disp_ = "";
+      g_ = val;
+    }
+
+    double b() const { return b_; }
+    void b(double val) {
+      hash_ = 0;
+      disp_ = "";
+      b_ = val;
+    }
 
     ATTACH_AST_OPERATIONS(Color_RGBA)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -284,20 +313,42 @@ namespace Sass {
   // Colors.
   //////////
   class Color_HSLA final : public Color {
-    HASH_PROPERTY(double, h)
-    HASH_PROPERTY(double, s)
-    HASH_PROPERTY(double, l)
-  public:
+   protected:
+    double h_;
+    double s_;
+    double l_;
+   public:
     Color_HSLA(ParserState pstate, double h, double s, double l, double a = 1, const std::string disp = "");
 
     std::string type() const override { return "color"; }
     static std::string type_name() { return "color"; }
 
     size_t hash() const override;
-    Color_RGBA_Ptr toRGBA(bool copy = false) override;
-    Color_HSLA_Ptr toHSLA(bool copy = false) override;
+    Color_RGBA_Ptr toRGBA() const override;
+    Color_HSLA_Ptr toHSLA() const override;
 
     bool operator== (const Expression& rhs) const override;
+
+    double h() const { return h_; }
+    void h(double val) {
+      hash_ = 0;
+      disp_ = "";
+      h_ = val;
+    }
+
+    double s() const { return s_; }
+    void s(double val) {
+      hash_ = 0;
+      disp_ = "";
+      s_ = val;
+    }
+
+    double l() const { return l_; }
+    void l(double val) {
+      hash_ = 0;
+      disp_ = "";
+      l_ = val;
+    }
 
     ATTACH_AST_OPERATIONS(Color_HSLA)
     ATTACH_CRTP_PERFORM_METHODS()

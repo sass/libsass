@@ -493,8 +493,7 @@ namespace Sass {
 
   Color::Color(const Color* ptr)
   : Value(ptr->pstate()),
-    // reset on copy
-    disp_(""),
+    disp_(ptr->disp()),
     a_(ptr->a_),
     hash_(ptr->hash_)
   { concrete_type(COLOR); }
@@ -551,7 +550,7 @@ namespace Sass {
     return hash_;
   }
 
-  Color_HSLA_Ptr Color_RGBA::toHSLA(bool copy)
+  Color_HSLA_Ptr Color_RGBA::toHSLA() const
   {
 
     // Algorithm from http://en.wikipedia.org/wiki/wHSL_and_HSV#Conversion_from_RGB_to_HSL_or_HSV
@@ -589,9 +588,9 @@ namespace Sass {
     );
   }
 
-  Color_RGBA_Ptr Color_RGBA::toRGBA(bool copy)
+  Color_RGBA_Ptr Color_RGBA::toRGBA() const
   {
-    return copy ? SASS_MEMORY_COPY(this) : this;
+    return SASS_MEMORY_COPY(this);
   }
 
   /////////////////////////////////////////////////////////////////////////
@@ -646,7 +645,7 @@ namespace Sass {
     return m1;
   }
 
-  Color_RGBA_Ptr Color_HSLA::toRGBA(bool copy)
+  Color_RGBA_Ptr Color_HSLA::toRGBA() const
   {
 
     double h = absmod(h_ / 360.0, 1.0);
@@ -668,9 +667,9 @@ namespace Sass {
     );
   }
 
-  Color_HSLA_Ptr Color_HSLA::toHSLA(bool copy)
+  Color_HSLA_Ptr Color_HSLA::toHSLA() const
   {
-    return copy ? SASS_MEMORY_COPY(this) : this;
+    return SASS_MEMORY_COPY(this);
   }
 
   /////////////////////////////////////////////////////////////////////////
