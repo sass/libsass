@@ -35,9 +35,11 @@ ifneq "$(COVERAGE)" "yes"
 	LDFLAGS  += -O2
 	# MinGW on Windows needs a plugin for LTO that isn't there by default.
 	ifneq (Windows,$(UNAME))
-		CFLAGS   += -flto
-		CXXFLAGS += -flto
-		LDFLAGS  += -flto
+		ifndef NO_LTO
+			CFLAGS   += -flto
+			CXXFLAGS += -flto
+			LDFLAGS  += -flto
+		endif
 	endif
 else
 	CFLAGS   += -O1 -fno-omit-frame-pointer

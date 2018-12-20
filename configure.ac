@@ -47,6 +47,10 @@ AC_ARG_ENABLE(tests, AS_HELP_STRING([--enable-tests], [enable testing the build]
 AS_CASE([$host], [*-*-mingw*], [is_mingw32=yes], [is_mingw32=no])
 AM_CONDITIONAL(COMPILER_IS_MINGW32, test "x$is_mingw32" = "xyes")
 
+# LTO is enabled by default, except for mingw32 which doesn't have the necessary
+# linker plugin installed by default.
+AM_CONDITIONAL([ENABLE_LTO], [test "$is_mingw32" = no -a -z "$NO_LTO"])
+
 dnl The dlopen() function is in the C library for *BSD and in
 dnl libdl on GLIBC-based systems
 if test "x$is_mingw32" != "xyes"; then

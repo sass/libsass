@@ -1,3 +1,4 @@
+dist: xenial
 language: cpp
 
 # ASan needs ptrace support which currently requires `sudo: required`.
@@ -24,14 +25,8 @@ matrix:
       compiler: gcc
       env: AUTOTOOLS=no COVERAGE=yes BUILD=static
     - os: linux
-      compiler: g++-5
+      compiler: gcc
       env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
     - os: linux
       compiler: clang
       # This build runs with ASan and we set `detect_odr_violation=0`

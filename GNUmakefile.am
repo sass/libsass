@@ -3,9 +3,13 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4 -I script
 AM_COPT = -Wall -O2
 AM_COVLDFLAGS =
 
+if ENABLE_LTO
+AM_COPT += -flto
+endif
+
 if ENABLE_COVERAGE
-	AM_COPT = -Wall -O1 -fno-omit-frame-pointer --coverage
-	AM_COVLDFLAGS += -lgcov
+AM_COPT = -Wall -O1 -fno-omit-frame-pointer --coverage
+AM_COVLDFLAGS += -lgcov
 endif
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
