@@ -7,7 +7,7 @@
 namespace Sass {
 
   // convert value from C++ side to C-API
-  union Sass_Value* ast_node_to_sass_value (const Expression_Ptr val)
+  union Sass_Value* ast_node_to_sass_value (Expression_Ptr val)
   {
     if (val->concrete_type() == Expression::NUMBER)
     {
