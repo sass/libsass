@@ -15,15 +15,6 @@ INSTALL  ?= install
 CFLAGS   ?= -Wall
 CXXFLAGS ?= -Wall
 LDFLAGS  ?= -Wall
-ifndef COVERAGE
-  CFLAGS   += -O2
-  CXXFLAGS += -O2
-  LDFLAGS  += -O2
-else
-  CFLAGS   += -O1 -fno-omit-frame-pointer
-  CXXFLAGS += -O1 -fno-omit-frame-pointer
-  LDFLAGS  += -O1 -fno-omit-frame-pointer
-endif
 CAT ?= $(if $(filter $(OS),Windows_NT),type,cat)
 
 ifneq (,$(findstring /cygdrive/,$(PATH)))
@@ -36,6 +27,22 @@ else ifneq (,$(findstring MINGW32,$(shell uname -s)))
 	UNAME := Windows
 else
 	UNAME := $(shell uname -s)
+endif
+
+ifneq "$(COVERAGE)" "yes"
+	CFLAGS   += -O2
+	CXXFLAGS += -O2
+	LDFLAGS  += -O2
+	# MinGW on Windows needs a plugin for LTO that isn't there by default.
+	ifneq (Windows,$(UNAME))
+		CFLAGS   += -flto
+		CXXFLAGS += -flto
+		LDFLAGS  += -flto
+	endif
+else
+	CFLAGS   += -O1 -fno-omit-frame-pointer
+	CXXFLAGS += -O1 -fno-omit-frame-pointer
+	LDFLAGS  += -O1 -fno-omit-frame-pointer
 endif
 
 ifndef LIBSASS_VERSION

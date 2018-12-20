@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4 -I script
 
-AM_COPT = -Wall -O2
+AM_COPT = -Wall -O2 -flto
 AM_COVLDFLAGS =
 
 if ENABLE_COVERAGE
