@@ -54,7 +54,7 @@ if [ "x$PREFIX" == "x" ]; then
 fi
 
 # -flto doesn't work on travis due to missing linker plugins.
-export NO_LTO=1
+# export NO_LTO=1
 
 if [[ $CC == clang ]]; then
   # enable address sanitation

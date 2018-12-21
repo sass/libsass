@@ -32,9 +32,22 @@ matrix:
       # This build runs with ASan and we set `detect_odr_violation=0`
       # to work around https://bugs.llvm.org/show_bug.cgi?id=37545.
       env: AUTOTOOLS=no COVERAGE=no BUILD=static ASAN_OPTIONS=detect_odr_violation=0
+      addons:
+        # https://bugs.launchpad.net/ubuntu/+source/llvm-toolchain-snapshot/+bug/1254970
+        apt:
+          sources:
+          - llvm-toolchain-xenial-7
+          packages:
+          - llvm-7-dev
     - os: linux
       compiler: clang
       env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
+      addons:
+        apt:
+          sources:
+          - llvm-toolchain-xenial-7
+          packages:
+          - llvm-7-dev
     - os: osx
       compiler: clang
       env: AUTOTOOLS=no COVERAGE=no BUILD=shared

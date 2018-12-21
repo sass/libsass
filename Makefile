@@ -29,22 +29,22 @@ else
 	UNAME := $(shell uname -s)
 endif
 
+
 ifneq "$(COVERAGE)" "yes"
-	CFLAGS   += -O2
-	CXXFLAGS += -O2
-	LDFLAGS  += -O2
-	# MinGW on Windows needs a plugin for LTO that isn't there by default.
-	ifneq (Windows,$(UNAME))
-		ifndef NO_LTO
-			CFLAGS   += -flto
-			CXXFLAGS += -flto
-			LDFLAGS  += -flto
-		endif
-	endif
+  CFLAGS   += -O2
+  CXXFLAGS += -O2
+  LDFLAGS  += -O2
 else
-	CFLAGS   += -O1 -fno-omit-frame-pointer
-	CXXFLAGS += -O1 -fno-omit-frame-pointer
-	LDFLAGS  += -O1 -fno-omit-frame-pointer
+  CFLAGS   += -O1 -fno-omit-frame-pointer
+  CXXFLAGS += -O1 -fno-omit-frame-pointer
+  LDFLAGS  += -O1 -fno-omit-frame-pointer
+endif
+
+$(foreach assignment,$(shell sh script/lto-env.sh $(CC)),$(eval $(assignment)))
+ifeq ($(ENABLE_LTO),yes)
+  CFLAGS   += -flto
+  CXXFLAGS += -flto
+  LDFLAGS  += -flto
 endif
 
 ifndef LIBSASS_VERSION
@@ -266,6 +266,8 @@ install-shared: $(DESTDIR)$(PREFIX)/lib/libsass.so \
                 install-headers
 
 $(SASSC_BIN): $(BUILD)
+	export AR=$(AR)
+	export RANLIB=$(RANLIB)
 	$(MAKE) -C $(SASS_SASSC_PATH) build-$(BUILD)-dev
 
 sassc: $(SASSC_BIN)
