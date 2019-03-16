@@ -2200,7 +2200,8 @@ namespace Sass {
     lex< identifier >();
     std::string name(lexed);
 
-    if (Util::normalize_underscores(name) == "content-exists" && stack.back() != Scope::Mixin)
+    bool in_mixin = std::find(stack.begin(), stack.end(), Scope::Mixin) != stack.end();
+    if (Util::normalize_underscores(name) == "content-exists" && !in_mixin)
     { error("Cannot call content-exists() except within a mixin."); }
 
     ParserState call_pos = pstate;
