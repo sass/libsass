@@ -54,6 +54,10 @@ endif
 CXXFLAGS += -std=c++11
 LDFLAGS  += -std=c++11
 
+ifeq ($(OS),OpenBSD)
+    @echo '*** HINT ***: OpenBSD uses `clang` instead of `gcc`, to fix this please visit: https://github.com/sass/libsass/blob/master/docs/build.md#compiling-with-clang-instead-of-gcc'
+endif
+
 ifeq (Windows,$(UNAME))
 	ifneq ($(BUILD),shared)
 		STATIC_ALL     ?= 1
