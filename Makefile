@@ -1,6 +1,9 @@
 OS       ?= $(shell uname -s)
 CC       ?= cc
 CXX      ?= c++
+ifeq ($(OS),OpenBSD)
+@echo '*** HINT ***: You need to use clang instead of gcc. Please refer to https://github.com/sass/libsass/blob/master/docs/build.md#compiling-with-clang-instead-of-gcc. Note that on some architectures you need to first install the clang package.'
+endif
 RM       ?= rm -f
 CP       ?= cp -a
 MKDIR    ?= mkdir
