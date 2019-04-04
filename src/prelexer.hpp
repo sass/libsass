@@ -67,11 +67,7 @@ namespace Sass {
       bool in_dquote = false;
       // bool in_braces = false;
 
-      while (*src) {
-
-        // check for abort condition
-        if (end && src >= end) break;
-
+      while (src < end && *src != '\0') {
         // has escaped sequence?
         if (*src == '\\') {
           ++ src; // skip this (and next)
