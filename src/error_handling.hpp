@@ -212,14 +212,13 @@ namespace Sass {
 
   }
 
-  void warn(std::string msg, ParserState pstate);
-  void warn(std::string msg, ParserState pstate, Backtrace* bt);
-  void warning(std::string msg, ParserState pstate);
+  std::string warn(std::string msg, ParserState pstate);
+  std::string warn(std::string msg, ParserState pstate, Backtrace* bt);
+  std::string warning(std::string msg, ParserState pstate);
 
-  void deprecated_function(std::string msg, ParserState pstate);
-  void deprecated(std::string msg, std::string msg2, bool with_column, ParserState pstate);
-  void deprecated_bind(std::string msg, ParserState pstate);
-  // void deprecated(std::string msg, ParserState pstate, Backtrace* bt);
+  std::string deprecated_function(std::string msg, ParserState pstate);
+  std::string deprecated(std::string msg, std::string msg2, bool with_column, ParserState pstate);
+  std::string deprecated_bind(std::string msg, ParserState pstate);
 
   void coreError(std::string msg, ParserState pstate);
   void error(std::string msg, ParserState pstate, Backtraces& traces);

@@ -46,6 +46,11 @@ bool omit_source_map_url;
 bool is_indented_syntax_src;
 ```
 ```C
+// If this options is set, nothing will be printed to stderr anymore
+// The aggregated output on stderr can be fetched via stderr_string
+bool suppress_stderr;
+```
+```C
 // The input path is used for source map
 // generating. It can be used to define
 // something with string compilation or to
@@ -109,6 +114,10 @@ enum Sass_Input_Style type;
 ```C
 // generated output data
 char* output_string;
+```
+```C
+// messages on stderr
+char* stderr_string;
 ```
 ```C
 // generated source map json
@@ -197,6 +206,7 @@ void sass_data_context_set_options (struct Sass_Data_Context* data_ctx, struct S
 
 // Getters for Sass_Context values
 const char* sass_context_get_output_string (struct Sass_Context* ctx);
+const char* sass_context_get_stderr_string (struct Sass_Context* ctx);
 int sass_context_get_error_status (struct Sass_Context* ctx);
 const char* sass_context_get_error_json (struct Sass_Context* ctx);
 const char* sass_context_get_error_text (struct Sass_Context* ctx);
@@ -262,6 +272,7 @@ void sass_option_set_source_map_contents (struct Sass_Options* options, bool sou
 void sass_option_set_source_map_file_urls (struct Sass_Options* options, bool source_map_file_urls);
 void sass_option_set_omit_source_map_url (struct Sass_Options* options, bool omit_source_map_url);
 void sass_option_set_is_indented_syntax_src (struct Sass_Options* options, bool is_indented_syntax_src);
+void sass_option_set_suppress_stderr (struct Sass_Options* options, bool suppress_stderr);
 void sass_option_set_indent (struct Sass_Options* options, const char* indent);
 void sass_option_set_linefeed (struct Sass_Options* options, const char* linefeed);
 void sass_option_set_input_path (struct Sass_Options* options, const char* input_path);

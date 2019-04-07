@@ -2,6 +2,7 @@
 #define SASS_CONTEXT_H
 
 #include <string>
+#include <sstream>
 #include <vector>
 #include <map>
 
@@ -43,6 +44,9 @@ namespace Sass {
     size_t head_imports;
     Plugins plugins;
     Output emitter;
+
+    std::ostream& CERR;
+    std::ostringstream STDERR;
 
     // generic ast node garbage container
     // used to avoid possible circular refs
@@ -103,6 +107,8 @@ namespace Sass {
 
     Sass_Output_Style output_style() { return c_options.output_style; };
     std::vector<std::string> get_included_files(bool skip = false, size_t headers = 0);
+
+    void print_stderr(const std::string& msg);
 
   private:
     void collect_plugin_paths(const char* paths_str);

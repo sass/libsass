@@ -76,6 +76,8 @@ namespace Sass {
     head_imports(0),
     plugins(),
     emitter(c_options),
+    CERR(std::cerr),
+    STDERR(),
 
     ast_gc(),
     strings(),
@@ -140,6 +142,14 @@ namespace Sass {
     c_importers.push_back(importer);
     // need to sort the array afterwards (no big deal)
     sort (c_importers.begin(), c_importers.end(), sort_importers);
+  }
+
+  void Context::print_stderr(const std::string& msg)
+  {
+    STDERR << msg;
+    if (!c_options.suppress_stderr) {
+      CERR << msg;
+    }
   }
 
   Context::~Context()

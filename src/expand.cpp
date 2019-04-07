@@ -685,11 +685,11 @@ namespace Sass {
       d->name() == "expression" ||
       d->name() == "url"
     )) {
-      deprecated(
+      ctx.print_stderr(deprecated(
         "Naming a function \"" + d->name() + "\" is disallowed and will be an error in future versions of Sass.",
         "This name conflicts with an existing CSS function with special parse rules.",
         false, d->pstate()
-      );
+      ));
     }
 
     // set the static link so we can have lexical scoping
@@ -746,7 +746,7 @@ namespace Sass {
       new_env.local_frame()["@content[m]"] = thunk;
     }
 
-    bind(std::string("Mixin"), c->name(), params, args, &new_env, &eval, traces);
+    bind(std::string("Mixin"), c->name(), params, args, &ctx, &new_env, &eval, traces);
 
     Block_Obj trace_block = SASS_MEMORY_NEW(Block, c->pstate());
     Trace_Obj trace = SASS_MEMORY_NEW(Trace, c->pstate(), c->name(), trace_block);

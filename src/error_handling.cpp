@@ -134,66 +134,78 @@ namespace Sass {
 
   }
 
-
-  void warn(std::string msg, ParserState pstate)
+  std::string warn(std::string msg, ParserState pstate)
   {
-    std::cerr << "Warning: " << msg << std::endl;
+    std::ostringstream sstrm;
+    sstrm << "Warning: " << msg << std::endl;
+    return sstrm.str();
   }
 
-  void warning(std::string msg, ParserState pstate)
-  {
-    std::string cwd(Sass::File::get_cwd());
-    std::string abs_path(Sass::File::rel2abs(pstate.path, cwd, cwd));
-    std::string rel_path(Sass::File::abs2rel(pstate.path, cwd, cwd));
-    std::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.path));
-
-    std::cerr << "WARNING on line " << pstate.line+1 << ", column " << pstate.column+1 << " of " << output_path << ":" << std::endl;
-    std::cerr << msg << std::endl << std::endl;
-  }
-
-  void warn(std::string msg, ParserState pstate, Backtrace* bt)
-  {
-    warn(msg, pstate);
-  }
-
-  void deprecated_function(std::string msg, ParserState pstate)
+  std::string warning(std::string msg, ParserState pstate)
   {
     std::string cwd(Sass::File::get_cwd());
     std::string abs_path(Sass::File::rel2abs(pstate.path, cwd, cwd));
     std::string rel_path(Sass::File::abs2rel(pstate.path, cwd, cwd));
     std::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.path));
 
-    std::cerr << "DEPRECATION WARNING: " << msg << std::endl;
-    std::cerr << "will be an error in future versions of Sass." << std::endl;
-    std::cerr << "        on line " << pstate.line+1 << " of " << output_path << std::endl;
+    std::ostringstream sstrm;
+    sstrm << "WARNING on line " << pstate.line + 1;
+    sstrm << ", column " << pstate.column + 1;
+    sstrm << " of " << output_path << std::endl;
+    sstrm << msg << std::endl;
+    sstrm << std::endl;
+    return sstrm.str();
   }
 
-  void deprecated(std::string msg, std::string msg2, bool with_column, ParserState pstate)
+  std::string warn(std::string msg, ParserState pstate, Backtrace* bt)
+  {
+    return warn(msg, pstate);
+  }
+
+  std::string deprecated_function(std::string msg, ParserState pstate)
+  {
+    std::string cwd(Sass::File::get_cwd());
+    std::string abs_path(Sass::File::rel2abs(pstate.path, cwd, cwd));
+    std::string rel_path(Sass::File::abs2rel(pstate.path, cwd, cwd));
+    std::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.path));
+
+    std::ostringstream sstrm;
+    sstrm << "DEPRECATION WARNING: " << msg << std::endl;
+    sstrm << "will be an error in future versions of Sass." << std::endl;
+    sstrm << "        on line " << pstate.line+1 << " of " << output_path << std::endl;
+    return sstrm.str();
+  }
+
+  std::string deprecated(std::string msg, std::string msg2, bool with_column, ParserState pstate)
   {
     std::string cwd(Sass::File::get_cwd());
     std::string abs_path(Sass::File::rel2abs(pstate.path, cwd, cwd));
     std::string rel_path(Sass::File::abs2rel(pstate.path, cwd, cwd));
     std::string output_path(Sass::File::path_for_console(rel_path, pstate.path, pstate.path));
 
-    std::cerr << "DEPRECATION WARNING on line " << pstate.line + 1;
-    if (with_column) std::cerr << ", column " << pstate.column + pstate.offset.column + 1;
-    if (output_path.length()) std::cerr << " of " << output_path;
-    std::cerr << ":" << std::endl;
-    std::cerr << msg << std::endl;
-    if (msg2.length()) std::cerr << msg2 << std::endl;
-    std::cerr << std::endl;
+    std::ostringstream sstrm;
+    sstrm << "DEPRECATION WARNING on line " << pstate.line + 1;
+    if (with_column) sstrm << ", column " << pstate.column + pstate.offset.column + 1;
+    if (output_path.length()) sstrm << " of " << output_path;
+    sstrm << ":" << std::endl;
+    sstrm << msg << std::endl;
+    if (msg2.length()) sstrm << msg2 << std::endl;
+    sstrm << std::endl;
+    return sstrm.str();
   }
 
-  void deprecated_bind(std::string msg, ParserState pstate)
+  std::string deprecated_bind(std::string msg, ParserState pstate)
   {
     std::string cwd(Sass::File::get_cwd());
     std::string abs_path(Sass::File::rel2abs(pstate.path, cwd, cwd));
     std::string rel_path(Sass::File::abs2rel(pstate.path, cwd, cwd));
     std::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.path));
 
-    std::cerr << "WARNING: " << msg << std::endl;
-    std::cerr << "        on line " << pstate.line+1 << " of " << output_path << std::endl;
-    std::cerr << "This will be an error in future versions of Sass." << std::endl;
+    std::ostringstream sstrm;
+    sstrm << "WARNING: " << msg << std::endl;
+    sstrm << "        on line " << pstate.line+1 << " of " << output_path << std::endl;
+    sstrm << "This will be an error in future versions of Sass." << std::endl;
+    return sstrm.str();
   }
 
   // should be replaced with error with backtraces

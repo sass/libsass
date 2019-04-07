@@ -389,9 +389,11 @@ namespace Sass {
 
     std::string result(unquote(message->to_sass()));
     std::cerr << "WARNING: " << result << std::endl;
+    std::ostringstream sstrm;
     traces.push_back(Backtrace(w->pstate()));
-    std::cerr << traces_to_string(traces, "         ");
-    std::cerr << std::endl;
+    sstrm << traces_to_string(traces, "         ");
+    sstrm << std::endl;
+    ctx.print_stderr(sstrm.str());
     options().output_style = outstyle;
     traces.pop_back();
     return 0;
@@ -485,8 +487,11 @@ namespace Sass {
     std::string output_path(Sass::File::path_for_console(rel_path, abs_path, d->pstate().path));
     options().output_style = outstyle;
 
-    std::cerr << output_path << ":" << d->pstate().line+1 << " DEBUG: " << result;
-    std::cerr << std::endl;
+    std::ostringstream sstrm;
+    sstrm << output_path << ":" << d->pstate().line+1 << " DEBUG: " << result;
+    sstrm << std::endl;
+    ctx.print_stderr(sstrm.str());
+
     return 0;
   }
 
@@ -1048,7 +1053,7 @@ namespace Sass {
     env_stack().push_back(&fn_env);
 
     if (func || body) {
-      bind(std::string("Function"), c->name(), params, args, &fn_env, this, traces);
+      bind(std::string("Function"), c->name(), params, args, &ctx, &fn_env, this, traces);
       std::string msg(", in function `" + c->name() + "`");
       traces.push_back(Backtrace(c->pstate(), msg));
       callee_stack().push_back({
@@ -1088,7 +1093,7 @@ namespace Sass {
 
       // populates env with default values for params
       std::string ff(c->name());
-      bind(std::string("Function"), c->name(), params, args, &fn_env, this, traces);
+      bind(std::string("Function"), c->name(), params, args, &ctx, &fn_env, this, traces);
       std::string msg(", in function `" + c->name() + "`");
       traces.push_back(Backtrace(c->pstate(), msg));
       callee_stack().push_back({

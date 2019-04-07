@@ -96,6 +96,7 @@ ADDAPI void ADDCALL sass_option_set_source_map_contents (struct Sass_Options* op
 ADDAPI void ADDCALL sass_option_set_source_map_file_urls (struct Sass_Options* options, bool source_map_file_urls);
 ADDAPI void ADDCALL sass_option_set_omit_source_map_url (struct Sass_Options* options, bool omit_source_map_url);
 ADDAPI void ADDCALL sass_option_set_is_indented_syntax_src (struct Sass_Options* options, bool is_indented_syntax_src);
+ADDAPI void ADDCALL sass_option_set_suppress_stderr (struct Sass_Options* options, bool suppress_stderr);
 ADDAPI void ADDCALL sass_option_set_indent (struct Sass_Options* options, const char* indent);
 ADDAPI void ADDCALL sass_option_set_linefeed (struct Sass_Options* options, const char* linefeed);
 ADDAPI void ADDCALL sass_option_set_input_path (struct Sass_Options* options, const char* input_path);
@@ -111,6 +112,7 @@ ADDAPI void ADDCALL sass_option_set_c_functions (struct Sass_Options* options, S
 
 // Getters for Sass_Context values
 ADDAPI const char* ADDCALL sass_context_get_output_string (struct Sass_Context* ctx);
+ADDAPI const char* ADDCALL sass_context_get_stderr_string (struct Sass_Context* ctx);
 ADDAPI int ADDCALL sass_context_get_error_status (struct Sass_Context* ctx);
 ADDAPI const char* ADDCALL sass_context_get_error_json (struct Sass_Context* ctx);
 ADDAPI const char* ADDCALL sass_context_get_error_text (struct Sass_Context* ctx);

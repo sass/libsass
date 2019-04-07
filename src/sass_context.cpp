@@ -119,6 +119,7 @@ namespace Sass {
       c_ctx->error_column = e.pstate.column + 1;
       c_ctx->error_src = e.pstate.src;
       c_ctx->output_string = 0;
+      c_ctx->stderr_string = 0;
       c_ctx->source_map_string = 0;
       json_delete(json_err);
     }
@@ -135,6 +136,7 @@ namespace Sass {
       c_ctx->error_text = sass_copy_c_string(ba.what());
       c_ctx->error_status = 2;
       c_ctx->output_string = 0;
+      c_ctx->stderr_string = 0;
       c_ctx->source_map_string = 0;
       json_delete(json_err);
     }
@@ -151,6 +153,7 @@ namespace Sass {
       c_ctx->error_text = sass_copy_c_string(e.what());
       c_ctx->error_status = 3;
       c_ctx->output_string = 0;
+      c_ctx->stderr_string = 0;
       c_ctx->source_map_string = 0;
       json_delete(json_err);
     }
@@ -167,6 +170,7 @@ namespace Sass {
       c_ctx->error_text = sass_copy_c_string(e.c_str());
       c_ctx->error_status = 4;
       c_ctx->output_string = 0;
+      c_ctx->stderr_string = 0;
       c_ctx->source_map_string = 0;
       json_delete(json_err);
     }
@@ -183,6 +187,7 @@ namespace Sass {
       c_ctx->error_text = sass_copy_c_string(e);
       c_ctx->error_status = 4;
       c_ctx->output_string = 0;
+      c_ctx->stderr_string = 0;
       c_ctx->source_map_string = 0;
       json_delete(json_err);
     }
@@ -198,6 +203,7 @@ namespace Sass {
       c_ctx->error_text = sass_copy_c_string("unknown");
       c_ctx->error_status = 5;
       c_ctx->output_string = 0;
+      c_ctx->stderr_string = 0;
       c_ctx->source_map_string = 0;
       json_delete(json_err);
     }
@@ -504,9 +510,19 @@ extern "C" {
     // compile the parsed root block
     try { compiler->c_ctx->output_string = cpp_ctx->render(root); }
     // pass catched errors to generic error handler
-    catch (...) { return handle_errors(compiler->c_ctx) | 1; }
+    catch (...) { 
+      // get aggregated messages on stderr as char*
+      std::string STDERR_STR = cpp_ctx->STDERR.str();
+      char* STDERR = sass_copy_string(STDERR_STR.c_str());
+      compiler->c_ctx->stderr_string = STDERR;
+      return handle_errors(compiler->c_ctx) | 1; 
+    }
     // generate source map json and store on context
     compiler->c_ctx->source_map_string = cpp_ctx->render_srcmap();
+    // get aggregated messages on stderr as char*
+    std::string STDERR_STR = cpp_ctx->STDERR.str();
+    char* STDERR = sass_copy_string(STDERR_STR.c_str());
+    compiler->c_ctx->stderr_string = STDERR;
     // success
     return 0;
   }
@@ -589,6 +605,7 @@ extern "C" {
     if (ctx == 0) return;
     // release the allocated memory (mostly via sass_copy_c_string)
     if (ctx->output_string)     free(ctx->output_string);
+    if (ctx->stderr_string)     free(ctx->stderr_string);
     if (ctx->source_map_string) free(ctx->source_map_string);
     if (ctx->error_message)     free(ctx->error_message);
     if (ctx->error_text)        free(ctx->error_text);
@@ -597,6 +614,7 @@ extern "C" {
     free_string_array(ctx->included_files);
     // play safe and reset properties
     ctx->output_string = 0;
+    ctx->stderr_string = 0;
     ctx->source_map_string = 0;
     ctx->error_message = 0;
     ctx->error_text = 0;
@@ -682,6 +700,7 @@ extern "C" {
   IMPLEMENT_SASS_OPTION_ACCESSOR(bool, source_map_file_urls);
   IMPLEMENT_SASS_OPTION_ACCESSOR(bool, omit_source_map_url);
   IMPLEMENT_SASS_OPTION_ACCESSOR(bool, is_indented_syntax_src);
+  IMPLEMENT_SASS_OPTION_ACCESSOR(bool, suppress_stderr);
   IMPLEMENT_SASS_OPTION_ACCESSOR(Sass_Function_List, c_functions);
   IMPLEMENT_SASS_OPTION_ACCESSOR(Sass_Importer_List, c_importers);
   IMPLEMENT_SASS_OPTION_ACCESSOR(Sass_Importer_List, c_headers);
@@ -704,6 +723,7 @@ extern "C" {
   IMPLEMENT_SASS_CONTEXT_GETTER(size_t, error_column);
   IMPLEMENT_SASS_CONTEXT_GETTER(const char*, error_src);
   IMPLEMENT_SASS_CONTEXT_GETTER(const char*, output_string);
+  IMPLEMENT_SASS_CONTEXT_GETTER(const char*, stderr_string);
   IMPLEMENT_SASS_CONTEXT_GETTER(const char*, source_map_string);
   IMPLEMENT_SASS_CONTEXT_GETTER(char**, included_files);
 
@@ -713,6 +733,7 @@ extern "C" {
   IMPLEMENT_SASS_CONTEXT_TAKER(char*, error_text);
   IMPLEMENT_SASS_CONTEXT_TAKER(char*, error_file);
   IMPLEMENT_SASS_CONTEXT_TAKER(char*, output_string);
+  IMPLEMENT_SASS_CONTEXT_TAKER(char*, stderr_string);
   IMPLEMENT_SASS_CONTEXT_TAKER(char*, source_map_string);
   IMPLEMENT_SASS_CONTEXT_TAKER(char**, included_files);
 

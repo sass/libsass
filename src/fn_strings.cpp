@@ -56,7 +56,7 @@ namespace Sass {
         val = Cast<Null>(arg) ? "null" : val;
         ctx.c_options.output_style = oldstyle;
 
-        deprecated_function("Passing " + val + ", a non-string value, to unquote()", pstate);
+        ctx.print_stderr(deprecated_function("Passing " + val + ", a non-string value, to unquote()", pstate));
         return ex;
       }
       throw std::runtime_error("Invalid Data Type for unquote");
