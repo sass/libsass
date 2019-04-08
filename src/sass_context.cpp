@@ -512,7 +512,7 @@ extern "C" {
     // pass catched errors to generic error handler
     catch (...) { 
       // get aggregated messages on stderr as char*
-      std::string STDERR_STR = cpp_ctx->STDERR.str();
+      std::string STDERR_STR = cpp_ctx->c_options.stderr_str;
       char* STDERR = sass_copy_string(STDERR_STR.c_str());
       compiler->c_ctx->stderr_string = STDERR;
       return handle_errors(compiler->c_ctx) | 1; 
@@ -520,7 +520,7 @@ extern "C" {
     // generate source map json and store on context
     compiler->c_ctx->source_map_string = cpp_ctx->render_srcmap();
     // get aggregated messages on stderr as char*
-    std::string STDERR_STR = cpp_ctx->STDERR.str();
+    std::string STDERR_STR = cpp_ctx->c_options.stderr_str;
     char* STDERR = sass_copy_string(STDERR_STR.c_str());
     compiler->c_ctx->stderr_string = STDERR;
     // success

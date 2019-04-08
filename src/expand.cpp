@@ -685,7 +685,7 @@ namespace Sass {
       d->name() == "expression" ||
       d->name() == "url"
     )) {
-      ctx.print_stderr(deprecated(
+      ctx.c_options.print_stderr(deprecated(
         "Naming a function \"" + d->name() + "\" is disallowed and will be an error in future versions of Sass.",
         "This name conflicts with an existing CSS function with special parse rules.",
         false, d->pstate()

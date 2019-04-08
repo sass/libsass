@@ -393,7 +393,7 @@ namespace Sass {
     traces.push_back(Backtrace(w->pstate()));
     sstrm << traces_to_string(traces, "         ");
     sstrm << std::endl;
-    ctx.print_stderr(sstrm.str());
+    ctx.c_options.print_stderr(sstrm.str());
     options().output_style = outstyle;
     traces.pop_back();
     return 0;
@@ -490,7 +490,7 @@ namespace Sass {
     std::ostringstream sstrm;
     sstrm << output_path << ":" << d->pstate().line+1 << " DEBUG: " << result;
     sstrm << std::endl;
-    ctx.print_stderr(sstrm.str());
+    ctx.c_options.print_stderr(sstrm.str());
 
     return 0;
   }

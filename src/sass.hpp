@@ -53,6 +53,8 @@
 
 // For C++ helper
 #include <string>
+#include <sstream>
+#include <iostream>
 
 // output behaviours
 namespace Sass {
@@ -96,11 +98,29 @@ struct Sass_Inspect_Options {
   // Precision for fractional numbers
   int precision;
 
+  // If this options is set, nothing will be printed to stderr anymore
+  // The aggregated output on stderr can be fetched via stderr_string
+  bool suppress_stderr;
+
+  // messages on stderr
+  std::string stderr_str;
+
   // initialization list (constructor with defaults)
   Sass_Inspect_Options(Sass_Output_Style style = Sass::NESTED,
-                       int precision = 10)
-  : output_style(style), precision(precision)
+                       int precision = 10,
+                       bool suppress_stderr = false,
+                       std::string stderr_str = "")
+  : output_style(style), precision(precision), 
+    suppress_stderr(suppress_stderr),
+    stderr_str(stderr_str)
   { }
+
+  void print_stderr(const std::string& msg) {
+    stderr_str += msg;
+    if (!suppress_stderr) {
+      std::cerr << msg;
+    }
+  }
 
 };
 

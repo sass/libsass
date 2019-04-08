@@ -23,10 +23,6 @@ struct Sass_Options : Sass_Output_Options {
   // Treat source_string as sass (as opposed to scss)
   bool is_indented_syntax_src;
 
-  // If this options is set, nothing will be printed to stderr anymore
-  // The aggregated output on stderr can be fetched via stderr_string
-  bool suppress_stderr;
-
   // The input path is used for source map
   // generation. It can be used to define
   // something with string compilation or to

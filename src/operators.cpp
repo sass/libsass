@@ -58,14 +58,14 @@ namespace Sass {
     bool gte(Expression_Obj lhs, Expression_Obj rhs) { return !cmp(lhs, rhs, Sass_OP::GTE) || eq(lhs, rhs); }
 
     /* colour math deprecation warning */
-    void op_color_deprecation(enum Sass_OP op, std::string lsh, std::string rhs, const ParserState& pstate)
+    void op_color_deprecation(enum Sass_OP op, std::string lsh, std::string rhs, struct Sass_Inspect_Options opt, const ParserState& pstate)
     {
-      deprecated(
+      opt.print_stderr(deprecated(
         "The operation `" + lsh + " " + sass_op_to_name(op) + " " + rhs +
         "` is deprecated and will be an error in future versions.",
         "Consider using Sass's color functions instead.\n"
         "https://sass-lang.com/documentation/Sass/Script/Functions.html#other_color_functions",
-        /*with_column=*/false, pstate);
+        /*with_column=*/false, pstate));
     }
 
     /* static function, throws OperationError, has no traces but optional pstate for returned value */
@@ -130,7 +130,7 @@ namespace Sass {
         throw Exception::ZeroDivisionError(lhs, rhs);
       }
 
-      op_color_deprecation(op, lhs.to_string(), rhs.to_string(), pstate);
+      op_color_deprecation(op, lhs.to_string(), rhs.to_string(), opt, pstate);
 
       return SASS_MEMORY_NEW(Color_RGBA,
                              pstate,
@@ -218,7 +218,7 @@ namespace Sass {
       switch (op) {
         case Sass_OP::ADD:
         case Sass_OP::MUL: {
-          op_color_deprecation(op, lhs.to_string(), rhs.to_string(opt), pstate);
+          op_color_deprecation(op, lhs.to_string(), rhs.to_string(opt), opt, pstate);
           return SASS_MEMORY_NEW(Color_RGBA,
                                 pstate,
                                 ops[op](lval, rhs.r()),
@@ -229,7 +229,7 @@ namespace Sass {
         case Sass_OP::SUB:
         case Sass_OP::DIV: {
           std::string color(rhs.to_string(opt));
-          op_color_deprecation(op, lhs.to_string(), color, pstate);
+          op_color_deprecation(op, lhs.to_string(), color, opt, pstate);
           return SASS_MEMORY_NEW(String_Quoted,
                                 pstate,
                                 lhs.to_string(opt)
@@ -251,7 +251,7 @@ namespace Sass {
         throw Exception::ZeroDivisionError(lhs, rhs);
       }
 
-      op_color_deprecation(op, lhs.to_string(), rhs.to_string(), pstate);
+      op_color_deprecation(op, lhs.to_string(), rhs.to_string(), opt, pstate);
 
       return SASS_MEMORY_NEW(Color_RGBA,
                             pstate,

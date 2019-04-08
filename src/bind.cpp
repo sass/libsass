@@ -196,7 +196,7 @@ namespace Sass {
             msg << (arg_count == 1 ? " was passed" : " were passed.");
             // ToDo: we only need ctx here to capture the message on stderr
             // ToDo: once deprecation is gone, remove it from method args
-            ctx->print_stderr(deprecated_bind(msg.str(), as->pstate()));
+            ctx->c_options.print_stderr(deprecated_bind(msg.str(), as->pstate()));
 
             while (arglist->length() > LP - ip) {
               arglist->elements().erase(arglist->elements().end() - 1);
