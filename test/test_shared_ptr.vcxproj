@@ -1,0 +1,8 @@
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="test.props" />
+  <ItemGroup>
+    <ClInclude Include="../src/memory/SharedPtr.h" />
+    <ClCompile Include="../src/memory/SharedPtr.cpp" />
+    <ClCompile Include="test_shared_ptr.cpp" />
+  </ItemGroup>
+</Project>

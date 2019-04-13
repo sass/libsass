@@ -1,0 +1,8 @@
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="test.props" />
+  <ItemGroup>
+    <ClInclude Include="../src/util_string.h" />
+    <ClCompile Include="../src/util_string.cpp" />
+    <ClCompile Include="test_util_string.cpp" />
+  </ItemGroup>
+</Project>
