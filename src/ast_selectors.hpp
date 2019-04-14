@@ -134,6 +134,9 @@ namespace Sass {
     virtual ~Simple_Selector() = 0;
     virtual Compound_Selector* unify_with(Compound_Selector*);
 
+    Complex_Selector* toComplexSelector();
+    Compound_Selector* toCompoundSelector();
+
     virtual bool has_parent_ref() const override;
     virtual bool has_real_parent_ref() const override;
     virtual bool is_pseudo_element() const;
@@ -382,7 +385,10 @@ namespace Sass {
     bool contains_placeholder();
     void append(Simple_Selector_Obj element) override;
     bool is_universal() const;
-    Complex_Selector_Obj to_complex();
+
+    Complex_Selector* toComplexSelector();
+    Selector_List* weaver(Selector_List* path);
+
     Compound_Selector* unify_with(Compound_Selector* rhs);
     // virtual Placeholder_Selector* find_placeholder();
     bool has_parent_ref() const override;
@@ -453,9 +459,6 @@ namespace Sass {
     bool has_real_parent_ref() const override;
     Complex_Selector_Obj skip_empty_reference();
 
-    // can still have a tail
-    bool is_empty_ancestor() const;
-
     Selector_List* tails(Selector_List* tails);
 
     // front returns the first real tail
@@ -472,7 +475,11 @@ namespace Sass {
     bool is_superselector_of(const Compound_Selector* sub, std::string wrapping = "") const;
     bool is_superselector_of(const Complex_Selector* sub, std::string wrapping = "") const;
     bool is_superselector_of(const Selector_List* sub, std::string wrapping = "") const;
+
+    Selector_List* subweaver(Complex_Selector* rhs);
     Selector_List* unify_with(Complex_Selector* rhs);
+    Selector_List* toSelectorList();
+
     Combinator clear_innermost();
     void append(Complex_Selector_Obj, Backtraces& traces);
     void set_innermost(Complex_Selector_Obj, Combinator);
@@ -486,6 +493,18 @@ namespace Sass {
       throw std::runtime_error("unification_order for Complex_Selector is undefined");
     }
     bool find ( bool (*f)(AST_Node_Obj) ) override;
+
+    // can still have a tail
+    bool is_empty_ancestor() const;
+
+    bool is_ancestor() const {
+      return combinator() == Combinator::ANCESTOR_OF;
+    }
+
+    bool is_bare_combinator() const {
+      return (!head() || head()->empty())
+        && combinator() != Combinator::ANCESTOR_OF;
+    }
 
     bool operator<(const Selector& rhs) const override;
     bool operator==(const Selector& rhs) const override;
@@ -555,6 +574,57 @@ namespace Sass {
     bool operator==(const Expression& rhs) const override;
     void cloneChildren() override;
     ATTACH_AST_OPERATIONS(Selector_List)
+    ATTACH_CRTP_PERFORM_METHODS()
+  };
+
+  //////////////////////////////////////////////////////////////////////
+  // Special class to group complex selectors
+  // Basically replaces the tail linked lists
+  //////////////////////////////////////////////////////////////////////
+  class Selector_Group final : public Selector, public Vectorized<Complex_Selector_Obj> {
+  public:
+    Selector_Group(ParserState pstate, std::size_t s = 0)
+      : Selector(pstate), Vectorized<Complex_Selector_Obj>(s) {}
+    std::size_t hash() const override { throw std::runtime_error("unimplemented"); }
+    unsigned long specificity() const override { throw std::runtime_error("unimplemented"); }
+    int unification_order() const override {
+      throw std::runtime_error("unification_order for Selector_Group is undefined");
+    }
+    std::string type() const { return "group"; }
+    bool operator<(const Selector& rhs) const { return false; }
+    bool operator==(const Selector& rhs) const { return false; }
+    bool operator<(const Selector_Group& rhs) const;
+    bool operator==(const Selector_Group& rhs) const;
+    Selector_Group* unify_with(Selector_Group*) { return this; }
+    Complex_Selector* toComplexSelector();
+    Selector_Groups* toSelectorGroups();
+    void cloneChildren() override {}
+    ATTACH_AST_OPERATIONS(Selector_Group)
+    ATTACH_CRTP_PERFORM_METHODS()
+  };
+
+  //////////////////////////////////////////////////////////////////////
+  // Special class to group complex selectors
+  // Basically replaces the selector lists
+  //////////////////////////////////////////////////////////////////////
+  class Selector_Groups final : public Selector, public Vectorized<Selector_Group_Obj> {
+  public:
+    Selector_Groups(ParserState pstate, std::size_t s = 0)
+      : Selector(pstate), Vectorized<Selector_Group_Obj>(s) {}
+    std::size_t hash() const override { throw std::runtime_error("unimplemented"); }
+    unsigned long specificity() const override { throw std::runtime_error("unimplemented"); }
+    int unification_order() const override {
+      throw std::runtime_error("unification_order for Selector_Groups is undefined");
+    }
+    std::string type() const { return "group"; }
+    bool operator<(const Selector& rhs) const { return false; }
+    bool operator==(const Selector& rhs) const { return false; }
+    bool operator<(const Selector_Groups& rhs) const;
+    bool operator==(const Selector_Groups& rhs) const;
+    Selector_Groups* unify_with(Selector_Groups*) { return this; }
+    Selector_List* toSelectorList();
+    void cloneChildren() override {}
+    ATTACH_AST_OPERATIONS(Selector_Groups)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

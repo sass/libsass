@@ -906,4 +906,65 @@ namespace Sass {
   /*#########################################################################*/
   /*#########################################################################*/
 
+bool Selector_Group::operator<(const Selector_Group& rhs) const {
+    if (length() < rhs.length()) return true;
+    if (length() > rhs.length()) return false;
+    for (std::size_t i = 0, L = length(); i < L; ++ i) {
+      Complex_Selector* sel1 = get(i);
+      Complex_Selector* sel2 = rhs.get(i);
+      if (sel1->length() < sel2->length()) return true;
+      if (sel2->length() < sel1->length()) return false;
+      // special implementation not following tails
+      if (sel1->combinator() < sel2->combinator()) return false;
+      if (sel1->combinator() < sel2->combinator()) return false;
+      if (sel1->head() && !sel2->head()) return false;
+      if (sel2->head() && !sel1->head()) return false;
+      if (*sel1->head() < *sel2->head()) return false;
+      if (*sel2->head() < *sel1->head()) return false;
+    }
+    return false;
+  }
+
+  bool Selector_Group::operator==(const Selector_Group& rhs) const {
+    if (length() < rhs.length()) return false;
+    if (length() > rhs.length()) return false;
+    for (std::size_t i = 0, L = length(); i < L; ++ i) {
+      Complex_Selector* sel1 = get(i);
+      Complex_Selector* sel2 = rhs.get(i);
+      if (sel1->length() != sel2->length()) return false;
+      // special implementation not following tails
+      if (sel1->head() && !sel2->head()) return false;
+      if (sel2->head() && !sel1->head()) return false;
+      if (sel1->combinator() != sel2->combinator()) return false;
+      if (sel1->head() && sel2->head()) {
+        if (!(*sel1->head() == *sel2->head())) return false;
+      }
+    }
+    return true;
+  }
+
+  /*#########################################################################*/
+  /*#########################################################################*/
+
+  bool Selector_Groups::operator<(const Selector_Groups& rhs) const {
+    if (length() < rhs.length()) return true;
+    if (length() > rhs.length()) return false;
+    for (std::size_t i = 0, L = length(); i < L; ++ i) {
+      if (*get(i) < *rhs.get(i)) return true;
+      if (*rhs.get(i) < *get(i)) return false;
+    }
+    return false;
+  }
+
+  bool Selector_Groups::operator==(const Selector_Groups& rhs) const {
+    if (length() != rhs.length()) return false;
+    for (std::size_t i = 0, L = length(); i < L; ++ i) {
+      if (!(*get(i) == *rhs.get(i))) return false;
+    }
+    return true;
+  }
+
+  /*#########################################################################*/
+  /*#########################################################################*/
+
 }

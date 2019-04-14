@@ -151,6 +151,17 @@ namespace Sass {
       return Cast<Value>(result->perform(&listize));
     }
 
+    Signature selector_subweave_sig = "selector-subweave($selector1, $selector2)";
+    BUILT_IN(selector_subweave)
+    {
+      Selector_List_Obj selector1 = ARGSELS("$selector1");
+      Selector_List_Obj selector2 = ARGSELS("$selector2");
+
+      Selector_List_Obj result = selector1->get(0)->subweaver(selector2->get(0));
+      Listize listize;
+      return Cast<Value>(result->perform(&listize));
+    }
+
     Signature selector_unify_sig = "selector-unify($selector1, $selector2)";
     BUILT_IN(selector_unify)
     {

@@ -117,6 +117,8 @@ namespace Sass {
   class Compound_Selector;
   class Complex_Selector;
   class Selector_List;
+  class Selector_Group;
+  class Selector_Groups;
 
 
   // common classes
@@ -206,6 +208,8 @@ namespace Sass {
   IMPL_MEM_OBJ(Compound_Selector);
   IMPL_MEM_OBJ(Complex_Selector);
   IMPL_MEM_OBJ(Selector_List);
+  IMPL_MEM_OBJ(Selector_Group);
+  IMPL_MEM_OBJ(Selector_Groups);
 
   // ###########################################################################
   // Implement compare, order and hashing operations for AST Nodes

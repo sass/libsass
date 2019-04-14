@@ -207,6 +207,17 @@ namespace Sass {
     return false;
   }
 
+  Complex_Selector* Simple_Selector::toComplexSelector() {
+    Compound_Selector_Obj compound = toCompoundSelector();
+    return compound->toComplexSelector();
+  }
+
+  Compound_Selector* Simple_Selector::toCompoundSelector() {
+    Compound_Selector* sel = SASS_MEMORY_NEW(Compound_Selector, pstate());
+    sel->append(this);
+    return sel;
+  }
+
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
@@ -597,17 +608,6 @@ namespace Sass {
     return length() == 1 && (*this)[0]->is_universal();
   }
 
-  // create complex selector (ancestor of) from compound selector
-  Complex_Selector_Obj Compound_Selector::to_complex()
-  {
-    // create an intermediate complex selector
-    return SASS_MEMORY_NEW(Complex_Selector,
-                           pstate(),
-                           Complex_Selector::ANCESTOR_OF,
-                           this,
-                           {});
-  }
-
   Simple_Selector* Compound_Selector::base() const {
     if (length() == 0) return 0;
     // ToDo: why is this needed?
@@ -684,6 +684,12 @@ namespace Sass {
     }
   }
 
+  Complex_Selector* Compound_Selector::toComplexSelector() {
+    Complex_Selector* sel = SASS_MEMORY_NEW(Complex_Selector, pstate());
+    sel->head(this);
+    return sel;
+  }
+
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
@@ -725,8 +731,8 @@ namespace Sass {
 
   bool Complex_Selector::is_empty_ancestor() const
   {
-    return (!head() || head()->length() == 0) &&
-            combinator() == Combinator::ANCESTOR_OF;
+    return (!head() || head()->empty())
+      && combinator() == Combinator::ANCESTOR_OF;
   }
 
   size_t Complex_Selector::hash() const
@@ -1252,6 +1258,12 @@ namespace Sass {
     return true;
   }
 
+  Selector_List* Complex_Selector::toSelectorList() {
+    Selector_List* sel = SASS_MEMORY_NEW(Selector_List, pstate());
+    sel->append(this);
+    return sel;
+  }
+
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
@@ -1459,6 +1471,47 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
+  Selector_Group::Selector_Group(const Selector_Group* ptr)
+    : Selector(ptr), Vectorized<Complex_Selector_Obj>(*ptr) {}
+
+  Selector_Groups* Selector_Group::toSelectorGroups() {
+    auto groups = SASS_MEMORY_NEW(Selector_Groups, pstate());
+    groups->append(this);
+    return groups;
+  }
+
+  Complex_Selector* Selector_Group::toComplexSelector() {
+    if (empty()) return nullptr;
+    auto* cs = SASS_MEMORY_COPY(get(0));
+    auto* root = cs;
+    for (size_t i = 1, L = length(); i < L; ++ i) {
+      auto* cpy = SASS_MEMORY_COPY(get(i));
+      cs->tail(cpy);
+      cs = cpy;
+    }
+    cs->tail({});
+    return root;
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
+  Selector_Groups::Selector_Groups(const Selector_Groups* ptr)
+    : Selector(ptr), Vectorized<Selector_Group_Obj>(*ptr) {}
+
+  Selector_List* Selector_Groups::toSelectorList() {
+    auto* list = SASS_MEMORY_NEW(Selector_List, pstate());
+    for (size_t i = 0, L = length(); i < L; ++ i) {
+      auto* sel = get(i)->toComplexSelector();
+      if (sel == nullptr) continue;
+      list->append(sel);
+    }
+    return list;
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
   IMPLEMENT_AST_OPERATORS(Selector_Schema);
   IMPLEMENT_AST_OPERATORS(Placeholder_Selector);
   IMPLEMENT_AST_OPERATORS(Parent_Selector);
@@ -1471,5 +1524,6 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(Pseudo_Selector);
   IMPLEMENT_AST_OPERATORS(Wrapped_Selector);
   IMPLEMENT_AST_OPERATORS(Selector_List);
-
+  IMPLEMENT_AST_OPERATORS(Selector_Group);
+  IMPLEMENT_AST_OPERATORS(Selector_Groups);
 }
