@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <sstream>
 #include <iostream>
+#include <thread>
 
 #include "ast.hpp"
 #include "util.hpp"
@@ -375,6 +376,11 @@ namespace Sass {
     // process the resolved entry
     else if (resolved.size() == 1) {
       bool use_cache = c_importers.size() == 0;
+      // register needed values for parallel lazy import
+      lazy_imports.push_back(std::make_tuple(resolved[0], pstate, use_cache));
+      // return immediately
+      return resolved[0];
+
       // use cache for the resource loading
       if (use_cache && sheets.count(resolved[0].abs_path)) return resolved[0];
       // try to read the content of the resolved file entry
@@ -385,6 +391,7 @@ namespace Sass {
         // return resolved entry
         return resolved[0];
       }
+
     }
 
     // nothing found
@@ -562,6 +569,17 @@ namespace Sass {
     }
   }
 
+  void reg_async(Context* ctx, Include resolved, ParserState pstate, bool use_cache) {
+    if (!use_cache || !ctx->sheets.count(resolved.abs_path)) {
+      // try to read the content of the resolved file entry
+      // the memory buffer returned must be freed by us!
+      if (char* contents = read_file(resolved.abs_path)) {
+        // register the newly resolved file resource
+        ctx->register_resource(resolved, { contents, 0 }, &pstate);
+      }
+    }
+  }
+
   Block_Obj File_Context::parse()
   {
 
@@ -602,6 +620,25 @@ namespace Sass {
 
     // create the source entry for file entry
     register_resource({{ input_path, "." }, abs_path }, { contents, 0 });
+
+    std::vector<std::thread> thrds;
+
+    // create parser threads
+    while(!lazy_imports.empty()) {
+      auto lazy = lazy_imports.back();
+      Include resolved = std::get<0>(lazy);
+      ParserState pstate = std::get<1>(lazy);
+      bool use_cache = std::get<2>(lazy);
+      std::thread thrd(reg_async, this, resolved, pstate, use_cache);
+      thrds.push_back(std::move(thrd));
+      lazy_imports.pop_back();
+    }
+
+    // join all threads
+    while (!thrds.empty()) {
+      thrds.back().join();
+      thrds.pop_back();
+    }
 
     // create root ast tree node
     return compile();

@@ -67,6 +67,7 @@ namespace Sass {
 
     std::vector<std::string> plugin_paths; // relative paths to load plugins
     std::vector<std::string> include_paths; // lookup paths for includes
+    std::vector<std::tuple<Include, ParserState, bool>> lazy_imports;
 
 
 
