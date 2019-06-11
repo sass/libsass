@@ -38,6 +38,11 @@
 # endif
 #endif
 
+// enable loading of plugins for non-wasm
+#ifndef _WASM
+# define ENABLE_LOAD_PLUGINS
+#endif
+
 // path separation char
 #ifndef PATH_SEP
 # ifdef _WIN32

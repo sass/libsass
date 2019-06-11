@@ -27,6 +27,14 @@ else
 endif
 CAT ?= $(if $(filter $(OS),Windows_NT),type,cat)
 
+ifdef WASM
+  CFLAGS   += -D_WASM
+  CXXFLAGS += -D_WASM
+endif
+
+ifdef WASM
+	UNAME := WebAssembly
+else
 ifneq (,$(findstring /cygdrive/,$(PATH)))
 	UNAME := Cygwin
 else
@@ -40,6 +48,7 @@ ifneq (,$(findstring MINGW32,$(shell uname -s)))
 	UNAME := Windows
 else
 	UNAME := $(shell uname -s)
+endif
 endif
 endif
 endif
@@ -163,10 +172,16 @@ ifeq (Windows,$(UNAME))
 		LIB_SHARED  = $(SASS_LIBSASS_PATH)/lib/libsass.dll
 	endif
 else
+ifdef WASM
+	SASSC_BIN = $(SASS_SASSC_PATH)/bin/sassc.wasm
+	SHAREDLIB  = lib/libsass.wasm
+	LIB_SHARED  = $(SASS_LIBSASS_PATH)/lib/libsass.wasm
+else
 ifneq (Cygwin,$(UNAME))
 	CFLAGS   += -fPIC
 	CXXFLAGS += -fPIC
 	LDFLAGS  += -fPIC
+endif
 endif
 endif
 
@@ -174,6 +189,10 @@ include Makefile.conf
 OBJECTS = $(addprefix src/,$(SOURCES:.cpp=.o))
 COBJECTS = $(addprefix src/,$(CSOURCES:.c=.o))
 RCOBJECTS = $(RESOURCES:.rc=.o)
+
+ifdef WASM
+WASMOBJECTS = wasm/libcxxabi_stubs.o
+endif
 
 DEBUG_LVL ?= NONE
 
@@ -200,14 +219,17 @@ debug-shared: shared
 lib:
 	$(MKDIR) lib
 
-lib/libsass.a: $(COBJECTS) $(OBJECTS) | lib
-	$(AR) rcvs $@ $(COBJECTS) $(OBJECTS)
+lib/libsass.a: $(COBJECTS) $(OBJECTS) $(WASMOBJECTS) | lib
+	$(AR) rcvs $@ $(COBJECTS) $(OBJECTS) $(WASMOBJECTS)
 
 lib/libsass.so: $(COBJECTS) $(OBJECTS) | lib
 	$(CXX) -shared $(LDFLAGS) -o $@ $(COBJECTS) $(OBJECTS) $(LDLIBS)
 
 lib/libsass.dll: $(COBJECTS) $(OBJECTS) $(RCOBJECTS) | lib
 	$(CXX) -shared $(LDFLAGS) -o $@ $(COBJECTS) $(OBJECTS) $(RCOBJECTS) $(LDLIBS) -s -Wl,--subsystem,windows,--out-implib,lib/libsass.a
+
+lib/libsass.wasm: $(COBJECTS) $(OBJECTS) $(WASMOBJECTS) | lib
+	$(CXX) $(LDFLAGS) -o $@ $(COBJECTS) $(OBJECTS) $(WASMOBJECTS) $(LDLIBS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -271,7 +293,9 @@ $(SASSC_BIN): $(BUILD)
 	$(MAKE) -C $(SASS_SASSC_PATH) build-$(BUILD)-dev
 
 sassc: $(SASSC_BIN)
+ifndef WASM
 	$(SASSC_BIN) -v
+endif
 
 version: $(SASSC_BIN)
 	$(SASSC_BIN) -v
@@ -288,7 +312,7 @@ test_probe: $(SASSC_BIN)
 	$(RUBY_BIN) $(SASS_SPEC_PATH)/sass-spec.rb -c $(SASSC_BIN) --impl libsass --probe-todo $(LOG_FLAGS) $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)
 
 clean-objects: | lib
-	-$(RM) lib/*.a lib/*.so lib/*.dll lib/*.la
+	-$(RM) lib/*.a lib/*.so lib/*.dll lib/*.la lib/*.wasm
 	-$(RMDIR) lib
 clean: clean-objects
 	$(RM) $(CLEANUPS)

@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <vector>
 #include <algorithm>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include "file.hpp"
 #include "context.hpp"
@@ -48,6 +49,15 @@ inline static std::string wstring_to_string(const std::wstring &wstr)
 # endif
 #endif
 
+#ifdef _WASM
+inline static std::string get_cwd_from_env()
+{
+  char* value = getenv("PWD");
+  if (!value) return "/";
+  return value;
+}
+#endif
+
 namespace Sass {
   namespace File {
 
@@ -56,6 +66,11 @@ namespace Sass {
     // always with trailing slash
     std::string get_cwd()
     {
+      #ifdef _WASM
+        // the WASI does not implement getcwd() yet --
+        // check the environment variables or default to "/".
+        std::string cwd = get_cwd_from_env();
+      #else
       const size_t wd_len = 4096;
       #ifndef _WIN32
         char wd[wd_len];
@@ -71,6 +86,7 @@ namespace Sass {
         std::string cwd = wstring_to_string(pwd);
         //convert backslashes to forward slashes
         replace(cwd.begin(), cwd.end(), '\\', '/');
+      #endif
       #endif
       if (cwd[cwd.length() - 1] != '/') cwd += '/';
       return cwd;
