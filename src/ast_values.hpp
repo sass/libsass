@@ -24,8 +24,25 @@ namespace Sass {
   class Value : public PreValue {
   public:
     Value(ParserState pstate, bool d = false, bool e = false, bool i = false, Type ct = NONE);
+
+    // Some obects are not meant to be compared
+    // ToDo: maybe fallback to pointer comparison?
+    virtual bool operator< (const Expression& rhs) const = 0;
+    virtual bool operator== (const Expression& rhs) const = 0;
+
+    // We can give some reasonable implementations by using
+    // inverst operators on the specialized implementations
+    virtual bool operator> (const Expression& rhs) const {
+      // Bigger if not smaller and not equal
+      return !(*this < rhs || *this == rhs);
+    }
+    virtual bool operator!= (const Expression& rhs) const {
+      // Unequal if not equal
+      return !(*this == rhs);
+    }
+
     ATTACH_VIRTUAL_AST_OPERATIONS(Value);
-    virtual bool operator== (const Expression& rhs) const override = 0;
+
   };
 
   ///////////////////////////////////////////////////////////////////////
@@ -53,6 +70,8 @@ namespace Sass {
     virtual size_t hash() const override;
     virtual size_t size() const;
     virtual void set_delayed(bool delayed) override;
+
+    virtual bool operator< (const Expression& rhs) const override;
     virtual bool operator== (const Expression& rhs) const override;
 
     ATTACH_AST_OPERATIONS(List)
@@ -72,6 +91,8 @@ namespace Sass {
     List_Obj to_list(ParserState& pstate);
 
     virtual size_t hash() const override;
+
+    virtual bool operator< (const Expression& rhs) const override;
     virtual bool operator== (const Expression& rhs) const override;
 
     ATTACH_AST_OPERATIONS(Map)
@@ -102,6 +123,7 @@ namespace Sass {
 
     virtual void set_delayed(bool delayed) override;
 
+    virtual bool operator< (const Expression& rhs) const override;
     virtual bool operator==(const Expression& rhs) const override;
 
     virtual size_t hash() const override;
@@ -126,6 +148,7 @@ namespace Sass {
 
     std::string name();
 
+    bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
 
     ATTACH_AST_OPERATIONS(Function)
@@ -202,6 +225,7 @@ namespace Sass {
 
     bool operator< (const Number& rhs) const;
     bool operator== (const Number& rhs) const;
+    bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
     ATTACH_AST_OPERATIONS(Number)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -223,6 +247,7 @@ namespace Sass {
 
     virtual size_t hash() const override = 0;
 
+    bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
 
     virtual Color_RGBA* copyAsRGBA() const = 0;
@@ -255,6 +280,7 @@ namespace Sass {
     Color_HSLA* copyAsHSLA() const override;
     Color_HSLA* toHSLA() override { return copyAsHSLA(); }
 
+    bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
 
     ATTACH_AST_OPERATIONS(Color_RGBA)
@@ -283,6 +309,7 @@ namespace Sass {
     Color_HSLA* copyAsHSLA() const override;
     Color_HSLA* toHSLA() override { return this; }
 
+    bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
 
     ATTACH_AST_OPERATIONS(Color_HSLA)
@@ -296,6 +323,7 @@ namespace Sass {
     ADD_CONSTREF(std::string, message)
   public:
     Custom_Error(ParserState pstate, std::string msg);
+    bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
     ATTACH_AST_OPERATIONS(Custom_Error)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -308,6 +336,7 @@ namespace Sass {
     ADD_CONSTREF(std::string, message)
   public:
     Custom_Warning(ParserState pstate, std::string msg);
+    bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
     ATTACH_AST_OPERATIONS(Custom_Warning)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -330,6 +359,7 @@ namespace Sass {
 
     bool is_false() override { return !value_; }
 
+    bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
 
     ATTACH_AST_OPERATIONS(Boolean)
@@ -348,6 +378,9 @@ namespace Sass {
     virtual void rtrim() = 0;
     virtual bool operator<(const Expression& rhs) const override {
       return this->to_string() < rhs.to_string();
+    };
+    virtual bool operator==(const Expression& rhs) const override {
+      return this->to_string() == rhs.to_string();
     };
     ATTACH_VIRTUAL_AST_OPERATIONS(String);
     ATTACH_CRTP_PERFORM_METHODS()
@@ -375,6 +408,7 @@ namespace Sass {
     size_t hash() const override;
     virtual void set_delayed(bool delayed) override;
 
+    bool operator< (const Expression& rhs) const override;
     bool operator==(const Expression& rhs) const override;
     ATTACH_AST_OPERATIONS(String_Schema)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -398,6 +432,7 @@ namespace Sass {
     bool is_invisible() const override;
     virtual void rtrim() override;
     size_t hash() const override;
+    bool operator< (const Expression& rhs) const override;
     bool operator==(const Expression& rhs) const override;
     // quotes are forced on inspection
     virtual std::string inspect() const override;
@@ -413,6 +448,7 @@ namespace Sass {
     String_Quoted(ParserState pstate, std::string val, char q = 0,
       bool keep_utf8_escapes = false, bool skip_unquoting = false,
       bool strict_unquoting = true, bool css = true);
+    bool operator< (const Expression& rhs) const override;
     bool operator==(const Expression& rhs) const override;
     // quotes are forced on inspection
     std::string inspect() const override;
@@ -434,6 +470,7 @@ namespace Sass {
 
     size_t hash() const override;
 
+    bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
 
     ATTACH_AST_OPERATIONS(Null)
@@ -448,8 +485,11 @@ namespace Sass {
     Parent_Reference(ParserState pstate);
     std::string type() const override { return "parent"; }
     static std::string type_name() { return "parent"; }
+    bool operator< (const Expression& rhs) const override {
+      return false; // they are always equal
+    }
     bool operator==(const Expression& rhs) const override {
-      return true; // can they ever be not equal?
+      return true; // they are always equal
     };
     ATTACH_AST_OPERATIONS(Parent_Reference)
     ATTACH_CRTP_PERFORM_METHODS()

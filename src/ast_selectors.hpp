@@ -128,14 +128,10 @@ namespace Sass {
     virtual bool is_pseudo_element() const;
     virtual bool has_real_parent_ref() const override;
 
-    bool operator<(const Selector& rhs) const final override;
     bool operator==(const Selector& rhs) const final override;
 
-    virtual bool operator<(const SelectorList& rhs) const;
     virtual bool operator==(const SelectorList& rhs) const;
-    virtual bool operator<(const ComplexSelector& rhs) const;
     virtual bool operator==(const ComplexSelector& rhs) const;
-    virtual bool operator<(const CompoundSelector& rhs) const;
     virtual bool operator==(const CompoundSelector& rhs) const;
 
     ATTACH_VIRTUAL_CMP_OPERATIONS(SimpleSelector);
@@ -154,7 +150,6 @@ namespace Sass {
     bool isInvisible() const override { return true; }
     virtual unsigned long specificity() const override;
     virtual bool has_placeholder() override;
-    bool operator<(const SimpleSelector& rhs) const override;
     bool operator==(const SimpleSelector& rhs) const override;
     ATTACH_CMP_OPERATIONS(Placeholder_Selector)
     ATTACH_AST_OPERATIONS(Placeholder_Selector)
@@ -171,7 +166,6 @@ namespace Sass {
     SimpleSelector* unifyWith(const SimpleSelector*);
     CompoundSelector* unifyWith(CompoundSelector*) override;
     Type_Selector* getTypeSelector() override { return this; }
-    bool operator<(const SimpleSelector& rhs) const final override;
     bool operator==(const SimpleSelector& rhs) const final override;
     ATTACH_CMP_OPERATIONS(Type_Selector)
     ATTACH_AST_OPERATIONS(Type_Selector)
@@ -185,7 +179,6 @@ namespace Sass {
   public:
     Class_Selector(ParserState pstate, std::string n);
     virtual unsigned long specificity() const override;
-    bool operator<(const SimpleSelector& rhs) const final override;
     bool operator==(const SimpleSelector& rhs) const final override;
     ATTACH_CMP_OPERATIONS(Class_Selector)
     ATTACH_AST_OPERATIONS(Class_Selector)
@@ -201,7 +194,6 @@ namespace Sass {
     virtual unsigned long specificity() const override;
     CompoundSelector* unifyWith(CompoundSelector*) override;
     Id_Selector* getIdSelector() final override { return this; }
-    bool operator<(const SimpleSelector& rhs) const final override;
     bool operator==(const SimpleSelector& rhs) const final override;
     ATTACH_CMP_OPERATIONS(Id_Selector)
     ATTACH_AST_OPERATIONS(Id_Selector)
@@ -220,7 +212,6 @@ namespace Sass {
     Attribute_Selector(ParserState pstate, std::string n, std::string m, String_Obj v, char o = 0);
     size_t hash() const override;
     virtual unsigned long specificity() const override;
-    bool operator<(const SimpleSelector& rhs) const final override;
     bool operator==(const SimpleSelector& rhs) const final override;
     ATTACH_CMP_OPERATIONS(Attribute_Selector)
     ATTACH_AST_OPERATIONS(Attribute_Selector)
@@ -259,7 +250,6 @@ namespace Sass {
 
     CompoundSelector* unifyWith(CompoundSelector*) override;
     Pseudo_Selector* getPseudoSelector() final override { return this; }
-    bool operator<(const SimpleSelector& rhs) const final override;
     bool operator==(const SimpleSelector& rhs) const final override;
     ATTACH_CMP_OPERATIONS(Pseudo_Selector)
     ATTACH_AST_OPERATIONS(Pseudo_Selector)
@@ -303,13 +293,9 @@ namespace Sass {
     size_t maxSpecificity() const override;
     size_t minSpecificity() const override;
 
-    bool operator<(const Selector& rhs) const override;
     bool operator==(const Selector& rhs) const override;
-    bool operator<(const SelectorList& rhs) const;
     bool operator==(const SelectorList& rhs) const;
-    bool operator<(const CompoundSelector& rhs) const;
     bool operator==(const CompoundSelector& rhs) const;
-    bool operator<(const SimpleSelector& rhs) const;
     bool operator==(const SimpleSelector& rhs) const;
 
     ATTACH_CMP_OPERATIONS(ComplexSelector)
@@ -350,7 +336,6 @@ namespace Sass {
     virtual const SelectorCombinator* getCombinator() const { return NULL; }
 
     virtual unsigned long specificity() const override;
-    bool operator<(const Selector& rhs) const override = 0;
     bool operator==(const Selector& rhs) const override = 0;
     ATTACH_VIRTUAL_CMP_OPERATIONS(SelectorComponent);
     ATTACH_VIRTUAL_AST_OPERATIONS(SelectorComponent);
@@ -407,9 +392,7 @@ namespace Sass {
     }
     void cloneChildren() override;
     virtual unsigned long specificity() const override;
-    bool operator<(const Selector& rhs) const override;
     bool operator==(const Selector& rhs) const override;
-    bool operator<(const SelectorComponent& rhs) const override;
     bool operator==(const SelectorComponent& rhs) const override;
 
     ATTACH_CMP_OPERATIONS(SelectorCombinator)
@@ -454,17 +437,12 @@ namespace Sass {
     size_t maxSpecificity() const override;
     size_t minSpecificity() const override;
 
-    bool operator<(const Selector& rhs) const override;
     bool operator==(const Selector& rhs) const override;
 
-    bool operator<(const SelectorComponent& rhs) const override;
     bool operator==(const SelectorComponent& rhs) const override;
 
-    bool operator<(const SelectorList& rhs) const;
     bool operator==(const SelectorList& rhs) const;
-    bool operator<(const ComplexSelector& rhs) const;
     bool operator==(const ComplexSelector& rhs) const;
-    bool operator<(const SimpleSelector& rhs) const;
     bool operator==(const SimpleSelector& rhs) const;
 
     ATTACH_CMP_OPERATIONS(CompoundSelector)
@@ -502,16 +480,11 @@ namespace Sass {
     size_t maxSpecificity() const override;
     size_t minSpecificity() const override;
 
-    bool operator<(const Selector& rhs) const override;
     bool operator==(const Selector& rhs) const override;
-    bool operator<(const ComplexSelector& rhs) const;
     bool operator==(const ComplexSelector& rhs) const;
-    bool operator<(const CompoundSelector& rhs) const;
     bool operator==(const CompoundSelector& rhs) const;
-    bool operator<(const SimpleSelector& rhs) const;
     bool operator==(const SimpleSelector& rhs) const;
     // Selector Lists can be compared to comma lists
-    bool operator<(const Expression& rhs) const override;
     bool operator==(const Expression& rhs) const override;
 
     ATTACH_CMP_OPERATIONS(SelectorList)

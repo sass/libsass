@@ -89,19 +89,12 @@ namespace Sass {
 
     // Some obects are not meant to be compared
     // ToDo: maybe fallback to pointer comparison?
-    virtual bool operator< (const AST_Node& rhs) const {
-      throw std::runtime_error("operator< not implemented");
-    }
     virtual bool operator== (const AST_Node& rhs) const {
       throw std::runtime_error("operator== not implemented");
     }
 
     // We can give some reasonable implementations by using
     // inverst operators on the specialized implementations
-    virtual bool operator> (const AST_Node& rhs) const {
-      // Bigger if not smaller and not equal
-      return !(*this < rhs || *this == rhs);
-    }
     virtual bool operator!= (const AST_Node& rhs) const {
       // Unequal if not equal
       return !(*this == rhs);
@@ -374,7 +367,8 @@ namespace Sass {
       K, T, ObjHash, ObjEquality
     > elements_;
 
-    std::vector<K> list_;
+    std::vector<K> _keys;
+    std::vector<T> _values;
   protected:
     mutable size_t hash_;
     K duplicate_key_;
@@ -384,12 +378,17 @@ namespace Sass {
   public:
     Hashed(size_t s = 0)
     : elements_(),
-      list_(),
+      _keys(),
+      _values(),
       hash_(0), duplicate_key_({})
-    { elements_.reserve(s); list_.reserve(s); }
+    {
+      _keys.reserve(s);
+      _values.reserve(s);
+      elements_.reserve(s);
+    }
     virtual ~Hashed();
-    size_t length() const                  { return list_.size(); }
-    bool empty() const                     { return list_.empty(); }
+    size_t length() const                  { return _keys.size(); }
+    bool empty() const                     { return _keys.empty(); }
     bool has(K k) const          {
       return elements_.find(k) != elements_.end();
     }
@@ -409,8 +408,13 @@ namespace Sass {
     {
       reset_hash();
 
-      if (!has(p.first)) list_.push_back(p.first);
-      else if (!duplicate_key_) duplicate_key_ = p.first;
+      if (!has(p.first)) {
+        _keys.push_back(p.first);
+        _values.push_back(p.second);
+      }
+      else if (!duplicate_key_) {
+        duplicate_key_ = p.first;
+      }
 
       elements_[p.first] = p.second;
 
@@ -421,7 +425,8 @@ namespace Sass {
     {
       if (length() == 0) {
         this->elements_ = h->elements_;
-        this->list_ = h->list_;
+        this->_values = h->_values;
+        this->_keys = h->_keys;
         return *this;
       }
 
@@ -435,7 +440,9 @@ namespace Sass {
     const std::unordered_map<
       K, T, ObjHash, ObjEquality
     >& pairs() const { return elements_; }
-    const std::vector<K>& keys() const { return list_; }
+
+    const std::vector<K>& keys() const { return _keys; }
+    const std::vector<T>& values() const { return _values; }
 
 //    std::unordered_map<Expression_Obj, Expression_Obj>::iterator end() { return elements_.end(); }
 //    std::unordered_map<Expression_Obj, Expression_Obj>::iterator begin() { return elements_.begin(); }
