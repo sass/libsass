@@ -1,6 +1,10 @@
 #ifndef SASS_OPERATION_H
 #define SASS_OPERATION_H
 
+// sass.hpp must go before all system headers to get the
+// __EXTENSIONS__ fix on Solaris.
+#include "sass.hpp"
+
 // base classes to implement curiously recurring template pattern (CRTP)
 // https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
 

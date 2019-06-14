@@ -1,5 +1,10 @@
 #ifndef SASS_FN_UTILS_H
 #define SASS_FN_UTILS_H
+
+// sass.hpp must go before all system headers to get the
+// __EXTENSIONS__ fix on Solaris.
+#include "sass.hpp"
+
 #include "units.hpp"
 #include "backtrace.hpp"
 #include "environment.hpp"

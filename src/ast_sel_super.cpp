@@ -1,5 +1,7 @@
-#include "ast_selectors.hpp"
-#include "debugger.hpp"
+// sass.hpp must go before all system headers to get the
+// __EXTENSIONS__ fix on Solaris.
+#include "sass.hpp"
+#include "ast.hpp"
 
 namespace Sass {
 

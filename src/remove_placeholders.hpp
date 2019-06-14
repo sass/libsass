@@ -1,7 +1,7 @@
 #ifndef SASS_REMOVE_PLACEHOLDERS_H
 #define SASS_REMOVE_PLACEHOLDERS_H
 
-#include "ast.hpp"
+#include "ast_fwd_decl.hpp"
 #include "operation.hpp"
 
 namespace Sass {

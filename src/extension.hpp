@@ -1,6 +1,10 @@
 #ifndef SASS_EXTENSION_H
 #define SASS_EXTENSION_H
 
+// sass.hpp must go before all system headers to get the
+// __EXTENSIONS__ fix on Solaris.
+#include "sass.hpp"
+
 #include <unordered_map>
 #include <unordered_set>
 #include "ast_fwd_decl.hpp"

@@ -1,28 +1,19 @@
 #ifndef SASS_CONTEXT_H
 #define SASS_CONTEXT_H
 
-#include <string>
-#include <vector>
-#include <map>
+// sass.hpp must go before all system headers to get the
+// __EXTENSIONS__ fix on Solaris.
+#include "sass.hpp"
+#include "ast.hpp"
+
 
 #define BUFFERSIZE 255
 #include "b64/encode.h"
 
-#include "ast_fwd_decl.hpp"
-#include "kwd_arg_macros.hpp"
-#include "ast_fwd_decl.hpp"
 #include "sass_context.hpp"
-#include "environment.hpp"
-#include "source_map.hpp"
-#include "backtrace.hpp"
-#include "output.hpp"
-#include "extender.hpp"
-#include "plugins.hpp"
 #include "stylesheet.hpp"
-#include "file.hpp"
-
-
-struct Sass_Function;
+#include "plugins.hpp"
+#include "output.hpp"
 
 namespace Sass {
 

@@ -1,9 +1,7 @@
 #ifndef SASS_PATHS_H
 #define SASS_PATHS_H
 
-#include <string>
 #include <vector>
-#include <sstream>
 
 namespace Sass {
 

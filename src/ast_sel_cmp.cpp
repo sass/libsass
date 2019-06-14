@@ -2,20 +2,6 @@
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
 
-#include "ast.hpp"
-#include "context.hpp"
-#include "eval.hpp"
-#include "emitter.hpp"
-#include "color_maps.hpp"
-#include "ast_fwd_decl.hpp"
-#include <set>
-#include <iomanip>
-#include <iostream>
-#include <algorithm>
-#include <functional>
-#include <cctype>
-#include <locale>
-
 #include "ast_selectors.hpp"
 
 namespace Sass {

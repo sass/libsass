@@ -1,45 +1,22 @@
 // sass.hpp must go before all system headers to get the
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
-
-#include <string>
-#include <cstdlib>
-#include <cstring>
-#include <iomanip>
-#include <sstream>
-#include <iostream>
-
 #include "ast.hpp"
-#include "util.hpp"
-#include "sass.h"
-#include "context.hpp"
-#include "plugins.hpp"
-#include "constants.hpp"
-#include "parser.hpp"
-#include "file.hpp"
-#include "inspect.hpp"
-#include "output.hpp"
-#include "expand.hpp"
-#include "eval.hpp"
-#include "check_nesting.hpp"
-#include "cssize.hpp"
-#include "listize.hpp"
-#include "extender.hpp"
+
 #include "remove_placeholders.hpp"
 #include "sass_functions.hpp"
-#include "backtrace.hpp"
-#include "sass2scss.h"
-#include "prelexer.hpp"
-#include "emitter.hpp"
-#include "fn_utils.hpp"
-#include "fn_miscs.hpp"
-#include "fn_maps.hpp"
-#include "fn_lists.hpp"
-#include "fn_colors.hpp"
-#include "fn_numbers.hpp"
-#include "fn_strings.hpp"
+#include "check_nesting.hpp"
 #include "fn_selectors.hpp"
-#include "sass/functions.h"
+#include "fn_strings.hpp"
+#include "fn_numbers.hpp"
+#include "fn_colors.hpp"
+#include "fn_miscs.hpp"
+#include "fn_lists.hpp"
+#include "fn_maps.hpp"
+#include "context.hpp"
+#include "expand.hpp"
+#include "parser.hpp"
+#include "cssize.hpp"
 
 namespace Sass {
   using namespace Constants;

@@ -1,23 +1,11 @@
-#include "extender.hpp"
-#include "extender.hpp"
 // sass.hpp must go before all system headers to get the
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
+#include "ast.hpp"
 
-#include "ast_fwd_decl.hpp"
-#include "extension.hpp"
 #include "extender.hpp"
-#include "context.hpp"
-#include "backtrace.hpp"
 #include "permutate.hpp"
-#include "parser.hpp"
-#include "expand.hpp"
 #include "dart_helpers.hpp"
-#include "remove_placeholders.hpp"
-#include "debug.hpp"
-#include <iostream>
-#include <deque>
-#include <set>
 
 namespace Sass {
 

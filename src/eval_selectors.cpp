@@ -1,36 +1,10 @@
 // sass.hpp must go before all system headers to get the
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
-
-#include <cstdlib>
-#include <cmath>
-#include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <typeinfo>
-
-#include "file.hpp"
+#include "expand.hpp"
 #include "eval.hpp"
 #include "ast.hpp"
-#include "bind.hpp"
-#include "util.hpp"
-#include "inspect.hpp"
-#include "operators.hpp"
-#include "environment.hpp"
-#include "position.hpp"
-#include "sass/values.h"
-#include "to_value.hpp"
-#include "ast2c.hpp"
-#include "c2ast.hpp"
-#include "context.hpp"
-#include "backtrace.hpp"
-#include "lexer.hpp"
-#include "prelexer.hpp"
-#include "parser.hpp"
-#include "expand.hpp"
-#include "color_maps.hpp"
-#include "sass_functions.hpp"
-#include "util_string.hpp"
+
 
 namespace Sass {
 

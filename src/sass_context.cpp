@@ -1,23 +1,10 @@
 // sass.hpp must go before all system headers to get the
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
-
-#include <cstring>
-#include <stdexcept>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include "sass.h"
 #include "ast.hpp"
-#include "file.hpp"
-#include "json.hpp"
-#include "util.hpp"
-#include "context.hpp"
-#include "sass_context.hpp"
+
 #include "sass_functions.hpp"
-#include "ast_fwd_decl.hpp"
-#include "error_handling.hpp"
+#include "json.hpp"
 
 #define LFEED "\n"
 

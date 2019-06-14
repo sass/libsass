@@ -4,35 +4,7 @@
 // sass.hpp must go before all system headers to get the
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
-
-#include <set>
-#include <deque>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <typeinfo>
-#include <algorithm>
-#include "sass/base.h"
-#include "ast_fwd_decl.hpp"
-
-#include "util.hpp"
-#include "units.hpp"
-#include "context.hpp"
-#include "position.hpp"
-#include "constants.hpp"
-#include "operation.hpp"
-#include "position.hpp"
-#include "inspect.hpp"
-#include "source_map.hpp"
-#include "environment.hpp"
-#include "error_handling.hpp"
-#include "ast_def_macros.hpp"
-#include "ast_fwd_decl.hpp"
-#include "source_map.hpp"
-#include "fn_utils.hpp"
-
-#include "sass.h"
+#include "ast.hpp"
 
 namespace Sass {
 

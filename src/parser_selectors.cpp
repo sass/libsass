@@ -3,20 +3,6 @@
 #include "sass.hpp"
 
 #include "parser.hpp"
-#include "file.hpp"
-#include "inspect.hpp"
-#include "constants.hpp"
-#include "util.hpp"
-#include "prelexer.hpp"
-#include "color_maps.hpp"
-#include "sass/functions.h"
-#include "error_handling.hpp"
-#include "util_string.hpp"
-
-#include <cstdlib>
-#include <iostream>
-#include <vector>
-#include <typeinfo>
 
 namespace Sass {
 
