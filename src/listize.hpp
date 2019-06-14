@@ -20,12 +20,16 @@ namespace Sass {
   class Listize : public Operation_CRTP<Expression*, Listize> {
 
   public:
+
+    static Expression* perform(AST_Node* node);
+
+  public:
     Listize();
     ~Listize() { }
 
-    Expression* operator()(Selector_List*);
-    Expression* operator()(Complex_Selector*);
-    Expression* operator()(Compound_Selector*);
+    Expression* operator()(SelectorList*);
+    Expression* operator()(ComplexSelector*);
+    Expression* operator()(CompoundSelector*);
 
     // generic fallback
     template <typename U>

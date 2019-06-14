@@ -145,7 +145,7 @@ namespace Sass {
     if (is_charset(node))
     { this->invalid_charset_parent(this->parent, node); }
 
-    if (Cast<Extension>(node))
+    if (Cast<ExtendRule>(node))
     { this->invalid_extend_parent(this->parent, node); }
 
     // if (Cast<Import>(node))
@@ -388,7 +388,8 @@ namespace Sass {
   {
     return Cast<Directive>(n) ||
            Cast<Import>(n) ||
-           Cast<Media_Block>(n) ||
-           Cast<Supports_Block>(n);
+      Cast<MediaRule>(n) ||
+      Cast<CssMediaRule>(n) ||
+      Cast<Supports_Block>(n);
   }
 }

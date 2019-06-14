@@ -108,17 +108,6 @@ namespace Sass {
       { }
   };
 
-  // parsed stylesheet from loaded resource
-  class StyleSheet : public Resource {
-    public:
-      // parsed root block
-      Block_Obj root;
-    public:
-      StyleSheet(const Resource& res, Block_Obj root)
-      : Resource(res), root(root)
-      { }
-  };
-
   namespace File {
 
     static std::vector<std::string> defaultExtensions = { ".scss", ".sass", ".css" };

@@ -4,9 +4,7 @@
 
 #include "ast.hpp"
 #include "context.hpp"
-#include "node.hpp"
 #include "eval.hpp"
-#include "extend.hpp"
 #include "emitter.hpp"
 #include "color_maps.hpp"
 #include "ast_fwd_decl.hpp"

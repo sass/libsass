@@ -1,6 +1,7 @@
 #ifndef SASS_ENVIRONMENT_H
 #define SASS_ENVIRONMENT_H
 
+#include <map>
 #include <string>
 #include "ast_fwd_decl.hpp"
 #include "ast_def_macros.hpp"

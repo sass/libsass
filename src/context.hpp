@@ -14,10 +14,11 @@
 #include "sass_context.hpp"
 #include "environment.hpp"
 #include "source_map.hpp"
-#include "subset_map.hpp"
 #include "backtrace.hpp"
 #include "output.hpp"
+#include "extender.hpp"
 #include "plugins.hpp"
+#include "stylesheet.hpp"
 #include "file.hpp"
 
 
@@ -52,10 +53,11 @@ namespace Sass {
     std::vector<char*> strings;
     std::vector<Resource> resources;
     std::map<const std::string, StyleSheet> sheets;
-    Subset_Map subset_map;
+
     ImporterStack import_stack;
     std::vector<Sass_Callee> callee_stack;
     std::vector<Backtrace> traces;
+    Extender extender;
 
     struct Sass_Compiler* c_compiler;
 
@@ -67,10 +69,6 @@ namespace Sass {
 
     std::vector<std::string> plugin_paths; // relative paths to load plugins
     std::vector<std::string> include_paths; // lookup paths for includes
-
-
-
-
 
     void apply_custom_headers(Block_Obj root, const char* path, ParserState pstate);
 

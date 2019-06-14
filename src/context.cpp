@@ -24,7 +24,7 @@
 #include "check_nesting.hpp"
 #include "cssize.hpp"
 #include "listize.hpp"
-#include "extend.hpp"
+#include "extender.hpp"
 #include "remove_placeholders.hpp"
 #include "sass_functions.hpp"
 #include "backtrace.hpp"
@@ -39,6 +39,7 @@
 #include "fn_numbers.hpp"
 #include "fn_strings.hpp"
 #include "fn_selectors.hpp"
+#include "sass/functions.h"
 
 namespace Sass {
   using namespace Constants;
@@ -81,10 +82,10 @@ namespace Sass {
     strings(),
     resources(),
     sheets(),
-    subset_map(),
     import_stack(),
     callee_stack(),
     traces(),
+    extender(Extender::NORMAL, traces),
     c_compiler(NULL),
 
     c_headers               (std::vector<Sass_Importer_Entry>()),
@@ -160,7 +161,7 @@ namespace Sass {
     }
     // clear inner structures (vectors) and input source
     resources.clear(); import_stack.clear();
-    subset_map.clear(), sheets.clear();
+    sheets.clear();
   }
 
   Data_Context::~Data_Context()
@@ -649,8 +650,6 @@ namespace Sass {
     return compile();
   }
 
-
-
   // parse root block from includes
   Block_Obj Context::compile()
   {
@@ -682,19 +681,23 @@ namespace Sass {
     check_nesting(root);
     // merge and bubble certain rules
     root = cssize(root);
-    // should we extend something?
-    if (!subset_map.empty()) {
-      // create crtp visitor object
-      Extend extend(subset_map);
-      extend.setEval(expand.eval);
-      // extend tree nodes
-      extend(root);
+
+    ExtSmplSelSet originals = extender.getSimpleSelectors();
+    for (auto target : extender.extensions) {
+      SimpleSelector* key = target.first;
+      ExtSelExtMapEntry& val = target.second;
+      if (originals.find(key) == originals.end()) {
+        const Extension& extension = val.front().second;
+        if (extension.isOptional) continue;
+        throw Exception::UnsatisfiedExtend(traces, extension);
+      }
     }
 
     // clean up by removing empty placeholders
     // ToDo: maybe we can do this somewhere else?
     Remove_Placeholders remove_placeholders;
     root->perform(&remove_placeholders);
+
     // return processed tree
     return root;
   }

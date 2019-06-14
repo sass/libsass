@@ -112,7 +112,7 @@ namespace Sass {
     wbuf.buffer = text + wbuf.buffer;
   }
 
-  char Emitter::last_char()
+  const char& Emitter::last_char()
   {
     return wbuf.buffer.back();
   }

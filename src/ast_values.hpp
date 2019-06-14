@@ -60,7 +60,7 @@ namespace Sass {
   // Lists of values, both comma- and space-separated (distinguished by a
   // type-tag.) Also used to represent variable-length argument lists.
   ///////////////////////////////////////////////////////////////////////
-  class List : public Value, public Vectorized<Expression_Obj> {
+  class List : public Value, public Vectorized<Expression_Obj, List> {
     void adjust_after_pushing(Expression_Obj e) override { is_expanded(false); }
   private:
     ADD_PROPERTY(enum Sass_Separator, separator)
@@ -90,7 +90,7 @@ namespace Sass {
   ///////////////////////////////////////////////////////////////////////
   // Key value paris.
   ///////////////////////////////////////////////////////////////////////
-  class Map : public Value, public Hashed {
+  class Map : public Value, public Hashed<Expression_Obj, Expression_Obj, Map_Obj> {
     void adjust_after_pushing(std::pair<Expression_Obj, Expression_Obj> p) override { is_expanded(false); }
   public:
     Map(ParserState pstate, size_t size = 0);
@@ -386,7 +386,7 @@ namespace Sass {
   // Interpolated strings. Meant to be reduced to flat strings during the
   // evaluation phase.
   ///////////////////////////////////////////////////////////////////////
-  class String_Schema final : public String, public Vectorized<PreValue_Obj> {
+  class String_Schema final : public String, public Vectorized<PreValue_Obj, String_Schema> {
     ADD_PROPERTY(bool, css)
     mutable size_t hash_;
   public:
@@ -413,7 +413,6 @@ namespace Sass {
   ////////////////////////////////////////////////////////
   class String_Constant : public String {
     ADD_PROPERTY(char, quote_mark)
-    ADD_PROPERTY(bool, can_compress_whitespace)
     HASH_CONSTREF(std::string, value)
   protected:
     mutable size_t hash_;

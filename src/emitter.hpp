@@ -81,7 +81,7 @@ namespace Sass {
       // this adds source-mappings for node start and end
       void append_token(const std::string& text, const AST_Node* node);
       // query last appended character
-      char last_char();
+      const char& last_char();
 
     public: // syntax sugar
       void append_indentation();

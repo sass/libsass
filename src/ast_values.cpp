@@ -4,9 +4,7 @@
 
 #include "ast.hpp"
 #include "context.hpp"
-#include "node.hpp"
 #include "eval.hpp"
-#include "extend.hpp"
 #include "emitter.hpp"
 #include "color_maps.hpp"
 #include "ast_fwd_decl.hpp"
@@ -52,7 +50,7 @@ namespace Sass {
 
   List::List(ParserState pstate, size_t size, enum Sass_Separator sep, bool argl, bool bracket)
   : Value(pstate),
-    Vectorized<Expression_Obj>(size),
+    Vectorized<Expression_Obj, List>(size),
     separator_(sep),
     is_arglist_(argl),
     is_bracketed_(bracket),
@@ -61,7 +59,7 @@ namespace Sass {
 
   List::List(const List* ptr)
   : Value(ptr),
-    Vectorized<Expression_Obj>(*ptr),
+    Vectorized<Expression_Obj, List>(*ptr),
     separator_(ptr->separator_),
     is_arglist_(ptr->is_arglist_),
     is_bracketed_(ptr->is_bracketed_),
@@ -758,12 +756,12 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   String_Schema::String_Schema(ParserState pstate, size_t size, bool css)
-  : String(pstate), Vectorized<PreValue_Obj>(size), css_(css), hash_(0)
+  : String(pstate), Vectorized<PreValue_Obj, String_Schema>(size), css_(css), hash_(0)
   { concrete_type(STRING); }
 
   String_Schema::String_Schema(const String_Schema* ptr)
   : String(ptr),
-    Vectorized<PreValue_Obj>(*ptr),
+    Vectorized<PreValue_Obj, String_Schema>(*ptr),
     css_(ptr->css_),
     hash_(ptr->hash_)
   { concrete_type(STRING); }
@@ -824,22 +822,21 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   String_Constant::String_Constant(ParserState pstate, std::string val, bool css)
-  : String(pstate), quote_mark_(0), can_compress_whitespace_(false), value_(read_css_string(val, css)), hash_(0)
+  : String(pstate), quote_mark_(0), value_(read_css_string(val, css)), hash_(0)
   { }
   String_Constant::String_Constant(ParserState pstate, const char* beg, bool css)
-  : String(pstate), quote_mark_(0), can_compress_whitespace_(false), value_(read_css_string(std::string(beg), css)), hash_(0)
+  : String(pstate), quote_mark_(0), value_(read_css_string(std::string(beg), css)), hash_(0)
   { }
   String_Constant::String_Constant(ParserState pstate, const char* beg, const char* end, bool css)
-  : String(pstate), quote_mark_(0), can_compress_whitespace_(false), value_(read_css_string(std::string(beg, end-beg), css)), hash_(0)
+  : String(pstate), quote_mark_(0), value_(read_css_string(std::string(beg, end-beg), css)), hash_(0)
   { }
   String_Constant::String_Constant(ParserState pstate, const Token& tok, bool css)
-  : String(pstate), quote_mark_(0), can_compress_whitespace_(false), value_(read_css_string(std::string(tok.begin, tok.end), css)), hash_(0)
+  : String(pstate), quote_mark_(0), value_(read_css_string(std::string(tok.begin, tok.end), css)), hash_(0)
   { }
 
   String_Constant::String_Constant(const String_Constant* ptr)
   : String(ptr),
     quote_mark_(ptr->quote_mark_),
-    can_compress_whitespace_(ptr->can_compress_whitespace_),
     value_(ptr->value_),
     hash_(ptr->hash_)
   { }
