@@ -30,6 +30,7 @@
 #include "expand.hpp"
 #include "color_maps.hpp"
 #include "sass_functions.hpp"
+#include "error_handling.hpp"
 #include "util_string.hpp"
 
 namespace Sass {
@@ -92,6 +93,12 @@ namespace Sass {
     Env* env = environment();
     std::string var(a->variable());
     if (a->is_global()) {
+      if (!env->has_global(var)) {
+        deprecated(
+          "!global assignments won't be able to declare new variables in future versions.",
+          "Consider adding `" + var + ": null` at the top level.",
+          true, a->pstate());
+      }
       if (a->is_default()) {
         if (env->has_global(var)) {
           Expression* e = Cast<Expression>(env->get_global(var));
