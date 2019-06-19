@@ -50,10 +50,10 @@ inline static std::string wstring_to_string(const std::wstring &wstr)
 #endif
 
 #ifdef _WASM
-inline static std::string get_cwd_from_env()
+inline static std::string get_cwd_from_env(const char* default_pwd)
 {
   char* value = getenv("PWD");
-  if (!value) return "/";
+  if (!value) return default_pwd;
   return value;
 }
 #endif
@@ -68,8 +68,8 @@ namespace Sass {
     {
       #ifdef _WASM
         // the WASI does not implement getcwd() yet --
-        // check the environment variables or default to "/".
-        std::string cwd = get_cwd_from_env();
+        // check the environment variables or default to "./".
+        std::string cwd = get_cwd_from_env("./");
       #else
       const size_t wd_len = 4096;
       #ifndef _WIN32
@@ -189,7 +189,9 @@ namespace Sass {
       while((pos = path.find("/./", pos)) != std::string::npos) path.erase(pos, 2);
 
       // remove all leading and trailing self references
-      while(path.size() >= 2 && path[0] == '.' && path[1] == '/') path.erase(0, 2);
+      #ifndef PREOPEN_COMPATIBLE
+        while(path.size() >= 2 && path[0] == '.' && path[1] == '/') path.erase(0, 2);
+      #endif
       while((pos = path.length()) > 1 && path[pos - 2] == '/' && path[pos - 1] == '.') path.erase(pos - 2);
 
 
