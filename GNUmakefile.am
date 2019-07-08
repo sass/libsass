@@ -29,6 +29,7 @@ if ENABLE_TESTS
 
 SASS_SASSC_PATH ?= $(top_srcdir)/sassc
 SASS_SPEC_PATH ?= $(top_srcdir)/sass-spec
+SASS_SPEC_ROOT ?= $(top_srcdir)/sass-spec
 
 noinst_PROGRAMS = tester
 tester_LDADD = src/libsass.la
@@ -49,6 +50,7 @@ AM_RB_LOG_FLAGS = $(RUBY)
 SASS_TEST_FLAGS = --impl libsass
 SASS_TEST_FLAGS += -r $(SASS_SPEC_PATH)
 SASS_TEST_FLAGS += -c $(top_srcdir)/tester$(EXEEXT)
+SASS_TEST_FLAGS += --cmd-args "-I $(SASS_SPEC_ROOT)/spec"
 AM_TESTS_ENVIRONMENT = TEST_FLAGS='$(SASS_TEST_FLAGS)'
 
 SASS_TESTER = $(RUBY) $(SASS_SPEC_PATH)/sass-spec.rb

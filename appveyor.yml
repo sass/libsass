@@ -79,7 +79,7 @@ test_script:
       }
       $env:TargetPath = Join-Path $pwd.Path $env:TargetPath
       If (Test-Path "$env:TargetPath") {
-        ruby sass-spec/sass-spec.rb --probe-todo --impl libsass -c $env:TargetPath -s sass-spec/spec
+        ruby sass-spec/sass-spec.rb --probe-todo --impl libsass --cmd-args "-I sass-spec/spec" -c $env:TargetPath -s sass-spec/spec
         if(-not($?)) {
           echo "sass-spec tests failed"
           exit 1
