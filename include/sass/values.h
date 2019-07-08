@@ -1,20 +1,30 @@
 #ifndef SASS_C_VALUES_H
 #define SASS_C_VALUES_H
 
-#include <stddef.h>
-#include <stdbool.h>
 #include <sass/base.h>
+
+// Implementation Notes: While I was refactoring for LibSass 4.0, I figured we should get
+// rid of all intermediate structs that we created when converting back and forth from C
+// to CPP. I researched several approaches and will document my findings here. C only knows
+// about structs, therefore we can export any struct-ptr from C++ directly to C. This would
+// have been the most desirable approach, since any class in C++ can be turned into a struct
+// but there are limitations. Mainly we cannot export a name-spaced struct, so we would need to
+// define all our "classes" on the root namespace. The main benefit would be that we could
+// inspect objects during debugging if linking statically. Another approach would be to wrap
+// a ValueObj inside a struct. My final conclusion was to simply create an "anonymous" struct
+// on the C-API side, which has no implementation at all. In the actual implementation we
+// just trust the pointer to be of the type it should be, or you get undefined behavior.
+// Since underlying the pointer is a SharedObj, we know how to handle the reference count
+// for memory management when destruction is requested from C-API. Whenever the created value
+// is a e.g. added to container, the actual destruction of the original is skipped.
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-// Forward declaration
-union Sass_Value;
-
 // Type for Sass values
-enum Sass_Tag {
+enum SassValueType {
   SASS_BOOLEAN,
   SASS_NUMBER,
   SASS_COLOR,
@@ -23,120 +33,154 @@ enum Sass_Tag {
   SASS_MAP,
   SASS_NULL,
   SASS_ERROR,
-  SASS_WARNING
+  SASS_WARNING,
+  SASS_FUNCTION,
+  SASS_PARENT,
 };
 
-// Tags for denoting Sass list separators
-enum Sass_Separator {
+// List Separators
+enum SassSeparator {
   SASS_COMMA,
   SASS_SPACE,
-  // only used internally to represent a hash map before evaluation
-  // otherwise we would be too early to check for duplicate keys
-  SASS_HASH
+  // A separator that hasn't yet been determined.
+  // Singleton lists and empty lists don't have separators defined. This means
+  // that list functions will prefer other lists' separators if possible.
+  SASS_UNDEF,
 };
 
 // Value Operators
-enum Sass_OP {
-  AND, OR,                   // logical connectives
+enum SassOperator {
+  OR, AND,                   // logical connectives
   EQ, NEQ, GT, GTE, LT, LTE, // arithmetic relations
   ADD, SUB, MUL, DIV, MOD,   // arithmetic functions
-  NUM_OPS                    // so we know how big to make the op table
+  IESEQ                      // special IE single equal
 };
 
 // Creator functions for all value types
-ADDAPI union Sass_Value* ADDCALL sass_make_null    (void);
-ADDAPI union Sass_Value* ADDCALL sass_make_boolean (bool val);
-ADDAPI union Sass_Value* ADDCALL sass_make_string  (const char* val);
-ADDAPI union Sass_Value* ADDCALL sass_make_qstring (const char* val);
-ADDAPI union Sass_Value* ADDCALL sass_make_number  (double val, const char* unit);
-ADDAPI union Sass_Value* ADDCALL sass_make_color   (double r, double g, double b, double a);
-ADDAPI union Sass_Value* ADDCALL sass_make_list    (size_t len, enum Sass_Separator sep, bool is_bracketed);
-ADDAPI union Sass_Value* ADDCALL sass_make_map     (size_t len);
-ADDAPI union Sass_Value* ADDCALL sass_make_error   (const char* msg);
-ADDAPI union Sass_Value* ADDCALL sass_make_warning (const char* msg);
+ADDAPI struct SassValue* ADDCALL sass_make_null    (void);
+ADDAPI struct SassValue* ADDCALL sass_make_boolean (bool val);
+ADDAPI struct SassValue* ADDCALL sass_make_string  (const char* val, bool is_quoted);
+ADDAPI struct SassValue* ADDCALL sass_make_number  (double val, const char* unit);
+
+ADDAPI struct SassValue* ADDCALL sass_make_number2(double val, const char* unit);
+
+
+ADDAPI struct SassValue* ADDCALL sass_make_color   (double r, double g, double b, double a);
+ADDAPI struct SassValue* ADDCALL sass_make_list    (enum SassSeparator sep, bool is_bracketed);
+ADDAPI struct SassValue* ADDCALL sass_make_map     ();
+ADDAPI struct SassValue* ADDCALL sass_make_error   (const char* msg);
+ADDAPI struct SassValue* ADDCALL sass_make_warning (const char* msg);
 
 // Generic destructor function for all types
 // Will release memory of all associated Sass_Values
 // Means we will delete recursively for lists and maps
-ADDAPI void ADDCALL sass_delete_value (union Sass_Value* val);
+ADDAPI void ADDCALL sass_delete_value(struct SassValue* val);
 
 // Make a deep cloned copy of the given sass value
-ADDAPI union Sass_Value* ADDCALL sass_clone_value (const union Sass_Value* val);
+ADDAPI struct SassValue* ADDCALL sass_clone_value (struct SassValue* val);
 
 // Execute an operation for two Sass_Values and return the result as a Sass_Value too
-ADDAPI union Sass_Value* ADDCALL sass_value_op (enum Sass_OP op, const union Sass_Value* a, const union Sass_Value* b);
+ADDAPI struct SassValue* ADDCALL sass_value_op (enum SassOperator op, struct SassValue* a, struct SassValue* b);
 
 // Stringify a Sass_Values and also return the result as a Sass_Value (of type STRING)
-ADDAPI union Sass_Value* ADDCALL sass_value_stringify (const union Sass_Value* a, bool compressed, int precision);
+ADDAPI struct SassValue* ADDCALL sass_value_stringify (struct SassValue* a, bool compressed, int precision);
 
 // Return the sass tag for a generic sass value
 // Check is needed before accessing specific values!
-ADDAPI enum Sass_Tag ADDCALL sass_value_get_tag (const union Sass_Value* v);
+ADDAPI enum SassValueType ADDCALL sass_value_get_tag (struct SassValue* v);
 
 // Check value to be of a specific type
 // Can also be used before accessing properties!
-ADDAPI bool ADDCALL sass_value_is_null (const union Sass_Value* v);
-ADDAPI bool ADDCALL sass_value_is_number (const union Sass_Value* v);
-ADDAPI bool ADDCALL sass_value_is_string (const union Sass_Value* v);
-ADDAPI bool ADDCALL sass_value_is_boolean (const union Sass_Value* v);
-ADDAPI bool ADDCALL sass_value_is_color (const union Sass_Value* v);
-ADDAPI bool ADDCALL sass_value_is_list (const union Sass_Value* v);
-ADDAPI bool ADDCALL sass_value_is_map (const union Sass_Value* v);
-ADDAPI bool ADDCALL sass_value_is_error (const union Sass_Value* v);
-ADDAPI bool ADDCALL sass_value_is_warning (const union Sass_Value* v);
+ADDAPI bool ADDCALL sass_value_is_null (struct SassValue* v);
+ADDAPI bool ADDCALL sass_value_is_number (struct SassValue* v);
+ADDAPI bool ADDCALL sass_value_is_string (struct SassValue* v);
+ADDAPI bool ADDCALL sass_value_is_boolean (struct SassValue* v);
+ADDAPI bool ADDCALL sass_value_is_color (struct SassValue* v);
+ADDAPI bool ADDCALL sass_value_is_list (struct SassValue* v);
+ADDAPI bool ADDCALL sass_value_is_map (struct SassValue* v);
+ADDAPI bool ADDCALL sass_value_is_error (struct SassValue* v);
+ADDAPI bool ADDCALL sass_value_is_warning (struct SassValue* v);
 
 // Getters and setters for Sass_Number
-ADDAPI double ADDCALL sass_number_get_value (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_number_set_value (union Sass_Value* v, double value);
-ADDAPI const char* ADDCALL sass_number_get_unit (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_number_set_unit (union Sass_Value* v, char* unit);
+ADDAPI double ADDCALL sass_number_get_value (struct SassValue* v);
+ADDAPI void ADDCALL sass_number_set_value (struct SassValue* v, double value);
+ADDAPI const char* ADDCALL sass_number_get_unit (struct SassValue* v);
+ADDAPI void ADDCALL sass_number_set_unit (struct SassValue* v, const char* unit);
+ADDAPI void ADDCALL sass_number_normalize(struct SassValue* v); // What does it do?
+ADDAPI void ADDCALL sass_number_reduce(struct SassValue* v);
 
 // Getters and setters for Sass_String
-ADDAPI const char* ADDCALL sass_string_get_value (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_string_set_value (union Sass_Value* v, char* value);
-ADDAPI bool ADDCALL sass_string_is_quoted(const union Sass_Value* v);
-ADDAPI void ADDCALL sass_string_set_quoted(union Sass_Value* v, bool quoted);
+ADDAPI const char* ADDCALL sass_string_get_value (struct SassValue* v);
+ADDAPI void ADDCALL sass_string_set_value (struct SassValue* v, char* value);
+ADDAPI bool ADDCALL sass_string_is_quoted(struct SassValue* v);
+ADDAPI void ADDCALL sass_string_set_quoted(struct SassValue* v, bool quoted);
 
 // Getters and setters for Sass_Boolean
-ADDAPI bool ADDCALL sass_boolean_get_value (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_boolean_set_value (union Sass_Value* v, bool value);
+ADDAPI bool ADDCALL sass_boolean_get_value (struct SassValue* v);
+ADDAPI void ADDCALL sass_boolean_set_value (struct SassValue* v, bool value);
 
 // Getters and setters for Sass_Color
-ADDAPI double ADDCALL sass_color_get_r (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_color_set_r (union Sass_Value* v, double r);
-ADDAPI double ADDCALL sass_color_get_g (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_color_set_g (union Sass_Value* v, double g);
-ADDAPI double ADDCALL sass_color_get_b (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_color_set_b (union Sass_Value* v, double b);
-ADDAPI double ADDCALL sass_color_get_a (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_color_set_a (union Sass_Value* v, double a);
+ADDAPI double ADDCALL sass_color_get_r (struct SassValue* v);
+ADDAPI void ADDCALL sass_color_set_r (struct SassValue* v, double r);
+ADDAPI double ADDCALL sass_color_get_g (struct SassValue* v);
+ADDAPI void ADDCALL sass_color_set_g (struct SassValue* v, double g);
+ADDAPI double ADDCALL sass_color_get_b (struct SassValue* v);
+ADDAPI void ADDCALL sass_color_set_b (struct SassValue* v, double b);
+ADDAPI double ADDCALL sass_color_get_a (struct SassValue* v);
+ADDAPI void ADDCALL sass_color_set_a (struct SassValue* v, double a);
 
-// Getter for the number of items in list
-ADDAPI size_t ADDCALL sass_list_get_length (const union Sass_Value* v);
+ADDAPI size_t ADDCALL sass_list_get_size(struct SassValue* list);
+ADDAPI void ADDCALL sass_list_push(struct SassValue* list, struct SassValue* value);
+ADDAPI struct SassValue* ADDCALL sass_list_at(struct SassValue* list, size_t i);
+ADDAPI struct SassValue* ADDCALL sass_list_pop(struct SassValue* list, struct SassValue* value);
+ADDAPI struct SassValue* ADDCALL sass_list_shift(struct SassValue* list, struct SassValue* value);
+
+
+
 // Getters and setters for Sass_List
-ADDAPI enum Sass_Separator ADDCALL sass_list_get_separator (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_list_set_separator (union Sass_Value* v, enum Sass_Separator value);
-ADDAPI bool ADDCALL sass_list_get_is_bracketed (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_list_set_is_bracketed (union Sass_Value* v, bool value);
+ADDAPI enum SassSeparator ADDCALL sass_list_get_separator (struct SassValue* v);
+ADDAPI void ADDCALL sass_list_set_separator (struct SassValue* v, enum SassSeparator value);
+ADDAPI bool ADDCALL sass_list_get_is_bracketed (struct SassValue* v);
+ADDAPI void ADDCALL sass_list_set_is_bracketed (struct SassValue* v, bool value);
 // Getters and setters for Sass_List values
-ADDAPI union Sass_Value* ADDCALL sass_list_get_value (const union Sass_Value* v, size_t i);
-ADDAPI void ADDCALL sass_list_set_value (union Sass_Value* v, size_t i, union Sass_Value* value);
+ADDAPI struct SassValue* ADDCALL sass_list_get_value (struct SassValue* v, size_t i);
+ADDAPI void ADDCALL sass_list_set_value (struct SassValue* v, size_t i, struct SassValue* value);
 
 // Getter for the number of items in map
-ADDAPI size_t ADDCALL sass_map_get_length (const union Sass_Value* v);
+// ADDAPI size_t ADDCALL sass_map_get_size (struct SassValue* v);
+
+ADDAPI void ADDCALL sass_map_set(struct SassValue* m, struct SassValue* k, struct SassValue* v);
+
+struct SassMapIterator;
+
+ADDAPI struct SassMapIterator* ADDCALL sass_map_make_iterator(struct SassValue* map);
+ADDAPI void ADDCALL sass_map_delete_iterator(struct SassMapIterator* it);
+ADDAPI bool ADDCALL sass_map_iterator_exhausted(struct SassMapIterator* it);
+ADDAPI struct SassValue* ADDCALL sass_map_iterator_get_key(struct SassMapIterator* it);
+ADDAPI struct SassValue* ADDCALL sass_map_iterator_get_value(struct SassMapIterator* it);
+ADDAPI void ADDCALL sass_map_iterator_next(struct SassMapIterator* it);
+
+// sass_map_get_iterator();
+// sass_map_iterator_next(it);
+
+
+ADDAPI void ADDCALL sass_map_set(struct SassValue* m, struct SassValue* k, struct SassValue* v);
+ADDAPI struct SassValue* ADDCALL sass_map_get(struct SassValue* m, struct SassValue* k);
+
+
 // Getters and setters for Sass_Map keys and values
-ADDAPI union Sass_Value* ADDCALL sass_map_get_key (const union Sass_Value* v, size_t i);
-ADDAPI void ADDCALL sass_map_set_key (union Sass_Value* v, size_t i, union Sass_Value*);
-ADDAPI union Sass_Value* ADDCALL sass_map_get_value (const union Sass_Value* v, size_t i);
-ADDAPI void ADDCALL sass_map_set_value (union Sass_Value* v, size_t i, union Sass_Value*);
+//ADDAPI struct SassValue* ADDCALL sass_map_get_key (struct SassValue* v, size_t i);
+//ADDAPI void ADDCALL sass_map_set_key (struct SassValue* v, size_t i, struct SassValue*);
+//ADDAPI struct SassValue* ADDCALL sass_map_get_value (struct SassValue* v, size_t i);
+//ADDAPI void ADDCALL sass_map_set_value (struct SassValue* v, size_t i, struct SassValue*);
 
 // Getters and setters for Sass_Error
-ADDAPI char* ADDCALL sass_error_get_message (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_error_set_message (union Sass_Value* v, char* msg);
+ADDAPI const char* ADDCALL sass_error_get_message (struct SassValue* v);
+ADDAPI void ADDCALL sass_error_set_message (struct SassValue* v, const char* msg);
 
 // Getters and setters for Sass_Warning
-ADDAPI char* ADDCALL sass_warning_get_message (const union Sass_Value* v);
-ADDAPI void ADDCALL sass_warning_set_message (union Sass_Value* v, char* msg);
+ADDAPI const char* ADDCALL sass_warning_get_message (struct SassValue* v);
+ADDAPI void ADDCALL sass_warning_set_message (struct SassValue* v, const char* msg);
 
 #ifdef __cplusplus
 } // __cplusplus defined.

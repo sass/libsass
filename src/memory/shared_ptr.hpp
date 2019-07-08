@@ -1,51 +1,85 @@
-#ifndef SASS_MEMORY_SHARED_PTR_H
-#define SASS_MEMORY_SHARED_PTR_H
+#ifndef SASS_MEMORY_SHARED_PTR_HPP
+#define SASS_MEMORY_SHARED_PTR_HPP
 
-#include "sass/base.h"
-
-#include "../sass.hpp"
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "../capi_sass.hpp"
 #include "allocator.hpp"
+
 #include <cstddef>
 #include <iostream>
 #include <string>
 #include <type_traits>
 #include <vector>
 
+#ifdef DEBUG_SHARED_PTR
+#include <unordered_set>
+#endif
+
 // https://lokiastari.com/blog/2014/12/30/c-plus-plus-by-example-smart-pointer/index.html
 // https://lokiastari.com/blog/2015/01/15/c-plus-plus-by-example-smart-pointer-part-ii/index.html
 // https://lokiastari.com/blog/2015/01/23/c-plus-plus-by-example-smart-pointer-part-iii/index.html
+// https://www.youtube.com/watch?v=LIb3L4vKZ7U - allocator composition (freelist and bucketizer)
 
 namespace Sass {
 
-  // Forward declaration
   class SharedPtr;
 
-  ///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////
   // Use macros for the allocation task, since overloading operator `new`
-  // has been proven to be flaky under certain compilers (see comment below).
-  ///////////////////////////////////////////////////////////////////////////////
+  // has been proven to be flaky under certain compilers. This allows us
+  // to track memory issues better by adding the source location for every
+  // memory allocation, so once it leaks we know where it was created.
+  ///////////////////////////////////////////////////////////////////////////
 
   #ifdef DEBUG_SHARED_PTR
 
+    // Macro to call the constructor
+    // Attach file/line in debug mode
     #define SASS_MEMORY_NEW(Class, ...) \
       ((Class*)(new Class(__VA_ARGS__))->trace(__FILE__, __LINE__)) \
 
-    #define SASS_MEMORY_COPY(obj) \
-      ((obj)->copy(__FILE__, __LINE__)) \
+    // Macro to call the constructor
+    // Attach file/line in debug mode
+    #define SASS_MEMORY_NEW_DBG(Class, ...) \
+      ((Class*)(new Class(__VA_ARGS__))->trace(file, line)) \
 
-    #define SASS_MEMORY_CLONE(obj) \
-      ((obj)->clone(__FILE__, __LINE__)) \
+    // Macro to call the constructor
+    // Attach file/line in debug mode
+    #define SASS_MEMORY_NEW(Class, ...) \
+      ((Class*)(new Class(__VA_ARGS__))->trace(__FILE__, __LINE__)) \
+
+    // Copy object and zero children
+    // The children array is empty
+    #define SASS_MEMORY_RESECT(obj) \
+      ((obj)->copy(__FILE__, __LINE__, true)) \
+
+    // Full copy but same children
+    // Children are the same reference
+    #define SASS_MEMORY_COPY(obj) \
+      ((obj)->copy(__FILE__, __LINE__, false)) \
 
   #else
 
+    // Macro to call the constructor
+    // Attach file/line in debug mode
     #define SASS_MEMORY_NEW(Class, ...) \
       new Class(__VA_ARGS__) \
 
-    #define SASS_MEMORY_COPY(obj) \
-      ((obj)->copy()) \
+    // Macro to call the constructor
+    // Attach file/line in debug mode
+    #define SASS_MEMORY_NEW_DBG(Class, ...) \
+      new Class(__VA_ARGS__) \
 
-    #define SASS_MEMORY_CLONE(obj) \
-      ((obj)->clone()) \
+    // Copy object and zero children
+    // The children array is empty
+    #define SASS_MEMORY_RESECT(obj) \
+      ((obj)->copy(true)) \
+
+    // Full copy but same children
+    // Children are the same reference
+    #define SASS_MEMORY_COPY(obj) \
+      ((obj)->copy(false)) \
 
   #endif
 
@@ -60,10 +94,14 @@ namespace Sass {
   // too by using `std::make_shared` (where the control block and the actual
   // object are allocated in one continuous memory block via one single call).
   class SharedObj {
+
    public:
-    SharedObj() : refcount(0), detached(false) {
+    SharedObj() : refcount(0) {
       #ifdef DEBUG_SHARED_PTR
-      if (taint) all.push_back(this);
+      this->objId = ++objCount;
+      if (taint) {
+        all.emplace_back(this);
+      }
       #endif
     }
     virtual ~SharedObj() {
@@ -74,10 +112,16 @@ namespace Sass {
           break;
         }
       }
+      erased = true;
       #endif
     }
 
+
     #ifdef DEBUG_SHARED_PTR
+    static void reportRefCounts() {
+      std::cerr << "Max refcount: " <<
+        SharedObj::maxRefCount << "\n";
+    }
     static void dumpMemLeaks();
     SharedObj* trace(sass::string file, size_t line) {
       this->file = file;
@@ -101,42 +145,74 @@ namespace Sass {
     }
     #endif
 
-    virtual sass::string to_string() const = 0;
    protected:
     friend class SharedPtr;
-    friend class Memory_Manager;
-    size_t refcount;
-    bool detached;
+    friend class MemoryPool;
+  public:
+  public:
+    uint32_t refcount;
+  public:
     static bool taint;
-    #ifdef DEBUG_SHARED_PTR
+#ifdef DEBUG_SHARED_PTR
+    static size_t maxRefCount;
     sass::string file;
     size_t line;
+  public:
+    size_t objId;
+  protected:
     bool dbg = false;
+    bool erased = false;
+    static size_t objCount;
     static sass::vector<SharedObj*> all;
-    #endif
+    static std::unordered_set<size_t> deleted;
+#endif
   };
 
   // SharedPtr is a intermediate (template-less) base class for SharedImpl.
   // ToDo: there should be a way to include this in SharedImpl and to get
   // ToDo: rid of all the static_cast that are now needed in SharedImpl.
   class SharedPtr {
-   public:
+
+  protected:
+
+    SharedObj* node;
+
+  private:
+
+    static const uint32_t SET_DETACHED_BITMASK = (uint32_t(1) << (sizeof(uint32_t) * 8 - 1));
+    static const uint32_t UNSET_DETACHED_BITMASK = ~(uint32_t(1) << (sizeof(uint32_t) * 8 - 1));
+
+  public:
     SharedPtr() : node(nullptr) {}
-    SharedPtr(SharedObj* ptr) : node(ptr) {
-      incRefCount();
-    }
+    SharedPtr(SharedObj* ptr) : node(ptr) { incRefCount(); }
     SharedPtr(const SharedPtr& obj) : SharedPtr(obj.node) {}
-    ~SharedPtr() {
+    SharedPtr(SharedPtr&& obj) noexcept : node(std::move(obj.node)) {
+      obj.node = nullptr; // reset old node pointer
+    }
+    virtual ~SharedPtr() {
       decRefCount();
     }
 
     SharedPtr& operator=(SharedObj* other_node) {
       if (node != other_node) {
-        decRefCount();
+        if (node) decRefCount();
         node = other_node;
         incRefCount();
       } else if (node != nullptr) {
-        node->detached = false;
+        node->refcount &= UNSET_DETACHED_BITMASK;
+      }
+      return *this;
+    }
+
+    SharedPtr& operator=(SharedPtr&& obj) noexcept
+    {
+      if (node != obj.node) {
+        if (node) decRefCount();
+        node = obj.node;
+        obj.node = nullptr;
+      }
+      else if (node != nullptr) {
+        node->refcount &= UNSET_DETACHED_BITMASK;
       }
       return *this;
     }
@@ -147,52 +223,88 @@ namespace Sass {
 
     // Prevents all SharedPtrs from freeing this node until it is assigned to another SharedPtr.
     SharedObj* detach() {
-      if (node != nullptr) node->detached = true;
+      if (node != nullptr) {
+        node->refcount |= SET_DETACHED_BITMASK;
+      }
       #ifdef DEBUG_SHARED_PTR
-      if (node->dbg) {
+      if (node && node->dbg) {
         std::cerr << "DETACHING NODE\n";
       }
-      #endif 
+      #endif
       return node;
     }
 
-    SharedObj* obj() const { return node; }
-    SharedObj* operator->() const { return node; }
+    void clear() {
+      if (node != nullptr) {
+        decRefCount();
+        node = nullptr;
+      }
+    }
+
+    SharedObj* obj() const {
+      #ifdef DEBUG_SHARED_PTR
+      if (node && node->deleted.count(node->objId) == 1) {
+        std::cerr << "ACCESSING DELETED " << node << "\n";
+      }
+      #endif
+      return node;
+    }
+    SharedObj* operator->() const {
+      #ifdef DEBUG_SHARED_PTR
+      if (node && node->deleted.count(node->objId) == 1) {
+        std::cerr << "ACCESSING DELETED " << node << "\n";
+      }
+      #endif
+      return node;
+    }
     bool isNull() const { return node == nullptr; }
     operator bool() const { return node != nullptr; }
 
-   protected:
-    SharedObj* node;
-    void decRefCount() {
+  protected:
+
+    // ##__declspec(noinline)
+    inline void decRefCount() noexcept {
       if (node == nullptr) return;
-      --node->refcount;
       #ifdef DEBUG_SHARED_PTR
-      if (node->dbg) std::cerr << "- " << node << " X " << node->refcount << " (" << this << ") " << "\n";
+      if (node->dbg) {
+        std::cerr << "- " << node << " X " << ((node->refcount & SET_DETACHED_BITMASK) ? "detached " : "")
+          << (node->refcount - (node->refcount  & SET_DETACHED_BITMASK)) << " (" << this << ") " << "\n";
+      }
       #endif
-      if (node->refcount == 0 && !node->detached) {
+      if (--node->refcount == 0) {
         #ifdef DEBUG_SHARED_PTR
-        if (node->dbg) std::cerr << "DELETE NODE " << node << "\n";
+          if (node->dbg) {
+            std::cerr << "DELETE NODE " << node << "\n";
+          }
+          // node->deleted.insert(node->objId);
         #endif
         delete node;
       }
-      else if (node->refcount == 0) {
-        #ifdef DEBUG_SHARED_PTR
-        if (node->dbg) std::cerr << "NODE EVAEDED DELETE " << node << "\n";
-        #endif
+      #ifdef DEBUG_SHARED_PTR
+      else if (node->refcount & SET_DETACHED_BITMASK) {
+        if (node->dbg) {
+          std::cerr << "NODE EVADED DELETE " << node << "\n";
+        }
       }
+      #endif
     }
-    void incRefCount() {
+    void incRefCount() noexcept {
       if (node == nullptr) return;
-      node->detached = false;
+      node->refcount &= UNSET_DETACHED_BITMASK;
       ++node->refcount;
       #ifdef DEBUG_SHARED_PTR
-      if (node->dbg) std::cerr << "+ " << node << " X " << node->refcount << " (" << this << ") " << "\n";
+      if (SharedObj::maxRefCount < node->refcount) {
+        SharedObj::maxRefCount = node->refcount;
+      }
+      if (node->dbg) {
+        std::cerr << "+ " << node << " X " << node->refcount << " (" << this << ") " << "\n";
+      }
       #endif
     }
   };
 
   template <class T>
-  class SharedImpl : private SharedPtr {
+  class SharedImpl final : private SharedPtr {
 
   public:
     SharedImpl() : SharedPtr(nullptr) {}
@@ -212,14 +324,15 @@ namespace Sass {
     }
 
     template <class U>
+    SharedImpl<T>& operator=(SharedImpl<U>&& rhs) {
+      return static_cast<SharedImpl<T>&>(
+        SharedPtr::operator=(std::move(static_cast<SharedImpl<T>&>(rhs))));
+    }
+
+    template <class U>
     SharedImpl<T>& operator=(const SharedImpl<U>& rhs) {
       return static_cast<SharedImpl<T>&>(
         SharedPtr::operator=(static_cast<const SharedImpl<T>&>(rhs)));
-    }
-
-    operator sass::string() const {
-      if (node) return node->to_string();
-      return "null";
     }
 
     using SharedPtr::isNull;
@@ -230,7 +343,7 @@ namespace Sass {
     T* operator-> () const { return static_cast<T*>(this->obj()); };
     T* ptr () const { return static_cast<T*>(this->obj()); };
     T* detach() { return static_cast<T*>(SharedPtr::detach()); }
-
+    void clear() { return SharedPtr::clear(); }
   };
 
   // Comparison operators, based on:

@@ -1,112 +1,68 @@
-// sass.hpp must go before all system headers to get the
-// __EXTENSIONS__ fix on Solaris.
-#include "sass.hpp"
-#include "ast.hpp"
-
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
+#include "ast_supports.hpp"
 
 namespace Sass {
 
   /////////////////////////////////////////////////////////////////////////
+  // The abstract superclass of all Supports conditions.
   /////////////////////////////////////////////////////////////////////////
 
-  SupportsRule::SupportsRule(SourceSpan pstate, SupportsConditionObj condition, Block_Obj block)
-  : ParentStatement(pstate, block), condition_(condition)
-  { statement_type(SUPPORTS); }
-  SupportsRule::SupportsRule(const SupportsRule* ptr)
-  : ParentStatement(ptr), condition_(ptr->condition_)
-  { statement_type(SUPPORTS); }
-  bool SupportsRule::bubbles() { return true; }
+  SupportsCondition::SupportsCondition(
+    const SourceSpan& pstate) :
+    AstNode(pstate)
+  {}
 
   /////////////////////////////////////////////////////////////////////////
+  // An operator condition (e.g. `CONDITION1 and CONDITION2`).
   /////////////////////////////////////////////////////////////////////////
 
-  SupportsCondition::SupportsCondition(SourceSpan pstate)
-  : Expression(pstate)
-  { }
-
-  SupportsCondition::SupportsCondition(const SupportsCondition* ptr)
-  : Expression(ptr)
-  { }
-
-  /////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
-
-  SupportsOperation::SupportsOperation(SourceSpan pstate, SupportsConditionObj l, SupportsConditionObj r, Operand o)
-  : SupportsCondition(pstate), left_(l), right_(r), operand_(o)
-  { }
-  SupportsOperation::SupportsOperation(const SupportsOperation* ptr)
-  : SupportsCondition(ptr),
-    left_(ptr->left_),
-    right_(ptr->right_),
-    operand_(ptr->operand_)
-  { }
-
-  bool SupportsOperation::needs_parens(SupportsConditionObj cond) const
-  {
-    if (SupportsOperationObj op = Cast<SupportsOperation>(cond)) {
-      return op->operand() != operand();
-    }
-    return Cast<SupportsNegation>(cond) != NULL;
-  }
+  SupportsOperation::SupportsOperation(
+    const SourceSpan& pstate,
+    SupportsConditionObj lhs,
+    SupportsConditionObj rhs,
+    Operand operand) :
+    SupportsCondition(pstate),
+    left_(lhs),
+    right_(rhs),
+    operand_(operand)
+  {}
 
   /////////////////////////////////////////////////////////////////////////
+  // A negation condition (`not CONDITION`).
   /////////////////////////////////////////////////////////////////////////
 
-  SupportsNegation::SupportsNegation(SourceSpan pstate, SupportsConditionObj c)
-  : SupportsCondition(pstate), condition_(c)
-  { }
-  SupportsNegation::SupportsNegation(const SupportsNegation* ptr)
-  : SupportsCondition(ptr), condition_(ptr->condition_)
-  { }
-
-  bool SupportsNegation::needs_parens(SupportsConditionObj cond) const
-  {
-    return Cast<SupportsNegation>(cond) ||
-           Cast<SupportsOperation>(cond);
-  }
+  SupportsNegation::SupportsNegation(
+    const SourceSpan& pstate,
+    SupportsCondition* condition) :
+    SupportsCondition(pstate),
+    condition_(condition)
+  {}
 
   /////////////////////////////////////////////////////////////////////////
+  // A declaration condition (e.g. `(feature: value)`).
   /////////////////////////////////////////////////////////////////////////
 
-  SupportsDeclaration::SupportsDeclaration(SourceSpan pstate, ExpressionObj f, ExpressionObj v)
-  : SupportsCondition(pstate), feature_(f), value_(v)
-  { }
-  SupportsDeclaration::SupportsDeclaration(const SupportsDeclaration* ptr)
-  : SupportsCondition(ptr),
-    feature_(ptr->feature_),
-    value_(ptr->value_)
-  { }
-
-  bool SupportsDeclaration::needs_parens(SupportsConditionObj cond) const
-  {
-    return false;
-  }
+  SupportsDeclaration::SupportsDeclaration(
+    const SourceSpan& pstate,
+    Expression* feature,
+    Expression* value)
+  : SupportsCondition(pstate),
+    feature_(feature),
+    value_(value)
+  {}
 
   /////////////////////////////////////////////////////////////////////////
+  // An interpolation condition (e.g. `#{$var}`).
   /////////////////////////////////////////////////////////////////////////
 
-  Supports_Interpolation::Supports_Interpolation(SourceSpan pstate, ExpressionObj v)
-  : SupportsCondition(pstate), value_(v)
-  { }
-  Supports_Interpolation::Supports_Interpolation(const Supports_Interpolation* ptr)
-  : SupportsCondition(ptr),
-    value_(ptr->value_)
-  { }
-
-  bool Supports_Interpolation::needs_parens(SupportsConditionObj cond) const
-  {
-    return false;
-  }
-
-  /////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
-
-  IMPLEMENT_AST_OPERATORS(SupportsRule);
-  IMPLEMENT_AST_OPERATORS(SupportsCondition);
-  IMPLEMENT_AST_OPERATORS(SupportsOperation);
-  IMPLEMENT_AST_OPERATORS(SupportsNegation);
-  IMPLEMENT_AST_OPERATORS(SupportsDeclaration);
-  IMPLEMENT_AST_OPERATORS(Supports_Interpolation);
+  SupportsInterpolation::SupportsInterpolation(
+    const SourceSpan& pstate,
+    Expression* value) :
+    SupportsCondition(pstate),
+    value_(value)
+  {}
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////

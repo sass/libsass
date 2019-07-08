@@ -1,16 +1,20 @@
-#include "sass.hpp"
-#include <map>
-#include <stdexcept>
-#include <algorithm>
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
 #include "units.hpp"
-#include "error_handling.hpp"
+
+#include "flat_map.hpp"
 
 namespace Sass {
 
-  /* the conversion matrix can be readed the following way */
+  /////////////////////////////////////////////////////////////////////////
+  // Old but trusted implementation following:
+  /////////////////////////////////////////////////////////////////////////
+  /* the conversion matrix can be read the following way */
   /* if you go down, the factor is for the numerator (multiply) */
   /* if you go right, the factor is for the denominator (divide) */
   /* and yes, we actually use both, not sure why, but why not!? */
+  /////////////////////////////////////////////////////////////////////////
 
   const double size_conversion_factors[6][6] =
   {
@@ -52,6 +56,9 @@ namespace Sass {
     /* dppx */ { 96,        96/2.54,   1        }
   };
 
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
   UnitClass get_unit_type(UnitType unit)
   {
     switch (unit & 0xFF00)
@@ -65,20 +72,7 @@ namespace Sass {
     }
   };
 
-  sass::string get_unit_class(UnitType unit)
-  {
-    switch (unit & 0xFF00)
-    {
-      case UnitClass::LENGTH:      return "LENGTH";
-      case UnitClass::ANGLE:       return "ANGLE";
-      case UnitClass::TIME:        return "TIME";
-      case UnitClass::FREQUENCY:   return "FREQUENCY";
-      case UnitClass::RESOLUTION:  return "RESOLUTION";
-      default:                     return "INCOMMENSURABLE";
-    }
-  };
-
-  UnitType get_main_unit(const UnitClass unit)
+  UnitType get_standard_unit(const UnitClass unit)
   {
     switch (unit)
     {
@@ -99,7 +93,7 @@ namespace Sass {
     else if (s == "pc")   return UnitType::PC;
     else if (s == "mm")   return UnitType::MM;
     else if (s == "cm")   return UnitType::CM;
-    else if (s == "in")   return UnitType::IN;
+    else if (s == "in")   return UnitType::INCH;
     // angle units
     else if (s == "deg")  return UnitType::DEG;
     else if (s == "grad") return UnitType::GRAD;
@@ -128,7 +122,7 @@ namespace Sass {
       case UnitType::PC:      return "pc";
       case UnitType::MM:      return "mm";
       case UnitType::CM:      return "cm";
-      case UnitType::IN:      return "in";
+      case UnitType::INCH:    return "in";
       // angle units
       case UnitType::DEG:     return "deg";
       case UnitType::GRAD:    return "grad";
@@ -149,32 +143,8 @@ namespace Sass {
     }
   }
 
-  sass::string unit_to_class(const sass::string& s)
-  {
-    if      (s == "px")   return "LENGTH";
-    else if (s == "pt")   return "LENGTH";
-    else if (s == "pc")   return "LENGTH";
-    else if (s == "mm")   return "LENGTH";
-    else if (s == "cm")   return "LENGTH";
-    else if (s == "in")   return "LENGTH";
-    // angle units
-    else if (s == "deg")  return "ANGLE";
-    else if (s == "grad") return "ANGLE";
-    else if (s == "rad")  return "ANGLE";
-    else if (s == "turn") return "ANGLE";
-    // time units
-    else if (s == "s")    return "TIME";
-    else if (s == "ms")   return "TIME";
-    // frequency units
-    else if (s == "Hz")   return "FREQUENCY";
-    else if (s == "kHz")  return "FREQUENCY";
-    // resolutions units
-    else if (s == "dpi")  return "RESOLUTION";
-    else if (s == "dpcm") return "RESOLUTION";
-    else if (s == "dppx") return "RESOLUTION";
-    // for unknown units
-    return "CUSTOM:" + s;
-  }
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
   // throws incompatibleUnits exceptions
   double conversion_factor(const sass::string& s1, const sass::string& s2)
@@ -197,9 +167,9 @@ namespace Sass {
     // can't convert between groups
     if (t1 != t2) return 0;
     // get absolute offset
-    // used for array acces
-    size_t i1 = u1 - t1;
-    size_t i2 = u2 - t2;
+    // used for array access
+    size_t i1 = size_t(u1) > size_t(t1) ? u1 - t1 : t1 - u1;
+    size_t i2 = size_t(u2) > size_t(t2) ? u2 - t2 : t2 - u2;
     // process known units
     switch (t1) {
       case LENGTH:
@@ -215,7 +185,7 @@ namespace Sass {
       case INCOMMENSURABLE:
         return 0;
     }
-    // fallback
+    // fall-back
     return 0;
   }
 
@@ -242,7 +212,7 @@ namespace Sass {
     if (rhsexp < 0 && lhsexp > 0 && - rhsexp > lhsexp) {
       // get the conversion factor for units
       f = conversion_factor(urhs, ulhs, clhs, crhs);
-      // left hand side has been consumned
+      // left hand side has been consumed
       f = std::pow(f, lhsexp);
       rhsexp += lhsexp;
       lhsexp = 0;
@@ -250,7 +220,7 @@ namespace Sass {
     else {
       // get the conversion factor for units
       f = conversion_factor(ulhs, urhs, clhs, crhs);
-      // right hand side has been consumned
+      // right hand side has been consumed
       f = std::pow(f, rhsexp);
       lhsexp += rhsexp;
       rhsexp = 0;
@@ -258,24 +228,16 @@ namespace Sass {
     return f;
   }
 
-  bool Units::operator< (const Units& rhs) const
-  {
-    return (numerators < rhs.numerators) &&
-           (denominators < rhs.denominators);
-  }
   bool Units::operator== (const Units& rhs) const
   {
     return (numerators == rhs.numerators) &&
            (denominators == rhs.denominators);
   }
-  bool Units::operator!= (const Units& rhs) const
-  {
-    return ! (*this == rhs);
-  }
 
   double Units::normalize()
   {
 
+    stringified.clear();
     size_t iL = numerators.size();
     size_t nL = denominators.size();
 
@@ -287,7 +249,7 @@ namespace Sass {
       UnitType ulhs = string_to_unit(lhs);
       if (ulhs == UNKNOWN) continue;
       UnitClass clhs = get_unit_type(ulhs);
-      UnitType umain = get_main_unit(clhs);
+      UnitType umain = get_standard_unit(clhs);
       if (ulhs == umain) continue;
       double f(conversion_factor(umain, ulhs, clhs, clhs));
       if (f == 0) throw std::runtime_error("INVALID");
@@ -300,8 +262,9 @@ namespace Sass {
       UnitType urhs = string_to_unit(rhs);
       if (urhs == UNKNOWN) continue;
       UnitClass crhs = get_unit_type(urhs);
-      UnitType umain = get_main_unit(crhs);
+      UnitType umain = get_standard_unit(crhs);
       if (urhs == umain) continue;
+      // this is never hit via spec-tests!?
       double f(conversion_factor(umain, urhs, crhs, crhs));
       if (f == 0) throw std::runtime_error("INVALID");
       denominators[n] = unit_to_string(umain);
@@ -318,6 +281,7 @@ namespace Sass {
   double Units::reduce()
   {
 
+    stringified.clear();
     size_t iL = numerators.size();
     size_t nL = denominators.size();
 
@@ -327,8 +291,9 @@ namespace Sass {
     // first make sure same units cancel each other out
     // it seems that a map table will fit nicely to do this
     // we basically construct exponents for each unit
-    // has the advantage that they will be pre-sorted
-    std::map<sass::string, int> exponents;
+    // has the advantage that they will be presorted
+    // ToDo: use fast map implementation?
+    FlatMap<sass::string, int> exponents;
 
     // initialize by summing up occurrences in unit vectors
     // this will already cancel out equivalent units (e.q. px/px)
@@ -354,12 +319,12 @@ namespace Sass {
     denominators.clear();
 
     // recreate sorted units vectors
-    for (auto exp : exponents) {
-      int &exponent = exp.second;
+    for (auto kv : exponents) {
+      int &exponent = kv.second;
       while (exponent > 0 && exponent --)
-        numerators.push_back(exp.first);
+        numerators.emplace_back(kv.first);
       while (exponent < 0 && exponent ++)
-        denominators.push_back(exp.first);
+        denominators.emplace_back(kv.first);
     }
 
     // return for conversion
@@ -367,37 +332,90 @@ namespace Sass {
 
   }
 
-  sass::string Units::unit() const
+  // Reset unit without conversion factor
+  void Units::unit(const sass::string& u)
   {
-    sass::string u;
-    size_t iL = numerators.size();
-    size_t nL = denominators.size();
-    for (size_t i = 0; i < iL; i += 1) {
-      if (i) u += '*';
-      u += numerators[i];
+    size_t l = 0;
+    size_t r;
+    stringified.clear();
+    numerators.clear();
+    denominators.clear();
+    if (!u.empty()) {
+      bool nominator = true;
+      while (true) {
+        r = u.find_first_of("*/", l);
+        sass::string unit(u.substr(l, r == sass::string::npos ? r : r - l));
+        if (!unit.empty()) {
+          if (nominator) numerators.emplace_back(unit);
+          else denominators.emplace_back(unit);
+        }
+        if (r == sass::string::npos) break;
+        // ToDo: should error for multiple slashes
+        // if (!nominator && u[r] == '/') error(...)
+        if (u[r] == '/')
+          nominator = false;
+        // strange math parsing?
+        // else if (u[r] == '*')
+        //  nominator = true;
+        l = r + 1;
+      }
     }
-    if (nL != 0) u += '/';
-    for (size_t n = 0; n < nL; n += 1) {
-      if (n) u += '*';
-      u += denominators[n];
-    }
-    return u;
   }
 
-  bool Units::is_unitless() const
+  const sass::string& Units::unit() const
+  {
+    // Units are expected to be short, so we hopefully
+    // can profit from small objects optimization. This
+    // is not guaranteed, but still safe to assume that
+    // any mature implementation utilizes it.
+    if (stringified.empty()) {
+      size_t iL = numerators.size();
+      size_t nL = denominators.size();
+      for (size_t i = 0; i < iL; i += 1) {
+        if (i) stringified += '*';
+        stringified += numerators[i];
+      }
+      if (iL == 0) {
+        if (nL > 1) stringified += '(';
+        for (size_t n = 0; n < nL; n += 1) {
+          if (n) stringified += '*';
+          stringified += denominators[n];
+        }
+        if (nL > 1) stringified += ')';
+        if (nL != 0) stringified += "^-1";
+      }
+      else {
+        if (nL != 0) stringified += '/';
+        for (size_t n = 0; n < nL; n += 1) {
+          if (n) stringified += '*';
+          stringified += denominators[n];
+        }
+      }
+    }
+    return stringified;
+  }
+
+  bool Units::hasUnit(sass::string unit)
+  {
+    return numerators.size() == 1 &&
+      denominators.empty() &&
+      numerators[0] == unit;
+  }
+
+  bool Units::isUnitless() const
   {
     return numerators.empty() &&
            denominators.empty();
   }
 
-  bool Units::is_valid_css_unit() const
+  bool Units::isValidCssUnit() const
   {
     return numerators.size() <= 1 &&
            denominators.size() == 0;
   }
 
   // this does not cover all cases (multiple preferred units)
-  double Units::convert_factor(const Units& r) const
+  double Units::getUnitConvertFactor(const Units& r) const
   {
 
     sass::vector<sass::string> miss_nums(0);
@@ -409,8 +427,8 @@ namespace Sass {
     auto l_num_it = numerators.begin();
     auto l_num_end = numerators.end();
 
-    bool l_unitless = is_unitless();
-    auto r_unitless = r.is_unitless();
+    bool l_unitless = isUnitless();
+    auto r_unitless = r.isUnitless();
 
     // overall conversion
     double factor = 1;
@@ -421,6 +439,9 @@ namespace Sass {
       // get and increment afterwards
       const sass::string l_num = *(l_num_it ++);
 
+      // ToDo: we erase from base vector in the loop.
+      // Iterators might get invalid during the loop
+      // ToDo: refactor to use index access instead.
       auto r_num_it = r_nums.begin(), r_num_end = r_nums.end();
 
       bool found = false;
@@ -446,7 +467,7 @@ namespace Sass {
       }
       // maybe we did not find any
       // left numerator is leftover
-      if (!found) miss_nums.push_back(l_num);
+      if (!found) miss_nums.emplace_back(l_num);
     }
 
     auto l_den_it = denominators.begin();
@@ -484,24 +505,27 @@ namespace Sass {
       }
       // maybe we did not find any
       // left denominator is leftover
-      if (!found) miss_dens.push_back(l_den);
+      if (!found) miss_dens.emplace_back(l_den);
     }
 
     // check left-overs (ToDo: might cancel out?)
     if (miss_nums.size() > 0 && !r_unitless) {
-      throw Exception::IncompatibleUnits(r, *this);
+      return 0.0;
     }
     else if (miss_dens.size() > 0 && !r_unitless) {
-      throw Exception::IncompatibleUnits(r, *this);
+      return 0.0;
     }
     else if (r_nums.size() > 0 && !l_unitless) {
-      throw Exception::IncompatibleUnits(r, *this);
+      return 0.0;
     }
     else if (r_dens.size() > 0 && !l_unitless) {
-      throw Exception::IncompatibleUnits(r, *this);
+      return 0.0;
     }
 
     return factor;
   }
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
 }

@@ -1,99 +1,102 @@
-#ifndef SASS_INSPECT_H
-#define SASS_INSPECT_H
+#ifndef SASS_INSPECT_HPP
+#define SASS_INSPECT_HPP
 
-#include "position.hpp"
-#include "operation.hpp"
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
+
 #include "emitter.hpp"
+#include "color_maps.hpp"
+#include "visitor_css.hpp"
+#include "visitor_value.hpp"
+#include "visitor_selector.hpp"
 
 namespace Sass {
   class Context;
 
-  class Inspect : public Operation_CRTP<void, Inspect>, public Emitter {
-  protected:
-    // import all the class-specific methods and override as desired
-    using Operation_CRTP<void, Inspect>::operator();
+  // public SelectorVisitor<void>
+
+  // Inspect does roughly the same as serialize.dart
+  class Inspect :
+    public SelectorVisitor<void>,
+    public ValueVisitor<void>,
+    public CssVisitor<void>,
+    public Emitter {
 
   public:
 
-    Inspect(const Emitter& emi);
-    virtual ~Inspect();
+    // Whether quoted strings should be emitted with quotes.
+    bool quotes;
 
-    // statements
-    virtual void operator()(Block*);
-    virtual void operator()(StyleRule*);
-    virtual void operator()(Bubble*);
-    virtual void operator()(SupportsRule*);
-    virtual void operator()(AtRootRule*);
-    virtual void operator()(AtRule*);
-    virtual void operator()(Keyframe_Rule*);
-    virtual void operator()(Declaration*);
-    virtual void operator()(Assignment*);
-    virtual void operator()(Import*);
-    virtual void operator()(Import_Stub*);
-    virtual void operator()(WarningRule*);
-    virtual void operator()(ErrorRule*);
-    virtual void operator()(DebugRule*);
-    virtual void operator()(Comment*);
-    virtual void operator()(If*);
-    virtual void operator()(ForRule*);
-    virtual void operator()(EachRule*);
-    virtual void operator()(WhileRule*);
-    virtual void operator()(Return*);
-    virtual void operator()(ExtendRule*);
-    virtual void operator()(Definition*);
-    virtual void operator()(Mixin_Call*);
-    virtual void operator()(Content*);
-    // expressions
-    virtual void operator()(Map*);
-    virtual void operator()(Function*);
-    virtual void operator()(List*);
-    virtual void operator()(Binary_Expression*);
-    virtual void operator()(Unary_Expression*);
-    virtual void operator()(Function_Call*);
-    // virtual void operator()(Custom_Warning*);
-    // virtual void operator()(Custom_Error*);
-    virtual void operator()(Variable*);
-    virtual void operator()(Number*);
-    virtual void operator()(Color_RGBA*);
-    virtual void operator()(Color_HSLA*);
-    virtual void operator()(Boolean*);
-    virtual void operator()(String_Schema*);
-    virtual void operator()(String_Constant*);
-    virtual void operator()(String_Quoted*);
-    virtual void operator()(Custom_Error*);
-    virtual void operator()(Custom_Warning*);
-    virtual void operator()(SupportsOperation*);
-    virtual void operator()(SupportsNegation*);
-    virtual void operator()(SupportsDeclaration*);
-    virtual void operator()(Supports_Interpolation*);
-    virtual void operator()(MediaRule*);
-    virtual void operator()(CssMediaRule*);
-    virtual void operator()(CssMediaQuery*);
-    virtual void operator()(Media_Query*);
-    virtual void operator()(Media_Query_Expression*);
-    virtual void operator()(At_Root_Query*);
-    virtual void operator()(Null*);
-    virtual void operator()(Parent_Reference* p);
-    // parameters and arguments
-    virtual void operator()(Parameter*);
-    virtual void operator()(Parameters*);
-    virtual void operator()(Argument*);
-    virtual void operator()(Arguments*);
-    // selectors
-    virtual void operator()(Selector_Schema*);
-    virtual void operator()(PlaceholderSelector*);
-    virtual void operator()(TypeSelector*);
-    virtual void operator()(ClassSelector*);
-    virtual void operator()(IDSelector*);
-    virtual void operator()(AttributeSelector*);
-    virtual void operator()(PseudoSelector*);
-    virtual void operator()(SelectorComponent*);
-    virtual void operator()(SelectorCombinator*);
-    virtual void operator()(CompoundSelector*);
-    virtual void operator()(ComplexSelector*);
-    virtual void operator()(SelectorList*);
-    virtual sass::string lbracket(List*);
-    virtual sass::string rbracket(List*);
+    // So far this only influences how list are rendered.
+    // If the separator is known to be comma, we append
+    // a trailing comma for lists with a single item.
+    bool inspect;
+
+    // We should probably pass an emitter, so we can switch implementation?
+    Inspect(struct SassOutputOptionsCpp& opt, bool srcmap_enabled);
+    Inspect(Logger& logger, struct SassOutputOptionsCpp& opt, bool srcmap_enabled);
+
+    void visitBlockStatements(CssNodeVector children);
+    
+    void renderQuotedString(const sass::string& text, uint8_t quotes = 0);
+    void renderUnquotedString(const sass::string& text);
+
+    /////////////////////////////////////////////////////////////////////////
+    // Implement Selector Visitors
+    /////////////////////////////////////////////////////////////////////////
+
+    virtual void visitAttributeSelector(AttributeSelector* sel) override;
+    virtual void visitClassSelector(ClassSelector* sel) override;
+    virtual void visitComplexSelector(ComplexSelector* sel) override;
+    virtual void visitCompoundSelector(CompoundSelector* sel) override;
+    virtual void visitIDSelector(IDSelector* sel) override;
+    virtual void visitPlaceholderSelector(PlaceholderSelector* sel) override;
+    virtual void visitPseudoSelector(PseudoSelector* sel) override;
+    virtual void visitSelectorCombinator(SelectorCombinator* sel) override; // LibSass only
+    virtual void visitSelectorList(SelectorList* sel) override;
+    virtual void visitTypeSelector(TypeSelector* sel) override;
+
+    /////////////////////////////////////////////////////////////////////////
+    // Implement Value Visitors
+    /////////////////////////////////////////////////////////////////////////
+
+    virtual void visitBoolean(Boolean* value) override;
+    virtual void visitColor(Color* value) override;
+    virtual void visitFunction(Function* value) override;
+    virtual void visitList(List* value) override;
+    virtual void visitMap(Map* value) override;
+    virtual void visitNull(Null* value) override;
+    virtual void visitNumber(Number* value) override;
+    virtual void visitString(String* value) override;
+
+    /////////////////////////////////////////////////////////////////////////
+    // Implement CSS Visitors
+    /////////////////////////////////////////////////////////////////////////
+
+    virtual void visitCssAtRule(CssAtRule* css) override;
+    virtual void visitCssComment(CssComment* css) override;
+    virtual void visitCssDeclaration(CssDeclaration* css) override;
+    virtual void visitCssImport(CssImport* css) override;
+    virtual void visitCssKeyframeBlock(CssKeyframeBlock* css) override;
+    virtual void visitCssMediaRule(CssMediaRule* css) override;
+    virtual void visitCssRoot(CssRoot* css) override; // LibSass only
+    virtual void visitCssStyleRule(CssStyleRule* css) override;
+    virtual void visitCssSupportsRule(CssSupportsRule* css) override;
+
+    /////////////////////////////////////////////////////////////////////////
+    // Not part of visitors (used internally as entry points)
+    /////////////////////////////////////////////////////////////////////////
+
+    virtual void acceptCssString(CssString*);
+    virtual void acceptCssMediaQuery(CssMediaQuery*);
+    virtual void acceptInterpolation(Interpolation*);
+    virtual void acceptNameSpaceSelector(NameSpaceSelector*);
+
+    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    void _writeMapElement(Interpolant* value);
 
   };
 

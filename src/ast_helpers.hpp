@@ -1,41 +1,44 @@
 #ifndef SASS_AST_HELPERS_H
 #define SASS_AST_HELPERS_H
 
-// sass.hpp must go before all system headers to get the
-// __EXTENSIONS__ fix on Solaris.
-#include "sass.hpp"
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
 #include <algorithm>
 #include <functional>
 #include "util_string.hpp"
+#include "string_utils.hpp"
 
 namespace Sass {
 
-  // ###########################################################################
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
+  /////////////////////////////////////////////////////////////////////////#
 
   // easier to search with name
   const bool DELAYED = true;
 
-  // ToDo: should this really be hardcoded
+  // ToDo: should this really be hard-coded
   // Note: most methods follow precision option
   const double NUMBER_EPSILON = 1e-12;
 
   // macro to test if numbers are equal within a small error margin
   #define NEAR_EQUAL(lhs, rhs) std::fabs(lhs - rhs) < NUMBER_EPSILON
 
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
   // We define various functions and functors here.
   // Functions satisfy the BinaryPredicate requirement
   // Functors are structs used for e.g. unordered_map
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
 
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
   // Implement compare and hashing operations for raw pointers
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
+
+  const std::hash<std::size_t> hasher;
 
   template <class T>
   size_t PtrHashFn(const T* ptr) {
-    return std::hash<std::size_t>()((size_t)ptr);
+    return ((size_t)ptr) >> 3;
   }
 
   struct PtrHash {
@@ -57,11 +60,11 @@ namespace Sass {
     }
   };
 
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
   // Implement compare and hashing operations for AST Nodes
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
 
-  // TODO: get rid of funtions and use ObjEquality<T>
+  // TODO: get rid of functions and use ObjEquality<T>
 
   template <class T>
   // Hash the raw pointer instead of object
@@ -124,7 +127,7 @@ namespace Sass {
   bool PtrObjEqualityFn(const T* lhs, const T* rhs) {
     if (lhs == nullptr) return rhs == nullptr;
     else if (rhs == nullptr) return false;
-    else return *lhs == *rhs;
+    else return lhs == rhs || *lhs == *rhs;
   }
 
   struct PtrObjEquality {
@@ -149,40 +152,16 @@ namespace Sass {
     }
   };
 
-  // ###########################################################################
-  // Special compare function only for hashes.
-  // We need to make sure to not have objects equal that 
-  // have different hashes. This is currently an issue,
-  // since `1px` is equal to `1` but have different hashes.
-  // This goes away once we remove unitless equality.
-  // ###########################################################################
-
-  template <class T>
-  // Compare the objects and its hashes
-  bool ObjHashEqualityFn(const T& lhs, const T& rhs) {
-    if (lhs == nullptr) return rhs == nullptr;
-    else if (rhs == nullptr) return false;
-    else return lhs->hash() == rhs->hash();
-  }
-  struct ObjHashEquality {
-    template <class T>
-    // Compare the objects and its contents and hashes
-    bool operator() (const T& lhs, const T& rhs) const {
-      return ObjEqualityFn<T>(lhs, rhs) &&
-        ObjHashEqualityFn(lhs, rhs);
-    }
-  };
-
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
   // Implement ordering operations for AST Nodes
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
 
   template <class T>
   // Compare the objects behind pointers
   bool PtrObjLessThanFn(const T* lhs, const T* rhs) {
     if (lhs == nullptr) return rhs != nullptr;
     else if (rhs == nullptr) return false;
-    else return *lhs < *rhs;
+    else return lhs != rhs && *lhs < *rhs;
   }
 
   struct PtrObjLessThan {
@@ -207,9 +186,9 @@ namespace Sass {
     }
   };
 
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
   // Some STL helper functions
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
 
   // Check if all elements are equal
   template <class X, class Y,
@@ -229,6 +208,12 @@ namespace Sass {
     return cnt && cnt->empty();
   }
 
+  // Return if Vector is empty
+  // template <class T>
+  // bool listIsInvisible(T* cnt) {
+  //   return cnt && (cnt->empty() || (cnt->hasInvisible() && !cnt->hasInvisible()));
+  // }
+
   // Erase items from vector that match predicate
   template<class T, class UnaryPredicate>
   void listEraseItemIf(T& vec, UnaryPredicate* predicate)
@@ -247,69 +232,69 @@ namespace Sass {
     return true;
   }
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Returns whether [name] is the name of a pseudo-element
   // that can be written with pseudo-class syntax (CSS2 vs CSS3):
   // `:before`, `:after`, `:first-line`, or `:first-letter`
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   inline bool isFakePseudoElement(const sass::string& name)
   {
-    return Util::equalsLiteral("after", name)
-      || Util::equalsLiteral("before", name)
-      || Util::equalsLiteral("first-line", name)
-      || Util::equalsLiteral("first-letter", name);
+    return StringUtils::equalsIgnoreCase(name, "after", 5)
+      || StringUtils::equalsIgnoreCase(name, "before", 6)
+      || StringUtils::equalsIgnoreCase(name, "first-line", 10)
+      || StringUtils::equalsIgnoreCase(name, "first-letter", 12);
   }
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Names of pseudo selectors that take selectors as arguments,
   // and that are subselectors of their arguments.
   // For example, `.foo` is a superselector of `:matches(.foo)`.
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   inline bool isSubselectorPseudo(const sass::string& norm)
   {
-    return Util::equalsLiteral("any", norm)
-      || Util::equalsLiteral("matches", norm)
-      || Util::equalsLiteral("nth-child", norm)
-      || Util::equalsLiteral("nth-last-child", norm);
+    return StringUtils::equalsIgnoreCase(norm, "any", 3)
+      || StringUtils::equalsIgnoreCase(norm, "matches", 7)
+      || StringUtils::equalsIgnoreCase(norm, "nth-child", 9)
+      || StringUtils::equalsIgnoreCase(norm, "nth-last-child", 14);
   }
   // EO isSubselectorPseudo
 
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
   // Pseudo-class selectors that take unadorned selectors as arguments.
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
   inline bool isSelectorPseudoClass(const sass::string& test)
   {
-    return Util::equalsLiteral("not", test)
-      || Util::equalsLiteral("matches", test)
-      || Util::equalsLiteral("current", test)
-      || Util::equalsLiteral("any", test)
-      || Util::equalsLiteral("has", test)
-      || Util::equalsLiteral("host", test)
-      || Util::equalsLiteral("host-context", test);
+    return StringUtils::equalsIgnoreCase(test, "not", 3)
+      || StringUtils::equalsIgnoreCase(test, "matches", 7)
+      || StringUtils::equalsIgnoreCase(test, "current", 7)
+      || StringUtils::equalsIgnoreCase(test, "any", 3)
+      || StringUtils::equalsIgnoreCase(test, "has", 3)
+      || StringUtils::equalsIgnoreCase(test, "host", 4)
+      || StringUtils::equalsIgnoreCase(test, "host-context", 12);
   }
   // EO isSelectorPseudoClass
 
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
   // Pseudo-element selectors that take unadorned selectors as arguments.
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
   inline bool isSelectorPseudoElement(const sass::string& test)
   {
-    return Util::equalsLiteral("slotted", test);
+    return StringUtils::equalsIgnoreCase(test, "slotted", 7);
   }
   // EO isSelectorPseudoElement
 
-  // ###########################################################################
-  // Pseudo-element selectors that has binominals
-  // ###########################################################################
-  inline bool isSelectorPseudoBinominal(const sass::string& test)
-  {
-    return Util::equalsLiteral("nth-child", test)
-      || Util::equalsLiteral("nth-last-child", test);
-  }
-  // isSelectorPseudoBinominal
+  /////////////////////////////////////////////////////////////////////////#
+  // Pseudo-element selectors that has binomials
+  /////////////////////////////////////////////////////////////////////////#
+  // inline bool isSelectorPseudoBinominal(const sass::string& test)
+  // {
+  //   return StringUtils::equalsIgnoreCase(test, "nth-child", 11)
+  //     || StringUtils::equalsIgnoreCase(test, "nth-last-child", 14);
+  // }
+  // EO isSelectorPseudoBinominal
 
-  // ###########################################################################
-  // ###########################################################################
+  /////////////////////////////////////////////////////////////////////////#
+  /////////////////////////////////////////////////////////////////////////#
 
 }
 

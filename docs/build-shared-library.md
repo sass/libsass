@@ -28,7 +28,6 @@ This should install these files
 /usr/lib/libsass.so.0.0.9
 # $ ls -la /usr/include/sass*
 /usr/include/sass.h
-/usr/include/sass2scss.h
 /usr/include/sass/context.h
 /usr/include/sass/functions.h
 /usr/include/sass/values.h

@@ -1,24 +1,30 @@
-#ifndef SASS_STYLESHEET_H
-#define SASS_STYLESHEET_H
+#ifndef SASS_STYLESHEET_HPP
+#define SASS_STYLESHEET_HPP
 
-// sass.hpp must go before all system headers to get the
-// __EXTENSIONS__ fix on Solaris.
-#include "sass.hpp"
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
 
-#include "ast_fwd_decl.hpp"
-#include "extender.hpp"
 #include "file.hpp"
 
 namespace Sass {
 
   // parsed stylesheet from loaded resource
   // this should be a `Module` for sass 4.0
-  class StyleSheet : public Resource {
+  class StyleSheet : public SharedObj {
     public:
+
+      // Whether this was parsed from a plain CSS stylesheet.
+      // bool plainCss33;
+
+      // SourceDataObj source;
 
       // The canonical URL for this module's source file. This may be `null`
       // if the module was loaded from a string without a URL provided.
-      // Uri get url;
+      // struct SassImport* import;
+
+      // the import type
+      // SassImportFormat syntax;
 
       // Modules that this module uses.
       // List<Module> get upstream;
@@ -37,17 +43,15 @@ namespace Sass {
       // The extensions defined in this module, which is also able to update
       // [css]'s style rules in-place based on downstream extensions.
       // Extender extender;
+      ImportObj import;
 
       // The module's CSS tree.
-      Block_Obj root;
+      RootObj root2;
 
     public:
 
       // default argument constructor
-      StyleSheet(const Resource& res, Block_Obj root);
-
-      // Copy constructor
-      StyleSheet(const StyleSheet& res);
+      StyleSheet(ImportObj import, RootObj root);
 
   };
 

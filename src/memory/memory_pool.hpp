@@ -1,15 +1,23 @@
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
 #ifndef SASS_MEMORY_POOL_H
 #define SASS_MEMORY_POOL_H
 
-#include <stdlib.h>
-#include <iostream>
-#include <algorithm>
-#include <climits>
 #include <vector>
+#include <string>
+#include <climits>
+#include <algorithm>
+
+#include "config.hpp"
 
 namespace Sass {
 
+#ifdef SASS_CUSTOM_ALLOCATOR
+
+  /////////////////////////////////////////////////////////////////////////
   // SIMPLE MEMORY-POOL ALLOCATOR WITH FREE-LIST ON TOP
+  /////////////////////////////////////////////////////////////////////////
 
   // This is a memory pool allocator with a free list on top.
   // We only allocate memory arenas from the system in specific
@@ -30,9 +38,12 @@ namespace Sass {
   // https://en.wikipedia.org/wiki/Free_list
 
   // On allocation calls we first check if there is any suitable
-  // item on the free-list. If there is we pop it from the stack
+  // item on the free-list. If there is, we pop it from the stack
   // and return it to the caller. Otherwise we have to take out
   // a new slice from the current `arena` and increase `offset`.
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
   // Note that this is not thread safe. This is on purpose as we
   // want to use the memory pool in a thread local usage. In order
@@ -42,6 +53,9 @@ namespace Sass {
   // it once all allocations have been returned. E.g. by using:
   // static thread_local size_t allocations;
   // static thread_local MemoryPool* pool;
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
   class MemoryPool {
 
@@ -75,8 +89,7 @@ namespace Sass {
       // Set to maximum value in order to
       // make an allocation on the first run
       offset(std::string::npos)
-    {
-    }
+    {}
 
     // Destructor
     ~MemoryPool() {
@@ -86,7 +99,6 @@ namespace Sass {
       }
       // Delete current arena
       free(arena);
-
     }
 
     // Allocate a slice of the memory pool
@@ -154,6 +166,7 @@ namespace Sass {
     }
     // EO allocate
 
+    // Deallocate the pointer
     void deallocate(void* ptr)
     {
 
@@ -180,6 +193,8 @@ namespace Sass {
     // EO deallocate
 
   };
+
+#endif
 
 }
 

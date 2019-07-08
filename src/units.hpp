@@ -1,10 +1,14 @@
-#ifndef SASS_UNITS_H
-#define SASS_UNITS_H
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
+#ifndef SASS_UNITS_HPP
+#define SASS_UNITS_HPP
 
-#include <cmath>
-#include <string>
-#include <sstream>
-#include <vector>
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
+
+#include "ast_def_macros.hpp"
 
 namespace Sass {
 
@@ -22,7 +26,7 @@ namespace Sass {
   enum UnitType {
 
     // size units
-    IN = UnitClass::LENGTH,
+    INCH = UnitClass::LENGTH,
     CM,
     PC,
     MM,
@@ -54,26 +58,59 @@ namespace Sass {
   };
 
   class Units {
+
+  private:
+
+    mutable sass::string stringified;
+
   public:
+
     sass::vector<sass::string> numerators;
     sass::vector<sass::string> denominators;
-  public:
+
     // default constructor
     Units() :
       numerators(),
       denominators()
     { }
+
+    Units(const sass::string& u) :
+      numerators(),
+      denominators()
+    {
+      unit(u);
+    }
+
+
     // copy constructor
     Units(const Units* ptr) :
       numerators(ptr->numerators),
       denominators(ptr->denominators)
     { }
+
+    // copy constructor
+    Units(const Units& ptr) :
+      numerators(ptr.numerators),
+      denominators(ptr.denominators)
+    { }
+
+    // move constructor
+    Units(Units&& other) noexcept :
+      numerators(std::move(other.numerators)),
+      denominators(std::move(other.denominators))
+    { }
+
     // convert to string
-    sass::string unit() const;
+    const sass::string& unit() const;
+    void unit(const sass::string& unit);
     // get if units are empty
-    bool is_unitless() const;
+    bool isUnitless() const;
+
+    bool hasUnits() const {
+      return !isUnitless();
+    }
     // return if valid for css
-    bool is_valid_css_unit() const;
+    bool isValidCssUnit() const;
     // reduce units for output
     // returns conversion factor
     double reduce();
@@ -81,25 +118,32 @@ namespace Sass {
     // returns conversion factor
     double normalize();
     // compare operations
-    bool operator< (const Units& rhs) const;
-    bool operator== (const Units& rhs) const;
-    bool operator!= (const Units& rhs) const;
+    bool operator==(const Units& rhs) const;
+    // Delete other operators to make implementation more clear
+    // Helps us spot cases where we use undefined implementations
+    // bool operator!=(const Units& rhs) const = delete;
+    // bool operator>=(const Units& rhs) const = delete;
+    // bool operator<=(const Units& rhs) const = delete;
+    // bool operator>(const Units& rhs) const = delete;
+    // bool operator<(const Units& rhs) const = delete;
+
     // factor to convert into given units
-    double convert_factor(const Units&) const;
+    double getUnitConvertFactor(const Units&) const;
+    // 
+    bool hasUnit(sass::string numerator);
   };
 
+  /* Declare matrix tables for unit conversion factors*/
   extern const double size_conversion_factors[6][6];
   extern const double angle_conversion_factors[4][4];
   extern const double time_conversion_factors[2][2];
   extern const double frequency_conversion_factors[2][2];
   extern const double resolution_conversion_factors[3][3];
 
-  UnitType get_main_unit(const UnitClass unit);
+  UnitType get_standard_unit(const UnitClass unit);
   enum Sass::UnitType string_to_unit(const sass::string&);
   const char* unit_to_string(Sass::UnitType unit);
   enum Sass::UnitClass get_unit_type(Sass::UnitType unit);
-  sass::string get_unit_class(Sass::UnitType unit);
-  sass::string unit_to_class(const sass::string&);
   // throws incompatibleUnits exceptions
   double conversion_factor(const sass::string&, const sass::string&);
   double conversion_factor(UnitType, UnitType, UnitClass, UnitClass);

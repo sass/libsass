@@ -19,11 +19,9 @@ if [ "x$COVERAGE" = "xyes" ]; then
                            --exclude src/cencode.c
                            --exclude src/b64
                            --exclude src/utf8
-                           --exclude src/utf8_string.hpp
+                           --exclude src/unicode.hpp
                            --exclude src/utf8.h
-                           --exclude src/utf8_string.cpp
-                           --exclude src/sass2scss.h
-                           --exclude src/sass2scss.cpp
+                           --exclude src/unicode.cpp
                            --exclude src/test
                            --exclude src/posix
                            --exclude src/debugger.hpp"

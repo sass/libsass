@@ -1,5 +1,8 @@
-#ifndef SASS_MEMORY_H
-#define SASS_MEMORY_H
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
+#ifndef SASS_MEMORY_HPP
+#define SASS_MEMORY_HPP
 
 #include "settings.hpp"
 

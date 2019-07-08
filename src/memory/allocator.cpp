@@ -1,31 +1,34 @@
-#include "../sass.hpp"
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
 #include "allocator.hpp"
-#include "memory_pool.hpp"
 
-#if defined (_MSC_VER) // Visual studio
-#define thread_local __declspec( thread )
-#elif defined (__GCC__) // GCC
-#define thread_local __thread
+#ifdef SASS_CUSTOM_ALLOCATOR
+#include "memory_pool.hpp"
 #endif
 
 namespace Sass {
 
 #ifdef SASS_CUSTOM_ALLOCATOR
 
-  // Only use PODs for thread_local
-  // Objects get unpredictable init order
+  // You must only use PODs for thread_local.
+  // Objects get very unpredictable init order.
   static thread_local MemoryPool* pool;
   static thread_local size_t allocations;
 
+  // Allocate memory from the memory pool.
+  // Memory pool is allocated on first call.
   void* allocateMem(size_t size)
   {
     if (pool == nullptr) {
       pool = new MemoryPool();
     }
-    allocations++;
+    ++allocations;
     return pool->allocate(size);
   }
 
+  // Release the memory from the pool.
+  // Destroys the pool when it is emptied.
   void deallocateMem(void* ptr, size_t size)
   {
 

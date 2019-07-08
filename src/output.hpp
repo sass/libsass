@@ -1,44 +1,55 @@
-#ifndef SASS_OUTPUT_H
-#define SASS_OUTPUT_H
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
+#ifndef SASS_OUTPUT_HPP
+#define SASS_OUTPUT_HPP
 
-#include <string>
-#include <vector>
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
 
-#include "util.hpp"
-#include "inspect.hpp"
-#include "operation.hpp"
+#include "cssize.hpp"
 
 namespace Sass {
-  class Context;
 
-  class Output : public Inspect {
+  class Output : public Cssize
+  {
   protected:
-    using Inspect::operator();
 
-  public:
-    Output(Sass_Output_Options& opt);
-    virtual ~Output();
-
-  protected:
     sass::string charset;
-    sass::vector<AST_Node*> top_nodes;
+    CssNodeVector top_nodes;
 
   public:
-    OutputBuffer get_buffer(void);
 
-    virtual void operator()(Map*);
-    virtual void operator()(StyleRule*);
-    virtual void operator()(SupportsRule*);
-    virtual void operator()(CssMediaRule*);
-    virtual void operator()(AtRule*);
-    virtual void operator()(Keyframe_Rule*);
-    virtual void operator()(Import*);
-    virtual void operator()(Comment*);
-    virtual void operator()(Number*);
-    virtual void operator()(String_Quoted*);
-    virtual void operator()(String_Constant*);
+    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
 
-    void fallback_impl(AST_Node* n);
+    // Value constructor
+    Output(
+      SassOutputOptionsCpp& opt,
+      bool srcmap_enabled);
+
+    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    // Return buffer to compiler
+    OutputBuffer getBuffer(void);
+
+    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    virtual void visitCssImport(CssImport*) override;
+    virtual void visitCssComment(CssComment*) override;
+    virtual void visitCssMediaRule(CssMediaRule*) override;
+
+    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    virtual void visitMap(Map* value) override;
+    virtual void visitString(String* value) override;
+
+    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
 
   };
 

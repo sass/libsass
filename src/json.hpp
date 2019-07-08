@@ -24,8 +24,8 @@
 #ifndef CCAN_JSON_H
 #define CCAN_JSON_H
 
-#include <stdbool.h>
-#include <stddef.h>
+#include <cstdbool>
+#include <cstddef>
 
 typedef enum {
   JSON_NULL,

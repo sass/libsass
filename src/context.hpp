@@ -1,139 +1,134 @@
-#ifndef SASS_CONTEXT_H
-#define SASS_CONTEXT_H
+#ifndef SASS_CONTEXT_HPP
+#define SASS_CONTEXT_HPP
 
-// sass.hpp must go before all system headers to get the
-// __EXTENSIONS__ fix on Solaris.
-#include "sass.hpp"
-#include "ast.hpp"
-
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
 
 #define BUFFERSIZE 255
 #include "b64/encode.h"
 
-#include "sass_context.hpp"
-#include "stylesheet.hpp"
-#include "plugins.hpp"
-#include "output.hpp"
+#include <map>
+#include "file.hpp"
+#include "ast_callables.hpp"
+
+// #include "output.hpp"
+// #include "sass_context.hpp"
+// #include "stylesheet.hpp"
+// #include "environment_stack.hpp"
 
 namespace Sass {
 
-  class Context {
-  public:
-    void import_url (Import* imp, sass::string load_path, const sass::string& ctx_path);
-    bool call_headers(const sass::string& load_path, const char* ctx_path, SourceSpan& pstate, Import* imp)
-    { return call_loader(load_path, ctx_path, pstate, imp, c_headers, false); };
-    bool call_importers(const sass::string& load_path, const char* ctx_path, SourceSpan& pstate, Import* imp)
-    { return call_loader(load_path, ctx_path, pstate, imp, c_importers, true); };
+  // Compiler is stateful, while Context is more low-level
+  class Context : public SassOutputOptionsCpp {
 
   private:
-    bool call_loader(const sass::string& load_path, const char* ctx_path, SourceSpan& pstate, Import* imp, sass::vector<Sass_Importer_Entry> importers, bool only_one = true);
+
+    // Checking if a file exists can be quite extensive
+    // Keep an internal map to avoid repeated system calls
+    std::unordered_map<sass::string, bool> fileExistsCache;
+
+    // Include paths are local to context since we need to know
+    // it for lookups during parsing. You may reset this for
+    // another compilation when reusing the context.
+    sass::vector<sass::string> includePaths;
+
+  protected:
+
+    // Functions in order of appearance
+    // Same order needed for function stack
+    std::vector<CallableObj> fnList;
+
+    // Lookup functions by function name
+    // Due to EnvKayMap case insensitive.
+    EnvKeyMap<CallableObj> fnLookup;
+
+    // Sheets are filled after resources are parsed
+    // This could be shared, should go to engine!?
+    // ToDo: should be case insensitive on windows?
+    std::map<const sass::string, StyleSheetObj> sheets;
+
+    // Only used to cache `loadImport` calls
+    std::map<const sass::string, ImportObj> sources;
+
+    // Additional C-API stuff for interaction
+    sass::vector<struct SassImporter*> cHeaders;
+    sass::vector<struct SassImporter*> cImporters;
+    sass::vector<struct SassFunction*> cFunctions;
 
   public:
-    const sass::string CWD;
-    struct Sass_Options& c_options;
-    sass::string entry_path;
-    size_t head_imports;
-    Plugins plugins;
-    Output emitter;
 
-    // generic ast node garbage container
-    // used to avoid possible circular refs
-    CallStack ast_gc;
-    // resources add under our control
-    // these are guaranteed to be freed
-    sass::vector<char*> strings;
-    sass::vector<Resource> resources;
-    std::map<const sass::string, StyleSheet> sheets;
-    ImporterStack import_stack;
-    sass::vector<Sass_Callee> callee_stack;
-    sass::vector<Backtrace> traces;
-    Extender extender;
+    // Stack of environment frames. New frames are appended
+    // when parser encounters a new environment scoping.
+    sass::vector<EnvFrame*> varStack;
 
-    struct Sass_Compiler* c_compiler;
+    // The root environment where parsed root variables
+    // and (custom) functions plus mixins are registered.
+    EnvRoot varRoot; // Must be after varStack!
 
-    // absolute paths to includes
-    sass::vector<sass::string> included_files;
-    // relative includes for sourcemap
-    sass::vector<sass::string> srcmap_links;
-    // vectors above have same size
+    // The import stack during evaluation phase
+    sass::vector<ImportObj> import_stack;
 
-    sass::vector<sass::string> plugin_paths; // relative paths to load plugins
-    sass::vector<sass::string> include_paths; // lookup paths for includes
+    // List of all sources that have been included
+    sass::vector<SourceDataObj> included_sources;
 
-    void apply_custom_headers(Block_Obj root, const char* path, SourceSpan pstate);
+    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
 
-    sass::vector<Sass_Importer_Entry> c_headers;
-    sass::vector<Sass_Importer_Entry> c_importers;
-    sass::vector<Sass_Function_Entry> c_functions;
+    // Constructor
+    Context();
 
-    void add_c_header(Sass_Importer_Entry header);
-    void add_c_importer(Sass_Importer_Entry importer);
-    void add_c_function(Sass_Function_Entry function);
+    /////////////////////////////////////////////////////////////////////////
+    // Helpers for `sass_prepare_context`
+    /////////////////////////////////////////////////////////////////////////
 
-    const sass::string indent; // String to be used for indentation
-    const sass::string linefeed; // String to be used for line feeds
-    const sass::string input_path; // for relative paths in src-map
-    const sass::string output_path; // for relative paths to the output
-    const sass::string source_map_file; // path to source map file (enables feature)
-    const sass::string source_map_root; // path for sourceRoot property (pass-through)
+    void addCustomHeader(struct SassImporter* header);
+    void addCustomImporter(struct SassImporter* importer);
+    void addCustomFunction(struct SassFunction* function);
 
-    virtual ~Context();
-    Context(struct Sass_Context&);
-    virtual Block_Obj parse() = 0;
-    virtual Block_Obj compile();
-    virtual char* render(Block_Obj root);
-    virtual char* render_srcmap();
+    /////////////////////////////////////////////////////////////////////////
+    // Some simple delegations to variable root for runtime queries
+    /////////////////////////////////////////////////////////////////////////
 
-    void register_resource(const Include&, const Resource&);
-    void register_resource(const Include&, const Resource&, SourceSpan&);
-    sass::vector<Include> find_includes(const Importer& import);
-    Include load_import(const Importer&, SourceSpan pstate);
-
-    Sass_Output_Style output_style() { return c_options.output_style; };
-    sass::vector<sass::string> get_included_files(bool skip = false, size_t headers = 0);
-
-  private:
-    void collect_plugin_paths(const char* paths_str);
-    void collect_plugin_paths(string_list* paths_array);
-    void collect_include_paths(const char* paths_str);
-    void collect_include_paths(string_list* paths_array);
-    sass::string format_embedded_source_map();
-    sass::string format_source_mapping_url(const sass::string& out_path);
-
-
-    // void register_built_in_functions(Env* env);
-    // void register_function(Signature sig, Native_Function f, Env* env);
-    // void register_function(Signature sig, Native_Function f, size_t arity, Env* env);
-    // void register_overload_stub(sass::string name, Env* env);
-
-  public:
-    const sass::string& cwd() { return CWD; };
-  };
-
-  class File_Context : public Context {
-  public:
-    File_Context(struct Sass_File_Context& ctx)
-    : Context(ctx)
-    { }
-    virtual ~File_Context();
-    virtual Block_Obj parse();
-  };
-
-  class Data_Context : public Context {
-  public:
-    char* source_c_str;
-    char* srcmap_c_str;
-    Data_Context(struct Sass_Data_Context& ctx)
-    : Context(ctx)
-    {
-      source_c_str       = ctx.source_string;
-      srcmap_c_str       = ctx.srcmap_string;
-      ctx.source_string = 0; // passed away
-      ctx.srcmap_string = 0; // passed away
+    // Get the value object for the variable by [name] on runtime.
+    // If [global] flag is given, we 
+    ValueObj getVariable(const EnvKey& name, bool global = false) {
+      return varRoot.getVariable(name, global);
     }
-    virtual ~Data_Context();
-    virtual Block_Obj parse();
+
+    void setVariable(const EnvKey& name, ValueObj val, bool global = false) {
+      return varRoot.setVariable(name, val, global);
+    }
+
+    // Functions only for evaluation phase (C-API functions and eval itself)
+    CallableObj getMixin(const EnvKey& name) { return varRoot.getMixin(name); }
+    CallableObj getFunction(const EnvKey& name) { return varRoot.getFunction(name); }
+
+    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    // Load plugins from path, which can be path separated
+    void loadPlugins(const sass::string& paths);
+
+    // Add additional include paths, which can be path separated
+    void addIncludePaths(const sass::string& paths);
+
+    // Load import from the file-system and create source object
+    // Results will be stored at `sources[source->getAbsPath()]`
+    Import* loadImport(const ResolvedImport& import);
+
+    // Implementation for `sass_compiler_find_file`
+    // Looks for the file in regard to the current
+    // import and then looks in all include folders.
+    sass::string findFile(const sass::string& path);
+
+    // Implementation for `resolveDynamicImport`
+    // Look for all possible filename variants (e.g. partials)
+    // Returns all results (e.g. for ambiguous but valid imports)
+    sass::vector<ResolvedImport> findIncludes(const ImportRequest& import);
+
   };
+  // EO Context
 
 }
 

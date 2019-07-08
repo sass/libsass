@@ -1,10 +1,15 @@
-#ifndef SASS_ALLOCATOR_H
-#define SASS_ALLOCATOR_H
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
+#ifndef SASS_ALLOCATOR_HPP
+#define SASS_ALLOCATOR_HPP
 
 #include "config.hpp"
 #include "../settings.hpp"
 #include "../MurmurHash2.hpp"
+#include "../randomize.hpp"
 
+#include <deque>
 #include <vector>
 #include <limits>
 #include <iostream>
@@ -13,14 +18,17 @@
 
 namespace Sass {
 
-#ifndef SASS_CUSTOM_ALLOCATOR
-
+  // Fallback to standard allocator
+  #ifndef SASS_CUSTOM_ALLOCATOR
   template <typename T> using Allocator = std::allocator<T>;
+  #else
 
-#else
-
+  // Allocate memory from the memory pool.
+  // Memory pool is allocated on first call.
   void* allocateMem(size_t size);
 
+  // Release the memory from the pool.
+  // Destroys the pool when it is emptied.
   void deallocateMem(void* ptr, size_t size = 1);
 
   template<typename T>
@@ -38,16 +46,17 @@ namespace Sass {
     typedef std::size_t       size_type;       
     typedef std::ptrdiff_t    difference_type; 
 
+    // Not really sure what this does!?
     template<typename U>
     struct rebind
     {
       typedef Allocator<U> other;
     };
 
-    // Constructor
+    // Default constructor
     Allocator(void) {}
 
-    // Copy Constructor
+    // Copy constructor
     template<typename U>
     Allocator(Allocator<U> const&)
     {}
@@ -90,6 +99,7 @@ namespace Sass {
 
   };
 
+  // Allocators are equal, don't care for type!
   template<typename T, typename U>
     bool operator==(Allocator<T> const& left,
       Allocator<U> const& right)
@@ -97,6 +107,7 @@ namespace Sass {
     return true;
   }
 
+  // Allocators are equal, don't care for type!
   template<typename T, typename U>
     bool operator!=(Allocator<T> const& left,
       Allocator<U> const& right)
@@ -104,31 +115,36 @@ namespace Sass {
     return !(left == right);
   }
 
-#endif
+  // EO custom allocator
+  #endif
 
-  namespace sass {
-    template <typename T> using vector = std::vector<T, Sass::Allocator<T>>;
-    using string = std::basic_string<char, std::char_traits<char>, Sass::Allocator<char>>;
-    using sstream = std::basic_stringstream<char, std::char_traits<char>, Sass::Allocator<char>>;
-    using ostream = std::basic_ostringstream<char, std::char_traits<char>, Sass::Allocator<char>>;
-    using istream = std::basic_istringstream<char, std::char_traits<char>, Sass::Allocator<char>>;
-  }
+}
 
+// Make them available on the global scope
+// Easier for global structs needed for C linkage
+namespace sass { // Note the lower-case notation
+  template <typename T> using deque = std::deque<T, Sass::Allocator<T>>;
+  template <typename T> using vector = std::vector<T, Sass::Allocator<T>>;
+  using string = std::basic_string<char, std::char_traits<char>, Sass::Allocator<char>>;
+  using wstring = std::basic_string<wchar_t, std::char_traits<wchar_t>, Sass::Allocator<wchar_t>>;
+  using sstream = std::basic_stringstream<char, std::char_traits<char>, Sass::Allocator<char>>;
+  using ostream = std::basic_ostringstream<char, std::char_traits<char>, Sass::Allocator<char>>;
+  using istream = std::basic_istringstream<char, std::char_traits<char>, Sass::Allocator<char>>;
 }
 
 #ifdef SASS_CUSTOM_ALLOCATOR
 
 namespace std {
   // Only GCC seems to need this specialization!?
-  template <> struct hash<Sass::sass::string> {
+  template <> struct hash<sass::string> {
   public:
     inline size_t operator()(
-      const Sass::sass::string& name) const
+      const sass::string& name) const
     {
       return MurmurHash2(
         (void*)name.c_str(),
         (int)name.size(),
-        0x73617373);
+        Sass::getHashSeed());
     }
   };
 }

@@ -1,14 +1,18 @@
-#ifndef SASS_PLUGINS_H
-#define SASS_PLUGINS_H
+#ifndef SASS_PLUGINS_HPP
+#define SASS_PLUGINS_HPP
+
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
 
 #include <string>
 #include <vector>
-#include "utf8_string.hpp"
+#include "unicode.hpp"
 #include "sass/functions.h"
 
 #ifdef _WIN32
 
-  #define LOAD_LIB(var, path) HMODULE var = LoadLibraryW(UTF_8::convert_to_utf16(path).c_str())
+  #define LOAD_LIB(var, path) HMODULE var = LoadLibraryW(Unicode::utf8to16(path).c_str())
   #define LOAD_LIB_WCHR(var, path_wide_str) HMODULE var = LoadLibraryW(path_wide_str.c_str())
   #define LOAD_LIB_FN(type, var, name) type var = (type) GetProcAddress(plugin, name)
   #define CLOSE_LIB(var) FreeLibrary(var)
@@ -31,8 +35,8 @@ namespace Sass {
   class Plugins {
 
     public: // c-tor
-      Plugins(void);
-      ~Plugins(void);
+      Plugins();
+      ~Plugins();
 
     public: // methods
       // load one specific plugin
@@ -41,14 +45,29 @@ namespace Sass {
       size_t load_plugins(const sass::string& path);
 
     public: // public accessors
-      const sass::vector<Sass_Importer_Entry> get_headers(void) { return headers; }
-      const sass::vector<Sass_Importer_Entry> get_importers(void) { return importers; }
-      const sass::vector<Sass_Function_Entry> get_functions(void) { return functions; }
+      void consume_headers(sass::vector<struct SassImporter*>& destination) {
+        destination.insert(destination.end(),
+          std::make_move_iterator(headers.begin()),
+          std::make_move_iterator(headers.end()));
+        headers.clear();
+      }
+      void consume_importers(sass::vector<struct SassImporter*>& destination) {
+        destination.insert(destination.end(),
+          std::make_move_iterator(importers.begin()),
+          std::make_move_iterator(importers.end()));
+        importers.clear();
+      }
+      void consume_functions(sass::vector<struct SassFunction*>& destination) {
+        destination.insert(destination.end(),
+          std::make_move_iterator(functions.begin()),
+          std::make_move_iterator(functions.end()));
+        functions.clear();
+      }
 
-    private: // private vars
-      sass::vector<Sass_Importer_Entry> headers;
-      sass::vector<Sass_Importer_Entry> importers;
-      sass::vector<Sass_Function_Entry> functions;
+  private: // private vars
+      sass::vector<struct SassImporter*> headers;
+      sass::vector<struct SassImporter*> importers;
+      sass::vector<struct SassFunction*> functions;
 
   };
 

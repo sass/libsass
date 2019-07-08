@@ -38,8 +38,7 @@ nodist_EXTRA_libsass_la_SOURCES = non-existent-file-to-force-CXX-linking.cxx
 endif
 endif
 
-include_HEADERS = $(top_srcdir)/include/sass.h \
-                  $(top_srcdir)/include/sass2scss.h
+include_HEADERS = $(top_srcdir)/include/sass.h
 
 sass_includedir = $(includedir)/sass
 

@@ -9,14 +9,10 @@ For details, see http://sourceforge.net/projects/libb64
 #define BASE64_ENCODE_H
 
 #include <iostream>
+#include "cencode.h"
 
 namespace base64
 {
-	extern "C"
-	{
-		#include "cencode.h"
-	}
-
 	struct encoder
 	{
 		base64_encodestate _state;
@@ -47,9 +43,9 @@ namespace base64
 		{
 			base64_init_encodestate(&_state);
 			//
-			const int N = _buffersize;
+      size_t N = _buffersize;
 			char* plaintext = new char[N];
-			char* code = new char[2*N];
+			char* code = new char[N*2];
 			int plainlength;
 			int codelength;
 

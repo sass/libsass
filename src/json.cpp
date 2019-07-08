@@ -30,13 +30,13 @@
 
 // include utf8 library used by libsass
 // ToDo: replace internal json utf8 code
-#include "utf8.h"
+#include "unicode.hpp"
 
-#include <assert.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cassert>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #if defined(_MSC_VER) && _MSC_VER < 1900
 #include <stdarg.h>
@@ -93,7 +93,9 @@ static void sb_grow(SB *sb, int need)
   do {
     alloc *= 2;
   } while (alloc < length + need);
-
+  #ifdef _MSC_VER
+  #pragma warning(disable : 6308)
+  #endif
   sb->start = (char*) realloc(sb->start, alloc + 1);
   if (sb->start == NULL)
     out_of_memory();
