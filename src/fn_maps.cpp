@@ -77,7 +77,7 @@ namespace Sass {
     {
       bool remove;
       Map_Obj m = ARGM("$map", Map);
-      List_Obj arglist = ARG("$keys", List, "a list");
+      List_Obj arglist = ARGLIST("$keys");
       Map* result = SASS_MEMORY_NEW(Map, pstate, 1);
       for (auto key : m->keys()) {
         remove = false;

@@ -112,6 +112,7 @@ namespace Sass {
       }
       else {
         Value_Obj rv = l->value_at_index(static_cast<int>(index));
+        rv = SASS_MEMORY_COPY(rv);
         rv->set_delayed(false);
         return rv.detach();
       }

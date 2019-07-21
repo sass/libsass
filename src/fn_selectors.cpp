@@ -13,7 +13,7 @@ namespace Sass {
     Signature selector_nest_sig = "selector-nest($selectors...)";
     BUILT_IN(selector_nest)
     {
-      List* arglist = ARG("$selectors", List, "a list");
+      List* arglist = ARGLIST("$selectors");
 
       // Not enough parameters
       if (arglist->length() == 0) {
@@ -27,8 +27,8 @@ namespace Sass {
       for (size_t i = 0, L = arglist->length(); i < L; ++i) {
         Expression_Obj exp = Cast<Expression>(arglist->value_at_index(i));
         if (exp->concrete_type() == Expression::NULL_VAL) {
-          error(
-            "$selectors: null is not a valid selector: it must be a string,\n"
+          error( // "$selectors: "
+            "null is not a valid selector: it must be a string,\n"
             "a list of strings, or a list of lists of strings for 'selector-nest'",
             pstate, traces);
         }
@@ -65,13 +65,12 @@ namespace Sass {
     Signature selector_append_sig = "selector-append($selectors...)";
     BUILT_IN(selector_append)
     {
-      List* arglist = ARG("$selectors", List, "a list");
+      List* arglist = ARGLIST("$selectors");
 
       // Not enough parameters
       if (arglist->empty()) {
         error(
-          "$selectors: At least one selector must be "
-          "passed for `selector-append'",
+          "$selectors: At least one selector must be passed.",
           pstate, traces);
       }
 
