@@ -53,8 +53,11 @@ namespace Sass {
           }
         }
         std::stringstream msg;
-        msg << "wrong number of arguments (" << LA << " for " << LP << ")";
-        msg << " for `" << name << "'";
+        msg << "Only " << LP << " ";
+        msg << (LP == 1 ? "argument" : "arguments");
+        msg << " allowed, but " << LA << " ";
+        msg << (LA == 1 ? "was" : "were");
+        msg << " passed.";
         return error(msg.str(), as->pstate(), traces);
       }
       Parameter_Obj p = ps->at(ip);
@@ -230,7 +233,7 @@ namespace Sass {
 
           if (!param_map.count(param)) {
             std::stringstream msg;
-            msg << callee << " has no parameter named " << param;
+            msg << "No argument named " << param << ".";
             error(msg.str(), a->pstate(), traces);
           }
           env->local_frame()[param] = argmap->at(key);
@@ -259,7 +262,7 @@ namespace Sass {
             varargs->append(a);
           } else {
             std::stringstream msg;
-            msg << callee << " has no parameter named " << a->name();
+            msg << "No argument named " << a->name() << ".";
             error(msg.str(), a->pstate(), traces);
           }
         }
