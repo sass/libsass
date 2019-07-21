@@ -103,7 +103,7 @@ namespace Sass {
     Signature min_sig = "min($numbers...)";
     BUILT_IN(min)
     {
-      List* arglist = ARG("$numbers", List);
+      List* arglist = ARG("$numbers", List, "a list");
       Number_Obj least;
       size_t L = arglist->length();
       if (L == 0) {
@@ -125,7 +125,7 @@ namespace Sass {
     Signature max_sig = "max($numbers...)";
     BUILT_IN(max)
     {
-      List* arglist = ARG("$numbers", List);
+      List* arglist = ARG("$numbers", List, "a list");
       Number_Obj greatest;
       size_t L = arglist->length();
       if (L == 0) {

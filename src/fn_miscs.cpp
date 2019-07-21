@@ -15,14 +15,14 @@ namespace Sass {
     Signature type_of_sig = "type-of($value)";
     BUILT_IN(type_of)
     {
-      Expression* v = ARG("$value", Expression);
+      Expression* v = ARG("$value", Expression, "an expression");
       return SASS_MEMORY_NEW(String_Quoted, pstate, v->type());
     }
 
     Signature variable_exists_sig = "variable-exists($name)";
     BUILT_IN(variable_exists)
     {
-      std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
+      std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant, "a string")->value()));
 
       if(d_env.has("$"+s)) {
         return SASS_MEMORY_NEW(Boolean, pstate, true);
@@ -35,7 +35,7 @@ namespace Sass {
     Signature global_variable_exists_sig = "global-variable-exists($name)";
     BUILT_IN(global_variable_exists)
     {
-      std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
+      std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant, "a string")->value()));
 
       if(d_env.has_global("$"+s)) {
         return SASS_MEMORY_NEW(Boolean, pstate, true);
@@ -66,7 +66,7 @@ namespace Sass {
     Signature mixin_exists_sig = "mixin-exists($name)";
     BUILT_IN(mixin_exists)
     {
-      std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
+      std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant, "a string")->value()));
 
       if(d_env.has(s+"[m]")) {
         return SASS_MEMORY_NEW(Boolean, pstate, true);
@@ -79,7 +79,7 @@ namespace Sass {
     Signature feature_exists_sig = "feature-exists($feature)";
     BUILT_IN(feature_exists)
     {
-      std::string s = unquote(ARG("$feature", String_Constant)->value());
+      std::string s = unquote(ARG("$feature", String_Constant, "a string")->value());
 
       static const auto *const features = new std::unordered_set<std::string> {
         "global-variable-shadowing",
@@ -108,7 +108,7 @@ namespace Sass {
         function = ff->name();
       }
 
-      List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List));
+      List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List, "a list"));
 
       Arguments_Obj args = SASS_MEMORY_NEW(Arguments, pstate);
       // std::string full_name(name + "[f]");
@@ -150,16 +150,16 @@ namespace Sass {
     Signature not_sig = "not($value)";
     BUILT_IN(sass_not)
     {
-      return SASS_MEMORY_NEW(Boolean, pstate, ARG("$value", Expression)->is_false());
+      return SASS_MEMORY_NEW(Boolean, pstate, ARG("$value", Expression, "an expression")->is_false());
     }
 
     Signature if_sig = "if($condition, $if-true, $if-false)";
     BUILT_IN(sass_if)
     {
       Expand expand(ctx, &d_env, &selector_stack, &original_stack);
-      Expression_Obj cond = ARG("$condition", Expression)->perform(&expand.eval);
+      Expression_Obj cond = ARG("$condition", Expression, "an expression")->perform(&expand.eval);
       bool is_true = !cond->is_false();
-      Expression_Obj res = ARG(is_true ? "$if-true" : "$if-false", Expression);
+      Expression_Obj res = ARG(is_true ? "$if-true" : "$if-false", Expression, "an expression");
       Value_Obj qwe = Cast<Value>(res->perform(&expand.eval));
       // res = res->perform(&expand.eval.val_eval);
       qwe->set_delayed(false); // clone?
@@ -173,7 +173,7 @@ namespace Sass {
     Signature inspect_sig = "inspect($value)";
     BUILT_IN(inspect)
     {
-      Expression* v = ARG("$value", Expression);
+      Expression* v = ARG("$value", Expression, "an expression");
       if (v->concrete_type() == Expression::NULL_VAL) {
         return SASS_MEMORY_NEW(String_Constant, pstate, "null");
       } else if (v->concrete_type() == Expression::BOOLEAN && v->is_false()) {
@@ -219,7 +219,7 @@ namespace Sass {
       std::string name = Util::normalize_underscores(unquote(ss->value()));
       std::string full_name = name + "[f]";
 
-      Boolean_Obj css = ARG("$css", Boolean);
+      Boolean_Obj css = ARG("$css", Boolean, "a boolean");
       if (!css->is_false()) {
         Definition* def = SASS_MEMORY_NEW(Definition,
                                          pstate,

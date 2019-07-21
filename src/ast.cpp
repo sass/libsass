@@ -455,6 +455,7 @@ namespace Sass {
     c_function_(ptr->c_function_),
     cookie_(ptr->cookie_),
     is_overload_stub_(ptr->is_overload_stub_),
+    defaultParams_(ptr->defaultParams_),
     signature_(ptr->signature_)
   { }
 
@@ -472,6 +473,7 @@ namespace Sass {
     c_function_(0),
     cookie_(0),
     is_overload_stub_(false),
+    defaultParams_(0),
     signature_(0)
   { }
 
@@ -490,6 +492,7 @@ namespace Sass {
     c_function_(0),
     cookie_(0),
     is_overload_stub_(overload_stub),
+    defaultParams_(0),
     signature_(sig)
   { }
 
@@ -507,6 +510,7 @@ namespace Sass {
     c_function_(c_func),
     cookie_(sass_function_get_cookie(c_func)),
     is_overload_stub_(false),
+    defaultParams_(0),
     signature_(sig)
   { }
 

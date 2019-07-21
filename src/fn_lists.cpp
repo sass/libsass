@@ -18,7 +18,7 @@ namespace Sass {
     Signature keywords_sig = "keywords($args)";
     BUILT_IN(keywords)
     {
-      List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List)); // copy
+      List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List, "a list")); // copy
       Map_Obj result = SASS_MEMORY_NEW(Map, pstate, 1);
       for (size_t i = arglist->size(), L = arglist->length(); i < L; ++i) {
         Expression_Obj obj = arglist->at(i);
@@ -38,7 +38,7 @@ namespace Sass {
       if (SelectorList * sl = Cast<SelectorList>(env["$list"])) {
         return SASS_MEMORY_NEW(Number, pstate, (double) sl->length());
       }
-      Expression* v = ARG("$list", Expression);
+      Expression* v = ARG("$list", Expression, "an expression");
       if (v->concrete_type() == Expression::MAP) {
         Map* map = Cast<Map>(env["$list"]);
         return SASS_MEMORY_NEW(Number, pstate, (double)(map ? map->length() : 1));
@@ -77,7 +77,7 @@ namespace Sass {
       // if the argument isn't a list, then wrap it in a singleton list
       if (!m && !l) {
         l = SASS_MEMORY_NEW(List, pstate, 1);
-        l->append(ARG("$list", Expression));
+        l->append(ARG("$list", Expression, "an expression"));
       }
       size_t len = m ? m->length() : l->length();
       bool empty = m ? m->empty() : l->empty();
@@ -103,11 +103,11 @@ namespace Sass {
     {
       Map_Obj m = Cast<Map>(env["$list"]);
       List_Obj l = Cast<List>(env["$list"]);
-      Number_Obj n = ARG("$n", Number);
-      Expression_Obj v = ARG("$value", Expression);
+      Number_Obj n = ARGNUM("$n");
+      Expression_Obj v = ARG("$value", Expression, "an expression");
       if (!l) {
         l = SASS_MEMORY_NEW(List, pstate, 1);
-        l->append(ARG("$list", Expression));
+        l->append(ARG("$list", Expression, "an expression"));
       }
       if (m) {
         l = m->to_list(pstate);
@@ -127,10 +127,10 @@ namespace Sass {
     {
       Map_Obj m = Cast<Map>(env["$list"]);
       List_Obj l = Cast<List>(env["$list"]);
-      Expression_Obj v = ARG("$value", Expression);
+      Expression_Obj v = ARG("$value", Expression, "an expression");
       if (!l) {
         l = SASS_MEMORY_NEW(List, pstate, 1);
-        l->append(ARG("$list", Expression));
+        l->append(ARG("$list", Expression, "an expression"));
       }
       if (m) {
         l = m->to_list(pstate);
@@ -148,19 +148,19 @@ namespace Sass {
       Map_Obj m2 = Cast<Map>(env["$list2"]);
       List_Obj l1 = Cast<List>(env["$list1"]);
       List_Obj l2 = Cast<List>(env["$list2"]);
-      String_Constant_Obj sep = ARG("$separator", String_Constant);
+      String_Constant_Obj sep = ARG("$separator", String_Constant, "a string");
       enum Sass_Separator sep_val = (l1 ? l1->separator() : SASS_SPACE);
-      Value* bracketed = ARG("$bracketed", Value);
+      Value* bracketed = ARG("$bracketed", Value, "a value");
       bool is_bracketed = (l1 ? l1->is_bracketed() : false);
       if (!l1) {
         l1 = SASS_MEMORY_NEW(List, pstate, 1);
-        l1->append(ARG("$list1", Expression));
+        l1->append(ARG("$list1", Expression, "an expression"));
         sep_val = (l2 ? l2->separator() : SASS_SPACE);
         is_bracketed = (l2 ? l2->is_bracketed() : false);
       }
       if (!l2) {
         l2 = SASS_MEMORY_NEW(List, pstate, 1);
-        l2->append(ARG("$list2", Expression));
+        l2->append(ARG("$list2", Expression, "an expression"));
       }
       if (m1) {
         l1 = m1->to_list(pstate);
@@ -190,14 +190,14 @@ namespace Sass {
     {
       Map_Obj m = Cast<Map>(env["$list"]);
       List_Obj l = Cast<List>(env["$list"]);
-      Expression_Obj v = ARG("$val", Expression);
+      Expression_Obj v = ARG("$val", Expression, "an expression");
       if (SelectorList * sl = Cast<SelectorList>(env["$list"])) {
         l = Cast<List>(Listize::perform(sl));
       }
-      String_Constant_Obj sep = ARG("$separator", String_Constant);
+      String_Constant_Obj sep = ARG("$separator", String_Constant, "a string");
       if (!l) {
         l = SASS_MEMORY_NEW(List, pstate, 1);
-        l->append(ARG("$list", Expression));
+        l->append(ARG("$list", Expression, "an expression"));
       }
       if (m) {
         l = m->to_list(pstate);
@@ -226,7 +226,7 @@ namespace Sass {
     Signature zip_sig = "zip($lists...)";
     BUILT_IN(zip)
     {
-      List_Obj arglist = SASS_MEMORY_COPY(ARG("$lists", List));
+      List_Obj arglist = SASS_MEMORY_COPY(ARG("$lists", List, "a list"));
       size_t shortest = 0;
       for (size_t i = 0, L = arglist->length(); i < L; ++i) {
         List_Obj ith = Cast<List>(arglist->value_at_index(i));
@@ -265,7 +265,7 @@ namespace Sass {
       List_Obj l = Cast<List>(env["$list"]);
       if (!l) {
         l = SASS_MEMORY_NEW(List, pstate, 1);
-        l->append(ARG("$list", Expression));
+        l->append(ARG("$list", Expression, "an expression"));
       }
       return SASS_MEMORY_NEW(String_Quoted,
                                pstate,
@@ -275,7 +275,7 @@ namespace Sass {
     Signature is_bracketed_sig = "is-bracketed($list)";
     BUILT_IN(is_bracketed)
     {
-      Value_Obj value = ARG("$list", Value);
+      Value_Obj value = ARG("$list", Value, "a value");
       List_Obj list = Cast<List>(value);
       return SASS_MEMORY_NEW(Boolean, pstate, list && list->is_bracketed());
     }

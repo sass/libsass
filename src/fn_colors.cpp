@@ -8,116 +8,615 @@
 #include "fn_colors.hpp"
 #include "util.hpp"
 #include "util_string.hpp"
+#include "listize.hpp"
 
 namespace Sass {
 
   namespace Functions {
 
-    bool string_argument(AST_Node_Obj obj) {
-      String_Constant* s = Cast<String_Constant>(obj);
+    std::vector<ExpressionObj> getArguments(Env& env, std::vector<std::string> names)
+    {
+      std::vector<ExpressionObj> arguments;
+      for (const std::string& name : names) {
+        arguments.push_back(env.get_local(name));
+      }
+      return arguments;
+    }
+
+    bool isVar(const AST_Node* obj) {
+      const String_Constant* s = Cast<String_Constant>(obj);
       if (s == nullptr) return false;
+      if (s->quote_mark() != 0) return false;
       const std::string& str = s->value();
-      return starts_with(str, "calc(") ||
-             starts_with(str, "var(");
+      return starts_with(str, "var(");
     }
 
-    void hsla_alpha_percent_deprecation(const ParserState& pstate, const std::string val)
-    {
-
-      std::string msg("Passing a percentage as the alpha value to hsla() will be interpreted");
-      std::string tail("differently in future versions of Sass. For now, use " + val + " instead.");
-
-      deprecated(msg, tail, false, pstate);
-
+    bool isSpecialNumber(const AST_Node* obj) {
+      const String_Constant* s = Cast<String_Constant>(obj);
+      if (s == nullptr) return false;
+      if (s->quote_mark() != 0) return false;
+      const std::string& str = s->value();
+      if (str.length() < 6) return false;
+      return starts_with(str, "calc(")
+        || starts_with(str, "var(")
+        || starts_with(str, "env(")
+        || starts_with(str, "min(")
+        || starts_with(str, "max(");
     }
 
-    Signature rgb_sig = "rgb($red, $green, $blue)";
-    BUILT_IN(rgb)
+    double scaleValue(double current, double scale, double max) {
+      return current + (scale > 0 ? max - current : current) * scale;
+    }
+
+    void checkPositionalArgs(List* args, Backtraces traces)
     {
-      if (
-        string_argument(env["$red"]) ||
-        string_argument(env["$green"]) ||
-        string_argument(env["$blue"])
-      ) {
-        return SASS_MEMORY_NEW(String_Constant, pstate, "rgb("
-                                                        + env["$red"]->to_string()
-                                                        + ", "
-                                                        + env["$green"]->to_string()
-                                                        + ", "
-                                                        + env["$blue"]->to_string()
-                                                        + ")"
-        );
+      for (Expression* ex : args->elements()) {
+        if (Argument * arg = Cast<Argument>(ex)) {
+          if (arg->name().empty()) {
+            error("Only one positional argument is allowed. "
+              "All other arguments must be passed by name.",
+              arg->pstate(), traces);
+          }
+        }
+      }
+    }
+
+    /// Asserts that [number] is a percentage or has no units, and normalizes the
+    /// value.
+    ///
+    /// If [number] has no units, its value is clamped to be greater than `0` or
+    /// less than [max] and returned. If [number] is a percentage, it's scaled to be
+    /// within `0` and [max]. Otherwise, this throws a [SassScriptException].
+    ///
+    /// [name] is used to identify the argument in the error message.
+    double _percentageOrUnitless(Number* number, double max, std::string name, Backtraces traces) {
+      double value = 0.0;
+      if (!number->hasUnits()) {
+        value = number->value();
+      }
+      else if (number->hasUnit("%")) {
+        value = max * number->value() / 100;
+      }
+      else {
+        error(name + ": Expected " + number->to_string() +
+          " to have no units or \"%\".", number->pstate(), traces);
+      }
+      if (value < 0.0) return 0.0;
+      if (value > max) return max;
+      return value;
+    }
+
+    void valueInRange(double val, double lo, double hi, const std::string& name, ParserState pstate, Backtraces traces)
+    {
+      // Error: Expected -100.1% to be within 0% and 255%.
+      if (val < lo || val > hi) {
+        std::stringstream msg;
+        if (!name.empty()) msg << name << ": ";
+        msg << "Expected " << val;
+        msg << " to be within " << lo;
+        msg << " and " << hi << ".";
+        error(msg.str(), pstate, traces);
+      }
+    }
+
+    Number* getColorScale(std::map<std::string, ExpressionObj>& keywords, const std::string& name, ParserState pstate, Backtraces traces)
+    {
+
+      auto pos = keywords.find(name);
+      if (pos == keywords.end()) return nullptr;
+      Expression* ex = pos->second;
+      if (Number * nr = Cast<Number>(ex)) {
+        if (!nr->hasUnit("%")) {
+          error(name + ": Expected " + ex->to_string() +
+            " to have unit \"%\".", ex->pstate(), traces);
+        }
+        if (nr->value() < -100.0 || nr->value() > 100.0) {
+          std::stringstream msg;
+          msg << "Expected " << nr->to_string();
+          msg << " to be within -100% and 100%.";
+          error(msg.str(), nr->pstate(), traces);
+        }
+        keywords.erase(name);
+        return nr;
+      }
+      else {
+        error(name + ": " + ex->to_string() +
+          " is not a number.", ex->pstate(), traces);
+      }
+      return nullptr;
+    }
+
+
+    Number* getColorArg(std::map<std::string, ExpressionObj>& keywords, const std::string& name, ParserState pstate, Backtraces traces)
+    {
+
+      auto pos = keywords.find(name);
+      if (pos == keywords.end()) return nullptr;
+      Expression* ex = pos->second;
+      if (Number * nr = Cast<Number>(ex)) {
+        keywords.erase(name);
+        return nr;
+      }
+      else {
+        error(name + ": " + ex->to_string() +
+          " is not a number.", ex->pstate(), traces);
+      }
+      return nullptr;
+    }
+
+    Number* getColorArgInRange(std::map<std::string, ExpressionObj>& keywords, const std::string& name, double lo, double hi, ParserState pstate, Backtraces traces)
+    {
+
+      auto pos = keywords.find(name);
+      if (pos == keywords.end()) return nullptr;
+      Expression* ex = pos->second;
+      if (Number * nr = Cast<Number>(ex)) {
+        if (!nr->hasUnit("%")) {
+          // error(name + ": Expected " + ex->to_string() +
+          //   " to have unit \"%\".", ex->pstate(), traces);
+        }
+        valueInRange(nr->value(), lo, hi, "", nr->pstate(), traces);
+        keywords.erase(name);
+        return nr;
+      }
+      else {
+        error(name + ": " + ex->to_string() +
+          " is not a number.", ex->pstate(), traces);
+      }
+      return nullptr;
+    }
+
+    double fuzzyRound(double value) {
+      return value;
+    }
+
+
+    /// Returns whether [value] is an unquoted string that start with `var(` and
+/// contains `/`.
+    bool _isVarSlash(Expression* value) {
+      if (String_Constant * string = Cast<String_Constant>(value)) {
+        return starts_with(string->value(), "var(") &&
+          string_constains(string->value(), '/');
+      }
+      return false;
+    }
+
+
+    Expression* _parseChannels(std::string name, std::vector<std::string> argumentNames, Value* channels, ParserState pstate, Backtraces traces)
+    {
+      if (isVar(channels)) {
+        std::stringstream fncall;
+        fncall << name << "("
+          << channels->to_string() << ")";
+        return SASS_MEMORY_NEW(String_Constant,
+          pstate, fncall.str());
       }
 
-      return SASS_MEMORY_NEW(Color_RGBA,
-                             pstate,
-                             COLOR_NUM("$red"),
-                             COLOR_NUM("$green"),
-                             COLOR_NUM("$blue"));
+      List* list = Cast<List>(channels);
+
+      if (!list) {
+        list = SASS_MEMORY_NEW(List, pstate);
+        list->append(channels);
+      }
+
+      bool isCommaSeparated = list->separator() == SASS_COMMA;
+      bool isBracketed = list->is_bracketed();
+      if (isCommaSeparated || isBracketed) {
+        std::stringstream msg;
+        msg << "$channels must be";
+        if (isBracketed) msg << " an unbracketed";
+        if (isCommaSeparated) {
+          msg << (isBracketed ? "," : " a");
+          msg << " space-separated";
+        }
+        msg << " list.";
+        error(msg.str(), pstate, traces);
+      }
+
+      if (list->length() > 3) {
+        std::stringstream msg;
+        msg << "Only 3 elements allowed, but "
+          << list->length() << " were passed.";
+        error(msg.str(), pstate, traces);
+      }
+      else if (list->length() < 3) {
+        bool hasVar = false;
+        for (Expression* item : list->elements()) {
+          if (isVar(item)) {
+            hasVar = true;
+            break;
+          }
+        }
+        if (hasVar || (!list->empty() && _isVarSlash(list->last()))) {
+          std::stringstream fncall;
+          fncall << name << "(";
+          for (size_t i = 0, iL = list->length(); i < iL; i++) {
+            if (i > 0) { fncall << " "; }
+            fncall << list->get(i)->to_string();
+          }
+          fncall << ")";
+          return SASS_MEMORY_NEW(String_Constant,
+            pstate, fncall.str());
+        }
+        else {
+          std::string argument = argumentNames[list->length()];
+          error(
+            "Missing element " + argument + ".",
+            pstate, traces);
+        }
+      }
+
+      Number* secondNumber = Cast<Number>(list->get(2));
+      String_Constant* secondString = Cast<String_Constant>(list->get(2));
+      if (secondNumber /* && secondNumber->hasAsSlash() */) {
+        List* rv = SASS_MEMORY_NEW(List, pstate);
+        rv->append(list->get(0));
+        rv->append(list->get(1));
+        // rv->append(secondNumber->lhsAsSlash());
+        // rv->append(secondNumber->rhsAsSlash());
+        return rv;
+      }
+      else if (secondString &&
+        secondString->quote_mark() == 0 &&
+        string_constains(secondString->value(), '/')) {
+        std::stringstream fncall;
+        fncall << name << "(";
+        for (size_t i = 0, iL = list->length(); i < iL; i++) {
+          if (i > 0) { fncall << " "; }
+          fncall << list->get(i)->to_string();
+
+        }
+        fncall << ")";
+        return SASS_MEMORY_NEW(String_Constant,
+          pstate, fncall.str());
+      }
+      else {
+        return list;
+      }
+
+    }
+
+    AST_Node* getArg(std::string name, Env& env)
+    {
+      if (env.has_local(name)) {
+        return env.get_local(name);
+      }
+      return nullptr;
+    }
+
+    double clamp(double val, double lo, double hi)
+    {
+      if (val < lo) return lo;
+      if (val > hi) return hi;
+      return val;
+    }
+
+    Color* assertColor(AST_Node* node, std::string name, ParserState pstate, Backtraces traces)
+    {
+      if (node == nullptr) return nullptr;
+      Color* col = Cast<Color>(node);
+      if (col == nullptr) {
+        error(name + ": " + node->to_string()
+          + " is not a color.", pstate, traces);
+      }
+      return col;
+    }
+
+    Number* assertNumber(AST_Node* node, std::string name, ParserState pstate, Backtraces traces)
+    {
+      if (node == nullptr) return nullptr;
+      Number* nr = Cast<Number>(node);
+      if (nr == nullptr) {
+        error(name + ": " + node->to_string()
+          + " is not a number.", pstate, traces);
+      }
+      return nr;
+    }
+
+    Value* _rgb(std::string name, std::vector<ExpressionObj> arguments, Signature sig, ParserState pstate, Backtraces traces)
+    {
+      AST_Node* _r = arguments[0];
+      AST_Node* _g = arguments[1];
+      AST_Node* _b = arguments[2];
+      AST_Node* _a = nullptr;
+      if (arguments.size() > 3) {
+        _a = arguments[3];
+      }
+      // Check if any `calc()` or `var()` are passed
+      if (isSpecialNumber(_r) || isSpecialNumber(_g) || isSpecialNumber(_b) || isSpecialNumber(_a)) {
+        std::stringstream fncall;
+        fncall << name << "(";
+        fncall << _r->to_string() << ", ";
+        fncall << _g->to_string() << ", ";
+        fncall << _b->to_string();
+        if (_a) { fncall << ", " << _a->to_string(); }
+        fncall << ")";
+        return SASS_MEMORY_NEW(String_Constant, pstate, fncall.str());
+      }
+
+      Number* r = assertNumber(_r, "$red", pstate, traces);
+      Number* g = assertNumber(_g, "$green", pstate, traces);
+      Number* b = assertNumber(_b, "$blue", pstate, traces);
+      Number* a = _a ? assertNumber(_a, "$alpha", pstate, traces) : nullptr;
+
+      return SASS_MEMORY_NEW(Color_RGBA, pstate,
+        fuzzyRound(_percentageOrUnitless(r, 255, "$red", traces)),
+        fuzzyRound(_percentageOrUnitless(g, 255, "$green", traces)),
+        fuzzyRound(_percentageOrUnitless(b, 255, "$blue", traces)),
+        a ? _percentageOrUnitless(a, 1.0, "$alpha", traces) : 1.0);
+
+    }
+
+    Value* _hsl(std::string name, std::vector<ExpressionObj> arguments, Signature sig, ParserState pstate, Backtraces traces)
+    {
+      AST_Node* _h = arguments[0];
+      AST_Node* _s = arguments[1];
+      AST_Node* _l = arguments[2];
+      AST_Node* _a = nullptr;
+      if (arguments.size() > 3) {
+        _a = arguments[3];
+      }
+      // Check if any `calc()` or `var()` are passed
+      if (isSpecialNumber(_h) || isSpecialNumber(_s) || isSpecialNumber(_l) || isSpecialNumber(_a)) {
+        std::stringstream fncall;
+        fncall << name << "(";
+        fncall << _h->to_string() << ", ";
+        fncall << _s->to_string() << ", ";
+        fncall << _l->to_string();
+        if (_a) { fncall << ", " << _a->to_string(); }
+        fncall << ")";
+        return SASS_MEMORY_NEW(String_Constant, pstate, fncall.str());
+      }
+
+      Number* h = assertNumber(_h, "$hue", pstate, traces);
+      Number* s = assertNumber(_s, "$saturation", pstate, traces);
+      Number* l = assertNumber(_l, "$lightness", pstate, traces);
+      Number* a = _a ? assertNumber(_a, "$alpha", pstate, traces) : nullptr;
+
+      return SASS_MEMORY_NEW(Color_HSLA, pstate,
+        h->value(),
+        clamp(s->value(), 0.0, 100.0),
+        clamp(l->value(), 0.0, 100.0),
+        a ? _percentageOrUnitless(a, 1.0, "$alpha", traces) : 1.0);
+
+    }
+
+    Value* _rgbTwoArg(std::string name, Env& env, Signature sig, ParserState pstate, Backtraces traces)
+    {
+      AST_Node* _c = getArg("$color", env);
+      AST_Node* _a = getArg("$alpha", env);
+      // Check if any `calc()` or `var()` are passed
+      if (isVar(_c)) {
+        std::stringstream fncall;
+        fncall << name << "("
+          << _c->to_string() << ", "
+          << _a->to_string() << ")";
+        return SASS_MEMORY_NEW(String_Constant,
+          pstate, fncall.str());
+      }
+      else if (isVar(_a)) {
+        if (Color* c = Cast<Color>(_c)) {
+          Color_RGBAObj col = c->toRGBA();
+          std::stringstream fncall;
+          fncall << name << "("
+            << col->r() << ", "
+            << col->g() << ", "
+            << col->b() << ", "
+            << _a->to_string() << ")";
+          return SASS_MEMORY_NEW(String_Constant,
+            pstate, fncall.str());
+        }
+        else {
+          std::stringstream fncall;
+          fncall << name << "("
+            << _c->to_string() << ", "
+            << _a->to_string() << ")";
+          return SASS_MEMORY_NEW(String_Constant,
+            pstate, fncall.str());
+        }
+      }
+      else if (isSpecialNumber(_a)) {
+        Color* c = ARGCOL("$color");
+        Color_RGBAObj col = c->toRGBA();
+        std::stringstream fncall;
+        fncall << name << "("
+          << col->r() << ", "
+          << col->g() << ", "
+          << col->b() << ", "
+          << _a->to_string() << ")";
+        return SASS_MEMORY_NEW(String_Constant,
+          pstate, fncall.str());
+      }
+
+      Color* c = ARGCOL("$color");
+      Number* a = ARGNUM("$alpha");
+
+      double alpha = _percentageOrUnitless(a, 1.0, "$alpha", traces);
+
+      c = SASS_MEMORY_COPY(c);
+      c->a(alpha);
+      c->disp("");
+      return c;
     }
 
     Signature rgba_4_sig = "rgba($red, $green, $blue, $alpha)";
     BUILT_IN(rgba_4)
     {
-      if (
-        string_argument(env["$red"]) ||
-        string_argument(env["$green"]) ||
-        string_argument(env["$blue"]) ||
-        string_argument(env["$alpha"])
-      ) {
-        return SASS_MEMORY_NEW(String_Constant, pstate, "rgba("
-                                                        + env["$red"]->to_string()
-                                                        + ", "
-                                                        + env["$green"]->to_string()
-                                                        + ", "
-                                                        + env["$blue"]->to_string()
-                                                        + ", "
-                                                        + env["$alpha"]->to_string()
-                                                        + ")"
-        );
-      }
+      std::vector<ExpressionObj> arguments =
+        getArguments(env, { "$red", "$green", "$blue", "$alpha" });
+      return _rgb("rgba", arguments, rgba_4_sig, pstate, traces);
+    }
 
-      return SASS_MEMORY_NEW(Color_RGBA,
-                             pstate,
-                             COLOR_NUM("$red"),
-                             COLOR_NUM("$green"),
-                             COLOR_NUM("$blue"),
-                             ALPHA_NUM("$alpha"));
+    Signature rgba_3_sig = "rgba($red, $green, $blue)";
+    BUILT_IN(rgba_3)
+    {
+      std::vector<ExpressionObj> arguments =
+        getArguments(env, { "$red", "$green", "$blue" });
+      return _rgb("rgba", arguments, rgba_3_sig, pstate, traces);
     }
 
     Signature rgba_2_sig = "rgba($color, $alpha)";
     BUILT_IN(rgba_2)
     {
-      if (
-        string_argument(env["$color"])
-      ) {
-        return SASS_MEMORY_NEW(String_Constant, pstate, "rgba("
-                                                        + env["$color"]->to_string()
-                                                        + ", "
-                                                        + env["$alpha"]->to_string()
-                                                        + ")"
-        );
+      return _rgbTwoArg("rgba", env, rgba_2_sig, pstate, traces);
+    }
+
+    Signature rgba_1_sig = "rgba($channels)";
+    BUILT_IN(rgba_1)
+    {
+      Value* channels = ARG("$channels", Value, "a value");
+      ExpressionObj parsed = _parseChannels("rgba",
+        { "$red", "$green", "$blue" }, channels, pstate, traces);
+      if (String_Constant * str = Cast<String_Constant>(parsed)) {
+        parsed.detach();
+        return str;
       }
-
-      Color_RGBA_Obj c_arg = ARG("$color", Color)->toRGBA();
-
-      if (
-        string_argument(env["$alpha"])
-      ) {
-        std::stringstream strm;
-        strm << "rgba("
-                 << (int)c_arg->r() << ", "
-                 << (int)c_arg->g() << ", "
-                 << (int)c_arg->b() << ", "
-                 << env["$alpha"]->to_string()
-             << ")";
-        return SASS_MEMORY_NEW(String_Constant, pstate, strm.str());
+      if (List * list = Cast<List>(parsed)) {
+        return _rgb("rgba", list->elements(), rgba_1_sig, pstate, traces);
       }
+      return nullptr;
+    }
 
-      Color_RGBA_Obj new_c = SASS_MEMORY_COPY(c_arg);
-      new_c->a(ALPHA_NUM("$alpha"));
-      new_c->disp("");
-      return new_c.detach();
+    Signature rgb_4_sig = "rgb($red, $green, $blue, $alpha)";
+    BUILT_IN(rgb_4)
+    {
+      std::vector<ExpressionObj> arguments =
+        getArguments(env, { "$red", "$green", "$blue", "$alpha" });
+      return _rgb("rgb", arguments, rgb_4_sig, pstate, traces);
+    }
+
+    Signature rgb_3_sig = "rgb($red, $green, $blue)";
+    BUILT_IN(rgb_3)
+    {
+      std::vector<ExpressionObj> arguments =
+        getArguments(env, { "$red", "$green", "$blue" });
+      return _rgb("rgb", arguments, rgb_3_sig, pstate, traces);
+    }
+
+    Signature rgb_2_sig = "rgb($color, $alpha)";
+    BUILT_IN(rgb_2)
+    {
+      return _rgbTwoArg("rgb", env, rgb_2_sig, pstate, traces);
+    }
+
+    Signature rgb_1_sig = "rgb($channels)";
+    BUILT_IN(rgb_1)
+    {
+      Value* channels = ARG("$channels", Value, "a value");
+      ExpressionObj parsed = _parseChannels("rgb",
+        { "$red", "$green", "$blue" }, channels, pstate, traces);
+      if (String_Constant * str = Cast<String_Constant>(parsed)) {
+        parsed.detach();
+        return str;
+      }
+      if (List * list = Cast<List>(parsed)) {
+        return _rgb("rgb", list->elements(), rgb_1_sig, pstate, traces);
+      }
+      return nullptr;
+    }
+
+    Signature hsl_4_sig = "hsl($hue, $saturation, $lightness, $alpha)";
+    BUILT_IN(hsl_4)
+    {
+      std::vector<ExpressionObj> arguments =
+        getArguments(env, { "$hue", "$saturation", "$lightness", "$alpha" });
+      return _hsl("hsl", arguments, hsl_4_sig, pstate, traces);
+    }
+
+    Signature hsl_3_sig = "hsl($hue, $saturation, $lightness)";
+    BUILT_IN(hsl_3)
+    {
+      std::vector<ExpressionObj> arguments =
+        getArguments(env, { "$hue", "$saturation", "$lightness"});
+      return _hsl("hsl", arguments, hsl_3_sig, pstate, traces);
+    }
+
+    Signature hsl_2_sig = "hsl($color, $alpha)";
+    BUILT_IN(hsl_2)
+    {
+      // hsl(123, var(--foo)) is valid CSS because --foo might be `10%, 20%` and
+      // functions are parsed after variable substitution.
+      if (isVar(env["$color"]) || isVar(env["$alpha"])) {
+        std::stringstream fncall;
+        fncall << "hsl("
+        << env["$color"]->to_string() << ", "
+        << env["$alpha"]->to_string() << ")";
+        return SASS_MEMORY_NEW(String_Constant,
+          pstate, fncall.str());
+      }
+      else {
+        error("Missing argument $lightness.",
+          pstate, traces);
+      }
+      return nullptr;
+    }
+
+    Signature hsl_1_sig = "hsl($channels)";
+    BUILT_IN(hsl_1)
+    {
+      Value* channels = ARG("$channels", Value, "a value");
+      ExpressionObj parsed = _parseChannels("hsl",
+        { "$hue", "$saturation", "$lightness" }, channels, pstate, traces);
+      if (String_Constant * str = Cast<String_Constant>(parsed)) {
+        parsed.detach();
+        return str;
+      }
+      if (List * list = Cast<List>(parsed)) {
+        return _hsl("hsl", list->elements(), hsl_1_sig, pstate, traces);
+      }
+      return nullptr;
+    }
+
+    Signature hsla_4_sig = "hsla($hue, $saturation, $lightness, $alpha)";
+    BUILT_IN(hsla_4)
+    {
+      std::vector<ExpressionObj> arguments =
+        getArguments(env, { "$hue", "$saturation", "$lightness", "$alpha" });
+      return _hsl("hsla", arguments, hsla_4_sig, pstate, traces);
+    }
+
+    Signature hsla_3_sig = "hsla($hue, $saturation, $lightness)";
+    BUILT_IN(hsla_3)
+    {
+      std::vector<ExpressionObj> arguments =
+        getArguments(env, { "$hue", "$saturation", "$lightness" });
+      return _hsl("hsla", arguments, hsla_3_sig, pstate, traces);
+    }
+
+    Signature hsla_2_sig = "hsla($color, $alpha)";
+    BUILT_IN(hsla_2)
+    {
+      // hsl(123, var(--foo)) is valid CSS because --foo might be `10%, 20%` and
+      // functions are parsed after variable substitution.
+      if (isVar(env["$color"]) || isVar(env["$alpha"])) {
+        std::stringstream fncall;
+        fncall << "hsla("
+          << env["$color"]->to_string() << ", "
+          << env["$alpha"]->to_string() << ")";
+        return SASS_MEMORY_NEW(String_Constant,
+          pstate, fncall.str());
+      }
+      else {
+        error("Missing argument $lightness.",
+          pstate, traces);
+      }
+      return nullptr;
+    }
+
+    Signature hsla_1_sig = "hsla($channels)";
+    BUILT_IN(hsla_1)
+    {
+      Value* channels = ARG("$channels", Value, "a value");
+      ExpressionObj parsed = _parseChannels("hsla",
+        { "$hue", "$saturation", "$lightness" }, channels, pstate, traces);
+      if (String_Constant * str = Cast<String_Constant>(parsed)) {
+        parsed.detach();
+        return str;
+      }
+      if (List * list = Cast<List>(parsed)) {
+        return _hsl("hsla", list->elements(), hsla_1_sig, pstate, traces);
+      }
+      return nullptr;
     }
 
     ////////////////
@@ -127,21 +626,21 @@ namespace Sass {
     Signature red_sig = "red($color)";
     BUILT_IN(red)
     {
-      Color_RGBA_Obj color = ARG("$color", Color)->toRGBA();
+      Color_RGBA_Obj color = ARGCOL("$color")->toRGBA();
       return SASS_MEMORY_NEW(Number, pstate, color->r());
     }
 
     Signature green_sig = "green($color)";
     BUILT_IN(green)
     {
-      Color_RGBA_Obj color = ARG("$color", Color)->toRGBA();
+      Color_RGBA_Obj color = ARGCOL("$color")->toRGBA();
       return SASS_MEMORY_NEW(Number, pstate, color->g());
     }
 
     Signature blue_sig = "blue($color)";
     BUILT_IN(blue)
     {
-      Color_RGBA_Obj color = ARG("$color", Color)->toRGBA();
+      Color_RGBA_Obj color = ARGCOL("$color")->toRGBA();
       return SASS_MEMORY_NEW(Number, pstate, color->b());
     }
 
@@ -166,80 +665,10 @@ namespace Sass {
     Signature mix_sig = "mix($color1, $color2, $weight: 50%)";
     BUILT_IN(mix)
     {
-      Color_Obj  color1 = ARG("$color1", Color);
-      Color_Obj  color2 = ARG("$color2", Color);
+      Color_Obj  color1 = ARGCOL("$color1");
+      Color_Obj  color2 = ARGCOL("$color2");
       double weight = DARG_U_PRCT("$weight");
       return colormix(ctx, pstate, color1, color2, weight);
-
-    }
-
-    ////////////////
-    // HSL FUNCTIONS
-    ////////////////
-
-    Signature hsl_sig = "hsl($hue, $saturation, $lightness)";
-    BUILT_IN(hsl)
-    {
-      if (
-        string_argument(env["$hue"]) ||
-        string_argument(env["$saturation"]) ||
-        string_argument(env["$lightness"])
-      ) {
-        return SASS_MEMORY_NEW(String_Constant, pstate, "hsl("
-                                                        + env["$hue"]->to_string()
-                                                        + ", "
-                                                        + env["$saturation"]->to_string()
-                                                        + ", "
-                                                        + env["$lightness"]->to_string()
-                                                        + ")"
-        );
-      }
-
-      return SASS_MEMORY_NEW(Color_HSLA,
-        pstate,
-        ARGVAL("$hue"),
-        ARGVAL("$saturation"),
-        ARGVAL("$lightness"),
-        1.0);
-
-    }
-
-    Signature hsla_sig = "hsla($hue, $saturation, $lightness, $alpha)";
-    BUILT_IN(hsla)
-    {
-      if (
-        string_argument(env["$hue"]) ||
-        string_argument(env["$saturation"]) ||
-        string_argument(env["$lightness"]) ||
-        string_argument(env["$alpha"])
-      ) {
-        return SASS_MEMORY_NEW(String_Constant, pstate, "hsla("
-                                                        + env["$hue"]->to_string()
-                                                        + ", "
-                                                        + env["$saturation"]->to_string()
-                                                        + ", "
-                                                        + env["$lightness"]->to_string()
-                                                        + ", "
-                                                        + env["$alpha"]->to_string()
-                                                        + ")"
-        );
-      }
-
-      Number* alpha = ARG("$alpha", Number);
-      if (alpha && alpha->unit() == "%") {
-        Number_Obj val = SASS_MEMORY_COPY(alpha);
-        val->numerators.clear(); // convert
-        val->value(val->value() / 100.0);
-        std::string nr(val->to_string(ctx.c_options));
-        hsla_alpha_percent_deprecation(pstate, nr);
-      }
-
-      return SASS_MEMORY_NEW(Color_HSLA,
-        pstate,
-        ARGVAL("$hue"),
-        ARGVAL("$saturation"),
-        ARGVAL("$lightness"),
-        ARGVAL("$alpha"));
 
     }
 
@@ -250,21 +679,21 @@ namespace Sass {
     Signature hue_sig = "hue($color)";
     BUILT_IN(hue)
     {
-      Color_HSLA_Obj col = ARG("$color", Color)->toHSLA();
+      Color_HSLA_Obj col = ARGCOL("$color")->toHSLA();
       return SASS_MEMORY_NEW(Number, pstate, col->h(), "deg");
     }
 
     Signature saturation_sig = "saturation($color)";
     BUILT_IN(saturation)
     {
-      Color_HSLA_Obj col = ARG("$color", Color)->toHSLA();
+      Color_HSLA_Obj col = ARGCOL("$color")->toHSLA();
       return SASS_MEMORY_NEW(Number, pstate, col->s(), "%");
     }
 
     Signature lightness_sig = "lightness($color)";
     BUILT_IN(lightness)
     {
-      Color_HSLA_Obj col = ARG("$color", Color)->toHSLA();
+      Color_HSLA_Obj col = ARGCOL("$color")->toHSLA();
       return SASS_MEMORY_NEW(Number, pstate, col->l(), "%");
     }
 
@@ -275,7 +704,7 @@ namespace Sass {
     Signature adjust_hue_sig = "adjust-hue($color, $degrees)";
     BUILT_IN(adjust_hue)
     {
-      Color* col = ARG("$color", Color);
+      Color* col = ARGCOL("$color");
       double degrees = ARGVAL("$degrees");
       Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->h(absmod(copy->h() + degrees, 360.0));
@@ -285,7 +714,7 @@ namespace Sass {
     Signature lighten_sig = "lighten($color, $amount)";
     BUILT_IN(lighten)
     {
-      Color* col = ARG("$color", Color);
+      Color* col = ARGCOL("$color");
       double amount = DARG_U_PRCT("$amount");
       Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->l(clip(copy->l() + amount, 0.0, 100.0));
@@ -296,32 +725,44 @@ namespace Sass {
     Signature darken_sig = "darken($color, $amount)";
     BUILT_IN(darken)
     {
-      Color* col = ARG("$color", Color);
+      Color* col = ARGCOL("$color");
       double amount = DARG_U_PRCT("$amount");
       Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->l(clip(copy->l() - amount, 0.0, 100.0));
       return copy.detach();
     }
 
-    Signature saturate_sig = "saturate($color, $amount: false)";
-    BUILT_IN(saturate)
+    Signature saturate_1_sig = "saturate($amount)";
+    BUILT_IN(saturate_1)
+    {
+      AST_Node* nr = env.get_local("$amount");
+      Number* number = assertNumber(nr,
+        "$amount", pstate, traces);
+      std::stringstream fncall;
+      fncall << "saturate(";
+      fncall << number->to_string();
+      fncall << ")";
+      return SASS_MEMORY_NEW(String_Constant,
+        pstate, fncall.str());
+    }
+
+    Signature saturate_2_sig = "saturate($color, $amount)";
+    BUILT_IN(saturate_2)
     {
       // CSS3 filter function overload: pass literal through directly
-      if (!Cast<Number>(env["$amount"])) {
-        return SASS_MEMORY_NEW(String_Quoted, pstate, "saturate(" + env["$color"]->to_string(ctx.c_options) + ")");
-      }
-
-      Color* col = ARG("$color", Color);
-      double amount = DARG_U_PRCT("$amount");
-      Color_HSLA_Obj copy = col->copyAsHSLA();
-      copy->s(clip(copy->s() + amount, 0.0, 100.0));
+      Color* color = ARGCOL("$color");
+      Number* amount = ARGNUM("$amount");
+      Color_HSLA_Obj copy = color->copyAsHSLA();
+      valueInRange(amount->value(), 0.0, 100.0,
+        "", amount->pstate(), traces);
+      copy->s(clip(copy->s() + amount->value(), 0.0, 100.0));
       return copy.detach();
     }
 
     Signature desaturate_sig = "desaturate($color, $amount)";
     BUILT_IN(desaturate)
     {
-      Color* col = ARG("$color", Color);
+      Color* col = ARGCOL("$color");
       double amount = DARG_U_PRCT("$amount");
       Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->s(clip(copy->s() - amount, 0.0, 100.0));
@@ -337,7 +778,7 @@ namespace Sass {
         return SASS_MEMORY_NEW(String_Quoted, pstate, "grayscale(" + amount->to_string(ctx.c_options) + ")");
       }
 
-      Color* col = ARG("$color", Color);
+      Color* col = ARGCOL("$color");
       Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->s(0.0); // just reset saturation
       return copy.detach();
@@ -350,7 +791,7 @@ namespace Sass {
     Signature complement_sig = "complement($color)";
     BUILT_IN(complement)
     {
-      Color* col = ARG("$color", Color);
+      Color* col = ARGCOL("$color");
       Color_HSLA_Obj copy = col->copyAsHSLA();
       copy->h(absmod(copy->h() - 180.0, 360.0));
       return copy.detach();
@@ -361,12 +802,16 @@ namespace Sass {
     {
       // CSS3 filter function overload: pass literal through directly
       Number* amount = Cast<Number>(env["$color"]);
+      double weight = DARG_U_PRCT("$weight");
       if (amount) {
+        // TODO: does not throw on 100% manually passed as value
+        if (weight < 100.0) {
+          error("Only one argument may be passed to the plain-CSS invert() function.", pstate, traces);
+        }
         return SASS_MEMORY_NEW(String_Quoted, pstate, "invert(" + amount->to_string(ctx.c_options) + ")");
       }
 
-      Color* col = ARG("$color", Color);
-      double weight = DARG_U_PRCT("$weight");
+      Color* col = ARGCOL("$color");
       Color_RGBA_Obj inv = col->copyAsRGBA();
       inv->r(clip(255.0 - inv->r(), 0.0, 255.0));
       inv->g(clip(255.0 - inv->g(), 0.0, 255.0));
@@ -393,14 +838,14 @@ namespace Sass {
         return SASS_MEMORY_NEW(String_Quoted, pstate, "opacity(" + amount->to_string(ctx.c_options) + ")");
       }
 
-      return SASS_MEMORY_NEW(Number, pstate, ARG("$color", Color)->a());
+      return SASS_MEMORY_NEW(Number, pstate, ARGCOL("$color")->a());
     }
 
     Signature opacify_sig = "opacify($color, $amount)";
     Signature fade_in_sig = "fade-in($color, $amount)";
     BUILT_IN(opacify)
     {
-      Color* col = ARG("$color", Color);
+      Color* col = ARGCOL("$color");
       double amount = DARG_U_FACT("$amount");
       Color_Obj copy = SASS_MEMORY_COPY(col);
       copy->a(clip(col->a() + amount, 0.0, 1.0));
@@ -411,7 +856,7 @@ namespace Sass {
     Signature fade_out_sig = "fade-out($color, $amount)";
     BUILT_IN(transparentize)
     {
-      Color* col = ARG("$color", Color);
+      Color* col = ARGCOL("$color");
       double amount = DARG_U_FACT("$amount");
       Color_Obj copy = SASS_MEMORY_COPY(col);
       copy->a(std::max(col->a() - amount, 0.0));
@@ -422,153 +867,225 @@ namespace Sass {
     // OTHER COLOR FUNCTIONS
     ////////////////////////
 
-    Signature adjust_color_sig = "adjust-color($color, $red: false, $green: false, $blue: false, $hue: false, $saturation: false, $lightness: false, $alpha: false)";
+    Signature adjust_color_sig = "adjust-color($color, $kwargs...)";
     BUILT_IN(adjust_color)
     {
-      Color* col = ARG("$color", Color);
-      Number* r = Cast<Number>(env["$red"]);
-      Number* g = Cast<Number>(env["$green"]);
-      Number* b = Cast<Number>(env["$blue"]);
-      Number* h = Cast<Number>(env["$hue"]);
-      Number* s = Cast<Number>(env["$saturation"]);
-      Number* l = Cast<Number>(env["$lightness"]);
-      Number* a = Cast<Number>(env["$alpha"]);
+      std::vector<ExpressionObj> arguments =
+        getArguments(env, { "$color", "$kwargs" });
+      Color* color = assertColor(arguments[0], "$color", pstate, traces);
+      List* argumentList = Cast<List>(arguments[1]); // is rest...
+      checkPositionalArgs(argumentList, traces);
+      std::map<std::string, ExpressionObj> keywords =
+        argumentList->getNormalizedArgMap();
 
-      bool rgb = r || g || b;
-      bool hsl = h || s || l;
+      // ToDo _fuzzyRoundOrNull
+      Number* r = getColorArgInRange(keywords, "$red", -255.0, 255.0, pstate, traces);
+      Number* g = getColorArgInRange(keywords, "$green", -255.0, 255.0, pstate, traces);
+      Number* b = getColorArgInRange(keywords, "$blue", -255.0, 255.0, pstate, traces);
+      Number* h = getColorArg(keywords, "$hue", pstate, traces);
+      Number* s = getColorArgInRange(keywords, "$saturation", -100.0, 100.0, pstate, traces);
+      Number* l = getColorArgInRange(keywords, "$lightness", -100.0, 100.0, pstate, traces);
+      Number* a = getColorArgInRange(keywords, "$alpha", -1.0, 1.0, pstate, traces);
 
-      if (rgb && hsl) {
-        error("Cannot specify HSL and RGB values for a color at the same time for `adjust-color'", pstate, traces);
+      if (!keywords.empty()) {
+        std::vector<std::string> keys;
+        for (auto kv : keywords) {
+
+          keys.push_back(kv.first);
+        }
+        std::stringstream msg;
+        size_t iL = keys.size();
+        msg << "No argument" <<
+          (iL > 1 ? "s" : "") <<
+          " named ";
+        for (size_t i = 0; i < iL; i++) {
+          if (i > 0) {
+            msg << (i == iL - 1 ?
+              " and " : ", ");
+          }
+          msg << keys[i];
+        }
+        msg << ".";
+        error(msg.str(), pstate, traces);
       }
-      else if (rgb) {
-        Color_RGBA_Obj c = col->copyAsRGBA();
-        if (r) c->r(c->r() + DARG_R_BYTE("$red"));
-        if (g) c->g(c->g() + DARG_R_BYTE("$green"));
-        if (b) c->b(c->b() + DARG_R_BYTE("$blue"));
-        if (a) c->a(c->a() + DARG_R_FACT("$alpha"));
+
+      bool hasRgb = r || g || b;
+      bool hasHsl = h || s || l;
+
+      if (hasRgb && hasHsl) {
+        error("RGB parameters may not be passed along with HSL parameters.", pstate, traces);
+      }
+      else if (hasRgb) {
+        Color_RGBA_Obj c = color->copyAsRGBA();
+        if (r) c->r(c->r() + (r ? r->value() : 0.0));
+        if (g) c->g(c->g() + (g ? g->value() : 0.0));
+        if (b) c->b(c->b() + (b ? b->value() : 0.0));
+        if (a) c->a(c->a() + (a ? a->value() : 0.0));
         return c.detach();
       }
-      else if (hsl) {
-        Color_HSLA_Obj c = col->copyAsHSLA();
+      else if (hasHsl) {
+        Color_HSLA_Obj c = color->copyAsHSLA();
         if (h) c->h(c->h() + absmod(h->value(), 360.0));
-        if (s) c->s(c->s() + DARG_R_PRCT("$saturation"));
-        if (l) c->l(c->l() + DARG_R_PRCT("$lightness"));
-        if (a) c->a(c->a() + DARG_R_FACT("$alpha"));
+        if (s) c->s(c->s() + (s ? s->value() : 1.0));
+        if (l) c->l(c->l() + (l ? l->value() : 1.0));
+        if (a) c->a(c->a() + (a ? a->value() : 0.0));
         return c.detach();
       }
       else if (a) {
-        Color_Obj c = SASS_MEMORY_COPY(col);
-        c->a(c->a() + DARG_R_FACT("$alpha"));
+        Color_Obj c = SASS_MEMORY_COPY(color);
+        c->a(c->a() + (a ? a->value() : 0.0));
         c->a(clip(c->a(), 0.0, 1.0));
         return c.detach();
       }
-      error("not enough arguments for `adjust-color'", pstate, traces);
-      // unreachable
-      return col;
+      return color;
     }
 
-    Signature scale_color_sig = "scale-color($color, $red: false, $green: false, $blue: false, $hue: false, $saturation: false, $lightness: false, $alpha: false)";
+    Signature scale_color_sig = "scale-color($color, $kwargs...)";
     BUILT_IN(scale_color)
     {
-      Color* col = ARG("$color", Color);
-      Number* r = Cast<Number>(env["$red"]);
-      Number* g = Cast<Number>(env["$green"]);
-      Number* b = Cast<Number>(env["$blue"]);
-      Number* h = Cast<Number>(env["$hue"]);
-      Number* s = Cast<Number>(env["$saturation"]);
-      Number* l = Cast<Number>(env["$lightness"]);
-      Number* a = Cast<Number>(env["$alpha"]);
+      std::vector<ExpressionObj> arguments =
+      getArguments(env, { "$color", "$kwargs" });
+      Color* color = assertColor(arguments[0], "$color", pstate, traces);
+      List* argumentList = Cast<List>(arguments[1]); // is rest...
+      checkPositionalArgs(argumentList, traces);
+      std::map<std::string, ExpressionObj> keywords =
+        argumentList->getNormalizedArgMap();
 
-      bool rgb = r || g || b;
-      bool hsl = h || s || l;
+      Number* r = getColorScale(keywords, "$red", pstate, traces);
+      Number* g = getColorScale(keywords, "$green", pstate, traces);
+      Number* b = getColorScale(keywords, "$blue", pstate, traces);
+      Number* s = getColorScale(keywords, "$saturation", pstate, traces);
+      Number* l = getColorScale(keywords, "$lightness", pstate, traces);
+      Number* a = getColorScale(keywords, "$alpha", pstate, traces);
 
-      if (rgb && hsl) {
-        error("Cannot specify HSL and RGB values for a color at the same time for `scale-color'", pstate, traces);
+      if (!keywords.empty()) {
+        std::vector<std::string> keys;
+        for (auto kv : keywords) {
+          keys.push_back(kv.first);
+        }
+        std::stringstream msg;
+        size_t iL = keys.size();
+        msg << "No argument" <<
+          (iL > 1 ? "s" : "") <<
+          " named ";
+        for (size_t i = 0; i < iL; i++) {
+          if (i > 0) {
+            msg << (i == iL - 1 ?
+              " and " : ", ");
+          }
+          msg << keys[i];
+        }
+        msg << ".";
+        error(msg.str(), pstate, traces);
       }
-      else if (rgb) {
-        Color_RGBA_Obj c = col->copyAsRGBA();
-        double rscale = (r ? DARG_R_PRCT("$red") : 0.0) / 100.0;
-        double gscale = (g ? DARG_R_PRCT("$green") : 0.0) / 100.0;
-        double bscale = (b ? DARG_R_PRCT("$blue") : 0.0) / 100.0;
-        double ascale = (a ? DARG_R_PRCT("$alpha") : 0.0) / 100.0;
-        if (rscale) c->r(c->r() + rscale * (rscale > 0.0 ? 255.0 - c->r() : c->r()));
-        if (gscale) c->g(c->g() + gscale * (gscale > 0.0 ? 255.0 - c->g() : c->g()));
-        if (bscale) c->b(c->b() + bscale * (bscale > 0.0 ? 255.0 - c->b() : c->b()));
-        if (ascale) c->a(c->a() + ascale * (ascale > 0.0 ? 1.0 - c->a() : c->a()));
+
+      bool hasRgb = r || g || b;
+      bool hasHsl = s || l;
+
+      if (hasRgb) {
+        if (hasHsl) {
+          error("RGB parameters may not be passed along with HSL parameters.", pstate, traces);
+        }
+
+        Color_RGBA_Obj c = color->copyAsRGBA();
+        if (r) c->r(fuzzyRound(scaleValue(c->r(), r->value() / 100.0, 255.0)));
+        if (g) c->g(fuzzyRound(scaleValue(c->g(), g->value() / 100.0, 255.0)));
+        if (b) c->b(fuzzyRound(scaleValue(c->b(), b->value() / 100.0, 255.0)));
+        if (a) c->a(scaleValue(c->a(), a->value() / 100.0, 1.0));
         return c.detach();
       }
-      else if (hsl) {
-        Color_HSLA_Obj c = col->copyAsHSLA();
-        double hscale = (h ? DARG_R_PRCT("$hue") : 0.0) / 100.0;
-        double sscale = (s ? DARG_R_PRCT("$saturation") : 0.0) / 100.0;
-        double lscale = (l ? DARG_R_PRCT("$lightness") : 0.0) / 100.0;
-        double ascale = (a ? DARG_R_PRCT("$alpha") : 0.0) / 100.0;
-        if (hscale) c->h(c->h() + hscale * (hscale > 0.0 ? 360.0 - c->h() : c->h()));
-        if (sscale) c->s(c->s() + sscale * (sscale > 0.0 ? 100.0 - c->l() : c->s()));
-        if (lscale) c->l(c->l() + lscale * (lscale > 0.0 ? 100.0 - c->l() : c->l()));
-        if (ascale) c->a(c->a() + ascale * (ascale > 0.0 ? 1.0 - c->a() : c->a()));
+      else if (hasHsl) {
+        Color_HSLA_Obj c = color->copyAsHSLA();
+        if (s) c->s(scaleValue(c->s(), s->value() / 100.0, 100.0));
+        if (l) c->l(scaleValue(c->l(), l->value() / 100.0, 100.0));
+        if (a) c->a(scaleValue(c->a(), a->value() / 100.0, 1.0));
         return c.detach();
       }
       else if (a) {
-        Color_Obj c = SASS_MEMORY_COPY(col);
-        double ascale = DARG_R_PRCT("$alpha") / 100.0;
-        c->a(c->a() + ascale * (ascale > 0.0 ? 1.0 - c->a() : c->a()));
+        Color_Obj c = SASS_MEMORY_COPY(color);
+        c->a(clamp(scaleValue(c->a(), a->value() / 100.0, 1.0), 0.0, 1.0));
         c->a(clip(c->a(), 0.0, 1.0));
         return c.detach();
       }
-      error("not enough arguments for `scale-color'", pstate, traces);
-      // unreachable
-      return col;
+      return color;
     }
 
-    Signature change_color_sig = "change-color($color, $red: false, $green: false, $blue: false, $hue: false, $saturation: false, $lightness: false, $alpha: false)";
+    Signature change_color_sig = "change-color($color, $kwargs...)";
     BUILT_IN(change_color)
     {
-      Color* col = ARG("$color", Color);
-      Number* r = Cast<Number>(env["$red"]);
-      Number* g = Cast<Number>(env["$green"]);
-      Number* b = Cast<Number>(env["$blue"]);
-      Number* h = Cast<Number>(env["$hue"]);
-      Number* s = Cast<Number>(env["$saturation"]);
-      Number* l = Cast<Number>(env["$lightness"]);
-      Number* a = Cast<Number>(env["$alpha"]);
+      std::vector<ExpressionObj> arguments =
+        getArguments(env, { "$color", "$kwargs" });
+      Color* color = assertColor(arguments[0], "$color", pstate, traces);
+      List* argumentList = Cast<List>(arguments[1]); // is rest...
+      checkPositionalArgs(argumentList, traces);
+      std::map<std::string, ExpressionObj> keywords =
+        argumentList->getNormalizedArgMap();
 
-      bool rgb = r || g || b;
-      bool hsl = h || s || l;
+      // ToDo _fuzzyRoundOrNull
+      Number* r = getColorArgInRange(keywords, "$red", 0.0, 255.0, pstate, traces);
+      Number* g = getColorArgInRange(keywords, "$green", 0.0, 255.0, pstate, traces);
+      Number* b = getColorArgInRange(keywords, "$blue", 0.0, 255.0, pstate, traces);
+      Number* h = getColorArg(keywords, "$hue", pstate, traces);
+      Number* s = getColorArgInRange(keywords, "$saturation", 0.0, 100.0, pstate, traces);
+      Number* l = getColorArgInRange(keywords, "$lightness", 0.0, 100.0, pstate, traces);
+      Number* a = getColorArgInRange(keywords, "$alpha", 0.0, 1.0, pstate, traces);
 
-      if (rgb && hsl) {
-        error("Cannot specify HSL and RGB values for a color at the same time for `change-color'", pstate, traces);
+      if (!keywords.empty()) {
+        std::vector<std::string> keys;
+        for (auto kv : keywords) {
+
+          keys.push_back(kv.first);
+        }
+        std::stringstream msg;
+        size_t iL = keys.size();
+        msg << "No argument" <<
+          (iL > 1 ? "s" : "") <<
+          " named ";
+        for (size_t i = 0; i < iL; i++) {
+          if (i > 0) {
+            msg << (i == iL - 1 ?
+              " and " : ", ");
+          }
+          msg << keys[i];
+        }
+        msg << ".";
+        error(msg.str(), pstate, traces);
       }
-      else if (rgb) {
-        Color_RGBA_Obj c = col->copyAsRGBA();
-        if (r) c->r(DARG_U_BYTE("$red"));
-        if (g) c->g(DARG_U_BYTE("$green"));
-        if (b) c->b(DARG_U_BYTE("$blue"));
-        if (a) c->a(DARG_U_FACT("$alpha"));
+
+      bool hasRgb = r || g || b;
+      bool hasHsl = h || s || l;
+
+      if (hasRgb && hasHsl) {
+        error("RGB parameters may not be passed along with HSL parameters.", pstate, traces);
+      }
+      else if (hasRgb) {
+        Color_RGBA_Obj c = color->copyAsRGBA();
+        if (r) c->r(r->value());
+        if (g) c->g(g->value());
+        if (b) c->b(b->value());
+        if (a) c->a(a->value());
         return c.detach();
       }
-      else if (hsl) {
-        Color_HSLA_Obj c = col->copyAsHSLA();
+      else if (hasHsl) {
+        Color_HSLA_Obj c = color->copyAsHSLA();
         if (h) c->h(absmod(h->value(), 360.0));
-        if (s) c->s(DARG_U_PRCT("$saturation"));
-        if (l) c->l(DARG_U_PRCT("$lightness"));
-        if (a) c->a(DARG_U_FACT("$alpha"));
+        if (s) c->s(s->value());
+        if (l) c->l(l->value());
+        if (a) c->a(a->value());
         return c.detach();
       }
       else if (a) {
-        Color_Obj c = SASS_MEMORY_COPY(col);
-        c->a(clip(DARG_U_FACT("$alpha"), 0.0, 1.0));
+        Color_Obj c = SASS_MEMORY_COPY(color);
+        c->a(clip(a->value(), 0.0, 1.0));
         return c.detach();
       }
-      error("not enough arguments for `change-color'", pstate, traces);
-      // unreachable
-      return col;
+      return color;
     }
 
     Signature ie_hex_str_sig = "ie-hex-str($color)";
     BUILT_IN(ie_hex_str)
     {
-      Color* col = ARG("$color", Color);
+      Color* col = ARGCOL("$color");
       Color_RGBA_Obj c = col->toRGBA();
       double r = clip(c->r(), 0.0, 255.0);
       double g = clip(c->g(), 0.0, 255.0);

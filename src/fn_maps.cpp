@@ -16,7 +16,7 @@ namespace Sass {
       // leaks for "map-get((), foo)" if not Obj
       // investigate why this is (unexpected)
       Map_Obj m = ARGM("$map", Map);
-      Expression_Obj v = ARG("$key", Expression);
+      Expression_Obj v = ARG("$key", Expression, "an expression");
       try {
         Value_Obj val = m->at(v);
         if (!val) return SASS_MEMORY_NEW(Null, pstate);
@@ -32,7 +32,7 @@ namespace Sass {
     BUILT_IN(map_has_key)
     {
       Map_Obj m = ARGM("$map", Map);
-      Expression_Obj v = ARG("$key", Expression);
+      Expression_Obj v = ARG("$key", Expression, "an expression");
       return SASS_MEMORY_NEW(Boolean, pstate, m->has(v));
     }
 
@@ -77,7 +77,7 @@ namespace Sass {
     {
       bool remove;
       Map_Obj m = ARGM("$map", Map);
-      List_Obj arglist = ARG("$keys", List);
+      List_Obj arglist = ARG("$keys", List, "a list");
       Map* result = SASS_MEMORY_NEW(Map, pstate, 1);
       for (auto key : m->keys()) {
         remove = false;

@@ -117,6 +117,19 @@ namespace Sass {
     return length();
   }
 
+  std::map<std::string, ExpressionObj> List::getNormalizedArgMap()
+  {
+    std::map<std::string, ExpressionObj> map;
+    if (is_arglist_) {
+      for (Expression* item : elements()) {
+        if (Argument * arg = Cast<Argument>(item)) {
+          if (arg->name().empty()) continue;
+          map[arg->name()] = arg->value();
+        }
+      }
+    }
+    return map;
+  }
 
   Expression_Obj List::value_at_index(size_t i) {
     Expression_Obj obj = this->at(i);

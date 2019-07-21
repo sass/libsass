@@ -484,7 +484,7 @@ namespace Sass {
 
   void register_function(Context&, Signature sig, Native_Function f, Env* env);
   void register_function(Context&, Signature sig, Native_Function f, size_t arity, Env* env);
-  void register_overload_stub(Context&, std::string name, Env* env);
+  void register_overload_stub(Context&, std::string name, Env* env, size_t defaultParams);
   void register_built_in_functions(Context&, Env* env);
   void register_c_functions(Context&, Env* env, Sass_Function_List);
   void register_c_function(Context&, Env* env, Sass_Function_Entry);
@@ -726,7 +726,7 @@ namespace Sass {
     (*env)[ss.str()] = def;
   }
 
-  void register_overload_stub(Context& ctx, std::string name, Env* env)
+  void register_overload_stub(Context& ctx, std::string name, Env* env, size_t defaultParams)
   {
     Definition* stub = SASS_MEMORY_NEW(Definition,
                                        ParserState("[built-in function]"),
@@ -735,6 +735,7 @@ namespace Sass {
                                        {},
                                        0,
                                        true);
+    stub->defaultParams(defaultParams);
     (*env)[name + "[f]"] = stub;
   }
 
@@ -742,30 +743,58 @@ namespace Sass {
   void register_built_in_functions(Context& ctx, Env* env)
   {
     using namespace Functions;
-    // RGB Functions
-    register_function(ctx, rgb_sig, rgb, env);
-    register_overload_stub(ctx, "rgba", env);
+    register_overload_stub(ctx, "rgb", env, 3);
+    register_function(ctx, rgb_4_sig, rgb_4, 4, env);
+    register_function(ctx, rgb_3_sig, rgb_3, 3, env);
+    register_function(ctx, rgb_2_sig, rgb_2, 2, env);
+    register_function(ctx, rgb_1_sig, rgb_1, 1, env);
+
+    register_overload_stub(ctx, "rgba", env, 4);
     register_function(ctx, rgba_4_sig, rgba_4, 4, env);
+    register_function(ctx, rgba_3_sig, rgba_3, 3, env);
     register_function(ctx, rgba_2_sig, rgba_2, 2, env);
+    register_function(ctx, rgba_1_sig, rgba_1, 1, env);
+
+    register_overload_stub(ctx, "hsl", env, 3);
+    register_function(ctx, hsl_4_sig, hsl_4, 4, env);
+    register_function(ctx, hsl_3_sig, hsl_3, 3, env);
+    register_function(ctx, hsl_2_sig, hsl_2, 2, env);
+    register_function(ctx, hsl_1_sig, hsl_1, 1, env);
+
+    register_overload_stub(ctx, "hsla", env, 4);
+    register_function(ctx, hsla_4_sig, hsla_4, 4, env);
+    register_function(ctx, hsla_3_sig, hsla_3, 3, env);
+    register_function(ctx, hsla_2_sig, hsla_2, 2, env);
+    register_function(ctx, hsla_1_sig, hsla_1, 1, env);
+
+    register_overload_stub(ctx, "saturate", env, 2);
+    register_function(ctx, saturate_1_sig, saturate_1, 1, env);
+    register_function(ctx, saturate_2_sig, saturate_2, 2, env);
+
+    // RGB Functions
     register_function(ctx, red_sig, red, env);
     register_function(ctx, green_sig, green, env);
     register_function(ctx, blue_sig, blue, env);
     register_function(ctx, mix_sig, mix, env);
     // HSL Functions
-    register_function(ctx, hsl_sig, hsl, env);
-    register_function(ctx, hsla_sig, hsla, env);
     register_function(ctx, hue_sig, hue, env);
     register_function(ctx, saturation_sig, saturation, env);
     register_function(ctx, lightness_sig, lightness, env);
     register_function(ctx, adjust_hue_sig, adjust_hue, env);
     register_function(ctx, lighten_sig, lighten, env);
     register_function(ctx, darken_sig, darken, env);
-    register_function(ctx, saturate_sig, saturate, env);
     register_function(ctx, desaturate_sig, desaturate, env);
     register_function(ctx, grayscale_sig, grayscale, env);
     register_function(ctx, complement_sig, complement, env);
     register_function(ctx, invert_sig, invert, env);
     // Opacity Functions
+    // register_overload_stub(ctx, "alpha", env);
+    // register_function(ctx, alpha_sig, alpha, 1, env);
+    // register_function(ctx, alpha_ie_sig, alpha_ie, std::string::npos, env);
+    // register_overload_stub(ctx, "opacity", env);
+    // register_function(ctx, opacity_sig, alpha, 1, env);
+
+
     register_function(ctx, alpha_sig, alpha, env);
     register_function(ctx, opacity_sig, alpha, env);
     register_function(ctx, opacify_sig, opacify, env);

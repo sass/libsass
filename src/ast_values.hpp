@@ -68,6 +68,7 @@ namespace Sass {
     virtual size_t hash() const override;
     virtual size_t size() const;
     virtual void set_delayed(bool delayed) override;
+    std::map<std::string, ExpressionObj> getNormalizedArgMap();
 
     virtual bool operator< (const Expression& rhs) const override;
     virtual bool operator== (const Expression& rhs) const override;

@@ -384,6 +384,13 @@ namespace Sass {
     return u;
   }
 
+  bool Units::hasUnit(std::string unit)
+  {
+    return numerators.size() == 1 &&
+      denominators.empty() &&
+      numerators[0] == unit;
+  }
+
   bool Units::is_unitless() const
   {
     return numerators.empty() &&

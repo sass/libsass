@@ -62,6 +62,10 @@ namespace Sass {
     return true;
   }
 
+  inline bool string_constains(const std::string& str, const char chr) {
+    return str.find(chr) != std::string::npos;
+  }
+
   // C++20 `starts_with` equivalent.
   // See https://en.cppreference.com/w/cpp/string/basic_string/starts_with
   inline bool starts_with(const std::string& str, const char* prefix, size_t prefix_len) {

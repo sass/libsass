@@ -1,6 +1,7 @@
 // sass.hpp must go before all system headers to get the
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
+#include "ast.hpp"
 
 #include "parser.hpp"
 #include "fn_utils.hpp"
@@ -53,6 +54,11 @@ namespace Sass {
       return str.substr(0, str.find('('));
     }
 
+    std::string envValueToString(Env& env, const std::string& name)
+    {
+      return env[name]->to_string();
+    }
+
     Map* get_arg_m(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces)
     {
       AST_Node* value = env[argname];
@@ -61,19 +67,19 @@ namespace Sass {
       if (list && list->length() == 0) {
         return SASS_MEMORY_NEW(Map, pstate, 0);
       }
-      return get_arg<Map>(argname, env, sig, pstate, traces);
+      return get_arg<Map>(argname, env, sig, pstate, traces, "a map");
     }
 
-    double get_arg_r(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, double lo, double hi)
+    double get_arg_r(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, double lo, double hi, std::string unit)
     {
-      Number* val = get_arg<Number>(argname, env, sig, pstate, traces);
+      Number* val = get_arg<Number>(argname, env, sig, pstate, traces, "a number");
       Number tmpnr(val);
       tmpnr.reduce();
       double v = tmpnr.value();
       if (!(lo <= v && v <= hi)) {
         std::stringstream msg;
-        msg << "argument `" << argname << "` of `" << sig << "` must be between ";
-        msg << lo << " and " << hi;
+        msg << "Expected " << v << unit << " to be within ";
+        msg << lo << unit << " and " << hi << unit << ".";
         error(msg.str(), pstate, traces);
       }
       return v;
@@ -81,7 +87,7 @@ namespace Sass {
 
     Number* get_arg_n(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces)
     {
-      Number* val = get_arg<Number>(argname, env, sig, pstate, traces);
+      Number* val = get_arg<Number>(argname, env, sig, pstate, traces, "a number");
       val = SASS_MEMORY_COPY(val);
       val->reduce();
       return val;
@@ -89,7 +95,7 @@ namespace Sass {
 
     double get_arg_val(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces)
     {
-      Number* val = get_arg<Number>(argname, env, sig, pstate, traces);
+      Number* val = get_arg<Number>(argname, env, sig, pstate, traces, "a number");
       Number tmpnr(val);
       tmpnr.reduce();
       return tmpnr.value();
@@ -97,7 +103,7 @@ namespace Sass {
 
     double color_num(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces)
     {
-      Number* val = get_arg<Number>(argname, env, sig, pstate, traces);
+      Number* val = get_arg<Number>(argname, env, sig, pstate, traces, "a number");
       Number tmpnr(val);
       tmpnr.reduce();
       if (tmpnr.unit() == "%") {
@@ -108,7 +114,7 @@ namespace Sass {
     }
 
     double alpha_num(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces) {
-      Number* val = get_arg<Number>(argname, env, sig, pstate, traces);
+      Number* val = get_arg<Number>(argname, env, sig, pstate, traces, "a number");
       Number tmpnr(val);
       tmpnr.reduce();
       if (tmpnr.unit() == "%") {
@@ -119,7 +125,7 @@ namespace Sass {
     }
 
     SelectorListObj get_arg_sels(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, Context& ctx) {
-      Expression_Obj exp = ARG(argname, Expression);
+      Expression_Obj exp = ARG(argname, Expression, "an expression");
       if (exp->concrete_type() == Expression::NULL_VAL) {
         std::stringstream msg;
         msg << argname << ": null is not a valid selector: it must be a string,\n";
@@ -134,10 +140,14 @@ namespace Sass {
     }
 
     CompoundSelectorObj get_arg_sel(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, Context& ctx) {
-      Expression_Obj exp = ARG(argname, Expression);
+      Expression_Obj exp = ARG(argname, Expression, "an expression");
       if (exp->concrete_type() == Expression::NULL_VAL) {
         std::stringstream msg;
-        msg << argname << ": null is not a string for `" << function_name(sig) << "'";
+        if (!argname.empty()) {
+          msg << argname << ": ";
+        }
+        msg << "null is not a valid selector: it must be a string,\n" 
+          << "a list of strings, or a list of lists of strings.";
         error(msg.str(), exp->pstate(), traces);
       }
       if (String_Constant* str = Cast<String_Constant>(exp)) {
@@ -147,6 +157,18 @@ namespace Sass {
       SelectorListObj sel_list = Parser::parse_selector(exp_src.c_str(), ctx, traces, exp->pstate(), pstate.src, /*allow_parent=*/false);
       if (sel_list->length() == 0) return {};
       return sel_list->first()->first();
+    }
+
+    int assertInt(const std::string& name, double value, ParserState pstate, Backtraces traces)
+    {
+      if (std::fabs(trunc(value) - value) < NUMBER_EPSILON) {
+        return (int) value;
+      }
+      std::stringstream err;
+      if (!name.empty()) err << name << ": ";
+      err << value << " is not an int.";
+      error(err.str(), pstate, traces);
+      return 0;
     }
 
 

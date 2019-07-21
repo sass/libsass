@@ -776,6 +776,7 @@ namespace Sass {
     ADD_PROPERTY(Sass_Function_Entry, c_function)
     ADD_PROPERTY(void*, cookie)
     ADD_PROPERTY(bool, is_overload_stub)
+    ADD_PROPERTY(size_t, defaultParams)
     ADD_PROPERTY(Signature, signature)
   public:
     Definition(ParserState pstate,

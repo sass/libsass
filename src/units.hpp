@@ -72,6 +72,10 @@ namespace Sass {
     std::string unit() const;
     // get if units are empty
     bool is_unitless() const;
+
+    bool hasUnits() const {
+      return !is_unitless();
+    }
     // return if valid for css
     bool is_valid_css_unit() const;
     // reduce units for output
@@ -86,6 +90,8 @@ namespace Sass {
     bool operator!= (const Units& rhs) const;
     // factor to convert into given units
     double convert_factor(const Units&) const;
+    // Check if number has the given unit
+    bool hasUnit(std::string numerator);
   };
 
   extern const double size_conversion_factors[6][6];

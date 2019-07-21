@@ -13,7 +13,7 @@ namespace Sass {
     Signature selector_nest_sig = "selector-nest($selectors...)";
     BUILT_IN(selector_nest)
     {
-      List* arglist = ARG("$selectors", List);
+      List* arglist = ARG("$selectors", List, "a list");
 
       // Not enough parameters
       if (arglist->length() == 0) {
@@ -65,7 +65,7 @@ namespace Sass {
     Signature selector_append_sig = "selector-append($selectors...)";
     BUILT_IN(selector_append)
     {
-      List* arglist = ARG("$selectors", List);
+      List* arglist = ARG("$selectors", List, "a list");
 
       // Not enough parameters
       if (arglist->empty()) {
