@@ -1013,9 +1013,19 @@ namespace Sass {
         if (rest) L += rest->length() - 1;
       }
       ss << full_name << L;
-      full_name = ss.str();
-      std::string resolved_name(full_name);
-      if (!env->has(resolved_name)) error("overloaded function `" + std::string(c->name()) + "` given wrong number of arguments", c->pstate(), traces);
+      std::string resolved_name(ss.str());
+      if (!env->has(resolved_name)) resolved_name = full_name + "*";
+      // std::cerr << "CALLING " << resolved_name << "\n";
+      if (!env->has(resolved_name)) {
+        size_t LP = def->defaultParams();
+        std::stringstream msg;
+        msg << "Only " << LP << " ";
+        msg << (LP == 1 ? "argument" : "arguments");
+        msg << " allowed, but " << L << " ";
+        msg << (L == 1 ? "was" : "were");
+        msg << " passed.";
+        error(msg.str(), c->pstate(), traces);
+      }
       def = Cast<Definition>((*env)[resolved_name]);
     }
 
