@@ -18,8 +18,11 @@ namespace Sass {
     Signature keywords_sig = "keywords($args)";
     BUILT_IN(keywords)
     {
-      List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List, "a list")); // copy
+      List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List, "an argument list")); // copy
       Map_Obj result = SASS_MEMORY_NEW(Map, pstate, 1);
+      // if (!arglist->is_arglist()) {
+        // error("$args: " + arglist->to_string() + " is not an argument list.", pstate, traces);
+      // }
       for (size_t i = arglist->size(), L = arglist->length(); i < L; ++i) {
         Expression_Obj obj = arglist->at(i);
         Argument_Obj arg = (Argument*) obj.ptr(); // XXX
@@ -69,11 +72,19 @@ namespace Sass {
         bool empty = m ? m->empty() : sl->empty();
         if (empty) error("argument `$list` of `" + std::string(sig) + "` must not be empty", pstate, traces);
         double index = std::floor(nr < 0 ? len + nr : nr - 1);
-        if (index < 0 || index > len - 1) error("index out of bounds for `" + std::string(sig) + "`", pstate, traces);
+        if (index < 0 || index > len - 1) {
+          if (std::floor(nr) == 0) error("$n: List index may not be 0.", pstate, traces);
+          std::stringstream strm;
+          strm << "$n: Invalid index ";
+          strm << std::floor(nr);
+          strm << " for a list with ";
+          strm << len << " elements.";
+          error(strm.str(), pstate, traces);
+        }
         return Cast<Value>(Listize::perform(sl->get(static_cast<int>(index))));
       }
       List_Obj l = Cast<List>(env["$list"]);
-      if (nr == 0) error("argument `$n` of `" + std::string(sig) + "` must be non-zero", pstate, traces);
+      if (nr == 0) error("$n: List index may not be 0.", pstate, traces);
       // if the argument isn't a list, then wrap it in a singleton list
       if (!m && !l) {
         l = SASS_MEMORY_NEW(List, pstate, 1);
@@ -83,7 +94,15 @@ namespace Sass {
       bool empty = m ? m->empty() : l->empty();
       if (empty) error("argument `$list` of `" + std::string(sig) + "` must not be empty", pstate, traces);
       double index = std::floor(nr < 0 ? len + nr : nr - 1);
-      if (index < 0 || index > len - 1) error("index out of bounds for `" + std::string(sig) + "`", pstate, traces);
+      if (index < 0 || index > len - 1) {
+        if (std::floor(nr) == 0) error("$n: List index may not be 0.", pstate, traces);
+        std::stringstream strm;
+        strm << "$n: Invalid index ";
+        strm << std::floor(nr);
+        strm << " for a list with ";
+        strm << l->length() << " elements.";
+        error(strm.str(), pstate, traces);
+      }
 
       if (m) {
         l = SASS_MEMORY_NEW(List, pstate, 2);
@@ -114,7 +133,15 @@ namespace Sass {
       }
       if (l->empty()) error("argument `$list` of `" + std::string(sig) + "` must not be empty", pstate, traces);
       double index = std::floor(n->value() < 0 ? l->length() + n->value() : n->value() - 1);
-      if (index < 0 || index > l->length() - 1) error("index out of bounds for `" + std::string(sig) + "`", pstate, traces);
+      if (index < 0 || index > l->length() - 1) {
+        if (std::floor(n->value()) == 0) error("$n: List index may not be 0.", pstate, traces);
+        std::stringstream strm;
+        strm << "$n: Invalid index ";
+        strm << std::floor(n->value());
+        strm << " for a list with ";
+        strm << l->length() << " elements.";
+        error(strm.str(), pstate, traces);
+      }
       List* result = SASS_MEMORY_NEW(List, pstate, l->length(), l->separator(), false, l->is_bracketed());
       for (size_t i = 0, L = l->length(); i < L; ++i) {
         result->append(((i == index) ? v : (*l)[i]));

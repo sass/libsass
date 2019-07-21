@@ -50,7 +50,7 @@ namespace Sass {
     {
       String_Constant* ss = Cast<String_Constant>(env["$name"]);
       if (!ss) {
-        error("$name: " + (env["$name"]->to_string()) + " is not a string for `function-exists'", pstate, traces);
+        error("$name: " + (env["$name"]->to_string()) + " is not a string.", pstate, traces);
       }
 
       std::string name = Util::normalize_underscores(unquote(ss->value()));
