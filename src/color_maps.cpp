@@ -631,6 +631,10 @@ namespace Sass {
   {
     auto p = colors_to_names->find(key);
     if (p != colors_to_names->end()) {
+      std::string rv = p->second;
+      // Match dart-sass output
+      if (rv == "magenta") { return "fuchsia"; }
+      if (rv == "cyan") { return "aqua"; }
       return p->second;
     }
     return nullptr;
