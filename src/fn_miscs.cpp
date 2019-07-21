@@ -108,7 +108,7 @@ namespace Sass {
         function = ff->name();
       }
 
-      List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List, "a list"));
+      List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List, "an argument list"));
 
       Arguments_Obj args = SASS_MEMORY_NEW(Arguments, pstate);
       // std::string full_name(name + "[f]");
@@ -178,8 +178,7 @@ namespace Sass {
         return SASS_MEMORY_NEW(String_Constant, pstate, "null");
       } else if (v->concrete_type() == Expression::BOOLEAN && v->is_false()) {
         return SASS_MEMORY_NEW(String_Constant, pstate, "false");
-      } else if (v->concrete_type() == Expression::STRING) {
-        String_Constant *s = Cast<String_Constant>(v);
+      } else if (String_Constant* s = Cast<String_Constant>(v)) {
         if (s->quote_mark()) {
           return SASS_MEMORY_NEW(String_Constant, pstate, quote(s->value(), s->quote_mark()));
         } else {
@@ -203,7 +202,7 @@ namespace Sass {
     BUILT_IN(content_exists)
     {
       if (!d_env.has_global("is_in_mixin")) {
-        error("Cannot call content-exists() except within a mixin.", pstate, traces);
+        error("content-exists() may only be called within a mixin.", pstate, traces);
       }
       return SASS_MEMORY_NEW(Boolean, pstate, d_env.has_lexical("@content[m]"));
     }
@@ -213,7 +212,7 @@ namespace Sass {
     {
       String_Constant* ss = Cast<String_Constant>(env["$name"]);
       if (!ss) {
-        error("$name: " + (env["$name"]->to_string()) + " is not a string for `get-function'", pstate, traces);
+        error("$name: " + (env["$name"]->to_string()) + " is not a string.", pstate, traces);
       }
 
       std::string name = Util::normalize_underscores(unquote(ss->value()));
@@ -231,7 +230,7 @@ namespace Sass {
       }
 
 
-      if (!d_env.has_global(full_name)) {
+      if (!d_env.has(full_name)) {
         error("Function not found: " + name, pstate, traces);
       }
 

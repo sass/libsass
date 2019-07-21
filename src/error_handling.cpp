@@ -41,15 +41,15 @@ namespace Sass {
     InvalidArgumentType::InvalidArgumentType(ParserState pstate, Backtraces traces, std::string fn, std::string arg, std::string type, const Value* value)
     : Base(pstate, def_msg, traces), fn(fn), arg(arg), type(type), value(value)
     {
-      msg = arg + ": \"";
+      msg = arg + ": ";
       if (value) msg += value->to_string(Sass_Inspect_Options());
-      msg += "\" is not a " + type + " for `" + fn + "'";
+      msg += " is not a " + type + ".";
     }
 
     MissingArgument::MissingArgument(ParserState pstate, Backtraces traces, std::string fn, std::string arg, std::string fntype)
     : Base(pstate, def_msg, traces), fn(fn), arg(arg), fntype(fntype)
     {
-      msg = fntype + " " + fn + " is missing argument " + arg + ".";
+      msg = "Missing argument " + arg + ".";
     }
 
     InvalidSyntax::InvalidSyntax(ParserState pstate, Backtraces traces, std::string msg)

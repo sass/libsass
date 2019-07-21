@@ -60,7 +60,7 @@ namespace Sass {
     BUILT_IN(percentage)
     {
       Number_Obj n = ARGN("$number");
-      if (!n->is_unitless()) error("argument $number of `" + std::string(sig) + "` must be unitless", pstate, traces);
+      if (!n->is_unitless()) error("$number: Expected " + n->to_string() + " to have no units.", pstate, traces);
       return SASS_MEMORY_NEW(Number, pstate, n->value() * 100, "%");
     }
 
@@ -103,7 +103,7 @@ namespace Sass {
     Signature min_sig = "min($numbers...)";
     BUILT_IN(min)
     {
-      List* arglist = ARG("$numbers", List, "a list");
+      List* arglist = ARGLIST("$numbers");
       Number_Obj least;
       size_t L = arglist->length();
       if (L == 0) {
@@ -113,7 +113,7 @@ namespace Sass {
         Expression_Obj val = arglist->value_at_index(i);
         Number_Obj xi = Cast<Number>(val);
         if (!xi) {
-          error("\"" + val->to_string(ctx.c_options) + "\" is not a number for `min'", pstate, traces);
+          error(val->to_string(ctx.c_options) + " is not a number.", val->pstate(), traces);
         }
         if (least) {
           if (*xi < *least) least = xi;
@@ -125,7 +125,7 @@ namespace Sass {
     Signature max_sig = "max($numbers...)";
     BUILT_IN(max)
     {
-      List* arglist = ARG("$numbers", List, "a list");
+      List* arglist = ARGLIST("$numbers");
       Number_Obj greatest;
       size_t L = arglist->length();
       if (L == 0) {
@@ -135,7 +135,7 @@ namespace Sass {
         Expression_Obj val = arglist->value_at_index(i);
         Number_Obj xi = Cast<Number>(val);
         if (!xi) {
-          error("\"" + val->to_string(ctx.c_options) + "\" is not a number for `max'", pstate, traces);
+          error(val->to_string(ctx.c_options) + " is not a number.", val->pstate(), traces);
         }
         if (greatest) {
           if (*greatest < *xi) greatest = xi;
@@ -144,24 +144,25 @@ namespace Sass {
       return greatest.detach();
     }
 
-    Signature random_sig = "random($limit:false)";
+    Signature random_sig = "random($limit: null)";
     BUILT_IN(random)
     {
       AST_Node_Obj arg = env["$limit"];
+      Null* n = Cast<Null>(arg);
       Value* v = Cast<Value>(arg);
       Number* l = Cast<Number>(arg);
       Boolean* b = Cast<Boolean>(arg);
-      if (l) {
+      if (n) {
+        std::uniform_real_distribution<> distributor(0, 1);
+        return SASS_MEMORY_NEW(Number, pstate, distributor(rand));
+      }
+      else if (l) {
         double lv = l->value();
+        bool eq_int = std::fabs(trunc(lv) - lv) < NUMBER_EPSILON;
+        assertInt("$limit", lv, pstate, traces);
         if (lv < 1) {
           std::stringstream err;
-          err << "$limit " << lv << " must be greater than or equal to 1 for `random'";
-          error(err.str(), pstate, traces);
-        }
-        bool eq_int = std::fabs(trunc(lv) - lv) < NUMBER_EPSILON;
-        if (!eq_int) {
-          std::stringstream err;
-          err << "Expected $limit to be an integer but got " << lv << " for `random'";
+          err << "$limit: Must be greater than 0, was " << lv << ".";
           error(err.str(), pstate, traces);
         }
         std::uniform_real_distribution<> distributor(1, lv + 1);

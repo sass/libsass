@@ -41,31 +41,23 @@ namespace Sass {
     {
       AST_Node_Obj arg = env["$string"];
       if (String_Quoted* string_quoted = Cast<String_Quoted>(arg)) {
-        String_Constant* result = SASS_MEMORY_NEW(String_Constant, pstate, string_quoted->value());
-        // remember if the string was quoted (color tokens)
-        result->is_delayed(true); // delay colors
-        return result;
+        return SASS_MEMORY_NEW(String_Constant, pstate, string_quoted->value());
       }
       else if (String_Constant* str = Cast<String_Constant>(arg)) {
         return str;
       }
-      else if (Value* ex = Cast<Value>(arg)) {
-        Sass_Output_Style oldstyle = ctx.c_options.output_style;
-        ctx.c_options.output_style = SASS_STYLE_NESTED;
-        std::string val(arg->to_string(ctx.c_options));
-        val = Cast<Null>(arg) ? "null" : val;
-        ctx.c_options.output_style = oldstyle;
-
-        deprecated_function("Passing " + val + ", a non-string value, to unquote()", pstate);
-        return ex;
-      }
-      throw std::runtime_error("Invalid Data Type for unquote");
+      std::stringstream msg;
+      msg << "$string: ";
+      msg << arg->to_string();
+      msg << " is not a string.";
+      error(msg.str(), arg->pstate(), traces);
+      return nullptr;
     }
 
     Signature quote_sig = "quote($string)";
     BUILT_IN(sass_quote)
     {
-      const String_Constant* s = ARG("$string", String_Constant, "a string");
+      const String_Constant* s = ARGSTRC("$string");
       String_Quoted *result = SASS_MEMORY_NEW(
           String_Quoted, pstate, s->value(),
           /*q=*/'\0', /*keep_utf8_escapes=*/false, /*skip_unquoting=*/true);
@@ -78,7 +70,7 @@ namespace Sass {
     {
       size_t len = std::string::npos;
       try {
-        String_Constant* s = ARG("$string", String_Constant, "a string");
+        String_Constant* s = ARGSTRC("$string");
         len = UTF_8::code_point_count(s->value(), 0, s->value().size());
 
       }
@@ -94,11 +86,12 @@ namespace Sass {
     {
       std::string str;
       try {
-        String_Constant* s = ARG("$string", String_Constant, "a string");
+        String_Constant* s = ARGSTRC("$string");
         str = s->value();
-        String_Constant* i = ARG("$insert", String_Constant, "a string");
+        String_Constant* i = ARGSTRC("$insert");
         std::string ins = i->value();
         double index = ARGVAL("$index");
+        assertInt("$index", index, pstate, traces);
         size_t len = UTF_8::code_point_count(str, 0, str.size());
 
         if (index > 0 && index <= len) {
@@ -137,8 +130,8 @@ namespace Sass {
     {
       size_t index = std::string::npos;
       try {
-        String_Constant* s = ARG("$string", String_Constant, "a string");
-        String_Constant* t = ARG("$substring", String_Constant, "a string");
+        String_Constant* s = ARGSTRC("$string");
+        String_Constant* t = ARGSTRC("$substring");
         std::string str = s->value();
         std::string substr = t->value();
 
@@ -155,14 +148,16 @@ namespace Sass {
       return SASS_MEMORY_NEW(Number, pstate, (double)index);
     }
 
-    Signature str_slice_sig = "str-slice($string, $start-at, $end-at:-1)";
+    Signature str_slice_sig = "str-slice($string, $start-at, $end-at: -1)";
     BUILT_IN(str_slice)
     {
       std::string newstr;
       try {
-        String_Constant* s = ARG("$string", String_Constant, "a string");
+        String_Constant* s = ARGSTRC("$string");
         double start_at = ARGVAL("$start-at");
         double end_at = ARGVAL("$end-at");
+        assertInt("", start_at, pstate, traces);
+        assertInt("", end_at, pstate, traces);
         String_Quoted* ss = Cast<String_Quoted>(s);
 
         std::string str(s->value());
@@ -185,7 +180,7 @@ namespace Sass {
         if (end_at > size) { end_at = (double)size; }
         if (start_at < 0) {
           start_at += size + 1;
-          if (start_at < 0)  start_at = 0;
+          if (start_at <= 0) start_at = 1;
         }
         else if (start_at == 0) { ++ start_at; }
 
@@ -210,7 +205,7 @@ namespace Sass {
     Signature to_upper_case_sig = "to-upper-case($string)";
     BUILT_IN(to_upper_case)
     {
-      String_Constant* s = ARG("$string", String_Constant, "a string");
+      String_Constant* s = ARGSTRC("$string");
       std::string str = s->value();
       Util::ascii_str_toupper(&str);
 
@@ -226,7 +221,7 @@ namespace Sass {
     Signature to_lower_case_sig = "to-lower-case($string)";
     BUILT_IN(to_lower_case)
     {
-      String_Constant* s = ARG("$string", String_Constant, "a string");
+      String_Constant* s = ARGSTRC("$string");
       std::string str = s->value();
       Util::ascii_str_tolower(&str);
 
