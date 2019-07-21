@@ -743,25 +743,25 @@ namespace Sass {
   void register_built_in_functions(Context& ctx, Env* env)
   {
     using namespace Functions;
-    register_overload_stub(ctx, "rgb", env, 3);
+    register_overload_stub(ctx, "rgb", env, 1);
     register_function(ctx, rgb_4_sig, rgb_4, 4, env);
     register_function(ctx, rgb_3_sig, rgb_3, 3, env);
     register_function(ctx, rgb_2_sig, rgb_2, 2, env);
     register_function(ctx, rgb_1_sig, rgb_1, 1, env);
 
-    register_overload_stub(ctx, "rgba", env, 4);
+    register_overload_stub(ctx, "rgba", env, 1);
     register_function(ctx, rgba_4_sig, rgba_4, 4, env);
     register_function(ctx, rgba_3_sig, rgba_3, 3, env);
     register_function(ctx, rgba_2_sig, rgba_2, 2, env);
     register_function(ctx, rgba_1_sig, rgba_1, 1, env);
 
-    register_overload_stub(ctx, "hsl", env, 3);
+    register_overload_stub(ctx, "hsl", env, 1);
     register_function(ctx, hsl_4_sig, hsl_4, 4, env);
     register_function(ctx, hsl_3_sig, hsl_3, 3, env);
     register_function(ctx, hsl_2_sig, hsl_2, 2, env);
     register_function(ctx, hsl_1_sig, hsl_1, 1, env);
 
-    register_overload_stub(ctx, "hsla", env, 4);
+    register_overload_stub(ctx, "hsla", env, 1);
     register_function(ctx, hsla_4_sig, hsla_4, 4, env);
     register_function(ctx, hsla_3_sig, hsla_3, 3, env);
     register_function(ctx, hsla_2_sig, hsla_2, 2, env);
