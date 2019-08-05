@@ -105,7 +105,11 @@ namespace Sass {
     {
       List* arglist = ARG("$numbers", List);
       Number_Obj least;
-      for (size_t i = 0, L = arglist->length(); i < L; ++i) {
+      size_t L = arglist->length();
+      if (L == 0) {
+        error("At least one argument must be passed.", pstate, traces);
+      }
+      for (size_t i = 0; i < L; ++i) {
         Expression_Obj val = arglist->value_at_index(i);
         Number_Obj xi = Cast<Number>(val);
         if (!xi) {
@@ -123,7 +127,11 @@ namespace Sass {
     {
       List* arglist = ARG("$numbers", List);
       Number_Obj greatest;
-      for (size_t i = 0, L = arglist->length(); i < L; ++i) {
+      size_t L = arglist->length();
+      if (L == 0) {
+        error("At least one argument must be passed.", pstate, traces);
+      }
+      for (size_t i = 0; i < L; ++i) {
         Expression_Obj val = arglist->value_at_index(i);
         Number_Obj xi = Cast<Number>(val);
         if (!xi) {
@@ -199,11 +207,11 @@ namespace Sass {
       return SASS_MEMORY_NEW(Boolean, pstate, unitless);
     }
 
-    Signature comparable_sig = "comparable($number-1, $number-2)";
+    Signature comparable_sig = "comparable($number1, $number2)";
     BUILT_IN(comparable)
     {
-      Number_Obj n1 = ARGN("$number-1");
-      Number_Obj n2 = ARGN("$number-2");
+      Number_Obj n1 = ARGN("$number1");
+      Number_Obj n2 = ARGN("$number2");
       if (n1->is_unitless() || n2->is_unitless()) {
         return SASS_MEMORY_NEW(Boolean, pstate, true);
       }

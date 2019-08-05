@@ -161,7 +161,10 @@ STATICLIB = lib/libsass.a
 SHAREDLIB = lib/libsass.so
 LIB_STATIC = $(SASS_LIBSASS_PATH)/lib/libsass.a
 LIB_SHARED = $(SASS_LIBSASS_PATH)/lib/libsass.so
-
+ifeq ($(UNAME),Darwin)
+	SHAREDLIB = lib/libsass.dylib
+	LIB_SHARED = $(SASS_LIBSASS_PATH)/lib/libsass.dylib
+endif
 ifeq (Windows,$(UNAME))
 	SASSC_BIN = $(SASS_SASSC_PATH)/bin/sassc.exe
 	RESOURCES += res/resource.rc
@@ -225,8 +228,13 @@ lib/libsass.a: $(COBJECTS) $(OBJECTS) $(WASMOBJECTS) | lib
 lib/libsass.so: $(COBJECTS) $(OBJECTS) | lib
 	$(CXX) -shared $(LDFLAGS) -o $@ $(COBJECTS) $(OBJECTS) $(LDLIBS)
 
+lib/libsass.dylib: $(COBJECTS) $(OBJECTS) | lib
+	$(CXX) -shared $(LDFLAGS) -o $@ $(COBJECTS) $(OBJECTS) $(LDLIBS) \
+	-install_name @rpath/libsass.dylib
+
 lib/libsass.dll: $(COBJECTS) $(OBJECTS) $(RCOBJECTS) | lib
-	$(CXX) -shared $(LDFLAGS) -o $@ $(COBJECTS) $(OBJECTS) $(RCOBJECTS) $(LDLIBS) -s -Wl,--subsystem,windows,--out-implib,lib/libsass.a
+	$(CXX) -shared $(LDFLAGS) -o $@ $(COBJECTS) $(OBJECTS) $(RCOBJECTS) $(LDLIBS) \
+	-s -Wl,--subsystem,windows,--out-implib,lib/libsass.a
 
 lib/libsass.wasm: $(COBJECTS) $(OBJECTS) $(WASMOBJECTS) | lib
 	$(CXX) $(LDFLAGS) -o $@ $(COBJECTS) $(OBJECTS) $(WASMOBJECTS) $(LDLIBS)
@@ -284,13 +292,17 @@ $(DESTDIR)$(PREFIX)/lib/%.dll: lib/%.dll \
                                | $(DESTDIR)$(PREFIX)/lib
 	@$(INSTALL) -v -m0755 "$<" "$@"
 
+$(DESTDIR)$(PREFIX)/lib/%.dylib: lib/%.dylib \
+                               | $(DESTDIR)$(PREFIX)/lib
+	@$(INSTALL) -v -m0755 "$<" "$@"
+
 install-static: $(DESTDIR)$(PREFIX)/lib/libsass.a
 
-install-shared: $(DESTDIR)$(PREFIX)/lib/libsass.so \
+install-shared: $(DESTDIR)$(PREFIX)/$(SHAREDLIB) \
                 install-headers
 
 $(SASSC_BIN): $(BUILD)
-	$(MAKE) -C $(SASS_SASSC_PATH) build-$(BUILD)-dev
+	$(MAKE) -C $(SASS_SASSC_PATH) build-$(BUILD)
 
 sassc: $(SASSC_BIN)
 ifndef WASM
@@ -303,16 +315,27 @@ version: $(SASSC_BIN)
 test: test_build
 
 test_build: $(SASSC_BIN)
-	$(RUBY_BIN) $(SASS_SPEC_PATH)/sass-spec.rb -c $(SASSC_BIN) --impl libsass $(LOG_FLAGS) $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)
+	$(RUBY_BIN) $(SASS_SPEC_PATH)/sass-spec.rb -c $(SASSC_BIN) --impl libsass \
+	--cmd-args "-I $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)" \
+	$(LOG_FLAGS) $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)
 
 test_full: $(SASSC_BIN)
-	$(RUBY_BIN) $(SASS_SPEC_PATH)/sass-spec.rb -c $(SASSC_BIN) --impl libsass --run-todo $(LOG_FLAGS) $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)
+	$(RUBY_BIN) $(SASS_SPEC_PATH)/sass-spec.rb -c $(SASSC_BIN) --impl libsass \
+	--cmd-args "-I $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)" \
+	--run-todo $(LOG_FLAGS) $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)
 
 test_probe: $(SASSC_BIN)
-	$(RUBY_BIN) $(SASS_SPEC_PATH)/sass-spec.rb -c $(SASSC_BIN) --impl libsass --probe-todo $(LOG_FLAGS) $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)
+	$(RUBY_BIN) $(SASS_SPEC_PATH)/sass-spec.rb -c $(SASSC_BIN) --impl libsass \
+	--cmd-args "-I $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)" \
+	--probe-todo $(LOG_FLAGS) $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)
+
+test_interactive: $(SASSC_BIN)
+	$(RUBY_BIN) $(SASS_SPEC_PATH)/sass-spec.rb -c $(SASSC_BIN) --impl libsass \
+	--cmd-args "-I $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)" \
+	--interactive $(LOG_FLAGS) $(SASS_SPEC_PATH)/$(SASS_SPEC_SPEC_DIR)
 
 clean-objects: | lib
-	-$(RM) lib/*.a lib/*.so lib/*.dll lib/*.la lib/*.wasm
+	-$(RM) lib/*.a lib/*.so lib/*.dll lib/*.dylib lib/*.la lib/*.wasm
 	-$(RMDIR) lib
 clean: clean-objects
 	$(RM) $(CLEANUPS)
