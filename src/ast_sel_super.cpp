@@ -9,7 +9,7 @@ namespace Sass {
 
   // ##########################################################################
   // To compare/debug against libsass you can use debugger.hpp:
-  // c++: std::cerr << "result " << debug_vec(compound) << "\n";
+  // c++: std::clog << "result " << debug_vec(compound) << std::endl;
   // dart: stderr.writeln("result " + compound.toString());
   // ##########################################################################
 
@@ -450,6 +450,7 @@ namespace Sass {
       }
     }
 
+    // Unreachable.
     return false;
 
   }

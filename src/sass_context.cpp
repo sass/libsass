@@ -284,7 +284,7 @@ extern "C" {
 
       // allocate a new compiler instance
       void* ctxmem = calloc(1, sizeof(struct Sass_Compiler));
-      if (ctxmem == 0) { std::cerr << "Error allocating memory for context" << std::endl; return 0; }
+      if (ctxmem == 0) { std::clog << "Error allocating memory for context" << std::endl; return 0; }
       Sass_Compiler* compiler = (struct Sass_Compiler*) ctxmem;
       compiler->state = SASS_COMPILER_CREATED;
 
@@ -335,7 +335,7 @@ extern "C" {
   Sass_Options* ADDCALL sass_make_options (void)
   {
     struct Sass_Options* options = (struct Sass_Options*) calloc(1, sizeof(struct Sass_Options));
-    if (options == 0) { std::cerr << "Error allocating memory for options" << std::endl; return 0; }
+    if (options == 0) { std::clog << "Error allocating memory for options" << std::endl; return 0; }
     init_options(options);
     return options;
   }
@@ -346,7 +346,7 @@ extern "C" {
     SharedObj::setTaint(true);
     #endif
     struct Sass_File_Context* ctx = (struct Sass_File_Context*) calloc(1, sizeof(struct Sass_File_Context));
-    if (ctx == 0) { std::cerr << "Error allocating memory for file context" << std::endl; return 0; }
+    if (ctx == 0) { std::clog << "Error allocating memory for file context" << std::endl; return 0; }
     ctx->type = SASS_CONTEXT_FILE;
     init_options(ctx);
     try {
@@ -365,7 +365,7 @@ extern "C" {
     SharedObj::setTaint(true);
     #endif
     struct Sass_Data_Context* ctx = (struct Sass_Data_Context*) calloc(1, sizeof(struct Sass_Data_Context));
-    if (ctx == 0) { std::cerr << "Error allocating memory for data context" << std::endl; return 0; }
+    if (ctx == 0) { std::clog << "Error allocating memory for data context" << std::endl; return 0; }
     ctx->type = SASS_CONTEXT_DATA;
     init_options(ctx);
     try {

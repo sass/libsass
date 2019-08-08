@@ -100,10 +100,10 @@ namespace Sass {
 
       if (ss) {
         function = Util::normalize_underscores(unquote(ss->value()));
-        std::cerr << "DEPRECATION WARNING: ";
-        std::cerr << "Passing a string to call() is deprecated and will be illegal" << std::endl;
-        std::cerr << "in Sass 4.0. Use call(get-function(" + quote(function) + ")) instead." << std::endl;
-        std::cerr << std::endl;
+		  std::string title("Passing a string to call() is deprecated and will be illegal in Sass 4.0.");
+		  std::ostringstream workAround;
+		  workAround << "Use call(get-function(" << quote(function) << ")) instead.";
+		  deprecated(title, workAround.str(), true , pstate);
       } else if (ff) {
         function = ff->name();
       }

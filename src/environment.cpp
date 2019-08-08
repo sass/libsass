@@ -31,7 +31,7 @@ namespace Sass {
   template <typename T>
   bool Environment<T>::is_lexical() const
   {
-    return !! parent_ && parent_->parent_;
+    return parent_ && parent_->parent_;
   }
 
   // only match the real root scope
@@ -240,13 +240,13 @@ namespace Sass {
   {
     size_t indent = 0;
     if (parent_) indent = parent_->print(prefix) + 1;
-    std::cerr << prefix << std::string(indent, ' ') << "== " << this << std::endl;
+    std::clog << prefix << std::string(indent, ' ') << "== " << this << std::endl;
     for (typename environment_map<std::string, T>::iterator i = local_frame_.begin(); i != local_frame_.end(); ++i) {
       if (!ends_with(i->first, "[f]") && !ends_with(i->first, "[f]4") && !ends_with(i->first, "[f]2")) {
-        std::cerr << prefix << std::string(indent, ' ') << i->first << " " << i->second;
+        std::clog << prefix << std::string(indent, ' ') << i->first << " " << i->second;
         if (Value* val = Cast<Value>(i->second))
-        { std::cerr << " : " << val->to_string(); }
-        std::cerr << std::endl;
+        { std::clog << " : " << val->to_string(); }
+        std::clog << std::endl;
       }
     }
     return indent ;

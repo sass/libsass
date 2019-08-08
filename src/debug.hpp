@@ -28,8 +28,8 @@ const uint32_t debug_lvl = UINT32_MAX;
 const uint32_t debug_lvl = (DEBUG_LVL);
 #endif // DEBUG_LVL
 
-#define DEBUG_PRINT(lvl, x) if((lvl) & debug_lvl) { std::cerr << x; }
-#define DEBUG_PRINTLN(lvl, x) if((lvl) & debug_lvl) { std::cerr << x << std::endl; }
+#define DEBUG_PRINT(lvl, x) if((lvl) & debug_lvl) { std::clog << x; }
+#define DEBUG_PRINTLN(lvl, x) if((lvl) & debug_lvl) { std::clog << x << std::endl; }
 #define DEBUG_EXEC(lvl, x) if((lvl) & debug_lvl) { x; }
 
 #else // DEBUG

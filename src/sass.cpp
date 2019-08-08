@@ -37,8 +37,8 @@ extern "C" {
   void* ADDCALL sass_alloc_memory(size_t size)
   {
     void* ptr = malloc(size);
-    if (ptr == NULL) {
-      std::cerr << "Out of memory.\n";
+    if (ptr == NULL) { // This should use cerr.
+      std::cerr << "Out of memory." << std::endl;
       exit(EXIT_FAILURE);
     }
     return ptr;

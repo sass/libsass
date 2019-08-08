@@ -172,7 +172,7 @@ namespace Sass {
       if (it_after_token > end) return 0;
 
       // maybe we want to update the parser state anyway?
-      if (force == false) {
+      if (!force) {
         // assertion that we got a valid match
         if (it_after_token == 0) return 0;
         // assertion that we actually lexed something
@@ -360,13 +360,13 @@ namespace Sass {
     {
       if (lex < open >(false)) {
         String_Schema_Obj schema = SASS_MEMORY_NEW(String_Schema, pstate);
-        // std::cerr << "LEX [[" << std::string(lexed) << "]]\n";
+        // std::clog << "LEX [[" << std::string(lexed) << "]]" << std::endl;
         schema->append(SASS_MEMORY_NEW(String_Constant, pstate, lexed));
         if (position[0] == '#' && position[1] == '{') {
           Expression_Obj itpl = lex_interpolation();
           if (!itpl.isNull()) schema->append(itpl);
           while (lex < close >(false)) {
-            // std::cerr << "LEX [[" << std::string(lexed) << "]]\n";
+            // std::clog << "LEX [[" << std::string(lexed) << "]]" << std::endl;
             schema->append(SASS_MEMORY_NEW(String_Constant, pstate, lexed));
             if (position[0] == '#' && position[1] == '{') {
               Expression_Obj itpl = lex_interpolation();

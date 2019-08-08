@@ -370,10 +370,12 @@ namespace Sass {
     }
 
     std::string result(unquote(message->to_sass()));
-    std::cerr << "WARNING: " << result << std::endl;
+    // Can this not done in error_handling?
+    // There's a warning method there...
+    std::clog << "WARNING: " << result << std::endl;
     traces.push_back(Backtrace(w->pstate()));
-    std::cerr << traces_to_string(traces, "         ");
-    std::cerr << std::endl;
+    std::clog << traces_to_string(traces, "         ");
+    std::clog << std::endl;
     options().output_style = outstyle;
     traces.pop_back();
     return 0;
@@ -467,8 +469,8 @@ namespace Sass {
     std::string output_path(Sass::File::path_for_console(rel_path, abs_path, d->pstate().path));
     options().output_style = outstyle;
 
-    std::cerr << output_path << ":" << d->pstate().line+1 << " DEBUG: " << result;
-    std::cerr << std::endl;
+    std::clog << output_path << ":" << d->pstate().line+1 << " DEBUG: " << result;
+    std::clog << std::endl;
     return 0;
   }
 

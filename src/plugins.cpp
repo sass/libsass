@@ -96,16 +96,19 @@ namespace Sass {
       else
       {
         // print debug message to stderr (should not happen)
-        std::cerr << "failed loading 'libsass_support' in <" << path << ">" << std::endl;
-        if (const char* dlsym_error = dlerror()) std::cerr << dlsym_error << std::endl;
+        std::clog << "failed loading 'libsass_support' in <" << path << ">" << std::endl;
+        if (const char* dlsym_error = dlerror()) std::clog << dlsym_error << std::endl;
         CLOSE_LIB(plugin);
       }
     }
     else
     {
       // print debug message to stderr (should not happen)
-      std::cerr << "failed loading plugin <" << path << ">" << std::endl;
-      if (const char* dlopen_error = dlerror()) std::cerr << dlopen_error << std::endl;
+      std::clog << "failed loading plugin <" << path << ">" << std::endl;
+      if (const char* dlopen_error = dlerror())
+      {
+		  std::clog << dlopen_error << std::endl;
+	  }
     }
 
     return false;
@@ -154,7 +157,7 @@ namespace Sass {
           {
             // report the error to the console (should not happen)
             // seems like we got strange data from the system call?
-            std::cerr << "filename in plugin path has invalid utf8?" << std::endl;
+            std::clog << "filename in plugin path has invalid utf8?" << std::endl;
           }
         }
       }
@@ -162,7 +165,7 @@ namespace Sass {
       {
         // report the error to the console (should not happen)
         // implementors should make sure to provide valid utf8
-        std::cerr << "plugin path contains invalid utf8" << std::endl;
+        std::clog << "plugin path contains invalid utf8" << std::endl;
       }
 
     #else

@@ -87,10 +87,10 @@ namespace Sass {
 
     while (true) {
       /*
-      // std::cerr << "PERM: ";
+      // std::clog << "PERM: ";
       for (size_t p = 0; p < L; p++)
-      { // std::cerr << state[p] << " "; }
-      // std::cerr << "\n";
+      { // std::clog << state[p] << " "; }
+      // std::clog << std::endl;
       */
       std::vector<T> perm;
       // Create one permutation for state

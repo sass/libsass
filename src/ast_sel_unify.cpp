@@ -160,7 +160,7 @@ namespace Sass {
   {
 
     if (compound->length() == 1 && compound->first()->is_universal()) {
-      // std::cerr << "implement universal pseudo\n";
+      // std::clog << "implement universal pseudo" << std::endl;
     }
 
     for (const SimpleSelectorObj& sel : compound->elements()) {

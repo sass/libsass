@@ -681,10 +681,10 @@ namespace Sass {
 
           if (compound->length() != 1) {
 
-            std::cerr <<
-              "compound selectors may no longer be extended.\n"
-              "Consider `@extend ${compound.components.join(', ')}` instead.\n"
-              "See http://bit.ly/ExtendCompound for details.\n";
+            std::clog
+			  << "compound selectors may no longer be extended." << std::endl
+			  << "Consider `@extend ${compound.components.join(', ')}` instead." << std::endl
+			  << "See http://bit.ly/ExtendCompound for details." << std::endl;
 
             // Make this an error once deprecation is over
             for (SimpleSelectorObj simple : compound->elements()) {

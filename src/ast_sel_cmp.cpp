@@ -204,7 +204,7 @@ namespace Sass {
 
   bool CompoundSelector::operator== (const CompoundSelector& rhs) const
   {
-    // std::cerr << "comp vs comp\n";
+    // std::clog << "comp vs comp" << std::endl;
     if (&rhs == this) return true;
     if (rhs.length() != length()) return false;
     std::unordered_set<const SimpleSelector*, PtrObjHash, PtrObjEquality> lhs_set;

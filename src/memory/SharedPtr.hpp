@@ -138,7 +138,7 @@ namespace Sass {
       if (node != nullptr) node->detached = true;
       #ifdef DEBUG_SHARED_PTR
       if (node->dbg) {
-        std::cerr << "DETACHING NODE\n";
+        std::clog << "DETACHING NODE" << std::endl;
       }
       #endif 
       return node;
@@ -155,17 +155,17 @@ namespace Sass {
       if (node == nullptr) return;
       --node->refcount;
       #ifdef DEBUG_SHARED_PTR
-      if (node->dbg) std::cerr << "- " << node << " X " << node->refcount << " (" << this << ") " << "\n";
+      if (node->dbg) std::clog << "- " << node << " X " << node->refcount << " (" << this << ") " << std::endl;
       #endif
       if (node->refcount == 0 && !node->detached) {
         #ifdef DEBUG_SHARED_PTR
-        if (node->dbg) std::cerr << "DELETE NODE " << node << "\n";
+        if (node->dbg) std::clog << "DELETE NODE " << node << std::endl;
         #endif
         delete node;
       }
       else if (node->refcount == 0) {
         #ifdef DEBUG_SHARED_PTR
-        if (node->dbg) std::cerr << "NODE EVAEDED DELETE " << node << "\n";
+        if (node->dbg) std::clog << "NODE EVAEDED DELETE " << node << std::endl;
         #endif
       }
     }
@@ -174,7 +174,7 @@ namespace Sass {
       node->detached = false;
       ++node->refcount;
       #ifdef DEBUG_SHARED_PTR
-      if (node->dbg) std::cerr << "+ " << node << " X " << node->refcount << " (" << this << ") " << "\n";
+      if (node->dbg) std::clog << "+ " << node << " X " << node->refcount << " (" << this << ") " << std::endl;
       #endif
     }
   };
