@@ -2072,7 +2072,7 @@ namespace Sass {
     return token;
   }
 
-  Each_Obj Parser::parse_each_directive()
+  EachRuleObj Parser::parse_each_directive()
   {
     stack.push_back(Scope::Control);
     ParserState each_source_position = pstate;
@@ -2088,7 +2088,7 @@ namespace Sass {
     Expression_Obj list = parse_list();
     Block_Obj body = parse_block(root);
     stack.pop_back();
-    return SASS_MEMORY_NEW(Each, each_source_position, vars, list, body);
+    return SASS_MEMORY_NEW(EachRule, each_source_position, vars, list, body);
   }
 
   // called after parsing `kwd_while_directive`

@@ -52,7 +52,7 @@ namespace Sass {
 
   class If;
   class ForRule;
-  class Each;
+  class EachRule;
   class WhileRule;
   class Return;
   class Content;
@@ -153,7 +153,7 @@ namespace Sass {
   IMPL_MEM_OBJ(Has_Block);
   IMPL_MEM_OBJ(If);
   IMPL_MEM_OBJ(ForRule);
-  IMPL_MEM_OBJ(Each);
+  IMPL_MEM_OBJ(EachRule);
   IMPL_MEM_OBJ(WhileRule);
   IMPL_MEM_OBJ(Return);
   IMPL_MEM_OBJ(Content);

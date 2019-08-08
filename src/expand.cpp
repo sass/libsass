@@ -552,7 +552,7 @@ namespace Sass {
 
   // Eval does not create a new env scope
   // But iteration vars are reset afterwards
-  Statement* Expand::operator()(Each* e)
+  Statement* Expand::operator()(EachRule* e)
   {
     std::vector<std::string> variables(e->variables());
     Expression_Obj expr = e->list()->perform(&eval);

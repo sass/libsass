@@ -673,9 +673,9 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     debug_ast(block->selector(), ind + "~", env);
     debug_ast(block->value(), ind + "+", env);
     if (block->block()) for(const Statement_Obj& i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
-  } else if (Cast<Each>(node)) {
-    Each* block = Cast<Each>(node);
-    std::cerr << ind << "Each " << block;
+  } else if (Cast<EachRule>(node)) {
+    EachRule* block = Cast<EachRule>(node);
+    std::cerr << ind << "EachRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
     if (block->block()) for(const Statement_Obj& i : block->block()->elements()) { debug_ast(i, ind + " ", env); }

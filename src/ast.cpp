@@ -397,10 +397,10 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Each::Each(ParserState pstate, std::vector<std::string> vars, Expression_Obj lst, Block_Obj b)
+  EachRule::EachRule(ParserState pstate, std::vector<std::string> vars, Expression_Obj lst, Block_Obj b)
   : Has_Block(pstate, b), variables_(vars), list_(lst)
   { statement_type(EACH); }
-  Each::Each(const Each* ptr)
+  EachRule::EachRule(const EachRule* ptr)
   : Has_Block(ptr), variables_(ptr->variables_), list_(ptr->list_)
   { statement_type(EACH); }
 
@@ -920,7 +920,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(Directive);
   IMPLEMENT_AST_OPERATORS(At_Root_Block);
   IMPLEMENT_AST_OPERATORS(WhileRule);
-  IMPLEMENT_AST_OPERATORS(Each);
+  IMPLEMENT_AST_OPERATORS(EachRule);
   IMPLEMENT_AST_OPERATORS(ForRule);
   IMPLEMENT_AST_OPERATORS(If);
   IMPLEMENT_AST_OPERATORS(Mixin_Call);

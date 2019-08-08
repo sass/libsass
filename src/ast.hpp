@@ -730,12 +730,12 @@ namespace Sass {
   //////////////////////////////////////
   // The Sass `@each` control directive.
   //////////////////////////////////////
-  class Each final : public Has_Block {
+  class EachRule final : public Has_Block {
     ADD_PROPERTY(std::vector<std::string>, variables)
     ADD_PROPERTY(Expression_Obj, list)
   public:
-    Each(ParserState pstate, std::vector<std::string> vars, Expression_Obj lst, Block_Obj b);
-    ATTACH_AST_OPERATIONS(Each)
+    EachRule(ParserState pstate, std::vector<std::string> vars, Expression_Obj lst, Block_Obj b);
+    ATTACH_AST_OPERATIONS(EachRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 
