@@ -205,7 +205,7 @@ namespace Sass {
   //   for (auto pp : this->parents) {
   //     if (
   //         Cast<Each>(pp) ||
-  //         Cast<For>(pp) ||
+  //         Cast<ForRule>(pp) ||
   //         Cast<If>(pp) ||
   //         Cast<WhileRule>(pp) ||
   //         Cast<Trace>(pp) ||
@@ -230,7 +230,7 @@ namespace Sass {
     for (Statement* pp : this->parents) {
       if (
           Cast<Each>(pp) ||
-          Cast<For>(pp) ||
+          Cast<ForRule>(pp) ||
           Cast<If>(pp) ||
           Cast<WhileRule>(pp) ||
           Cast<Trace>(pp) ||
@@ -247,7 +247,7 @@ namespace Sass {
     for (Statement* pp : this->parents) {
       if (
           Cast<Each>(pp) ||
-          Cast<For>(pp) ||
+          Cast<ForRule>(pp) ||
           Cast<If>(pp) ||
           Cast<WhileRule>(pp) ||
           Cast<Trace>(pp) ||
@@ -263,7 +263,7 @@ namespace Sass {
   {
     if (!(
         Cast<Each>(child) ||
-        Cast<For>(child) ||
+        Cast<ForRule>(child) ||
         Cast<If>(child) ||
         Cast<WhileRule>(child) ||
         Cast<Trace>(child) ||
@@ -284,7 +284,7 @@ namespace Sass {
   {
     if (!(
         Cast<Each>(child) ||
-        Cast<For>(child) ||
+        Cast<ForRule>(child) ||
         Cast<If>(child) ||
         Cast<WhileRule>(child) ||
         Cast<Trace>(child) ||
@@ -344,7 +344,7 @@ namespace Sass {
 
     return Cast<Import>(parent) ||
            Cast<Each>(parent) ||
-           Cast<For>(parent) ||
+           Cast<ForRule>(parent) ||
            Cast<If>(parent) ||
            Cast<WhileRule>(parent) ||
            Cast<Trace>(parent) ||

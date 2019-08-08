@@ -381,12 +381,12 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  For::For(ParserState pstate,
+  ForRule::ForRule(ParserState pstate,
       std::string var, Expression_Obj lo, Expression_Obj hi, Block_Obj b, bool inc)
   : Has_Block(pstate, b),
     variable_(var), lower_bound_(lo), upper_bound_(hi), is_inclusive_(inc)
   { statement_type(FOR); }
-  For::For(const For* ptr)
+  ForRule::ForRule(const ForRule* ptr)
   : Has_Block(ptr),
     variable_(ptr->variable_),
     lower_bound_(ptr->lower_bound_),
@@ -921,7 +921,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(At_Root_Block);
   IMPLEMENT_AST_OPERATORS(WhileRule);
   IMPLEMENT_AST_OPERATORS(Each);
-  IMPLEMENT_AST_OPERATORS(For);
+  IMPLEMENT_AST_OPERATORS(ForRule);
   IMPLEMENT_AST_OPERATORS(If);
   IMPLEMENT_AST_OPERATORS(Mixin_Call);
   IMPLEMENT_AST_OPERATORS(ExtendRule);

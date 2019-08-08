@@ -67,7 +67,7 @@ namespace Sass {
     virtual T operator()(Debug* x)                  = 0;
     virtual T operator()(Comment* x)                = 0;
     virtual T operator()(If* x)                     = 0;
-    virtual T operator()(For* x)                    = 0;
+    virtual T operator()(ForRule* x)                    = 0;
     virtual T operator()(Each* x)                   = 0;
     virtual T operator()(WhileRule* x)                  = 0;
     virtual T operator()(Return* x)                 = 0;
@@ -153,7 +153,7 @@ namespace Sass {
     T operator()(Debug* x)                  { return static_cast<D*>(this)->fallback(x); }
     T operator()(Comment* x)                { return static_cast<D*>(this)->fallback(x); }
     T operator()(If* x)                     { return static_cast<D*>(this)->fallback(x); }
-    T operator()(For* x)                    { return static_cast<D*>(this)->fallback(x); }
+    T operator()(ForRule* x)                    { return static_cast<D*>(this)->fallback(x); }
     T operator()(Each* x)                   { return static_cast<D*>(this)->fallback(x); }
     T operator()(WhileRule* x)                  { return static_cast<D*>(this)->fallback(x); }
     T operator()(Return* x)                 { return static_cast<D*>(this)->fallback(x); }

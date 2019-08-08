@@ -77,7 +77,7 @@ namespace Sass {
     Statement* operator()(Debug*);
     Statement* operator()(Comment*);
     Statement* operator()(If*);
-    Statement* operator()(For*);
+    Statement* operator()(ForRule*);
     Statement* operator()(Each*);
     Statement* operator()(WhileRule*);
     Statement* operator()(Return*);

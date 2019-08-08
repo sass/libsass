@@ -35,7 +35,7 @@ namespace Sass {
     virtual void operator()(Debug*);
     virtual void operator()(Comment*);
     virtual void operator()(If*);
-    virtual void operator()(For*);
+    virtual void operator()(ForRule*);
     virtual void operator()(Each*);
     virtual void operator()(WhileRule*);
     virtual void operator()(Return*);

@@ -167,7 +167,7 @@ namespace Sass {
 
   // For does not create a new env scope
   // But iteration vars are reset afterwards
-  Expression* Eval::operator()(For* f)
+  Expression* Eval::operator()(ForRule* f)
   {
     std::string variable(f->variable());
     Expression_Obj low = f->lower_bound()->perform(this);

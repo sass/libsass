@@ -294,7 +294,7 @@ namespace Sass {
     }
   }
 
-  void Inspect::operator()(For* loop)
+  void Inspect::operator()(ForRule* loop)
   {
     append_indentation();
     append_token("@for", loop);

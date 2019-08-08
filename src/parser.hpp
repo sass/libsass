@@ -301,7 +301,7 @@ namespace Sass {
     String_Schema_Obj parse_value_schema(const char* stop);
     String_Obj parse_identifier_schema();
     If_Obj parse_if_directive(bool else_if = false);
-    For_Obj parse_for_directive();
+    ForRuleObj parse_for_directive();
     Each_Obj parse_each_directive();
     WhileRuleObj parse_while_directive();
     MediaRule_Obj parseMediaRule();
