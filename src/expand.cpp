@@ -449,7 +449,7 @@ namespace Sass {
     return 0;
   }
 
-  Statement* Expand::operator()(Error* e)
+  Statement* Expand::operator()(ErrorRule* e)
   {
     // eval handles this too, because errors may occur in functions
     e->perform(&eval);

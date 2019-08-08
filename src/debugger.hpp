@@ -585,9 +585,9 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
     debug_ast(block->message(), ind + " : ");
-  } else if (Cast<Error>(node)) {
-    Error* block = Cast<Error>(node);
-    std::cerr << ind << "Error " << block;
+  } else if (Cast<ErrorRule>(node)) {
+    ErrorRule* block = Cast<ErrorRule>(node);
+    std::cerr << ind << "ErrorRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
   } else if (Cast<DebugRule>(node)) {

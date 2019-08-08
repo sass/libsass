@@ -379,7 +379,7 @@ namespace Sass {
     return 0;
   }
 
-  Expression* Eval::operator()(Error* e)
+  Expression* Eval::operator()(ErrorRule* e)
   {
     Sass_Output_Style outstyle = options().output_style;
     options().output_style = NESTED;

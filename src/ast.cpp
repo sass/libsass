@@ -327,10 +327,10 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Error::Error(ParserState pstate, Expression_Obj msg)
+  ErrorRule::ErrorRule(ParserState pstate, Expression_Obj msg)
   : Statement(pstate), message_(msg)
   { statement_type(ERROR); }
-  Error::Error(const Error* ptr)
+  ErrorRule::ErrorRule(const ErrorRule* ptr)
   : Statement(ptr), message_(ptr->message_)
   { statement_type(ERROR); }
 
@@ -928,7 +928,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(Media_Query);
   IMPLEMENT_AST_OPERATORS(Media_Query_Expression);
   IMPLEMENT_AST_OPERATORS(DebugRule);
-  IMPLEMENT_AST_OPERATORS(Error);
+  IMPLEMENT_AST_OPERATORS(ErrorRule);
   IMPLEMENT_AST_OPERATORS(WarnRule);
   IMPLEMENT_AST_OPERATORS(Assignment);
   IMPLEMENT_AST_OPERATORS(Return);

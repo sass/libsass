@@ -326,7 +326,7 @@ namespace Sass {
     String_Schema_Obj parse_almost_any_value();
     Directive_Obj parse_directive();
     WarnRuleObj parse_warning();
-    Error_Obj parse_error();
+    ErrorRuleObj parse_error();
     DebugRuleObj parse_debug();
 
     Value* color_or_string(const std::string& lexed) const;

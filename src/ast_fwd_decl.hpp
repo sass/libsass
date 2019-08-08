@@ -46,7 +46,7 @@ namespace Sass {
   class Import_Stub;
   class WarnRule;
 
-  class Error;
+  class ErrorRule;
   class DebugRule;
   class Comment;
 
@@ -146,7 +146,7 @@ namespace Sass {
   IMPL_MEM_OBJ(Import);
   IMPL_MEM_OBJ(Import_Stub);
   IMPL_MEM_OBJ(WarnRule);
-  IMPL_MEM_OBJ(Error);
+  IMPL_MEM_OBJ(ErrorRule);
   IMPL_MEM_OBJ(DebugRule);
   IMPL_MEM_OBJ(Comment);
   IMPL_MEM_OBJ(PreValue);

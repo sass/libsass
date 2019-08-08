@@ -254,7 +254,7 @@ namespace Sass {
     append_delimiter();
   }
 
-  void Inspect::operator()(Error* error)
+  void Inspect::operator()(ErrorRule* error)
   {
     append_indentation();
     append_token("@error", error);
