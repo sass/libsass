@@ -579,9 +579,9 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     if (root_block->isInvisible()) std::cerr << " [isInvisible]";
     std::cerr << " " << root_block->tabs() << std::endl;
     for(const Statement_Obj& i : root_block->elements()) { debug_ast(i, ind + " ", env); }
-  } else if (Cast<Warning>(node)) {
-    Warning* block = Cast<Warning>(node);
-    std::cerr << ind << "Warning " << block;
+  } else if (Cast<WarnRule>(node)) {
+    WarnRule* block = Cast<WarnRule>(node);
+    std::cerr << ind << "WarnRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
     debug_ast(block->message(), ind + " : ");

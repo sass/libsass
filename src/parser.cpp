@@ -2559,7 +2559,7 @@ namespace Sass {
     return schema.detach();
   }
 
-  Warning_Obj Parser::parse_warning()
+  WarnRuleObj Parser::parse_warning()
   {
     if (stack.back() != Scope::Root &&
         stack.back() != Scope::Function &&
@@ -2568,7 +2568,7 @@ namespace Sass {
         stack.back() != Scope::Rules) {
       error("Illegal nesting: Only properties may be nested beneath properties.");
     }
-    return SASS_MEMORY_NEW(Warning, pstate, parse_list(DELAYED));
+    return SASS_MEMORY_NEW(WarnRule, pstate, parse_list(DELAYED));
   }
 
   Error_Obj Parser::parse_error()

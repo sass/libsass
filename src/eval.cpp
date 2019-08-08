@@ -331,7 +331,7 @@ namespace Sass {
     return r->value()->perform(this);
   }
 
-  Expression* Eval::operator()(Warning* w)
+  Expression* Eval::operator()(WarnRule* w)
   {
     Sass_Output_Style outstyle = options().output_style;
     options().output_style = NESTED;

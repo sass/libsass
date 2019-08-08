@@ -442,7 +442,7 @@ namespace Sass {
     return 0;
   }
 
-  Statement* Expand::operator()(Warning* w)
+  Statement* Expand::operator()(WarnRule* w)
   {
     // eval handles this too, because warnings may occur in functions
     w->perform(&eval);
