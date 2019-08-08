@@ -322,7 +322,7 @@ namespace Sass {
     loop->block()->perform(this);
   }
 
-  void Inspect::operator()(While* loop)
+  void Inspect::operator()(WhileRule* loop)
   {
     append_indentation();
     append_token("@while", loop);

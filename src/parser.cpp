@@ -2092,12 +2092,12 @@ namespace Sass {
   }
 
   // called after parsing `kwd_while_directive`
-  While_Obj Parser::parse_while_directive()
+  WhileRuleObj Parser::parse_while_directive()
   {
     stack.push_back(Scope::Control);
     bool root = block_stack.back()->is_root();
     // create the initial while call object
-    While_Obj call = SASS_MEMORY_NEW(While, pstate, {}, {});
+    WhileRuleObj call = SASS_MEMORY_NEW(WhileRule, pstate, {}, {});
     // parse mandatory predicate
     Expression_Obj predicate = parse_list();
     List_Obj l = Cast<List>(predicate);

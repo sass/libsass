@@ -742,11 +742,11 @@ namespace Sass {
   ///////////////////////////////////////
   // The Sass `@while` control directive.
   ///////////////////////////////////////
-  class While final : public Has_Block {
+  class WhileRule final : public Has_Block {
     ADD_PROPERTY(Expression_Obj, predicate)
   public:
-    While(ParserState pstate, Expression_Obj pred, Block_Obj b);
-    ATTACH_AST_OPERATIONS(While)
+    WhileRule(ParserState pstate, Expression_Obj pred, Block_Obj b);
+    ATTACH_AST_OPERATIONS(WhileRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 
