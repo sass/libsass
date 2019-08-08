@@ -679,11 +679,11 @@ namespace Sass {
   ///////////////////////////////
   // The Sass `@debug` directive.
   ///////////////////////////////
-  class Debug final : public Statement {
+  class DebugRule final : public Statement {
     ADD_PROPERTY(Expression_Obj, value)
   public:
-    Debug(ParserState pstate, Expression_Obj val);
-    ATTACH_AST_OPERATIONS(Debug)
+    DebugRule(ParserState pstate, Expression_Obj val);
+    ATTACH_AST_OPERATIONS(DebugRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

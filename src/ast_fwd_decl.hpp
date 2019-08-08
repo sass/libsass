@@ -47,7 +47,7 @@ namespace Sass {
   class WarnRule;
 
   class Error;
-  class Debug;
+  class DebugRule;
   class Comment;
 
   class If;
@@ -147,7 +147,7 @@ namespace Sass {
   IMPL_MEM_OBJ(Import_Stub);
   IMPL_MEM_OBJ(WarnRule);
   IMPL_MEM_OBJ(Error);
-  IMPL_MEM_OBJ(Debug);
+  IMPL_MEM_OBJ(DebugRule);
   IMPL_MEM_OBJ(Comment);
   IMPL_MEM_OBJ(PreValue);
   IMPL_MEM_OBJ(Has_Block);

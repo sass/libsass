@@ -64,7 +64,7 @@ namespace Sass {
     virtual T operator()(Import_Stub* x)            = 0;
     virtual T operator()(WarnRule* x)                = 0;
     virtual T operator()(Error* x)                  = 0;
-    virtual T operator()(Debug* x)                  = 0;
+    virtual T operator()(DebugRule* x)                  = 0;
     virtual T operator()(Comment* x)                = 0;
     virtual T operator()(If* x)                     = 0;
     virtual T operator()(ForRule* x)                    = 0;
@@ -150,7 +150,7 @@ namespace Sass {
     T operator()(Import_Stub* x)            { return static_cast<D*>(this)->fallback(x); }
     T operator()(WarnRule* x)                { return static_cast<D*>(this)->fallback(x); }
     T operator()(Error* x)                  { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Debug* x)                  { return static_cast<D*>(this)->fallback(x); }
+    T operator()(DebugRule* x)                  { return static_cast<D*>(this)->fallback(x); }
     T operator()(Comment* x)                { return static_cast<D*>(this)->fallback(x); }
     T operator()(If* x)                     { return static_cast<D*>(this)->fallback(x); }
     T operator()(ForRule* x)                    { return static_cast<D*>(this)->fallback(x); }

@@ -32,7 +32,7 @@ namespace Sass {
     virtual void operator()(Import_Stub*);
     virtual void operator()(WarnRule*);
     virtual void operator()(Error*);
-    virtual void operator()(Debug*);
+    virtual void operator()(DebugRule*);
     virtual void operator()(Comment*);
     virtual void operator()(If*);
     virtual void operator()(ForRule*);

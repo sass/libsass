@@ -263,7 +263,7 @@ namespace Sass {
     append_delimiter();
   }
 
-  void Inspect::operator()(Debug* debug)
+  void Inspect::operator()(DebugRule* debug)
   {
     append_indentation();
     append_token("@debug", debug);
