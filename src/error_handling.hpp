@@ -6,8 +6,7 @@
 #include "sass.hpp"
 
 #include <string>
-#include <sstream>
-#include <stdexcept>
+
 #include "units.hpp"
 #include "position.hpp"
 #include "backtrace.hpp"
@@ -25,7 +24,7 @@ namespace Sass {
     const char* const def_op_null_msg = "Invalid null operation";
     const char* const def_nesting_limit = "Code too deeply neested";
 
-    class Base : public std::runtime_error {
+    class Base {
       protected:
         std::string msg;
         std::string prefix;

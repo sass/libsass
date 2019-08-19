@@ -7,15 +7,12 @@
 #include "backtrace.hpp"
 #include "error_handling.hpp"
 
-#include <iostream>
-
 namespace Sass {
 
   namespace Exception {
 
     Base::Base(ParserState pstate, std::string msg, Backtraces traces)
-    : std::runtime_error(msg), msg(msg),
-      prefix("Error"), pstate(pstate), traces(traces)
+    : msg(msg), prefix("Error"), pstate(pstate), traces(traces)
     { }
 
     Base::~Base() throw() {}
