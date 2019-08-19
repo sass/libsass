@@ -5,6 +5,7 @@
 #include "parser.hpp"
 #include "color_maps.hpp"
 #include "util_string.hpp"
+#include "error_handling.hpp"
 
 // Notes about delayed: some ast nodes can have delayed evaluation so
 // they can preserve their original semantics if needed. This is most

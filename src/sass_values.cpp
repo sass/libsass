@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include "error_handling.hpp"
 #include "util.hpp"
 #include "eval.hpp"
 #include "operators.hpp"
