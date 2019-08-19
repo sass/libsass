@@ -34,26 +34,22 @@ namespace Sass {
         Backtraces traces;
       public:
         Base(ParserState pstate, std::string msg, Backtraces traces);
-        virtual const char* errtype() const { return prefix.c_str(); }
-        virtual const char* what() const throw() { return msg.c_str(); }
-        virtual ~Base() throw() {};
+        virtual ~Base() throw();
+        virtual const char* errtype() const;
+        virtual const char* what() const throw();
     };
 
     class InvalidSass : public Base {
       public:
-        InvalidSass(InvalidSass& other) : Base(other), owned_src(other.owned_src) {
-          // Assumes that `this` will outlive `other`.
-          other.owned_src = nullptr;
-        }
+        // Assumes that `this` will outlive `other`.
+        InvalidSass(InvalidSass& other);
 
         // Required because the copy constructor's argument is not const.
         // Can't use `std::move` here because we build on Visual Studio 2013.
-        InvalidSass(InvalidSass &&other) : Base(other), owned_src(other.owned_src) {
-          other.owned_src = nullptr;
-        }
+        InvalidSass(InvalidSass &&other);
 
         InvalidSass(ParserState pstate, Backtraces traces, std::string msg, char* owned_src = nullptr);
-        virtual ~InvalidSass() throw() { sass_free_memory(owned_src); };
+        virtual ~InvalidSass() throw();
         char *owned_src;
     };
 
@@ -63,7 +59,7 @@ namespace Sass {
         Selector* selector;
       public:
         InvalidParent(Selector* parent, Backtraces traces, Selector* selector);
-        virtual ~InvalidParent() throw() {};
+        virtual ~InvalidParent() throw();
     };
 
     class MissingArgument : public Base {
@@ -73,7 +69,7 @@ namespace Sass {
         std::string fntype;
       public:
         MissingArgument(ParserState pstate, Backtraces traces, std::string fn, std::string arg, std::string fntype);
-        virtual ~MissingArgument() throw() {};
+        virtual ~MissingArgument() throw();
     };
 
     class InvalidArgumentType : public Base {
@@ -84,7 +80,7 @@ namespace Sass {
         const Value* value;
       public:
         InvalidArgumentType(ParserState pstate, Backtraces traces, std::string fn, std::string arg, std::string type, const Value* value = 0);
-        virtual ~InvalidArgumentType() throw() {};
+        virtual ~InvalidArgumentType() throw();
     };
 
     class InvalidVarKwdType : public Base {
@@ -93,19 +89,19 @@ namespace Sass {
         const Argument* arg;
       public:
         InvalidVarKwdType(ParserState pstate, Backtraces traces, std::string name, const Argument* arg = 0);
-        virtual ~InvalidVarKwdType() throw() {};
+        virtual ~InvalidVarKwdType() throw();
     };
 
     class InvalidSyntax : public Base {
       public:
         InvalidSyntax(ParserState pstate, Backtraces traces, std::string msg);
-        virtual ~InvalidSyntax() throw() {};
+        virtual ~InvalidSyntax() throw();
     };
 
     class NestingLimitError : public Base {
       public:
         NestingLimitError(ParserState pstate, Backtraces traces, std::string msg = def_nesting_limit);
-        virtual ~NestingLimitError() throw() {};
+        virtual ~NestingLimitError() throw();
     };
 
     class DuplicateKeyError : public Base {
@@ -114,8 +110,8 @@ namespace Sass {
         const Expression& org;
       public:
         DuplicateKeyError(Backtraces traces, const Map& dup, const Expression& org);
+        virtual ~DuplicateKeyError() throw();
         virtual const char* errtype() const { return "Error"; }
-        virtual ~DuplicateKeyError() throw() {};
     };
 
     class TypeMismatch : public Base {
@@ -124,8 +120,8 @@ namespace Sass {
         const std::string type;
       public:
         TypeMismatch(Backtraces traces, const Expression& var, const std::string type);
+        virtual ~TypeMismatch() throw();
         virtual const char* errtype() const { return "Error"; }
-        virtual ~TypeMismatch() throw() {};
     };
 
     class InvalidValue : public Base {
@@ -133,8 +129,8 @@ namespace Sass {
         const Expression& val;
       public:
         InvalidValue(Backtraces traces, const Expression& val);
+        virtual ~InvalidValue() throw();
         virtual const char* errtype() const { return "Error"; }
-        virtual ~InvalidValue() throw() {};
     };
 
     class StackError : public Base {
@@ -142,8 +138,8 @@ namespace Sass {
         const AST_Node& node;
       public:
         StackError(Backtraces traces, const AST_Node& node);
+        virtual ~StackError() throw();
         virtual const char* errtype() const { return "SystemStackError"; }
-        virtual ~StackError() throw() {};
     };
 
     /* common virtual base class (has no pstate or trace) */
@@ -151,13 +147,10 @@ namespace Sass {
       protected:
         std::string msg;
       public:
-        OperationError(std::string msg = def_op_msg)
-        : std::runtime_error(msg), msg(msg)
-        {};
-      public:
+        OperationError(std::string msg = def_op_msg);
+        virtual ~OperationError() throw();
         virtual const char* errtype() const { return "Error"; }
         virtual const char* what() const throw() { return msg.c_str(); }
-        virtual ~OperationError() throw() {};
     };
 
     class ZeroDivisionError : public OperationError {
@@ -166,8 +159,8 @@ namespace Sass {
         const Expression& rhs;
       public:
         ZeroDivisionError(const Expression& lhs, const Expression& rhs);
+        virtual ~ZeroDivisionError() throw();
         virtual const char* errtype() const { return "ZeroDivisionError"; }
-        virtual ~ZeroDivisionError() throw() {};
     };
 
     class IncompatibleUnits : public OperationError {
@@ -177,7 +170,7 @@ namespace Sass {
       public:
         IncompatibleUnits(const Units& lhs, const Units& rhs);
         IncompatibleUnits(const UnitType lhs, const UnitType rhs);
-        virtual ~IncompatibleUnits() throw() {};
+        virtual ~IncompatibleUnits() throw();
     };
 
     class UndefinedOperation : public OperationError {
@@ -188,13 +181,13 @@ namespace Sass {
       public:
         UndefinedOperation(const Expression* lhs, const Expression* rhs, enum Sass_OP op);
         // virtual const char* errtype() const { return "Error"; }
-        virtual ~UndefinedOperation() throw() {};
+        virtual ~UndefinedOperation() throw();
     };
 
     class InvalidNullOperation : public UndefinedOperation {
       public:
         InvalidNullOperation(const Expression* lhs, const Expression* rhs, enum Sass_OP op);
-        virtual ~InvalidNullOperation() throw() {};
+        virtual ~InvalidNullOperation() throw();
     };
 
     class AlphaChannelsNotEqual : public OperationError {
@@ -205,31 +198,31 @@ namespace Sass {
       public:
         AlphaChannelsNotEqual(const Expression* lhs, const Expression* rhs, enum Sass_OP op);
         // virtual const char* errtype() const { return "Error"; }
-        virtual ~AlphaChannelsNotEqual() throw() {};
+        virtual ~AlphaChannelsNotEqual() throw();
     };
 
     class SassValueError : public Base {
     public:
       SassValueError(Backtraces traces, ParserState pstate, OperationError& err);
-      virtual ~SassValueError() throw() {};
+      virtual ~SassValueError() throw();
     };
 
     class TopLevelParent : public Base {
     public:
       TopLevelParent(Backtraces traces, ParserState pstate);
-      virtual ~TopLevelParent() throw() {};
+      virtual ~TopLevelParent() throw();
     };
 
     class UnsatisfiedExtend : public Base {
     public:
       UnsatisfiedExtend(Backtraces traces, Extension extension);
-      virtual ~UnsatisfiedExtend() throw() {};
+      virtual ~UnsatisfiedExtend() throw();
     };
 
     class ExtendAcrossMedia : public Base {
     public:
       ExtendAcrossMedia(Backtraces traces, Extension extension);
-      virtual ~ExtendAcrossMedia() throw() {};
+      virtual ~ExtendAcrossMedia() throw();
     };
 
   }

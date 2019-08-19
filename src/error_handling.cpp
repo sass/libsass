@@ -18,10 +18,26 @@ namespace Sass {
       prefix("Error"), pstate(pstate), traces(traces)
     { }
 
+    Base::~Base() throw() {}
+
+    const char* Base::errtype() const { return prefix.c_str(); }
+    const char* Base::what() const throw() { return msg.c_str(); }
+
     InvalidSass::InvalidSass(ParserState pstate, Backtraces traces, std::string msg, char* owned_src)
     : Base(pstate, msg, traces), owned_src(owned_src)
     { }
 
+    InvalidSass::InvalidSass(InvalidSass& other) : Base(other), owned_src(other.owned_src) {
+      other.owned_src = nullptr;
+    }
+
+    InvalidSass::InvalidSass(InvalidSass &&other) : Base(other), owned_src(other.owned_src) {
+      other.owned_src = nullptr;
+    }
+
+    InvalidSass::~InvalidSass() throw() {
+       sass_free_memory(owned_src);
+    }
 
     InvalidParent::InvalidParent(Selector* parent, Backtraces traces, Selector* selector)
     : Base(selector->pstate(), def_msg, traces), parent(parent), selector(selector)
@@ -31,12 +47,16 @@ namespace Sass {
         "\"" + parent->to_string(Sass_Inspect_Options()) + "\"";
     }
 
+    InvalidParent::~InvalidParent() throw() {}
+
     InvalidVarKwdType::InvalidVarKwdType(ParserState pstate, Backtraces traces, std::string name, const Argument* arg)
     : Base(pstate, def_msg, traces), name(name), arg(arg)
     {
       msg = "Variable keyword argument map must have string keys.\n" +
         name + " is not a string in " + arg->to_string() + ".";
     }
+
+    InvalidVarKwdType::~InvalidVarKwdType() throw() {}
 
     InvalidArgumentType::InvalidArgumentType(ParserState pstate, Backtraces traces, std::string fn, std::string arg, std::string type, const Value* value)
     : Base(pstate, def_msg, traces), fn(fn), arg(arg), type(type), value(value)
@@ -46,19 +66,27 @@ namespace Sass {
       msg += "\" is not a " + type + " for `" + fn + "'";
     }
 
+    InvalidArgumentType::~InvalidArgumentType() throw() {}
+
     MissingArgument::MissingArgument(ParserState pstate, Backtraces traces, std::string fn, std::string arg, std::string fntype)
     : Base(pstate, def_msg, traces), fn(fn), arg(arg), fntype(fntype)
     {
       msg = fntype + " " + fn + " is missing argument " + arg + ".";
     }
 
+    MissingArgument::~MissingArgument() throw() {}
+
     InvalidSyntax::InvalidSyntax(ParserState pstate, Backtraces traces, std::string msg)
     : Base(pstate, msg, traces)
     { }
 
+    InvalidSyntax::~InvalidSyntax() throw() {}
+
     NestingLimitError::NestingLimitError(ParserState pstate, Backtraces traces, std::string msg)
     : Base(pstate, msg, traces)
     { }
+
+    NestingLimitError::~NestingLimitError() throw() {}
 
     DuplicateKeyError::DuplicateKeyError(Backtraces traces, const Map& dup, const Expression& org)
     : Base(org.pstate(), def_msg, traces), dup(dup), org(org)
@@ -66,11 +94,15 @@ namespace Sass {
       msg = "Duplicate key " + dup.get_duplicate_key()->inspect() + " in map (" + org.inspect() + ").";
     }
 
+    DuplicateKeyError::~DuplicateKeyError() throw() {}
+
     TypeMismatch::TypeMismatch(Backtraces traces, const Expression& var, const std::string type)
     : Base(var.pstate(), def_msg, traces), var(var), type(type)
     {
       msg = var.to_string() + " is not an " + type + ".";
     }
+
+    TypeMismatch::~TypeMismatch() throw() {}
 
     InvalidValue::InvalidValue(Backtraces traces, const Expression& val)
     : Base(val.pstate(), def_msg, traces), val(val)
@@ -78,11 +110,15 @@ namespace Sass {
       msg = val.to_string() + " isn't a valid CSS value.";
     }
 
+    InvalidValue::~InvalidValue() throw() {}
+
     StackError::StackError(Backtraces traces, const AST_Node& node)
     : Base(node.pstate(), def_msg, traces), node(node)
     {
       msg = "stack level too deep";
     }
+
+    StackError::~StackError() throw() {}
 
     IncompatibleUnits::IncompatibleUnits(const Units& lhs, const Units& rhs)
     {
@@ -94,6 +130,8 @@ namespace Sass {
       msg = std::string("Incompatible units: '") + unit_to_string(rhs) + "' and '" + unit_to_string(lhs) + "'.";
     }
 
+    IncompatibleUnits::~IncompatibleUnits() throw() {}
+
     AlphaChannelsNotEqual::AlphaChannelsNotEqual(const Expression* lhs, const Expression* rhs, enum Sass_OP op)
     : OperationError(), lhs(lhs), rhs(rhs), op(op)
     {
@@ -103,11 +141,19 @@ namespace Sass {
         rhs->to_string({ NESTED, 5 }) + ".";
     }
 
+    AlphaChannelsNotEqual::~AlphaChannelsNotEqual() throw() {}
+
+    OperationError::OperationError(std::string msg) : std::runtime_error(msg), msg(msg) {}
+
+    OperationError::~OperationError() throw() {}
+
     ZeroDivisionError::ZeroDivisionError(const Expression& lhs, const Expression& rhs)
     : OperationError(), lhs(lhs), rhs(rhs)
     {
       msg = "divided by 0";
     }
+
+    ZeroDivisionError::~ZeroDivisionError() throw() {}
 
     UndefinedOperation::UndefinedOperation(const Expression* lhs, const Expression* rhs, enum Sass_OP op)
     : OperationError(), lhs(lhs), rhs(rhs), op(op)
@@ -119,11 +165,15 @@ namespace Sass {
         "\".";
     }
 
+    UndefinedOperation::~UndefinedOperation() throw() {}
+
     InvalidNullOperation::InvalidNullOperation(const Expression* lhs, const Expression* rhs, enum Sass_OP op)
     : UndefinedOperation(lhs, rhs, op)
     {
       msg = def_op_null_msg + ": \"" + lhs->inspect() + " " + sass_op_to_name(op) + " " + rhs->inspect() + "\".";
     }
+
+    InvalidNullOperation::~InvalidNullOperation() throw() {}
 
     SassValueError::SassValueError(Backtraces traces, ParserState pstate, OperationError& err)
     : Base(pstate, err.what(), traces)
@@ -132,11 +182,15 @@ namespace Sass {
       prefix = err.errtype();
     }
 
+    SassValueError::~SassValueError() throw() {}
+
     TopLevelParent::TopLevelParent(Backtraces traces, ParserState pstate)
       : Base(pstate, "Top-level selectors may not contain the parent selector \"&\".", traces)
     {
 
     }
+
+    TopLevelParent::~TopLevelParent() throw() {}
 
     UnsatisfiedExtend::UnsatisfiedExtend(Backtraces traces, Extension extension)
       : Base(extension.target->pstate(), "The target selector was not found.\n"
@@ -145,13 +199,16 @@ namespace Sass {
 
     }
 
+    UnsatisfiedExtend::~UnsatisfiedExtend() throw() {}
+
     ExtendAcrossMedia::ExtendAcrossMedia(Backtraces traces, Extension extension)
       : Base(extension.target->pstate(), "You may not @extend selectors across media queries.\n"
         "Use \"@extend " + extension.target->to_string() + " !optional\" to avoid this error.", traces)
     {
 
     }
-    
+
+    ExtendAcrossMedia::~ExtendAcrossMedia() throw() {}
 
   }
 
