@@ -20,10 +20,10 @@ namespace Sass {
 
   namespace Exception {
 
-    const std::string def_msg = "Invalid sass detected";
-    const std::string def_op_msg = "Undefined operation";
-    const std::string def_op_null_msg = "Invalid null operation";
-    const std::string def_nesting_limit = "Code too deeply neested";
+    const char* const def_msg = "Invalid sass detected";
+    const char* const def_op_msg = "Undefined operation";
+    const char* const def_op_null_msg = "Invalid null operation";
+    const char* const def_nesting_limit = "Code too deeply neested";
 
     class Base : public std::runtime_error {
       protected:

@@ -158,7 +158,7 @@ namespace Sass {
     UndefinedOperation::UndefinedOperation(const Expression* lhs, const Expression* rhs, enum Sass_OP op)
     : OperationError(), lhs(lhs), rhs(rhs), op(op)
     {
-      msg = def_op_msg + ": \"" +
+      msg = std::string(def_op_msg) + ": \"" +
         lhs->to_string({ NESTED, 5 }) +
         " " + sass_op_to_name(op) + " " +
         rhs->to_string({ TO_SASS, 5 }) +
@@ -170,7 +170,7 @@ namespace Sass {
     InvalidNullOperation::InvalidNullOperation(const Expression* lhs, const Expression* rhs, enum Sass_OP op)
     : UndefinedOperation(lhs, rhs, op)
     {
-      msg = def_op_null_msg + ": \"" + lhs->inspect() + " " + sass_op_to_name(op) + " " + rhs->inspect() + "\".";
+      msg = std::string(def_op_null_msg) + ": \"" + lhs->inspect() + " " + sass_op_to_name(op) + " " + rhs->inspect() + "\".";
     }
 
     InvalidNullOperation::~InvalidNullOperation() throw() {}
