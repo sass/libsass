@@ -4,6 +4,7 @@
 
 #include "sass.h"
 #include "values.hpp"
+#include "ast_values.hpp"
 
 #include <stdint.h>
 

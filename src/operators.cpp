@@ -3,7 +3,10 @@
 #include "sass.hpp"
 
 #include <cmath>
+
+#include "ast_values.hpp"
 #include "operators.hpp"
+#include "util.hpp"
 
 namespace Sass {
 

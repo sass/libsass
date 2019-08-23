@@ -4,6 +4,9 @@
 
 #include "ast2c.hpp"
 #include "ast.hpp"
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
 
 namespace Sass {
 
@@ -76,5 +79,8 @@ namespace Sass {
   // not strictly necessary because of the fallback
   union Sass_Value* AST2C::operator()(Null* n)
   { return sass_make_null(); }
+
+  union Sass_Value* AST2C::fallback(AST_Node* x)
+  { return sass_make_error("unknown type for C-API"); }
 
 };

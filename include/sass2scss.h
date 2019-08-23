@@ -41,7 +41,7 @@
 #endif
 
 // add namespace for c++
-namespace Sass
+namespace Sass2Scss
 {
 
 	// pretty print options

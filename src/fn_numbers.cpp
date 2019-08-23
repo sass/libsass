@@ -11,9 +11,12 @@
 #include <algorithm>
 
 #include "ast.hpp"
+#include "ast_values.hpp"
+#include "context.hpp"
 #include "units.hpp"
 #include "fn_utils.hpp"
 #include "fn_numbers.hpp"
+#include "util.hpp"
 
 #ifdef __MINGW32__
 #include "windows.h"

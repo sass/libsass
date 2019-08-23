@@ -1,5 +1,9 @@
 #include "ast.hpp"
 
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
+
 namespace Sass {
 
   #define IMPLEMENT_BASE_CAST(T) \

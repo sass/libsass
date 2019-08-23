@@ -2,7 +2,10 @@
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
 
+#include <unordered_set>
+
 #include "ast_selectors.hpp"
+#include "ast_values.hpp"
 
 namespace Sass {
 

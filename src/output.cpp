@@ -3,6 +3,9 @@
 #include "sass.hpp"
 
 #include "ast.hpp"
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
 #include "output.hpp"
 #include "util.hpp"
 

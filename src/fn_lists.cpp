@@ -2,10 +2,14 @@
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
 
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
 #include "listize.hpp"
 #include "operators.hpp"
 #include "fn_utils.hpp"
 #include "fn_lists.hpp"
+#include "util.hpp"
 
 namespace Sass {
 

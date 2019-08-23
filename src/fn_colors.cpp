@@ -4,6 +4,8 @@
 
 #include <iomanip>
 #include "ast.hpp"
+#include "ast_values.hpp"
+#include "context.hpp"
 #include "fn_utils.hpp"
 #include "fn_colors.hpp"
 #include "util.hpp"

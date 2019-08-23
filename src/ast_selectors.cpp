@@ -3,7 +3,11 @@
 #include "sass.hpp"
 
 #include "ast.hpp"
+#include "ast_selectors.hpp"
+#include "ast_values.hpp"
+#include "constants.hpp"
 #include "permutate.hpp"
+#include "util.hpp"
 #include "util_string.hpp"
 
 namespace Sass {

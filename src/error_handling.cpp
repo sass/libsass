@@ -3,6 +3,9 @@
 #include "sass.hpp"
 
 #include "ast.hpp"
+#include "ast_selectors.hpp"
+#include "ast_values.hpp"
+#include "extension.hpp"
 #include "prelexer.hpp"
 #include "backtrace.hpp"
 #include "error_handling.hpp"
@@ -151,7 +154,7 @@ namespace Sass {
     {
 
     }
-    
+
 
   }
 

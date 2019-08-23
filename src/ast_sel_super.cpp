@@ -2,7 +2,8 @@
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
 #include "ast.hpp"
-
+#include "ast_selectors.hpp"
+#include "ast_values.hpp"
 #include "util_string.hpp"
 
 namespace Sass {
@@ -76,7 +77,7 @@ namespace Sass {
           // That items must be a compound selector
           if (auto compound = Cast<CompoundSelector>(complex->at(0))) {
             // It must contain the lhs simple selector
-            if (!compound->contains(simple1)) { 
+            if (!compound->contains(simple1)) {
               return false;
             }
           }
@@ -386,8 +387,8 @@ namespace Sass {
 
       // Find the first index where `complex2.sublist(i2, afterSuperselector)`
       // is a subselector of [compound1]. We stop before the superselector
-      // would encompass all of [complex2] because we know [complex1] has 
-      // more than one element, and consuming all of [complex2] wouldn't 
+      // would encompass all of [complex2] because we know [complex1] has
+      // more than one element, and consuming all of [complex2] wouldn't
       // leave anything for the rest of [complex1] to match.
       size_t afterSuperselector = i2 + 1;
       for (; afterSuperselector < complex2.size(); afterSuperselector++) {

@@ -3,6 +3,7 @@
 #include "sass.hpp"
 
 #include "ast.hpp"
+#include "ast_selectors.hpp"
 #include "permutate.hpp"
 #include "dart_helpers.hpp"
 
@@ -190,7 +191,7 @@ namespace Sass {
   // EO getChunks
 
   // ##########################################################################
-  // If the first element of [queue] has a `::root` 
+  // If the first element of [queue] has a `::root`
   // selector, removes and returns that element.
   // ##########################################################################
   CompoundSelectorObj getFirstIfRoot(std::vector<SelectorComponentObj>& queue) {
@@ -298,7 +299,7 @@ namespace Sass {
         return true;
       }
     }
-    
+
     std::vector<SelectorComponentObj> combinators1;
     while (!components1.empty() && Cast<SelectorCombinator>(components1.back())) {
       SelectorCombinatorObj back = Cast<SelectorCombinator>(components1.back());
@@ -379,7 +380,7 @@ namespace Sass {
         else {
           CompoundSelectorObj unified = compound1->unifyWith(compound2);
           std::vector<std::vector<SelectorComponentObj>> items;
-          
+
           if (!unified.isNull()) {
             items.push_back({
               unified, nextSiblingCombinator

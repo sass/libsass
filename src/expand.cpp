@@ -6,6 +6,9 @@
 #include <typeinfo>
 
 #include "ast.hpp"
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
 #include "expand.hpp"
 #include "bind.hpp"
 #include "eval.hpp"
@@ -96,7 +99,7 @@ namespace Sass {
   SelectorListObj Expand::popFromSelectorStack()
   {
     SelectorListObj last = selector_stack.back();
-    if (selector_stack.size() > 0)    
+    if (selector_stack.size() > 0)
       selector_stack.pop_back();
     if (last.isNull()) return {};
     return last;

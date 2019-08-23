@@ -14,23 +14,20 @@
 #include <typeinfo>
 #include <algorithm>
 #include "sass/base.h"
-#include "ast_fwd_decl.hpp"
 
-#include "util.hpp"
-#include "units.hpp"
-#include "context.hpp"
-#include "position.hpp"
-#include "constants.hpp"
-#include "operation.hpp"
-#include "position.hpp"
-#include "inspect.hpp"
-#include "source_map.hpp"
-#include "environment.hpp"
-#include "error_handling.hpp"
 #include "ast_def_macros.hpp"
 #include "ast_fwd_decl.hpp"
-#include "source_map.hpp"
+#include "constants.hpp"
+#include "context.hpp"
+#include "environment.hpp"
+#include "error_handling.hpp"
 #include "fn_utils.hpp"
+#include "inspect.hpp"
+#include "operation.hpp"
+#include "position.hpp"
+#include "source_map.hpp"
+#include "units.hpp"
+#include "util.hpp"
 
 #include "sass.h"
 

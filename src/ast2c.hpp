@@ -29,9 +29,7 @@ namespace Sass {
     union Sass_Value* operator()(Argument*);
 
     // return sass error if type is not supported
-    union Sass_Value* fallback(AST_Node* x)
-    { return sass_make_error("unknown type for C-API"); }
-
+    union Sass_Value* fallback(AST_Node* x);
   };
 
 }

@@ -3,6 +3,7 @@
 #include "sass.hpp"
 
 #include "ast.hpp"
+#include "ast_values.hpp"
 #include "color_maps.hpp"
 #include "util_string.hpp"
 
