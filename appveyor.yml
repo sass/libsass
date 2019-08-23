@@ -50,7 +50,7 @@ install:
 build_script:
   - ps: |
       if ($env:Compiler -eq "mingw") {
-        mingw32-make -j4 sassc
+        mingw32-make -j4 sassc AMALGAM=1
       } else {
         msbuild /m:4 /p:"Configuration=$env:Config;Platform=$env:Platform" sassc\win\sassc.sln
       }

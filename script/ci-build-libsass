@@ -87,6 +87,8 @@ if [ "x$AUTOTOOLS" == "xyes" ]; then
 
 else
 
+  MAKE_OPTS="$MAKE_OPTS AMALGAM=1"
+
   make $MAKE_OPTS clean
 
   # Run C++ unit tests
