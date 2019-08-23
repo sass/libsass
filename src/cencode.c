@@ -7,6 +7,10 @@ For details, see http://sourceforge.net/projects/libb64
 
 #include "b64/cencode.h"
 
+#ifdef __cplusplus
+namespace base64 {
+#endif
+
 void base64_init_encodestate(base64_encodestate* state_in)
 {
 	state_in->step = step_A;
@@ -104,3 +108,6 @@ int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
 	return (int)(codechar - code_out);
 }
 
+#ifdef __cplusplus
+}  // namespace base64
+#endif
