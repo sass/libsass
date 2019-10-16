@@ -4,10 +4,14 @@ script/branding
 
 : ${SASS_SPEC_PATH:="sass-spec"}
 : ${SASS_SASSC_PATH:="sassc" }
+: ${LIBSASS_SPEC_PATH:="$SASS_SPEC_PATH/spec/libsass-spec"}
 
 if [ ! -d $SASS_SPEC_PATH ]; then
   git clone https://github.com/sass/sass-spec.git $SASS_SPEC_PATH
 fi
 if [ ! -d $SASS_SASSC_PATH ]; then
   git clone https://github.com/sass/sassc.git $SASS_SASSC_PATH
+fi
+if [ ! -d $LIBSASS_SPEC_PATH ]  && [ "${ASAN_OPTIONS}" == "" ]; then
+  git clone https://github.com/mgreter/libsass-specs.git $LIBSASS_SPEC_PATH --branch bolt-bench
 fi
