@@ -20,7 +20,7 @@ ship with a command line interface (CLI) you can use directly. There is also
 [SassC](https://github.com/sass/sassc), which is the official lightweight
 CLI tool built by the same people as LibSass.
 
-### Excerpt of "sanctioned" implementations:
+### Excerpt of Approved Implementations:
 
 - https://github.com/sass/node-sass (Node.js)
 - https://github.com/sass/perl-libsass (Perl)
