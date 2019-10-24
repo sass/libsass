@@ -49,16 +49,6 @@ namespace Sass {
       else if (String_Constant* str = Cast<String_Constant>(arg)) {
         return str;
       }
-      else if (Value* ex = Cast<Value>(arg)) {
-        Sass_Output_Style oldstyle = ctx.c_options.output_style;
-        ctx.c_options.output_style = SASS_STYLE_NESTED;
-        std::string val(arg->to_string(ctx.c_options));
-        val = Cast<Null>(arg) ? "null" : val;
-        ctx.c_options.output_style = oldstyle;
-
-        deprecated_function("Passing " + val + ", a non-string value, to unquote()", pstate);
-        return ex;
-      }
       throw std::runtime_error("Invalid Data Type for unquote");
     }
 
