@@ -317,9 +317,9 @@ namespace Sass {
     return sel ? *this == *sel : false;
   }
 
-  bool Pseudo_Selector::operator== (const SimpleSelector& rhs) const
+  bool PseudoSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Pseudo_Selector>(&rhs);
+    auto sel = Cast<PseudoSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
@@ -375,7 +375,7 @@ namespace Sass {
     else { return false; }
   }
 
-  bool Pseudo_Selector::operator== (const Pseudo_Selector& rhs) const
+  bool PseudoSelector::operator== (const PseudoSelector& rhs) const
   {
     if (is_ns_eq(rhs)) {
       if (name() != rhs.name()) return false;

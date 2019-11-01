@@ -106,7 +106,7 @@ namespace Sass {
   class IDSelector;
   class Attribute_Selector;
 
-  class Pseudo_Selector;
+  class PseudoSelector;
   
   class SelectorComponent;
   class SelectorCombinator;
@@ -202,7 +202,7 @@ namespace Sass {
   IMPL_MEM_OBJ(ClassSelector);
   IMPL_MEM_OBJ(IDSelector);
   IMPL_MEM_OBJ(Attribute_Selector);
-  IMPL_MEM_OBJ(Pseudo_Selector);
+  IMPL_MEM_OBJ(PseudoSelector);
 
   IMPL_MEM_OBJ(SelectorComponent);
   IMPL_MEM_OBJ(SelectorCombinator);

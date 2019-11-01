@@ -1528,7 +1528,7 @@ namespace Sass {
     return s;
   }
 
-  Pseudo_Selector* Eval::operator()(Pseudo_Selector* pseudo)
+  PseudoSelector* Eval::operator()(PseudoSelector* pseudo)
   {
     // ToDo: should we eval selector?
     return pseudo;

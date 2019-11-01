@@ -156,7 +156,7 @@ namespace Sass {
   // ##########################################################################
   // This is implemented in `selector/pseudo.dart` as `PseudoSelector::unify`
   // ##########################################################################
-  CompoundSelector* Pseudo_Selector::unifyWith(CompoundSelector* compound)
+  CompoundSelector* PseudoSelector::unifyWith(CompoundSelector* compound)
   {
 
     if (compound->length() == 1 && compound->first()->is_universal()) {
@@ -174,7 +174,7 @@ namespace Sass {
     bool addedThis = false;
     for (auto simple : compound->elements()) {
       // Make sure pseudo selectors always come last.
-      if (Pseudo_Selector_Obj pseudo = simple->getPseudoSelector()) {
+      if (PseudoSelectorObj pseudo = simple->getPseudoSelector()) {
         if (pseudo->isElement()) {
           // A given compound selector may only contain one pseudo element. If
           // [compound] has a different one than [this], unification fails.
@@ -197,7 +197,7 @@ namespace Sass {
     return result.detach();
 
   }
-  // EO Pseudo_Selector::unifyWith(CompoundSelector*
+  // EO PseudoSelector::unifyWith(CompoundSelector*
 
   // ##########################################################################
   // This is implemented in `extend/functions.dart` as `unifyUniversalAndElement`

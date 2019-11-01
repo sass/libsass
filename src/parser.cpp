@@ -707,7 +707,7 @@ namespace Sass {
     return {};
   }
 
-  Pseudo_Selector_Obj Parser::parse_negated_selector2()
+  PseudoSelectorObj Parser::parse_negated_selector2()
   {
     lex< pseudo_not >();
     sass::string name(lexed);
@@ -718,7 +718,7 @@ namespace Sass {
     }
     name.erase(name.size() - 1);
 
-    Pseudo_Selector* sel = SASS_MEMORY_NEW(Pseudo_Selector, nsource_position, name.substr(1));
+    PseudoSelector* sel = SASS_MEMORY_NEW(PseudoSelector, nsource_position, name.substr(1));
     sel->selector(negated);
     return sel;
   }
@@ -753,7 +753,7 @@ namespace Sass {
           sass::string parsed(lexed); // always compacting binominals (as dart-sass)
           parsed.erase(std::unique(parsed.begin(), parsed.end(), BothAreSpaces), parsed.end());
           String_Constant_Obj arg = SASS_MEMORY_NEW(String_Constant, pstate, parsed);
-          Pseudo_Selector* pseudo = SASS_MEMORY_NEW(Pseudo_Selector, p, name, element);
+          PseudoSelector* pseudo = SASS_MEMORY_NEW(PseudoSelector, p, name, element);
           if (lex < sequence < css_whitespace, insensitive < of_kwd >>>(false)) {
             pseudo->selector(parseSelectorList(true));
           }
@@ -772,14 +772,14 @@ namespace Sass {
           if (unvendored == "not" || unvendored == "matches" || unvendored == "current"  || unvendored == "any" || unvendored == "has" || unvendored == "host" || unvendored == "host-context" || unvendored == "slotted") {
              if (SelectorListObj wrapped = parseSelectorList(true)) {
                 if (wrapped && lex_css< exactly<')'> >()) {
-                  Pseudo_Selector* pseudo = SASS_MEMORY_NEW(Pseudo_Selector, p, name, element);
+                  PseudoSelector* pseudo = SASS_MEMORY_NEW(PseudoSelector, p, name, element);
                   pseudo->selector(wrapped);
                   return pseudo;
                 }
               }
           } else {
             String_Schema_Obj arg = parse_css_variable_value();
-            Pseudo_Selector* pseudo = SASS_MEMORY_NEW(Pseudo_Selector, p, name, element);
+            PseudoSelector* pseudo = SASS_MEMORY_NEW(PseudoSelector, p, name, element);
             pseudo->argument(arg);
 
             if (lex_css< exactly<')'> >()) {
@@ -792,7 +792,7 @@ namespace Sass {
       // EO if pseudo selector
 
       else if (lex < sequence< optional < pseudo_prefix >, identifier > >()) {
-        return SASS_MEMORY_NEW(Pseudo_Selector, pstate, lexed, element);
+        return SASS_MEMORY_NEW(PseudoSelector, pstate, lexed, element);
       }
       else if (lex < pseudo_prefix >()) {
         css_error("Invalid CSS", " after ", ": expected pseudoclass or pseudoelement, was ");

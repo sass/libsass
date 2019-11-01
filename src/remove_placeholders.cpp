@@ -18,7 +18,7 @@ namespace Sass {
 
     void Remove_Placeholders::remove_placeholders(SimpleSelector* simple)
     {
-      if (Pseudo_Selector * pseudo = simple->getPseudoSelector()) {
+      if (PseudoSelector * pseudo = simple->getPseudoSelector()) {
         if (pseudo->selector()) remove_placeholders(pseudo->selector());
       }
     }

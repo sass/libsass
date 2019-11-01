@@ -119,7 +119,7 @@ namespace Sass {
     /* helper function for syntax sugar */
     virtual IDSelector* getIdSelector() { return NULL; }
     virtual TypeSelector* getTypeSelector() { return NULL; }
-    virtual Pseudo_Selector* getPseudoSelector() { return NULL; }
+    virtual PseudoSelector* getPseudoSelector() { return NULL; }
 
     ComplexSelectorObj wrapInComplex();
     CompoundSelectorObj wrapInCompound();
@@ -222,14 +222,14 @@ namespace Sass {
   // Pseudo selectors -- e.g., :first-child, :nth-of-type(...), etc.
   //////////////////////////////////////////////////////////////////
   // Pseudo Selector cannot have any namespace?
-  class Pseudo_Selector final : public SimpleSelector {
+  class PseudoSelector final : public SimpleSelector {
     ADD_PROPERTY(sass::string, normalized)
     ADD_PROPERTY(String_Obj, argument)
     ADD_PROPERTY(SelectorListObj, selector)
     ADD_PROPERTY(bool, isSyntacticClass)
     ADD_PROPERTY(bool, isClass)
   public:
-    Pseudo_Selector(ParserState pstate, sass::string n, bool element = false);
+    PseudoSelector(ParserState pstate, sass::string n, bool element = false);
     virtual bool is_pseudo_element() const override;
     size_t hash() const override;
 
@@ -246,13 +246,13 @@ namespace Sass {
     bool isSyntacticElement() const { return !isSyntacticClass(); }
 
     virtual unsigned long specificity() const override;
-    Pseudo_Selector_Obj withSelector(SelectorListObj selector);
+    PseudoSelectorObj withSelector(SelectorListObj selector);
 
     CompoundSelector* unifyWith(CompoundSelector*) override;
-    Pseudo_Selector* getPseudoSelector() final override { return this; }
+    PseudoSelector* getPseudoSelector() final override { return this; }
     bool operator==(const SimpleSelector& rhs) const final override;
-    ATTACH_CMP_OPERATIONS(Pseudo_Selector)
-    ATTACH_AST_OPERATIONS(Pseudo_Selector)
+    ATTACH_CMP_OPERATIONS(PseudoSelector)
+    ATTACH_AST_OPERATIONS(PseudoSelector)
     void cloneChildren() override;
     ATTACH_CRTP_PERFORM_METHODS()
   };

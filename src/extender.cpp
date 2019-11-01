@@ -895,12 +895,12 @@ namespace Sass {
     const CssMediaRuleObj& mediaQueryContext,
     ExtSmplSelSet* targetsUsed)
   {
-    if (Pseudo_Selector* pseudo = Cast<Pseudo_Selector>(simple)) {
+    if (PseudoSelector* pseudo = Cast<PseudoSelector>(simple)) {
       if (pseudo->selector()) {
         sass::vector<sass::vector<Extension>> merged;
-        sass::vector<Pseudo_Selector_Obj> extended =
+        sass::vector<PseudoSelectorObj> extended =
           extendPseudo(pseudo, extensions, mediaQueryContext);
-        for (Pseudo_Selector_Obj& extend : extended) {
+        for (PseudoSelectorObj& extend : extended) {
           SimpleSelectorObj simple = extend;
           sass::vector<Extension> result =
             extendWithoutPseudo(simple, extensions, targetsUsed);
@@ -924,7 +924,7 @@ namespace Sass {
   // ##########################################################################
   sass::vector<ComplexSelectorObj> Extender::extendPseudoComplex(
     const ComplexSelectorObj& complex,
-    const Pseudo_Selector_Obj& pseudo,
+    const PseudoSelectorObj& pseudo,
     const CssMediaRuleObj& mediaQueryContext)
   {
 
@@ -932,7 +932,7 @@ namespace Sass {
     auto compound = Cast<CompoundSelector>(complex->get(0));
     if (compound == nullptr) { return { complex }; }
     if (compound->length() != 1) { return { complex }; }
-    auto innerPseudo = Cast<Pseudo_Selector>(compound->get(0));
+    auto innerPseudo = Cast<PseudoSelector>(compound->get(0));
     if (innerPseudo == nullptr) { return { complex }; }
     if (!innerPseudo->selector()) { return { complex }; }
 
@@ -972,8 +972,8 @@ namespace Sass {
   // Extends [pseudo] using [extensions], and returns
   // a list of resulting pseudo selectors.
   // ##########################################################################
-  sass::vector<Pseudo_Selector_Obj> Extender::extendPseudo(
-    const Pseudo_Selector_Obj& pseudo,
+  sass::vector<PseudoSelectorObj> Extender::extendPseudo(
+    const PseudoSelectorObj& pseudo,
     const ExtSelExtMap& extensions,
     const CssMediaRuleObj& mediaQueryContext)
   {
@@ -1011,7 +1011,7 @@ namespace Sass {
     // unless it originally contained a selector list.
     if (pseudo->normalized() == "not") {
       if (pseudo->selector()->length() == 1) {
-        sass::vector<Pseudo_Selector_Obj> pseudos;
+        sass::vector<PseudoSelectorObj> pseudos;
         for (size_t i = 0; i < expanded.size(); i += 1) {
           pseudos.push_back(pseudo->withSelector(
             expanded[i]->wrapInList()

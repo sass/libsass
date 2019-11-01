@@ -115,7 +115,7 @@ namespace Sass {
     virtual T operator()(ClassSelector* x)         = 0;
     virtual T operator()(IDSelector* x)            = 0;
     virtual T operator()(Attribute_Selector* x)     = 0;
-    virtual T operator()(Pseudo_Selector* x)        = 0;
+    virtual T operator()(PseudoSelector* x)        = 0;
     virtual T operator()(SelectorComponent* x) = 0;
     virtual T operator()(SelectorCombinator* x) = 0;
     virtual T operator()(CompoundSelector* x) = 0;
@@ -201,7 +201,7 @@ namespace Sass {
     T operator()(ClassSelector* x)         { return static_cast<D*>(this)->fallback(x); }
     T operator()(IDSelector* x)            { return static_cast<D*>(this)->fallback(x); }
     T operator()(Attribute_Selector* x)     { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Pseudo_Selector* x)        { return static_cast<D*>(this)->fallback(x); }
+    T operator()(PseudoSelector* x)        { return static_cast<D*>(this)->fallback(x); }
     T operator()(SelectorComponent* x) { return static_cast<D*>(this)->fallback(x); }
     T operator()(SelectorCombinator* x) { return static_cast<D*>(this)->fallback(x); }
     T operator()(CompoundSelector* x) { return static_cast<D*>(this)->fallback(x); }

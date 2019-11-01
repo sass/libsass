@@ -339,15 +339,15 @@ namespace Sass {
     // ##########################################################################
     static sass::vector<ComplexSelectorObj> extendPseudoComplex(
       const ComplexSelectorObj& complex,
-      const Pseudo_Selector_Obj& pseudo,
+      const PseudoSelectorObj& pseudo,
       const CssMediaRuleObj& mediaQueryContext);
 
     // ##########################################################################
     // Extends [pseudo] using [extensions], and returns
     // a list of resulting pseudo selectors.
     // ##########################################################################
-    sass::vector<Pseudo_Selector_Obj> extendPseudo(
-      const Pseudo_Selector_Obj& pseudo,
+    sass::vector<PseudoSelectorObj> extendPseudo(
+      const PseudoSelectorObj& pseudo,
       const ExtSelExtMap& extensions,
       const CssMediaRuleObj& mediaQueryContext);
 

@@ -82,7 +82,7 @@ namespace Sass {
     CompoundSelector* operator()(CompoundSelector*);
     SelectorComponent* operator()(SelectorComponent*);
     SimpleSelector* operator()(SimpleSelector* s);
-    Pseudo_Selector* operator()(Pseudo_Selector* s);
+    PseudoSelector* operator()(PseudoSelector* s);
 
     // they don't have any specific implementation (yet)
     IDSelector* operator()(IDSelector* s) { return s; };
