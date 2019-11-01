@@ -894,12 +894,12 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   String_Schema::String_Schema(ParserState pstate, size_t size, bool css)
-  : String(pstate), Vectorized<PreValue_Obj>(size), css_(css), hash_(0)
+  : String(pstate), Vectorized<PreValueObj>(size), css_(css), hash_(0)
   { concrete_type(STRING); }
 
   String_Schema::String_Schema(const String_Schema* ptr)
   : String(ptr),
-    Vectorized<PreValue_Obj>(*ptr),
+    Vectorized<PreValueObj>(*ptr),
     css_(ptr->css_),
     hash_(ptr->hash_)
   { concrete_type(STRING); }

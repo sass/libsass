@@ -775,8 +775,8 @@ namespace Sass {
       }
 
       To_Value to_value(ctx);
-      Value_Obj v_l = Cast<Value>(lhs->perform(&to_value));
-      Value_Obj v_r = Cast<Value>(rhs->perform(&to_value));
+      ValueObj v_l = Cast<Value>(lhs->perform(&to_value));
+      ValueObj v_r = Cast<Value>(rhs->perform(&to_value));
 
       if (force_delay) {
         sass::string str("");
@@ -841,8 +841,8 @@ namespace Sass {
       else {
         To_Value to_value(ctx);
         // this will leak if perform does not return a value!
-        Value_Obj v_l = Cast<Value>(lhs->perform(&to_value));
-        Value_Obj v_r = Cast<Value>(rhs->perform(&to_value));
+        ValueObj v_l = Cast<Value>(lhs->perform(&to_value));
+        ValueObj v_r = Cast<Value>(rhs->perform(&to_value));
         bool interpolant = b->is_right_interpolant() ||
                            b->is_left_interpolant() ||
                            b->is_interpolant();

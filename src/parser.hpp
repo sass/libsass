@@ -294,7 +294,7 @@ namespace Sass {
     String_Obj parse_url_function_argument();
     String_Obj parse_interpolated_chunk(Token, bool constant = false, bool css = true);
     String_Obj parse_string();
-    Value_Obj parse_static_value();
+    ValueObj parse_static_value();
     String_Schema_Obj parse_css_variable_value();
     String_Obj parse_ie_property();
     String_Obj parse_ie_keyword_arg();

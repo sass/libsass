@@ -92,7 +92,7 @@ namespace Sass {
         return l.detach();
       }
       else {
-        Value_Obj rv = l->value_at_index(static_cast<int>(index));
+        ValueObj rv = l->value_at_index(static_cast<int>(index));
         rv->set_delayed(false);
         return rv.detach();
       }
@@ -275,7 +275,7 @@ namespace Sass {
     Signature is_bracketed_sig = "is-bracketed($list)";
     BUILT_IN(is_bracketed)
     {
-      Value_Obj value = ARG("$list", Value);
+      ValueObj value = ARG("$list", Value);
       List_Obj list = Cast<List>(value);
       return SASS_MEMORY_NEW(Boolean, pstate, list && list->is_bracketed());
     }

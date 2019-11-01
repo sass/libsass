@@ -18,7 +18,7 @@ namespace Sass {
       Map_Obj m = ARGM("$map", Map);
       ExpressionObj v = ARG("$key", Expression);
       try {
-        Value_Obj val = m->at(v);
+        ValueObj val = m->at(v);
         if (!val) return SASS_MEMORY_NEW(Null, pstate);
         val->set_delayed(false);
         return val.detach();

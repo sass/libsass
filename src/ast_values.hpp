@@ -389,7 +389,7 @@ namespace Sass {
   // Interpolated strings. Meant to be reduced to flat strings during the
   // evaluation phase.
   ///////////////////////////////////////////////////////////////////////
-  class String_Schema final : public String, public Vectorized<PreValue_Obj> {
+  class String_Schema final : public String, public Vectorized<PreValueObj> {
     ADD_PROPERTY(bool, css)
     mutable size_t hash_;
   public:

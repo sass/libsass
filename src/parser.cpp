@@ -1663,7 +1663,7 @@ namespace Sass {
     return schema.detach();
   }
 
-  Value_Obj Parser::parse_static_value()
+  ValueObj Parser::parse_static_value()
   {
     lex< static_value >();
     Token str(lexed);
