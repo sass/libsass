@@ -175,13 +175,13 @@ namespace Sass {
   ////////////////////////////////////////////////
   // Class selectors  -- i.e., .foo.
   ////////////////////////////////////////////////
-  class Class_Selector final : public SimpleSelector {
+  class ClassSelector final : public SimpleSelector {
   public:
-    Class_Selector(ParserState pstate, sass::string n);
+    ClassSelector(ParserState pstate, sass::string n);
     virtual unsigned long specificity() const override;
     bool operator==(const SimpleSelector& rhs) const final override;
-    ATTACH_CMP_OPERATIONS(Class_Selector)
-    ATTACH_AST_OPERATIONS(Class_Selector)
+    ATTACH_CMP_OPERATIONS(ClassSelector)
+    ATTACH_AST_OPERATIONS(ClassSelector)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

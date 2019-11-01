@@ -677,7 +677,7 @@ namespace Sass {
   {
     lex < css_comments >(false);
     if (lex< class_name >()) {
-      return SASS_MEMORY_NEW(Class_Selector, pstate, lexed);
+      return SASS_MEMORY_NEW(ClassSelector, pstate, lexed);
     }
     else if (lex< id_name >()) {
       return SASS_MEMORY_NEW(IDSelector, pstate, lexed);

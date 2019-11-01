@@ -207,14 +207,14 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Class_Selector::Class_Selector(ParserState pstate, sass::string n)
+  ClassSelector::ClassSelector(ParserState pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(CLASS_SEL); }
-  Class_Selector::Class_Selector(const Class_Selector* ptr)
+  ClassSelector::ClassSelector(const ClassSelector* ptr)
   : SimpleSelector(ptr)
   { simple_type(CLASS_SEL); }
 
-  unsigned long Class_Selector::specificity() const
+  unsigned long ClassSelector::specificity() const
   {
     return Constants::Specificity_Class;
   }
@@ -1022,7 +1022,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(Placeholder_Selector);
   IMPLEMENT_AST_OPERATORS(Attribute_Selector);
   IMPLEMENT_AST_OPERATORS(TypeSelector);
-  IMPLEMENT_AST_OPERATORS(Class_Selector);
+  IMPLEMENT_AST_OPERATORS(ClassSelector);
   IMPLEMENT_AST_OPERATORS(IDSelector);
   IMPLEMENT_AST_OPERATORS(Pseudo_Selector);
   IMPLEMENT_AST_OPERATORS(SelectorCombinator);

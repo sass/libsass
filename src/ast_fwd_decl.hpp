@@ -102,7 +102,7 @@ namespace Sass {
   class Selector_Schema;
   class Placeholder_Selector;
   class TypeSelector;
-  class Class_Selector;
+  class ClassSelector;
   class IDSelector;
   class Attribute_Selector;
 
@@ -199,7 +199,7 @@ namespace Sass {
   IMPL_MEM_OBJ(SimpleSelector);
   IMPL_MEM_OBJ(Placeholder_Selector);
   IMPL_MEM_OBJ(TypeSelector);
-  IMPL_MEM_OBJ(Class_Selector);
+  IMPL_MEM_OBJ(ClassSelector);
   IMPL_MEM_OBJ(IDSelector);
   IMPL_MEM_OBJ(Attribute_Selector);
   IMPL_MEM_OBJ(Pseudo_Selector);

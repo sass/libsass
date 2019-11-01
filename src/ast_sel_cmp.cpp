@@ -311,9 +311,9 @@ namespace Sass {
     return sel ? *this == *sel : false;
   }
 
-  bool Class_Selector::operator== (const SimpleSelector& rhs) const
+  bool ClassSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Class_Selector>(&rhs);
+    auto sel = Cast<ClassSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
@@ -349,7 +349,7 @@ namespace Sass {
     return is_ns_eq(rhs) && name() == rhs.name();
   }
 
-  bool Class_Selector::operator== (const Class_Selector& rhs) const
+  bool ClassSelector::operator== (const ClassSelector& rhs) const
   {
     // Class has no namespacing
     return name() == rhs.name();
