@@ -698,7 +698,7 @@ namespace Sass {
       return parse_attribute_selector();
     }
     else if (lex< placeholder >()) {
-      return SASS_MEMORY_NEW(Placeholder_Selector, pstate, lexed);
+      return SASS_MEMORY_NEW(PlaceholderSelector, pstate, lexed);
     }
     else {
       css_error("Invalid CSS", " after ", ": expected selector, was ");

@@ -462,10 +462,10 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     std::cerr << " <<" << selector->ns_name() << ">>";
     std::cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">";
     std::cerr << std::endl;
-  } else if (Cast<Placeholder_Selector>(node)) {
+  } else if (Cast<PlaceholderSelector>(node)) {
 
-    Placeholder_Selector* selector = Cast<Placeholder_Selector>(node);
-    std::cerr << ind << "Placeholder_Selector [" << selector->ns_name() << "] " << selector;
+    PlaceholderSelector* selector = Cast<PlaceholderSelector>(node);
+    std::cerr << ind << "PlaceholderSelector [" << selector->ns_name() << "] " << selector;
     std::cerr << " (" << pstate_source_position(selector) << ")"
       << " <" << selector->hash() << ">"
       << (selector->isInvisible() ? " [isInvisible]" : " -")

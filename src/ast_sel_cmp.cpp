@@ -329,9 +329,9 @@ namespace Sass {
     return sel ? *this == *sel : false;
   }
 
-  bool Placeholder_Selector::operator== (const SimpleSelector& rhs) const
+  bool PlaceholderSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Placeholder_Selector>(&rhs);
+    auto sel = Cast<PlaceholderSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
@@ -355,7 +355,7 @@ namespace Sass {
     return name() == rhs.name();
   }
 
-  bool Placeholder_Selector::operator== (const Placeholder_Selector& rhs) const
+  bool PlaceholderSelector::operator== (const PlaceholderSelector& rhs) const
   {
     // Placeholder has no namespacing
     return name() == rhs.name();

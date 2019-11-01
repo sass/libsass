@@ -174,17 +174,17 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Placeholder_Selector::Placeholder_Selector(ParserState pstate, sass::string n)
+  PlaceholderSelector::PlaceholderSelector(ParserState pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(PLACEHOLDER_SEL); }
-  Placeholder_Selector::Placeholder_Selector(const Placeholder_Selector* ptr)
+  PlaceholderSelector::PlaceholderSelector(const PlaceholderSelector* ptr)
   : SimpleSelector(ptr)
   { simple_type(PLACEHOLDER_SEL); }
-  unsigned long Placeholder_Selector::specificity() const
+  unsigned long PlaceholderSelector::specificity() const
   {
     return Constants::Specificity_Base;
   }
-  bool Placeholder_Selector::has_placeholder() {
+  bool PlaceholderSelector::has_placeholder() {
     return true;
   }
 
@@ -1019,7 +1019,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   IMPLEMENT_AST_OPERATORS(Selector_Schema);
-  IMPLEMENT_AST_OPERATORS(Placeholder_Selector);
+  IMPLEMENT_AST_OPERATORS(PlaceholderSelector);
   IMPLEMENT_AST_OPERATORS(AttributeSelector);
   IMPLEMENT_AST_OPERATORS(TypeSelector);
   IMPLEMENT_AST_OPERATORS(ClassSelector);

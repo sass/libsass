@@ -89,7 +89,7 @@ namespace Sass {
     ClassSelector* operator()(ClassSelector* s) { return s; };
     TypeSelector* operator()(TypeSelector* s) { return s; };
     AttributeSelector* operator()(AttributeSelector* s) { return s; };
-    Placeholder_Selector* operator()(Placeholder_Selector* s) { return s; };
+    PlaceholderSelector* operator()(PlaceholderSelector* s) { return s; };
 
     // actual evaluated selectors
     SelectorList* operator()(Selector_Schema*);

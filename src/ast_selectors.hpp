@@ -144,15 +144,15 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   // Placeholder selectors (e.g., "%foo") for use in extend-only selectors.
   /////////////////////////////////////////////////////////////////////////
-  class Placeholder_Selector final : public SimpleSelector {
+  class PlaceholderSelector final : public SimpleSelector {
   public:
-    Placeholder_Selector(ParserState pstate, sass::string n);
+    PlaceholderSelector(ParserState pstate, sass::string n);
     bool isInvisible() const override { return true; }
     virtual unsigned long specificity() const override;
     virtual bool has_placeholder() override;
     bool operator==(const SimpleSelector& rhs) const override;
-    ATTACH_CMP_OPERATIONS(Placeholder_Selector)
-    ATTACH_AST_OPERATIONS(Placeholder_Selector)
+    ATTACH_CMP_OPERATIONS(PlaceholderSelector)
+    ATTACH_AST_OPERATIONS(PlaceholderSelector)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 
