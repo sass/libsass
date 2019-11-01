@@ -40,8 +40,8 @@ namespace Sass {
     enum Scope { Root, Mixin, Function, Media, Control, Properties, Rules, AtRoot };
 
     Context& ctx;
-    std::vector<Block_Obj> block_stack;
-    std::vector<Scope> stack;
+    sass::vector<Block_Obj> block_stack;
+    sass::vector<Scope> stack;
     const char* source;
     const char* position;
     const char* end;
@@ -63,7 +63,7 @@ namespace Sass {
       stack.push_back(Scope::Root);
     }
 
-    // static Parser from_string(const std::string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
+    // static Parser from_string(const sass::string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
     static Parser from_c_str(const char* src, Context& ctx, Backtraces, ParserState pstate = ParserState("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
     static Parser from_c_str(const char* beg, const char* end, Context& ctx, Backtraces, ParserState pstate = ParserState("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
     static Parser from_token(Token t, Context& ctx, Backtraces, ParserState pstate = ParserState("[TOKEN]"), const char* source = nullptr);
@@ -240,13 +240,13 @@ namespace Sass {
 
 #endif
 
-    void error(std::string msg);
-    void error(std::string msg, Position pos);
+    void error(sass::string msg);
+    void error(sass::string msg, Position pos);
     // generate message with given and expected sample
     // text before and in the middle are configurable
-    void css_error(const std::string& msg,
-                   const std::string& prefix = " after ",
-                   const std::string& middle = ", was: ",
+    void css_error(const sass::string& msg,
+                   const sass::string& prefix = " after ",
+                   const sass::string& middle = ", was: ",
                    const bool trim = true);
     void read_bom();
 
@@ -305,8 +305,8 @@ namespace Sass {
     Each_Obj parse_each_directive();
     While_Obj parse_while_directive();
     MediaRule_Obj parseMediaRule();
-    std::vector<CssMediaQuery_Obj> parseCssMediaQueries();
-    std::string parseIdentifier();
+    sass::vector<CssMediaQuery_Obj> parseCssMediaQueries();
+    sass::string parseIdentifier();
     CssMediaQuery_Obj parseCssMediaQuery();
     Return_Obj parse_return_directive();
     Content_Obj parse_content_directive();
@@ -329,7 +329,7 @@ namespace Sass {
     Error_Obj parse_error();
     Debug_Obj parse_debug();
 
-    Value* color_or_string(const std::string& lexed) const;
+    Value* color_or_string(const sass::string& lexed) const;
 
     // be more like ruby sass
     Expression_Obj lex_almost_any_value_token();
@@ -348,11 +348,11 @@ namespace Sass {
     Lookahead lookahead_for_selector(const char* start = 0);
     Lookahead lookahead_for_include(const char* start = 0);
 
-    Expression_Obj fold_operands(Expression_Obj base, std::vector<Expression_Obj>& operands, Operand op);
-    Expression_Obj fold_operands(Expression_Obj base, std::vector<Expression_Obj>& operands, std::vector<Operand>& ops, size_t i = 0);
+    Expression_Obj fold_operands(Expression_Obj base, sass::vector<Expression_Obj>& operands, Operand op);
+    Expression_Obj fold_operands(Expression_Obj base, sass::vector<Expression_Obj>& operands, sass::vector<Operand>& ops, size_t i = 0);
 
-    void throw_syntax_error(std::string message, size_t ln = 0);
-    void throw_read_error(std::string message, size_t ln = 0);
+    void throw_syntax_error(sass::string message, size_t ln = 0);
+    void throw_read_error(sass::string message, size_t ln = 0);
 
 
     template <Prelexer::prelexer open, Prelexer::prelexer close>
@@ -360,13 +360,13 @@ namespace Sass {
     {
       if (lex < open >(false)) {
         String_Schema_Obj schema = SASS_MEMORY_NEW(String_Schema, pstate);
-        // std::cerr << "LEX [[" << std::string(lexed) << "]]\n";
+        // std::cerr << "LEX [[" << sass::string(lexed) << "]]\n";
         schema->append(SASS_MEMORY_NEW(String_Constant, pstate, lexed));
         if (position[0] == '#' && position[1] == '{') {
           Expression_Obj itpl = lex_interpolation();
           if (!itpl.isNull()) schema->append(itpl);
           while (lex < close >(false)) {
-            // std::cerr << "LEX [[" << std::string(lexed) << "]]\n";
+            // std::cerr << "LEX [[" << sass::string(lexed) << "]]\n";
             schema->append(SASS_MEMORY_NEW(String_Constant, pstate, lexed));
             if (position[0] == '#' && position[1] == '{') {
               Expression_Obj itpl = lex_interpolation();
@@ -383,15 +383,15 @@ namespace Sass {
     }
 
   public:
-    static Number* lexed_number(const ParserState& pstate, const std::string& parsed);
-    static Number* lexed_dimension(const ParserState& pstate, const std::string& parsed);
-    static Number* lexed_percentage(const ParserState& pstate, const std::string& parsed);
-    static Value* lexed_hex_color(const ParserState& pstate, const std::string& parsed);
+    static Number* lexed_number(const ParserState& pstate, const sass::string& parsed);
+    static Number* lexed_dimension(const ParserState& pstate, const sass::string& parsed);
+    static Number* lexed_percentage(const ParserState& pstate, const sass::string& parsed);
+    static Value* lexed_hex_color(const ParserState& pstate, const sass::string& parsed);
   private:
-    Number* lexed_number(const std::string& parsed) { return lexed_number(pstate, parsed); };
-    Number* lexed_dimension(const std::string& parsed) { return lexed_dimension(pstate, parsed); };
-    Number* lexed_percentage(const std::string& parsed) { return lexed_percentage(pstate, parsed); };
-    Value* lexed_hex_color(const std::string& parsed) { return lexed_hex_color(pstate, parsed); };
+    Number* lexed_number(const sass::string& parsed) { return lexed_number(pstate, parsed); };
+    Number* lexed_dimension(const sass::string& parsed) { return lexed_dimension(pstate, parsed); };
+    Number* lexed_percentage(const sass::string& parsed) { return lexed_percentage(pstate, parsed); };
+    Value* lexed_hex_color(const sass::string& parsed) { return lexed_hex_color(pstate, parsed); };
 
     static const char* re_attr_sensitive_close(const char* src);
     static const char* re_attr_insensitive_close(const char* src);

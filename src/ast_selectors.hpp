@@ -15,25 +15,25 @@ namespace Sass {
   bool compoundIsSuperselector(
     const CompoundSelectorObj& compound1,
     const CompoundSelectorObj& compound2,
-    const std::vector<SelectorComponentObj>& parents);
+    const sass::vector<SelectorComponentObj>& parents);
 
   bool complexIsParentSuperselector(
-    const std::vector<SelectorComponentObj>& complex1,
-    const std::vector<SelectorComponentObj>& complex2);
+    const sass::vector<SelectorComponentObj>& complex1,
+    const sass::vector<SelectorComponentObj>& complex2);
 
-    std::vector<std::vector<SelectorComponentObj>> weave(
-    const std::vector<std::vector<SelectorComponentObj>>& complexes);
+    sass::vector<sass::vector<SelectorComponentObj>> weave(
+    const sass::vector<sass::vector<SelectorComponentObj>>& complexes);
 
-  std::vector<std::vector<SelectorComponentObj>> weaveParents(
-    std::vector<SelectorComponentObj> parents1,
-    std::vector<SelectorComponentObj> parents2);
+  sass::vector<sass::vector<SelectorComponentObj>> weaveParents(
+    sass::vector<SelectorComponentObj> parents1,
+    sass::vector<SelectorComponentObj> parents2);
 
-  std::vector<SimpleSelectorObj> unifyCompound(
-    const std::vector<SimpleSelectorObj>& compound1,
-    const std::vector<SimpleSelectorObj>& compound2);
+  sass::vector<SimpleSelectorObj> unifyCompound(
+    const sass::vector<SimpleSelectorObj>& compound1,
+    const sass::vector<SimpleSelectorObj>& compound2);
 
-  std::vector<std::vector<SelectorComponentObj>> unifyComplex(
-    const std::vector<std::vector<SelectorComponentObj>>& complexes);
+  sass::vector<sass::vector<SelectorComponentObj>> unifyComplex(
+    const sass::vector<sass::vector<SelectorComponentObj>>& complexes);
 
   /////////////////////////////////////////
   // Abstract base class for CSS selectors.
@@ -93,13 +93,13 @@ namespace Sass {
       PLACEHOLDER_SEL,
     };
   public:
-    HASH_CONSTREF(std::string, ns)
-    HASH_CONSTREF(std::string, name)
+    HASH_CONSTREF(sass::string, ns)
+    HASH_CONSTREF(sass::string, name)
     ADD_PROPERTY(Simple_Type, simple_type)
     HASH_PROPERTY(bool, has_ns)
   public:
-    SimpleSelector(ParserState pstate, std::string n = "");
-    virtual std::string ns_name() const;
+    SimpleSelector(ParserState pstate, sass::string n = "");
+    virtual sass::string ns_name() const;
     size_t hash() const override;
     virtual bool empty() const;
     // namespace compare functions
@@ -146,7 +146,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   class Placeholder_Selector final : public SimpleSelector {
   public:
-    Placeholder_Selector(ParserState pstate, std::string n);
+    Placeholder_Selector(ParserState pstate, sass::string n);
     bool isInvisible() const override { return true; }
     virtual unsigned long specificity() const override;
     virtual bool has_placeholder() override;
@@ -161,7 +161,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////
   class Type_Selector final : public SimpleSelector {
   public:
-    Type_Selector(ParserState pstate, std::string n);
+    Type_Selector(ParserState pstate, sass::string n);
     virtual unsigned long specificity() const override;
     SimpleSelector* unifyWith(const SimpleSelector*);
     CompoundSelector* unifyWith(CompoundSelector*) override;
@@ -177,7 +177,7 @@ namespace Sass {
   ////////////////////////////////////////////////
   class Class_Selector final : public SimpleSelector {
   public:
-    Class_Selector(ParserState pstate, std::string n);
+    Class_Selector(ParserState pstate, sass::string n);
     virtual unsigned long specificity() const override;
     bool operator==(const SimpleSelector& rhs) const final override;
     ATTACH_CMP_OPERATIONS(Class_Selector)
@@ -190,7 +190,7 @@ namespace Sass {
   ////////////////////////////////////////////////
   class Id_Selector final : public SimpleSelector {
   public:
-    Id_Selector(ParserState pstate, std::string n);
+    Id_Selector(ParserState pstate, sass::string n);
     virtual unsigned long specificity() const override;
     CompoundSelector* unifyWith(CompoundSelector*) override;
     Id_Selector* getIdSelector() final override { return this; }
@@ -204,12 +204,12 @@ namespace Sass {
   // Attribute selectors -- e.g., [src*=".jpg"], etc.
   ///////////////////////////////////////////////////
   class Attribute_Selector final : public SimpleSelector {
-    ADD_CONSTREF(std::string, matcher)
+    ADD_CONSTREF(sass::string, matcher)
     // this cannot be changed to obj atm!!!!!!????!!!!!!!
     ADD_PROPERTY(String_Obj, value) // might be interpolated
     ADD_PROPERTY(char, modifier);
   public:
-    Attribute_Selector(ParserState pstate, std::string n, std::string m, String_Obj v, char o = 0);
+    Attribute_Selector(ParserState pstate, sass::string n, sass::string m, String_Obj v, char o = 0);
     size_t hash() const override;
     virtual unsigned long specificity() const override;
     bool operator==(const SimpleSelector& rhs) const final override;
@@ -223,13 +223,13 @@ namespace Sass {
   //////////////////////////////////////////////////////////////////
   // Pseudo Selector cannot have any namespace?
   class Pseudo_Selector final : public SimpleSelector {
-    ADD_PROPERTY(std::string, normalized)
+    ADD_PROPERTY(sass::string, normalized)
     ADD_PROPERTY(String_Obj, argument)
     ADD_PROPERTY(SelectorListObj, selector)
     ADD_PROPERTY(bool, isSyntacticClass)
     ADD_PROPERTY(bool, isClass)
   public:
-    Pseudo_Selector(ParserState pstate, std::string n, bool element = false);
+    Pseudo_Selector(ParserState pstate, sass::string n, bool element = false);
     virtual bool is_pseudo_element() const override;
     size_t hash() const override;
 
@@ -424,12 +424,12 @@ namespace Sass {
     CompoundSelector* getCompound() final override { return this; }
     const CompoundSelector* getCompound() const final override { return this; }
 
-    bool isSuperselectorOf(const CompoundSelector* sub, std::string wrapped = "") const;
+    bool isSuperselectorOf(const CompoundSelector* sub, sass::string wrapped = "") const;
 
     void cloneChildren() override;
     bool has_real_parent_ref() const override;
     bool has_placeholder() const override;
-    std::vector<ComplexSelectorObj> resolve_parent_refs(SelectorStack pstack, Backtraces& traces, bool implicit_parent = true);
+    sass::vector<ComplexSelectorObj> resolve_parent_refs(SelectorStack pstack, Backtraces& traces, bool implicit_parent = true);
 
     virtual bool isCompound() const override { return true; };
     virtual unsigned long specificity() const override;
@@ -460,7 +460,7 @@ namespace Sass {
     ADD_PROPERTY(bool, is_optional)
   public:
     SelectorList(ParserState pstate, size_t s = 0);
-    std::string type() const override { return "list"; }
+    sass::string type() const override { return "list"; }
     size_t hash() const override;
 
     SelectorList* unifyWith(SelectorList*);

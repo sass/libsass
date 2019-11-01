@@ -14,7 +14,7 @@ namespace Sass {
 
     Backtraces&                 traces;
     BlockStack      block_stack;
-    std::vector<Statement*>  p_stack;
+    sass::vector<Statement*>  p_stack;
 
   public:
     Cssize(Context&);
@@ -48,7 +48,7 @@ namespace Sass {
     Statement* operator()(Null*);
 
     Statement* parent();
-    std::vector<std::pair<bool, Block_Obj>> slice_by_bubble(Block*);
+    sass::vector<std::pair<bool, Block_Obj>> slice_by_bubble(Block*);
     Statement* bubble(Directive*);
     Statement* bubble(At_Root_Block*);
     Statement* bubble(CssMediaRule*);

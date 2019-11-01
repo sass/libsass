@@ -11,7 +11,7 @@
 
 namespace Sass {
   namespace UTF_8 {
-    using std::string;
+    using sass::string;
 
     // naming conventions:
     // offset: raw byte offset (0 based)

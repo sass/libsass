@@ -34,7 +34,7 @@ namespace Sass {
 
     Env* environment();
     EnvStack& env_stack();
-    const std::string cwd();
+    const sass::string cwd();
     CalleeStack& callee_stack();
     struct Sass_Inspect_Options& options();
     struct Sass_Compiler* compiler();
@@ -101,7 +101,7 @@ namespace Sass {
     { return Cast<Expression>(x); }
 
   private:
-    void interpolation(Context& ctx, std::string& res, Expression_Obj ex, bool into_quotes, bool was_itpl = false);
+    void interpolation(Context& ctx, sass::string& res, Expression_Obj ex, bool into_quotes, bool was_itpl = false);
 
   };
 

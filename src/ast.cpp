@@ -58,7 +58,7 @@ namespace Sass {
     pstate_.offset += pstate - pstate_ + pstate.offset;
   }
 
-  std::string AST_Node::to_string(Sass_Inspect_Options opt) const
+  sass::string AST_Node::to_string(Sass_Inspect_Options opt) const
   {
     Sass_Output_Options out(opt);
     Emitter emitter(out);
@@ -69,7 +69,7 @@ namespace Sass {
     return i.get_buffer();
   }
 
-  std::string AST_Node::to_css(Sass_Inspect_Options opt) const
+  sass::string AST_Node::to_css(Sass_Inspect_Options opt) const
   {
     opt.output_style = TO_CSS;
     Sass_Output_Options out(opt);
@@ -81,7 +81,7 @@ namespace Sass {
     return i.get_buffer();
   }
 
-  std::string AST_Node::to_string() const
+  sass::string AST_Node::to_string() const
   {
     return to_string({ NESTED, 5 });
   }
@@ -200,7 +200,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Trace::Trace(ParserState pstate, std::string n, Block_Obj b, char type)
+  Trace::Trace(ParserState pstate, sass::string n, Block_Obj b, char type)
   : Has_Block(pstate, b), type_(type), name_(n)
   { }
   Trace::Trace(const Trace* ptr)
@@ -212,7 +212,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Directive::Directive(ParserState pstate, std::string kwd, SelectorListObj sel, Block_Obj b, Expression_Obj val)
+  Directive::Directive(ParserState pstate, sass::string kwd, SelectorListObj sel, Block_Obj b, Expression_Obj val)
   : Has_Block(pstate, b), keyword_(kwd), selector_(sel), value_(val) // set value manually if needed
   { statement_type(DIRECTIVE); }
   Directive::Directive(const Directive* ptr)
@@ -271,7 +271,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Assignment::Assignment(ParserState pstate, std::string var, Expression_Obj val, bool is_default, bool is_global)
+  Assignment::Assignment(ParserState pstate, sass::string var, Expression_Obj val, bool is_default, bool is_global)
   : Statement(pstate), variable_(var), value_(val), is_default_(is_default), is_global_(is_global)
   { statement_type(ASSIGNMENT); }
   Assignment::Assignment(const Assignment* ptr)
@@ -287,8 +287,8 @@ namespace Sass {
 
   Import::Import(ParserState pstate)
   : Statement(pstate),
-    urls_(std::vector<Expression_Obj>()),
-    incs_(std::vector<Include>()),
+    urls_(sass::vector<Expression_Obj>()),
+    incs_(sass::vector<Include>()),
     import_queries_()
   { statement_type(IMPORT); }
   Import::Import(const Import* ptr)
@@ -298,8 +298,8 @@ namespace Sass {
     import_queries_(ptr->import_queries_)
   { statement_type(IMPORT); }
 
-  std::vector<Include>& Import::incs() { return incs_; }
-  std::vector<Expression_Obj>& Import::urls() { return urls_; }
+  sass::vector<Include>& Import::incs() { return incs_; }
+  sass::vector<Expression_Obj>& Import::urls() { return urls_; }
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
@@ -311,8 +311,8 @@ namespace Sass {
   : Statement(ptr), resource_(ptr->resource_)
   { statement_type(IMPORT_STUB); }
   Include Import_Stub::resource() { return resource_; };
-  std::string Import_Stub::imp_path() { return resource_.imp_path; };
-  std::string Import_Stub::abs_path() { return resource_.abs_path; };
+  sass::string Import_Stub::imp_path() { return resource_.imp_path; };
+  sass::string Import_Stub::abs_path() { return resource_.abs_path; };
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
@@ -382,7 +382,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   For::For(ParserState pstate,
-      std::string var, Expression_Obj lo, Expression_Obj hi, Block_Obj b, bool inc)
+      sass::string var, Expression_Obj lo, Expression_Obj hi, Block_Obj b, bool inc)
   : Has_Block(pstate, b),
     variable_(var), lower_bound_(lo), upper_bound_(hi), is_inclusive_(inc)
   { statement_type(FOR); }
@@ -397,7 +397,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Each::Each(ParserState pstate, std::vector<std::string> vars, Expression_Obj lst, Block_Obj b)
+  Each::Each(ParserState pstate, sass::vector<sass::string> vars, Expression_Obj lst, Block_Obj b)
   : Has_Block(pstate, b), variables_(vars), list_(lst)
   { statement_type(EACH); }
   Each::Each(const Each* ptr)
@@ -459,7 +459,7 @@ namespace Sass {
   { }
 
   Definition::Definition(ParserState pstate,
-              std::string n,
+              sass::string n,
               Parameters_Obj params,
               Block_Obj b,
               Type t)
@@ -477,7 +477,7 @@ namespace Sass {
 
   Definition::Definition(ParserState pstate,
               Signature sig,
-              std::string n,
+              sass::string n,
               Parameters_Obj params,
               Native_Function func_ptr,
               bool overload_stub)
@@ -495,7 +495,7 @@ namespace Sass {
 
   Definition::Definition(ParserState pstate,
               Signature sig,
-              std::string n,
+              sass::string n,
               Parameters_Obj params,
               Sass_Function_Entry c_func)
   : Has_Block(pstate, {}),
@@ -513,7 +513,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Mixin_Call::Mixin_Call(ParserState pstate, std::string n, Arguments_Obj args, Parameters_Obj b_params, Block_Obj b)
+  Mixin_Call::Mixin_Call(ParserState pstate, sass::string n, Arguments_Obj args, Parameters_Obj b_params, Block_Obj b)
   : Has_Block(pstate, b), name_(n), arguments_(args), block_parameters_(b_params)
   { }
   Mixin_Call::Mixin_Call(const Mixin_Call* ptr)
@@ -566,7 +566,7 @@ namespace Sass {
     operand_(ptr->operand_),
     hash_(ptr->hash_)
   { }
-  const std::string Unary_Expression::type_name() {
+  const sass::string Unary_Expression::type_name() {
     switch (optype_) {
       case PLUS: return "plus";
       case MINUS: return "minus";
@@ -602,7 +602,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Argument::Argument(ParserState pstate, Expression_Obj val, std::string n, bool rest, bool keyword)
+  Argument::Argument(ParserState pstate, Expression_Obj val, sass::string n, bool rest, bool keyword)
   : Expression(pstate), value_(val), name_(n), is_rest_argument_(rest), is_keyword_argument_(keyword), hash_(0)
   {
     if (!name_.empty() && is_rest_argument_) {
@@ -646,7 +646,7 @@ namespace Sass {
   size_t Argument::hash() const
   {
     if (hash_ == 0) {
-      hash_ = std::hash<std::string>()(name());
+      hash_ = std::hash<sass::string>()(name());
       hash_combine(hash_, value()->hash());
     }
     return hash_;
@@ -776,11 +776,11 @@ namespace Sass {
     value_(ptr->value_)
   { }
 
-  bool At_Root_Query::exclude(std::string str)
+  bool At_Root_Query::exclude(sass::string str)
   {
     bool with = feature() && unquote(feature()->to_string()).compare("with") == 0;
     List* l = static_cast<List*>(value().ptr());
-    std::string v;
+    sass::string v;
 
     if (with)
     {
@@ -828,7 +828,7 @@ namespace Sass {
     {
       if (Directive_Obj dir = Cast<Directive>(s))
       {
-        std::string keyword(dir->keyword());
+        sass::string keyword(dir->keyword());
         if (keyword.length() > 0) keyword.erase(0, 1);
         return expression()->exclude(keyword);
       }
@@ -855,7 +855,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Parameter::Parameter(ParserState pstate, std::string n, Expression_Obj def, bool rest)
+  Parameter::Parameter(ParserState pstate, sass::string n, Expression_Obj def, bool rest)
   : AST_Node(pstate), name_(n), default_value_(def), is_rest_parameter_(rest)
   { }
   Parameter::Parameter(const Parameter* ptr)

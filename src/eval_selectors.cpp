@@ -10,7 +10,7 @@ namespace Sass {
 
   SelectorList* Eval::operator()(SelectorList* s)
   {
-    std::vector<SelectorListObj> rv;
+    sass::vector<SelectorListObj> rv;
     SelectorListObj sl = SASS_MEMORY_NEW(SelectorList, s->pstate());
     for (size_t i = 0, iL = s->length(); i < iL; ++i) {
       rv.push_back(operator()(s->get(i)));
@@ -19,7 +19,7 @@ namespace Sass {
     // we should actually permutate parent first
     // but here we have permutated the selector first
     size_t round = 0;
-    while (round != std::string::npos) {
+    while (round != sass::string::npos) {
       bool abort = true;
       for (size_t i = 0, iL = rv.size(); i < iL; ++i) {
         if (rv[i]->length() > round) {
@@ -28,7 +28,7 @@ namespace Sass {
         }
       }
       if (abort) {
-        round = std::string::npos;
+        round = sass::string::npos;
       }
       else {
         ++round;

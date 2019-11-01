@@ -26,7 +26,7 @@ namespace Sass {
       }
     }
   }
-  std::vector<SharedObj*> SharedObj::all;
+  sass::vector<SharedObj*> SharedObj::all;
   #endif
 
   bool SharedObj::taint = false;

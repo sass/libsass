@@ -20,20 +20,20 @@ namespace Sass {
 
   namespace Exception {
 
-    const std::string def_msg = "Invalid sass detected";
-    const std::string def_op_msg = "Undefined operation";
-    const std::string def_op_null_msg = "Invalid null operation";
-    const std::string def_nesting_limit = "Code too deeply neested";
+    const sass::string def_msg = "Invalid sass detected";
+    const sass::string def_op_msg = "Undefined operation";
+    const sass::string def_op_null_msg = "Invalid null operation";
+    const sass::string def_nesting_limit = "Code too deeply neested";
 
     class Base : public std::runtime_error {
       protected:
-        std::string msg;
-        std::string prefix;
+        sass::string msg;
+        sass::string prefix;
       public:
         ParserState pstate;
         Backtraces traces;
       public:
-        Base(ParserState pstate, std::string msg, Backtraces traces);
+        Base(ParserState pstate, sass::string msg, Backtraces traces);
         virtual const char* errtype() const { return prefix.c_str(); }
         virtual const char* what() const throw() { return msg.c_str(); }
         virtual ~Base() throw() {};
@@ -52,7 +52,7 @@ namespace Sass {
           other.owned_src = nullptr;
         }
 
-        InvalidSass(ParserState pstate, Backtraces traces, std::string msg, char* owned_src = nullptr);
+        InvalidSass(ParserState pstate, Backtraces traces, sass::string msg, char* owned_src = nullptr);
         virtual ~InvalidSass() throw() { sass_free_memory(owned_src); };
         char *owned_src;
     };
@@ -68,43 +68,43 @@ namespace Sass {
 
     class MissingArgument : public Base {
       protected:
-        std::string fn;
-        std::string arg;
-        std::string fntype;
+        sass::string fn;
+        sass::string arg;
+        sass::string fntype;
       public:
-        MissingArgument(ParserState pstate, Backtraces traces, std::string fn, std::string arg, std::string fntype);
+        MissingArgument(ParserState pstate, Backtraces traces, sass::string fn, sass::string arg, sass::string fntype);
         virtual ~MissingArgument() throw() {};
     };
 
     class InvalidArgumentType : public Base {
       protected:
-        std::string fn;
-        std::string arg;
-        std::string type;
+        sass::string fn;
+        sass::string arg;
+        sass::string type;
         const Value* value;
       public:
-        InvalidArgumentType(ParserState pstate, Backtraces traces, std::string fn, std::string arg, std::string type, const Value* value = 0);
+        InvalidArgumentType(ParserState pstate, Backtraces traces, sass::string fn, sass::string arg, sass::string type, const Value* value = 0);
         virtual ~InvalidArgumentType() throw() {};
     };
 
     class InvalidVarKwdType : public Base {
       protected:
-        std::string name;
+        sass::string name;
         const Argument* arg;
       public:
-        InvalidVarKwdType(ParserState pstate, Backtraces traces, std::string name, const Argument* arg = 0);
+        InvalidVarKwdType(ParserState pstate, Backtraces traces, sass::string name, const Argument* arg = 0);
         virtual ~InvalidVarKwdType() throw() {};
     };
 
     class InvalidSyntax : public Base {
       public:
-        InvalidSyntax(ParserState pstate, Backtraces traces, std::string msg);
+        InvalidSyntax(ParserState pstate, Backtraces traces, sass::string msg);
         virtual ~InvalidSyntax() throw() {};
     };
 
     class NestingLimitError : public Base {
       public:
-        NestingLimitError(ParserState pstate, Backtraces traces, std::string msg = def_nesting_limit);
+        NestingLimitError(ParserState pstate, Backtraces traces, sass::string msg = def_nesting_limit);
         virtual ~NestingLimitError() throw() {};
     };
 
@@ -121,9 +121,9 @@ namespace Sass {
     class TypeMismatch : public Base {
       protected:
         const Expression& var;
-        const std::string type;
+        const sass::string type;
       public:
-        TypeMismatch(Backtraces traces, const Expression& var, const std::string type);
+        TypeMismatch(Backtraces traces, const Expression& var, const sass::string type);
         virtual const char* errtype() const { return "Error"; }
         virtual ~TypeMismatch() throw() {};
     };
@@ -149,9 +149,9 @@ namespace Sass {
     /* common virtual base class (has no pstate or trace) */
     class OperationError : public std::runtime_error {
       protected:
-        std::string msg;
+        sass::string msg;
       public:
-        OperationError(std::string msg = def_op_msg)
+        OperationError(sass::string msg = def_op_msg)
         : std::runtime_error(msg), msg(msg)
         {};
       public:
@@ -234,17 +234,17 @@ namespace Sass {
 
   }
 
-  void warn(std::string msg, ParserState pstate);
-  void warn(std::string msg, ParserState pstate, Backtrace* bt);
-  void warning(std::string msg, ParserState pstate);
+  void warn(sass::string msg, ParserState pstate);
+  void warn(sass::string msg, ParserState pstate, Backtrace* bt);
+  void warning(sass::string msg, ParserState pstate);
 
-  void deprecated_function(std::string msg, ParserState pstate);
-  void deprecated(std::string msg, std::string msg2, bool with_column, ParserState pstate);
-  void deprecated_bind(std::string msg, ParserState pstate);
-  // void deprecated(std::string msg, ParserState pstate, Backtrace* bt);
+  void deprecated_function(sass::string msg, ParserState pstate);
+  void deprecated(sass::string msg, sass::string msg2, bool with_column, ParserState pstate);
+  void deprecated_bind(sass::string msg, ParserState pstate);
+  // void deprecated(sass::string msg, ParserState pstate, Backtrace* bt);
 
-  void coreError(std::string msg, ParserState pstate);
-  void error(std::string msg, ParserState pstate, Backtraces& traces);
+  void coreError(sass::string msg, ParserState pstate);
+  void error(sass::string msg, ParserState pstate, Backtraces& traces);
 
 }
 

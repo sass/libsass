@@ -52,7 +52,7 @@ namespace Sass {
     return exp.environment();
   }
 
-  const std::string Eval::cwd()
+  const sass::string Eval::cwd()
   {
     return ctx.cwd();
   }
@@ -72,7 +72,7 @@ namespace Sass {
     return exp.env_stack;
   }
 
-  std::vector<Sass_Callee>& Eval::callee_stack()
+  sass::vector<Sass_Callee>& Eval::callee_stack()
   {
     return ctx.callee_stack;
   }
@@ -90,7 +90,7 @@ namespace Sass {
   Expression* Eval::operator()(Assignment* a)
   {
     Env* env = environment();
-    std::string var(a->variable());
+    sass::string var(a->variable());
     if (a->is_global()) {
       if (a->is_default()) {
         if (env->has_global(var)) {
@@ -169,7 +169,7 @@ namespace Sass {
   // But iteration vars are reset afterwards
   Expression* Eval::operator()(For* f)
   {
-    std::string variable(f->variable());
+    sass::string variable(f->variable());
     Expression_Obj low = f->lower_bound()->perform(this);
     if (low->concrete_type() != Expression::NUMBER) {
       traces.push_back(Backtrace(low->pstate()));
@@ -184,7 +184,7 @@ namespace Sass {
     Number_Obj sass_end = Cast<Number>(high);
     // check if units are valid for sequence
     if (sass_start->unit() != sass_end->unit()) {
-      std::stringstream msg; msg << "Incompatible units: '"
+      sass::sstream msg; msg << "Incompatible units: '"
         << sass_end->unit() << "' and '"
         << sass_start->unit() << "'.";
       error(msg.str(), low->pstate(), traces);
@@ -225,7 +225,7 @@ namespace Sass {
   // But iteration vars are reset afterwards
   Expression* Eval::operator()(Each* e)
   {
-    std::vector<std::string> variables(e->variables());
+    sass::vector<sass::string> variables(e->variables());
     Expression_Obj expr = e->list()->perform(this);
     Env env(environment(), true);
     env_stack().push_back(&env);
@@ -369,7 +369,7 @@ namespace Sass {
 
     }
 
-    std::string result(unquote(message->to_sass()));
+    sass::string result(unquote(message->to_sass()));
     std::cerr << "WARNING: " << result << std::endl;
     traces.push_back(Backtrace(w->pstate()));
     std::cerr << traces_to_string(traces, "         ");
@@ -417,7 +417,7 @@ namespace Sass {
 
     }
 
-    std::string result(unquote(message->to_sass()));
+    sass::string result(unquote(message->to_sass()));
     options().output_style = outstyle;
     error(result, e->pstate(), traces);
     return 0;
@@ -461,10 +461,10 @@ namespace Sass {
 
     }
 
-    std::string result(unquote(message->to_sass()));
-    std::string abs_path(Sass::File::rel2abs(d->pstate().path, cwd(), cwd()));
-    std::string rel_path(Sass::File::abs2rel(d->pstate().path, cwd(), cwd()));
-    std::string output_path(Sass::File::path_for_console(rel_path, abs_path, d->pstate().path));
+    sass::string result(unquote(message->to_sass()));
+    sass::string abs_path(Sass::File::rel2abs(d->pstate().path, cwd(), cwd()));
+    sass::string rel_path(Sass::File::abs2rel(d->pstate().path, cwd(), cwd()));
+    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, d->pstate().path));
     options().output_style = outstyle;
 
     std::cerr << output_path << ":" << d->pstate().line+1 << " DEBUG: " << result;
@@ -758,7 +758,7 @@ namespace Sass {
           op_type == Sass_OP::EQ) {
         // If possible upgrade LHS to a number (for number to string compare)
         if (String_Constant* str = Cast<String_Constant>(lhs)) {
-          std::string value(str->value());
+          sass::string value(str->value());
           const char* start = value.c_str();
           if (Prelexer::sequence < Prelexer::dimension, Prelexer::end_of_file >(start) != 0) {
             lhs = Parser::lexed_dimension(b->pstate(), str->value());
@@ -766,7 +766,7 @@ namespace Sass {
         }
         // If possible upgrade RHS to a number (for string to number compare)
         if (String_Constant* str = Cast<String_Constant>(rhs)) {
-          std::string value(str->value());
+          sass::string value(str->value());
           const char* start = value.c_str();
           if (Prelexer::sequence < Prelexer::dimension, Prelexer::number >(start) != 0) {
             rhs = Parser::lexed_dimension(b->pstate(), str->value());
@@ -779,7 +779,7 @@ namespace Sass {
       Value_Obj v_r = Cast<Value>(rhs->perform(&to_value));
 
       if (force_delay) {
-        std::string str("");
+        sass::string str("");
         str += v_l->to_string(options());
         if (b->op().ws_before) str += " ";
         str += b->separator();
@@ -909,7 +909,7 @@ namespace Sass {
         return cpy.detach(); // return the copy
       }
       else if (u->optype() == Unary_Expression::SLASH) {
-        std::string str = '/' + nr->to_string(options());
+        sass::string str = '/' + nr->to_string(options());
         return SASS_MEMORY_NEW(String_Constant, u->pstate(), str);
       }
       // nothing for positive
@@ -960,13 +960,13 @@ namespace Sass {
     if (Cast<String_Schema>(c->sname())) {
       Expression_Obj evaluated_name = c->sname()->perform(this);
       Expression_Obj evaluated_args = c->arguments()->perform(this);
-      std::string str(evaluated_name->to_string());
+      sass::string str(evaluated_name->to_string());
       str += evaluated_args->to_string();
       return SASS_MEMORY_NEW(String_Constant, c->pstate(), str);
     }
 
-    std::string name(Util::normalize_underscores(c->name()));
-    std::string full_name(name + "[f]");
+    sass::string name(Util::normalize_underscores(c->name()));
+    sass::string full_name(name + "[f]");
 
     // we make a clone here, need to implement that further
     Arguments_Obj args = c->arguments();
@@ -1010,7 +1010,7 @@ namespace Sass {
     if (c->func()) def = c->func()->definition();
 
     if (def->is_overload_stub()) {
-      std::stringstream ss;
+      sass::sstream ss;
       size_t L = args->length();
       // account for rest arguments
       if (args->has_rest_argument() && args->length() > 0) {
@@ -1021,8 +1021,8 @@ namespace Sass {
       }
       ss << full_name << L;
       full_name = ss.str();
-      std::string resolved_name(full_name);
-      if (!env->has(resolved_name)) error("overloaded function `" + std::string(c->name()) + "` given wrong number of arguments", c->pstate(), traces);
+      sass::string resolved_name(full_name);
+      if (!env->has(resolved_name)) error("overloaded function `" + sass::string(c->name()) + "` given wrong number of arguments", c->pstate(), traces);
       def = Cast<Definition>((*env)[resolved_name]);
     }
 
@@ -1038,8 +1038,8 @@ namespace Sass {
     env_stack().push_back(&fn_env);
 
     if (func || body) {
-      bind(std::string("Function"), c->name(), params, args, &fn_env, this, traces);
-      std::string msg(", in function `" + c->name() + "`");
+      bind(sass::string("Function"), c->name(), params, args, &fn_env, this, traces);
+      sass::string msg(", in function `" + c->name() + "`");
       traces.push_back(Backtrace(c->pstate(), msg));
       callee_stack().push_back({
         c->name().c_str(),
@@ -1058,7 +1058,7 @@ namespace Sass {
         result = func(fn_env, *env, ctx, def->signature(), c->pstate(), traces, exp.getSelectorStack(), exp.originalStack);
       }
       if (!result) {
-        error(std::string("Function ") + c->name() + " finished without @return", c->pstate(), traces);
+        error(sass::string("Function ") + c->name() + " finished without @return", c->pstate(), traces);
       }
       callee_stack().pop_back();
       traces.pop_back();
@@ -1077,9 +1077,9 @@ namespace Sass {
       }
 
       // populates env with default values for params
-      std::string ff(c->name());
-      bind(std::string("Function"), c->name(), params, args, &fn_env, this, traces);
-      std::string msg(", in function `" + c->name() + "`");
+      sass::string ff(c->name());
+      bind(sass::string("Function"), c->name(), params, args, &fn_env, this, traces);
+      sass::string msg(", in function `" + c->name() + "`");
       traces.push_back(Backtrace(c->pstate(), msg));
       callee_stack().push_back({
         c->name().c_str(),
@@ -1094,19 +1094,19 @@ namespace Sass {
       union Sass_Value* c_args = sass_make_list(params->length(), SASS_COMMA, false);
       for(size_t i = 0; i < params->length(); i++) {
         Parameter_Obj param = params->at(i);
-        std::string key = param->name();
+        sass::string key = param->name();
         AST_Node_Obj node = fn_env.get_local(key);
         Expression_Obj arg = Cast<Expression>(node);
         sass_list_set_value(c_args, i, arg->perform(&ast2c));
       }
       union Sass_Value* c_val = c_func(c_args, c_function, compiler());
       if (sass_value_get_tag(c_val) == SASS_ERROR) {
-        std::string message("error in C function " + c->name() + ": " + sass_error_get_message(c_val));
+        sass::string message("error in C function " + c->name() + ": " + sass_error_get_message(c_val));
         sass_delete_value(c_val);
         sass_delete_value(c_args);
         error(message, c->pstate(), traces);
       } else if (sass_value_get_tag(c_val) == SASS_WARNING) {
-        std::string message("warning in C function " + c->name() + ": " + sass_warning_get_message(c_val));
+        sass::string message("warning in C function " + c->name() + ": " + sass_warning_get_message(c_val));
         sass_delete_value(c_val);
         sass_delete_value(c_args);
         error(message, c->pstate(), traces);
@@ -1122,7 +1122,7 @@ namespace Sass {
 
     // link back to function definition
     // only do this for custom functions
-    if (result->pstate().file == std::string::npos)
+    if (result->pstate().file == sass::string::npos)
       result->pstate(c->pstate());
 
     result = result->perform(this);
@@ -1135,7 +1135,7 @@ namespace Sass {
   {
     Expression_Obj value;
     Env* env = environment();
-    const std::string& name(v->name());
+    const sass::string& name(v->name());
     EnvResult rv(env->find(name));
     if (rv.found) value = static_cast<Expression*>(rv.it->second.ptr());
     else error("Undefined variable: \"" + v->name() + "\".", v->pstate(), traces);
@@ -1169,7 +1169,7 @@ namespace Sass {
     return b;
   }
 
-  void Eval::interpolation(Context& ctx, std::string& res, Expression_Obj ex, bool into_quotes, bool was_itpl) {
+  void Eval::interpolation(Context& ctx, sass::string& res, Expression_Obj ex, bool into_quotes, bool was_itpl) {
 
     bool needs_closing_brace = false;
 
@@ -1216,7 +1216,7 @@ namespace Sass {
       // if (l->size() && Cast<Null>((*l)[0])) { res += ""; }
       for(Expression_Obj item : *l) {
         item->is_interpolant(l->is_interpolant());
-        std::string rl(""); interpolation(ctx, rl, item, into_quotes, l->is_interpolant());
+        sass::string rl(""); interpolation(ctx, rl, item, into_quotes, l->is_interpolant());
         bool is_null = Cast<Null>(item) != 0; // rl != ""
         if (!is_null) ll->append(SASS_MEMORY_NEW(String_Quoted, item->pstate(), rl));
       }
@@ -1224,7 +1224,7 @@ namespace Sass {
       // here. Normally single list items are already unwrapped.
       if (l->size() > 1) {
         // string_to_output would fail "#{'_\a' '_\a'}";
-        std::string str(ll->to_string(options()));
+        sass::string str(ll->to_string(options()));
         str = read_hex_escapes(str); // read escapes
         newline_to_space(str); // replace directly
         res += str; // append to result string
@@ -1245,7 +1245,7 @@ namespace Sass {
       if (into_quotes && ex->is_interpolant()) {
         res += evacuate_escapes(ex ? ex->to_string(options()) : "");
       } else {
-        std::string str(ex ? ex->to_string(options()) : "");
+        sass::string str(ex ? ex->to_string(options()) : "");
         if (into_quotes) str = read_hex_escapes(str);
         res += str; // append to result string
       }
@@ -1273,7 +1273,7 @@ namespace Sass {
     }
     bool was_quoted = false;
     bool was_interpolant = false;
-    std::string res("");
+    sass::string res("");
     for (size_t i = 0; i < L; ++i) {
       bool is_quoted = Cast<String_Quoted>((*s)[i]) != NULL;
       if (was_quoted && !(*s)[i]->is_interpolant() && !was_interpolant) { res += " "; }
@@ -1501,7 +1501,7 @@ namespace Sass {
     LOCAL_FLAG(is_in_selector_schema, true);
     // the parser will look for a brace to end the selector
     Expression_Obj sel = s->contents()->perform(this);
-    std::string result_str(sel->to_string(options()));
+    sass::string result_str(sel->to_string(options()));
     result_str = unquote(Util::rtrim(result_str));
     char* temp_cstr = sass_copy_c_string(result_str.c_str());
     ctx.strings.push_back(temp_cstr); // attach to context

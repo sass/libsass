@@ -30,7 +30,7 @@ namespace Sass {
       throw Exception::InvalidValue({}, *n);
     }
     // use values to_string facility
-    std::string res = n->to_string(opt);
+    sass::string res = n->to_string(opt);
     // output the final token
     append_token(res, n);
   }
@@ -77,7 +77,7 @@ namespace Sass {
       // declare the charset
       if (output_style() != COMPRESSED)
         charset = "@charset \"UTF-8\";"
-                + std::string(opt.linefeed);
+                + sass::string(opt.linefeed);
       else charset = "\xEF\xBB\xBF";
       // abort search
       break;
@@ -135,9 +135,9 @@ namespace Sass {
       indentation += r->tabs();
     }
     if (opt.source_comments) {
-      std::stringstream ss;
+      sass::sstream ss;
       append_indentation();
-      std::string path(File::abs2rel(r->pstate().path));
+      sass::string path(File::abs2rel(r->pstate().path));
       ss << "/* line " << r->pstate().line + 1 << ", " << path << " */";
       append_string(ss.str());
       append_optional_linefeed();
@@ -151,7 +151,7 @@ namespace Sass {
       // Check print conditions
       if (Declaration* dec = Cast<Declaration>(stm)) {
         if (const String_Constant* valConst = Cast<String_Constant>(dec->value())) {
-          const std::string& val = valConst->value();
+          const sass::string& val = valConst->value();
           if (const String_Quoted* qstr = Cast<const String_Quoted>(valConst)) {
             if (!qstr->quote_mark() && val.empty()) {
               bPrintExpression = false;
@@ -255,7 +255,7 @@ namespace Sass {
 
   void Output::operator()(Directive* a)
   {
-    std::string      kwd   = a->keyword();
+    sass::string      kwd   = a->keyword();
     Selector_Obj   s     = a->selector();
     Expression_Obj v     = a->value();
     Block_Obj      b     = a->block();
@@ -309,7 +309,7 @@ namespace Sass {
 
   void Output::operator()(String_Constant* s)
   {
-    std::string value(s->value());
+    sass::string value(s->value());
     if (!in_comment && !in_custom_property) {
       append_token(string_to_output(value), s);
     } else {

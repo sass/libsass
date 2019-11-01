@@ -238,11 +238,11 @@ namespace Sass {
     return ff.detach();
   }
 
-  std::vector<CssMediaQuery_Obj> Expand::mergeMediaQueries(
-    const std::vector<CssMediaQuery_Obj>& lhs,
-    const std::vector<CssMediaQuery_Obj>& rhs)
+  sass::vector<CssMediaQuery_Obj> Expand::mergeMediaQueries(
+    const sass::vector<CssMediaQuery_Obj>& lhs,
+    const sass::vector<CssMediaQuery_Obj>& rhs)
   {
-    std::vector<CssMediaQuery_Obj> queries;
+    sass::vector<CssMediaQuery_Obj> queries;
     for (CssMediaQuery_Obj query1 : lhs) {
       for (CssMediaQuery_Obj query2 : rhs) {
         CssMediaQuery_Obj result = query1->merge(query2);
@@ -257,13 +257,13 @@ namespace Sass {
   Statement* Expand::operator()(MediaRule* m)
   {
     Expression_Obj mq = eval(m->schema());
-    std::string str_mq(mq->to_css(ctx.c_options));
+    sass::string str_mq(mq->to_css(ctx.c_options));
     char* str = sass_copy_c_string(str_mq.c_str());
     ctx.strings.push_back(str);
     Parser parser(Parser::from_c_str(str, ctx, traces, mq->pstate()));
     // Create a new CSS only representation of the media rule
     CssMediaRuleObj css = SASS_MEMORY_NEW(CssMediaRule, m->pstate(), m->block());
-    std::vector<CssMediaQuery_Obj> parsed = parser.parseCssMediaQueries();
+    sass::vector<CssMediaQuery_Obj> parsed = parser.parseCssMediaQueries();
     if (mediaStack.size() && mediaStack.back()) {
       auto& parent = mediaStack.back()->elements();
       css->concat(mergeMediaQueries(parent, parsed));
@@ -327,7 +327,7 @@ namespace Sass {
     String_Obj new_p = Cast<String>(prop);
     // we might get a color back
     if (!new_p) {
-      std::string str(prop->to_string(ctx.c_options));
+      sass::string str(prop->to_string(ctx.c_options));
       new_p = SASS_MEMORY_NEW(String_Constant, old_p->pstate(), str);
     }
     Expression_Obj value = d->value();
@@ -356,7 +356,7 @@ namespace Sass {
   Statement* Expand::operator()(Assignment* a)
   {
     Env* env = environment();
-    const std::string& var(a->variable());
+    const sass::string& var(a->variable());
     if (a->is_global()) {
       if (a->is_default()) {
         if (env->has_global(var)) {
@@ -450,7 +450,7 @@ namespace Sass {
     block_stack.back()->append(trace);
     block_stack.push_back(trace_block);
 
-    const std::string& abs_path(i->resource().abs_path);
+    const sass::string& abs_path(i->resource().abs_path);
     append_block(ctx.sheets.at(abs_path).root);
     sass_delete_import(ctx.import_stack.back());
     ctx.import_stack.pop_back();
@@ -516,7 +516,7 @@ namespace Sass {
   // But iteration vars are reset afterwards
   Statement* Expand::operator()(For* f)
   {
-    std::string variable(f->variable());
+    sass::string variable(f->variable());
     Expression_Obj low = f->lower_bound()->perform(&eval);
     if (low->concrete_type() != Expression::NUMBER) {
       traces.push_back(Backtrace(low->pstate()));
@@ -531,7 +531,7 @@ namespace Sass {
     Number_Obj sass_end = Cast<Number>(high);
     // check if units are valid for sequence
     if (sass_start->unit() != sass_end->unit()) {
-      std::stringstream msg; msg << "Incompatible units: '"
+      sass::sstream msg; msg << "Incompatible units: '"
         << sass_start->unit() << "' and '"
         << sass_end->unit() << "'.";
       error(msg.str(), low->pstate(), traces);
@@ -571,7 +571,7 @@ namespace Sass {
   // But iteration vars are reset afterwards
   Statement* Expand::operator()(Each* e)
   {
-    std::vector<std::string> variables(e->variables());
+    sass::vector<sass::string> variables(e->variables());
     Expression_Obj expr = e->list()->perform(&eval);
     List_Obj list;
     Map_Obj map;
@@ -698,7 +698,7 @@ namespace Sass {
 
           if (compound->length() != 1) {
 
-            std::stringstream sels; bool addComma = false;
+            sass::sstream sels; bool addComma = false;
             sels << "Compound selectors may no longer be extended.\n";
             sels << "Consider `@extend ";
             for (auto sel : compound->elements()) {
@@ -769,7 +769,7 @@ namespace Sass {
     recursions ++;
 
     Env* env = environment();
-    std::string full_name(c->name() + "[m]");
+    sass::string full_name(c->name() + "[m]");
     if (!env->has(full_name)) {
       error("no mixin named " + c->name(), c->pstate(), traces);
     }
@@ -782,7 +782,7 @@ namespace Sass {
     }
     Expression_Obj rv = c->arguments()->perform(&eval);
     Arguments_Obj args = Cast<Arguments>(rv);
-    std::string msg(", in mixin `" + c->name() + "`");
+    sass::string msg(", in mixin `" + c->name() + "`");
     traces.push_back(Backtrace(c->pstate(), msg));
     ctx.callee_stack.push_back({
       c->name().c_str(),
@@ -809,7 +809,7 @@ namespace Sass {
       new_env.local_frame()["@content[m]"] = thunk;
     }
 
-    bind(std::string("Mixin"), c->name(), params, args, &new_env, &eval, traces);
+    bind(sass::string("Mixin"), c->name(), params, args, &new_env, &eval, traces);
 
     Block_Obj trace_block = SASS_MEMORY_NEW(Block, c->pstate());
     Trace_Obj trace = SASS_MEMORY_NEW(Trace, c->pstate(), c->name(), trace_block);

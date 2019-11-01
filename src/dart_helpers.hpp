@@ -12,7 +12,7 @@ namespace Sass {
   // Flatten `vector<vector<T>>` to `vector<T>`
   // ##########################################################################
   template <class T>
-  T flatten(const std::vector<T>& all)
+  T flatten(const sass::vector<T>& all)
   {
     T flattened;
     for (const auto& sub : all) {
@@ -42,7 +42,7 @@ namespace Sass {
   // ##########################################################################
   // ##########################################################################
   template <class T>
-  T flattenInner(const std::vector<T>& vec)
+  T flattenInner(const sass::vector<T>& vec)
   {
     T outer;
     for (const auto& sub : vec) {
@@ -102,8 +102,8 @@ namespace Sass {
   // Longest common subsequence with predicate
   // ##########################################################################
   template <class T>
-  std::vector<T> lcs(
-    const std::vector<T>& X, const std::vector<T>& Y,
+  sass::vector<T> lcs(
+    const sass::vector<T>& X, const sass::vector<T>& Y,
     bool(*select)(const T&, const T&, T&) = lcsIdentityCmp<T>)
   {
 
@@ -142,7 +142,7 @@ namespace Sass {
     }
 
     // Following code is used to print LCS
-    std::vector<T> lcs;
+    sass::vector<T> lcs;
     std::size_t index = LEN(m, n);
     lcs.reserve(index);
 

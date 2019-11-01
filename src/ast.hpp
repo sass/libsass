@@ -66,7 +66,7 @@ namespace Sass {
 
     // allow implicit conversion to string
     // needed for by SharedPtr implementation
-    operator std::string() {
+    operator sass::string() {
       return to_string();
     }
 
@@ -74,11 +74,11 @@ namespace Sass {
 
     virtual ~AST_Node() = 0;
     virtual size_t hash() const { return 0; }
-    virtual std::string inspect() const { return to_string({ INSPECT, 5 }); }
-    virtual std::string to_sass() const { return to_string({ TO_SASS, 5 }); }
-    virtual std::string to_string(Sass_Inspect_Options opt) const;
-    virtual std::string to_css(Sass_Inspect_Options opt) const;
-    virtual std::string to_string() const;
+    virtual sass::string inspect() const { return to_string({ INSPECT, 5 }); }
+    virtual sass::string to_sass() const { return to_string({ TO_SASS, 5 }); }
+    virtual sass::string to_string(Sass_Inspect_Options opt) const;
+    virtual sass::string to_css(Sass_Inspect_Options opt) const;
+    virtual sass::string to_string() const;
     virtual void cloneChildren() {};
     // generic find function (not fully implemented yet)
     // ToDo: add specific implementions to all children
@@ -158,8 +158,8 @@ namespace Sass {
     virtual ~Expression() { }
     virtual bool is_invisible() const { return false; }
 
-    virtual std::string type() const { return ""; }
-    static std::string type_name() { return ""; }
+    virtual sass::string type() const { return ""; }
+    static sass::string type_name() { return ""; }
 
     virtual bool is_false() { return false; }
     // virtual bool is_true() { return !is_false(); }
@@ -210,7 +210,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////////
   template <typename T>
   class Vectorized {
-    std::vector<T> elements_;
+    sass::vector<T> elements_;
   protected:
     mutable size_t hash_;
     void reset_hash() { hash_ = 0; }
@@ -218,7 +218,7 @@ namespace Sass {
   public:
     Vectorized(size_t s = 0) : hash_(0)
     { elements_.reserve(s); }
-    Vectorized(std::vector<T> vec) :
+    Vectorized(sass::vector<T> vec) :
       elements_(std::move(vec)),
       hash_(0)
     {}
@@ -248,23 +248,23 @@ namespace Sass {
     const T& get(size_t i) const { return elements_[i]; }
     const T& operator[](size_t i) const { return elements_[i]; }
 
-    // Implicitly get the std::vector from our object
-    // Makes the Vector directly assignable to std::vector
+    // Implicitly get the sass::vector from our object
+    // Makes the Vector directly assignable to sass::vector
     // You are responsible to make a copy if needed
     // Note: since this returns the real object, we can't
     // Note: guarantee that the hash will not get out of sync
-    operator std::vector<T>&() { return elements_; }
-    operator const std::vector<T>&() const { return elements_; }
+    operator sass::vector<T>&() { return elements_; }
+    operator const sass::vector<T>&() const { return elements_; }
 
-    // Explicitly request all elements as a real std::vector
+    // Explicitly request all elements as a real sass::vector
     // You are responsible to make a copy if needed
     // Note: since this returns the real object, we can't
     // Note: guarantee that the hash will not get out of sync
-    std::vector<T>& elements() { return elements_; }
-    const std::vector<T>& elements() const { return elements_; }
+    sass::vector<T>& elements() { return elements_; }
+    const sass::vector<T>& elements() const { return elements_; }
 
     // Insert all items from compatible vector
-    void concat(const std::vector<T>& v)
+    void concat(const sass::vector<T>& v)
     {
       if (!v.empty()) reset_hash();
       elements().insert(end(), v.begin(), v.end());
@@ -320,7 +320,7 @@ namespace Sass {
     }
 
     // This might be better implemented as `operator=`?
-    void elements(std::vector<T> e) {
+    void elements(sass::vector<T> e) {
       reset_hash();
       elements_ = std::move(e);
     }
@@ -336,17 +336,17 @@ namespace Sass {
     }
 
     template <typename P, typename V>
-    typename std::vector<T>::iterator insert(P position, const V& val) {
+    typename sass::vector<T>::iterator insert(P position, const V& val) {
       reset_hash();
       return elements_.insert(position, val);
     }
 
-    typename std::vector<T>::iterator end() { return elements_.end(); }
-    typename std::vector<T>::iterator begin() { return elements_.begin(); }
-    typename std::vector<T>::const_iterator end() const { return elements_.end(); }
-    typename std::vector<T>::const_iterator begin() const { return elements_.begin(); }
-    typename std::vector<T>::iterator erase(typename std::vector<T>::iterator el) { reset_hash(); return elements_.erase(el); }
-    typename std::vector<T>::const_iterator erase(typename std::vector<T>::const_iterator el) { reset_hash(); return elements_.erase(el); }
+    typename sass::vector<T>::iterator end() { return elements_.end(); }
+    typename sass::vector<T>::iterator begin() { return elements_.begin(); }
+    typename sass::vector<T>::const_iterator end() const { return elements_.end(); }
+    typename sass::vector<T>::const_iterator begin() const { return elements_.begin(); }
+    typename sass::vector<T>::iterator erase(typename sass::vector<T>::iterator el) { reset_hash(); return elements_.erase(el); }
+    typename sass::vector<T>::const_iterator erase(typename sass::vector<T>::const_iterator el) { reset_hash(); return elements_.erase(el); }
 
   };
   template <typename T>
@@ -354,7 +354,7 @@ namespace Sass {
 
   /////////////////////////////////////////////////////////////////////////////
   // Mixin class for AST nodes that should behave like a hash table. Uses an
-  // extra <std::vector> internally to maintain insertion order for interation.
+  // extra <sass::vector> internally to maintain insertion order for interation.
   /////////////////////////////////////////////////////////////////////////////
   template <typename K, typename T, typename U>
   class Hashed {
@@ -363,8 +363,8 @@ namespace Sass {
       K, T, ObjHash, ObjEquality
     > elements_;
 
-    std::vector<K> _keys;
-    std::vector<T> _values;
+    sass::vector<K> _keys;
+    sass::vector<T> _values;
   protected:
     mutable size_t hash_;
     K duplicate_key_;
@@ -437,8 +437,8 @@ namespace Sass {
       K, T, ObjHash, ObjEquality
     >& pairs() const { return elements_; }
 
-    const std::vector<K>& keys() const { return _keys; }
-    const std::vector<T>& values() const { return _values; }
+    const sass::vector<K>& keys() const { return _keys; }
+    const sass::vector<T>& values() const { return _values; }
 
 //    std::unordered_map<Expression_Obj, Expression_Obj>::iterator end() { return elements_.end(); }
 //    std::unordered_map<Expression_Obj, Expression_Obj>::iterator begin() { return elements_.begin(); }
@@ -558,9 +558,9 @@ namespace Sass {
   /////////////////
   class Trace final : public Has_Block {
     ADD_CONSTREF(char, type)
-    ADD_CONSTREF(std::string, name)
+    ADD_CONSTREF(sass::string, name)
   public:
-    Trace(ParserState pstate, std::string n, Block_Obj b = {}, char type = 'm');
+    Trace(ParserState pstate, sass::string n, Block_Obj b = {}, char type = 'm');
     ATTACH_AST_OPERATIONS(Trace)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -570,11 +570,11 @@ namespace Sass {
   // optional statement block.
   ///////////////////////////////////////////////////////////////////////
   class Directive final : public Has_Block {
-    ADD_CONSTREF(std::string, keyword)
+    ADD_CONSTREF(sass::string, keyword)
     ADD_PROPERTY(SelectorListObj, selector)
     ADD_PROPERTY(Expression_Obj, value)
   public:
-    Directive(ParserState pstate, std::string kwd, SelectorListObj sel = {}, Block_Obj b = {}, Expression_Obj val = {});
+    Directive(ParserState pstate, sass::string kwd, SelectorListObj sel = {}, Block_Obj b = {}, Expression_Obj val = {});
     bool bubbles() override;
     bool is_media();
     bool is_keyframes();
@@ -615,12 +615,12 @@ namespace Sass {
   // Assignments -- variable and value.
   /////////////////////////////////////
   class Assignment final : public Statement {
-    ADD_CONSTREF(std::string, variable)
+    ADD_CONSTREF(sass::string, variable)
     ADD_PROPERTY(Expression_Obj, value)
     ADD_PROPERTY(bool, is_default)
     ADD_PROPERTY(bool, is_global)
   public:
-    Assignment(ParserState pstate, std::string var, Expression_Obj val, bool is_default = false, bool is_global = false);
+    Assignment(ParserState pstate, sass::string var, Expression_Obj val, bool is_default = false, bool is_global = false);
     ATTACH_AST_OPERATIONS(Assignment)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -630,13 +630,13 @@ namespace Sass {
   // necessary to store a list of each in an Import node.
   ////////////////////////////////////////////////////////////////////////////
   class Import final : public Statement {
-    std::vector<Expression_Obj> urls_;
-    std::vector<Include>        incs_;
+    sass::vector<Expression_Obj> urls_;
+    sass::vector<Include>        incs_;
     ADD_PROPERTY(List_Obj,      import_queries);
   public:
     Import(ParserState pstate);
-    std::vector<Include>& incs();
-    std::vector<Expression_Obj>& urls();
+    sass::vector<Include>& incs();
+    sass::vector<Expression_Obj>& urls();
     ATTACH_AST_OPERATIONS(Import)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -648,8 +648,8 @@ namespace Sass {
   public:
     Import_Stub(ParserState pstate, Include res);
     Include resource();
-    std::string imp_path();
-    std::string abs_path();
+    sass::string imp_path();
+    sass::string abs_path();
     ATTACH_AST_OPERATIONS(Import_Stub)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -717,12 +717,12 @@ namespace Sass {
   // The Sass `@for` control directive.
   /////////////////////////////////////
   class For final : public Has_Block {
-    ADD_CONSTREF(std::string, variable)
+    ADD_CONSTREF(sass::string, variable)
     ADD_PROPERTY(Expression_Obj, lower_bound)
     ADD_PROPERTY(Expression_Obj, upper_bound)
     ADD_PROPERTY(bool, is_inclusive)
   public:
-    For(ParserState pstate, std::string var, Expression_Obj lo, Expression_Obj hi, Block_Obj b, bool inc);
+    For(ParserState pstate, sass::string var, Expression_Obj lo, Expression_Obj hi, Block_Obj b, bool inc);
     ATTACH_AST_OPERATIONS(For)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -731,10 +731,10 @@ namespace Sass {
   // The Sass `@each` control directive.
   //////////////////////////////////////
   class Each final : public Has_Block {
-    ADD_PROPERTY(std::vector<std::string>, variables)
+    ADD_PROPERTY(sass::vector<sass::string>, variables)
     ADD_PROPERTY(Expression_Obj, list)
   public:
-    Each(ParserState pstate, std::vector<std::string> vars, Expression_Obj lst, Block_Obj b);
+    Each(ParserState pstate, sass::vector<sass::string> vars, Expression_Obj lst, Block_Obj b);
     ATTACH_AST_OPERATIONS(Each)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -768,7 +768,7 @@ namespace Sass {
   class Definition final : public Has_Block {
   public:
     enum Type { MIXIN, FUNCTION };
-    ADD_CONSTREF(std::string, name)
+    ADD_CONSTREF(sass::string, name)
     ADD_PROPERTY(Parameters_Obj, parameters)
     ADD_PROPERTY(Env*, environment)
     ADD_PROPERTY(Type, type)
@@ -779,19 +779,19 @@ namespace Sass {
     ADD_PROPERTY(Signature, signature)
   public:
     Definition(ParserState pstate,
-               std::string n,
+               sass::string n,
                Parameters_Obj params,
                Block_Obj b,
                Type t);
     Definition(ParserState pstate,
                Signature sig,
-               std::string n,
+               sass::string n,
                Parameters_Obj params,
                Native_Function func_ptr,
                bool overload_stub = false);
     Definition(ParserState pstate,
                Signature sig,
-               std::string n,
+               sass::string n,
                Parameters_Obj params,
                Sass_Function_Entry c_func);
     ATTACH_AST_OPERATIONS(Definition)
@@ -802,11 +802,11 @@ namespace Sass {
   // Mixin calls (i.e., `@include ...`).
   //////////////////////////////////////
   class Mixin_Call final : public Has_Block {
-    ADD_CONSTREF(std::string, name)
+    ADD_CONSTREF(sass::string, name)
     ADD_PROPERTY(Arguments_Obj, arguments)
     ADD_PROPERTY(Parameters_Obj, block_parameters)
   public:
-    Mixin_Call(ParserState pstate, std::string n, Arguments_Obj args, Parameters_Obj b_params = {}, Block_Obj b = {});
+    Mixin_Call(ParserState pstate, sass::string n, Arguments_Obj args, Parameters_Obj b_params = {}, Block_Obj b = {});
     ATTACH_AST_OPERATIONS(Mixin_Call)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -834,7 +834,7 @@ namespace Sass {
     mutable size_t hash_;
   public:
     Unary_Expression(ParserState pstate, Type t, Expression_Obj o);
-    const std::string type_name();
+    const sass::string type_name();
     virtual bool operator==(const Expression& rhs) const override;
     size_t hash() const override;
     ATTACH_AST_OPERATIONS(Unary_Expression)
@@ -846,12 +846,12 @@ namespace Sass {
   ////////////////////////////////////////////////////////////
   class Argument final : public Expression {
     HASH_PROPERTY(Expression_Obj, value)
-    HASH_CONSTREF(std::string, name)
+    HASH_CONSTREF(sass::string, name)
     ADD_PROPERTY(bool, is_rest_argument)
     ADD_PROPERTY(bool, is_keyword_argument)
     mutable size_t hash_;
   public:
-    Argument(ParserState pstate, Expression_Obj val, std::string n = "", bool rest = false, bool keyword = false);
+    Argument(ParserState pstate, Expression_Obj val, sass::string n = "", bool rest = false, bool keyword = false);
     void set_delayed(bool delayed) override;
     bool operator==(const Expression& rhs) const override;
     size_t hash() const override;
@@ -925,14 +925,14 @@ namespace Sass {
 
     // The modifier, probably either "not" or "only".
     // This may be `null` if no modifier is in use.
-    ADD_PROPERTY(std::string, modifier);
+    ADD_PROPERTY(sass::string, modifier);
 
     // The media type, for example "screen" or "print".
     // This may be `null`. If so, [features] will not be empty.
-    ADD_PROPERTY(std::string, type);
+    ADD_PROPERTY(sass::string, type);
 
     // Feature queries, including parentheses.
-    ADD_PROPERTY(std::vector<std::string>, features);
+    ADD_PROPERTY(sass::vector<sass::string>, features);
 
   public:
     CssMediaQuery(ParserState pstate);
@@ -1003,7 +1003,7 @@ namespace Sass {
     ADD_PROPERTY(Expression_Obj, value)
   public:
     At_Root_Query(ParserState pstate, Expression_Obj f = {}, Expression_Obj v = {}, bool i = false);
-    bool exclude(std::string str);
+    bool exclude(sass::string str);
     ATTACH_AST_OPERATIONS(At_Root_Query)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -1025,11 +1025,11 @@ namespace Sass {
   // Individual parameter objects for mixins and functions.
   /////////////////////////////////////////////////////////
   class Parameter final : public AST_Node {
-    ADD_CONSTREF(std::string, name)
+    ADD_CONSTREF(sass::string, name)
     ADD_PROPERTY(Expression_Obj, default_value)
     ADD_PROPERTY(bool, is_rest_parameter)
   public:
-    Parameter(ParserState pstate, std::string n, Expression_Obj def = {}, bool rest = false);
+    Parameter(ParserState pstate, sass::string n, Expression_Obj def = {}, bool rest = false);
     ATTACH_AST_OPERATIONS(Parameter)
     ATTACH_CRTP_PERFORM_METHODS()
   };

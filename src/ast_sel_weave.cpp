@@ -38,11 +38,11 @@ namespace Sass {
   // selectors contain the same unique simple selector, such as an ID.
   // ##########################################################################
   bool mustUnify(
-    const std::vector<SelectorComponentObj>& complex1,
-    const std::vector<SelectorComponentObj>& complex2)
+    const sass::vector<SelectorComponentObj>& complex1,
+    const sass::vector<SelectorComponentObj>& complex2)
   {
 
-    std::vector<const SimpleSelector*> uniqueSelectors1;
+    sass::vector<const SimpleSelector*> uniqueSelectors1;
     for (const SelectorComponent* component : complex1) {
       if (const CompoundSelector * compound = component->getCompound()) {
         for (const SimpleSelector* sel : compound->elements()) {
@@ -76,9 +76,9 @@ namespace Sass {
   // Helper function used by `weaveParents`
   // ##########################################################################
   bool cmpGroups(
-    const std::vector<SelectorComponentObj>& group1,
-    const std::vector<SelectorComponentObj>& group2,
-    std::vector<SelectorComponentObj>& select)
+    const sass::vector<SelectorComponentObj>& group1,
+    const sass::vector<SelectorComponentObj>& group2,
+    sass::vector<SelectorComponentObj>& select)
   {
 
     if (group1.size() == group2.size() && std::equal(group1.begin(), group1.end(), group2.begin(), PtrObjEqualityFn<SelectorComponent>)) {
@@ -109,7 +109,7 @@ namespace Sass {
       return false;
     }
 
-    std::vector<std::vector<SelectorComponentObj>> unified
+    sass::vector<sass::vector<SelectorComponentObj>> unified
       = unifyComplex({ group1, group2 });
     if (unified.empty()) return false;
     if (unified.size() > 1) return false;
@@ -131,8 +131,8 @@ namespace Sass {
   // Helper function used by `weaveParents`
   // ##########################################################################
   bool cmpChunkForEmptySequence(
-    const std::vector<std::vector<SelectorComponentObj>>& seq,
-    const std::vector<SelectorComponentObj>& group)
+    const sass::vector<sass::vector<SelectorComponentObj>>& seq,
+    const sass::vector<SelectorComponentObj>& group)
   {
     return seq.empty();
   }
@@ -142,8 +142,8 @@ namespace Sass {
   // Helper function used by `weaveParents`
   // ##########################################################################
   bool cmpChunkForParentSuperselector(
-    const std::vector< std::vector<SelectorComponentObj>>& seq,
-    const std::vector<SelectorComponentObj>& group)
+    const sass::vector< sass::vector<SelectorComponentObj>>& seq,
+    const sass::vector<SelectorComponentObj>& group)
   {
     return seq.empty() || complexIsParentSuperselector(seq.front(), group);
   }
@@ -159,18 +159,18 @@ namespace Sass {
   // (1 2 A B C)]`. The queues would then contain `(D E)` and `(3 4 5)`.
   // ##########################################################################
   template <class T>
-  std::vector<std::vector<T>> getChunks(
-    std::vector<T>& queue1, std::vector<T>& queue2,
-    const T& group, bool(*done)(const std::vector<T>&, const T&)
+  sass::vector<sass::vector<T>> getChunks(
+    sass::vector<T>& queue1, sass::vector<T>& queue2,
+    const T& group, bool(*done)(const sass::vector<T>&, const T&)
   ) {
 
-    std::vector<T> chunk1;
+    sass::vector<T> chunk1;
     while (!done(queue1, group)) {
       chunk1.push_back(queue1.front());
       queue1.erase(queue1.begin());
     }
 
-    std::vector<T> chunk2;
+    sass::vector<T> chunk2;
     while (!done(queue2, group)) {
       chunk2.push_back(queue2.front());
       queue2.erase(queue2.begin());
@@ -180,7 +180,7 @@ namespace Sass {
     else if (chunk1.empty()) return { chunk2 };
     else if (chunk2.empty()) return { chunk1 };
 
-    std::vector<T> choice1(chunk1), choice2(chunk2);
+    sass::vector<T> choice1(chunk1), choice2(chunk2);
     std::move(std::begin(chunk2), std::end(chunk2),
       std::inserter(choice1, std::end(choice1)));
     std::move(std::begin(chunk1), std::end(chunk1),
@@ -193,7 +193,7 @@ namespace Sass {
   // If the first element of [queue] has a `::root` 
   // selector, removes and returns that element.
   // ##########################################################################
-  CompoundSelectorObj getFirstIfRoot(std::vector<SelectorComponentObj>& queue) {
+  CompoundSelectorObj getFirstIfRoot(sass::vector<SelectorComponentObj>& queue) {
     if (queue.empty()) return {};
     SelectorComponent* first = queue.front();
     if (CompoundSelector* sel = Cast<CompoundSelector>(first)) {
@@ -210,12 +210,12 @@ namespace Sass {
   // contains two adjacent [ComplexSelector]s. For example,
   // `(A B > C D + E ~ > G)` is grouped into `[(A) (B > C) (D + E ~ > G)]`.
   // ##########################################################################
-  std::vector<std::vector<SelectorComponentObj>> groupSelectors(
-    const std::vector<SelectorComponentObj>& components)
+  sass::vector<sass::vector<SelectorComponentObj>> groupSelectors(
+    const sass::vector<SelectorComponentObj>& components)
   {
     bool lastWasCompound = false;
-    std::vector<SelectorComponentObj> group;
-    std::vector<std::vector<SelectorComponentObj>> groups;
+    sass::vector<SelectorComponentObj> group;
+    sass::vector<sass::vector<SelectorComponentObj>> groups;
     for (size_t i = 0; i < components.size(); i += 1) {
       if (CompoundSelector* compound = components[i]->getCompound()) {
         if (lastWasCompound) {
@@ -244,19 +244,19 @@ namespace Sass {
   // If the combinators can't be merged, returns `null`.
   // ##########################################################################
   bool mergeInitialCombinators(
-    std::vector<SelectorComponentObj>& components1,
-    std::vector<SelectorComponentObj>& components2,
-    std::vector<SelectorComponentObj>& result)
+    sass::vector<SelectorComponentObj>& components1,
+    sass::vector<SelectorComponentObj>& components2,
+    sass::vector<SelectorComponentObj>& result)
   {
 
-    std::vector<SelectorComponentObj> combinators1;
+    sass::vector<SelectorComponentObj> combinators1;
     while (!components1.empty() && Cast<SelectorCombinator>(components1.front())) {
       SelectorCombinatorObj front = Cast<SelectorCombinator>(components1.front());
       components1.erase(components1.begin());
       combinators1.push_back(front);
     }
 
-    std::vector<SelectorComponentObj> combinators2;
+    sass::vector<SelectorComponentObj> combinators2;
     while (!components2.empty() && Cast<SelectorCombinator>(components2.front())) {
       SelectorCombinatorObj front = Cast<SelectorCombinator>(components2.front());
       components2.erase(components2.begin());
@@ -265,7 +265,7 @@ namespace Sass {
 
     // If neither sequence of combinators is a subsequence
     // of the other, they cannot be merged successfully.
-    std::vector<SelectorComponentObj> LCS = lcs<SelectorComponentObj>(combinators1, combinators2);
+    sass::vector<SelectorComponentObj> LCS = lcs<SelectorComponentObj>(combinators1, combinators2);
 
     if (ListEquality(LCS, combinators1, PtrObjEqualityFn<SelectorComponent>)) {
       result = combinators2;
@@ -288,9 +288,9 @@ namespace Sass {
   // empty list. If the sequences can't be merged, returns `null`.
   // ##########################################################################
   bool mergeFinalCombinators(
-    std::vector<SelectorComponentObj>& components1,
-    std::vector<SelectorComponentObj>& components2,
-    std::vector<std::vector<std::vector<SelectorComponentObj>>>& result)
+    sass::vector<SelectorComponentObj>& components1,
+    sass::vector<SelectorComponentObj>& components2,
+    sass::vector<sass::vector<sass::vector<SelectorComponentObj>>>& result)
   {
 
     if (components1.empty() || !Cast<SelectorCombinator>(components1.back())) {
@@ -299,14 +299,14 @@ namespace Sass {
       }
     }
     
-    std::vector<SelectorComponentObj> combinators1;
+    sass::vector<SelectorComponentObj> combinators1;
     while (!components1.empty() && Cast<SelectorCombinator>(components1.back())) {
       SelectorCombinatorObj back = Cast<SelectorCombinator>(components1.back());
       components1.erase(components1.end() - 1);
       combinators1.push_back(back);
     }
 
-    std::vector<SelectorComponentObj> combinators2;
+    sass::vector<SelectorComponentObj> combinators2;
     while (!components2.empty() && Cast<SelectorCombinator>(components2.back())) {
       SelectorCombinatorObj back = Cast<SelectorCombinator>(components2.back());
       components2.erase(components2.end() - 1);
@@ -356,7 +356,7 @@ namespace Sass {
           result.push_back({ { compound1, combinator1 } });
         }
         else {
-          std::vector<std::vector<SelectorComponentObj>> choices;
+          sass::vector<sass::vector<SelectorComponentObj>> choices;
           choices.push_back({ compound1, combinator1, compound2, combinator2 });
           choices.push_back({ compound2, combinator2, compound1, combinator1 });
           if (CompoundSelector* unified = compound1->unifyWith(compound2)) {
@@ -378,7 +378,7 @@ namespace Sass {
         }
         else {
           CompoundSelectorObj unified = compound1->unifyWith(compound2);
-          std::vector<std::vector<SelectorComponentObj>> items;
+          sass::vector<sass::vector<SelectorComponentObj>> items;
           
           if (!unified.isNull()) {
             items.push_back({
@@ -463,10 +463,10 @@ namespace Sass {
   // exponential output for very little gain. The selector `.D (.A .B)`
   // is represented as the list `[[.D], [.A, .B]]`.
   // ##########################################################################
-  std::vector<std::vector<SelectorComponentObj>> weave(
-    const std::vector<std::vector<SelectorComponentObj>>& complexes) {
+  sass::vector<sass::vector<SelectorComponentObj>> weave(
+    const sass::vector<sass::vector<SelectorComponentObj>>& complexes) {
 
-    std::vector<std::vector<SelectorComponentObj>> prefixes;
+    sass::vector<sass::vector<SelectorComponentObj>> prefixes;
 
     prefixes.push_back(complexes.at(0));
 
@@ -475,7 +475,7 @@ namespace Sass {
       if (complexes[i].empty()) {
         continue;
       }
-      const std::vector<SelectorComponentObj>& complex = complexes[i];
+      const sass::vector<SelectorComponentObj>& complex = complexes[i];
       SelectorComponent* target = complex.back();
       if (complex.size() == 1) {
         for (auto& prefix : prefixes) {
@@ -484,13 +484,13 @@ namespace Sass {
         continue;
       }
 
-      std::vector<SelectorComponentObj> parents(complex);
+      sass::vector<SelectorComponentObj> parents(complex);
 
       parents.pop_back();
 
-      std::vector<std::vector<SelectorComponentObj>> newPrefixes;
-      for (std::vector<SelectorComponentObj> prefix : prefixes) {
-        std::vector<std::vector<SelectorComponentObj>>
+      sass::vector<sass::vector<SelectorComponentObj>> newPrefixes;
+      for (sass::vector<SelectorComponentObj> prefix : prefixes) {
+        sass::vector<sass::vector<SelectorComponentObj>>
           parentPrefixes = weaveParents(prefix, parents);
         if (parentPrefixes.empty()) continue;
         for (auto& parentPrefix : parentPrefixes) {
@@ -519,13 +519,13 @@ namespace Sass {
   // elements matched by `A X` and all elements matched by `B X`. Some `AB_i`
   // are elided to reduce the size of the output.
   // ##########################################################################
-  std::vector<std::vector<SelectorComponentObj>> weaveParents(
-    std::vector<SelectorComponentObj> queue1,
-    std::vector<SelectorComponentObj> queue2)
+  sass::vector<sass::vector<SelectorComponentObj>> weaveParents(
+    sass::vector<SelectorComponentObj> queue1,
+    sass::vector<SelectorComponentObj> queue2)
   {
 
-    std::vector<SelectorComponentObj> leads;
-    std::vector<std::vector<std::vector<SelectorComponentObj>>> trails;
+    sass::vector<SelectorComponentObj> leads;
+    sass::vector<sass::vector<sass::vector<SelectorComponentObj>>> trails;
     if (!mergeInitialCombinators(queue1, queue2, leads)) return {};
     if (!mergeFinalCombinators(queue1, queue2, trails)) return {};
     // list comes out in reverse order for performance
@@ -550,27 +550,27 @@ namespace Sass {
     }
 
     // group into sub-lists so no sub-list contains two adjacent ComplexSelectors.
-    std::vector<std::vector<SelectorComponentObj>> groups1 = groupSelectors(queue1);
-    std::vector<std::vector<SelectorComponentObj>> groups2 = groupSelectors(queue2);
+    sass::vector<sass::vector<SelectorComponentObj>> groups1 = groupSelectors(queue1);
+    sass::vector<sass::vector<SelectorComponentObj>> groups2 = groupSelectors(queue2);
 
     // The main array to store our choices that will be permutated
-    std::vector<std::vector<std::vector<SelectorComponentObj>>> choices;
+    sass::vector<sass::vector<sass::vector<SelectorComponentObj>>> choices;
 
     // append initial combinators
     choices.push_back({ leads });
 
-    std::vector<std::vector<SelectorComponentObj>> LCS =
-      lcs<std::vector<SelectorComponentObj>>(groups1, groups2, cmpGroups);
+    sass::vector<sass::vector<SelectorComponentObj>> LCS =
+      lcs<sass::vector<SelectorComponentObj>>(groups1, groups2, cmpGroups);
 
     for (auto group : LCS) {
 
       // Create junks from groups1 and groups2
-      std::vector<std::vector<std::vector<SelectorComponentObj>>>
-        chunks = getChunks<std::vector<SelectorComponentObj>>(
+      sass::vector<sass::vector<sass::vector<SelectorComponentObj>>>
+        chunks = getChunks<sass::vector<SelectorComponentObj>>(
           groups1, groups2, group, cmpChunkForParentSuperselector);
 
       // Create expanded array by flattening chunks2 inner
-      std::vector<std::vector<SelectorComponentObj>>
+      sass::vector<sass::vector<SelectorComponentObj>>
         expanded = flattenInner(chunks);
 
       // Prepare data structures
@@ -586,8 +586,8 @@ namespace Sass {
     }
 
     // Create junks from groups1 and groups2
-    std::vector<std::vector<std::vector<SelectorComponentObj>>>
-      chunks = getChunks<std::vector<SelectorComponentObj>>(
+    sass::vector<sass::vector<sass::vector<SelectorComponentObj>>>
+      chunks = getChunks<sass::vector<SelectorComponentObj>>(
         groups1, groups2, {}, cmpChunkForEmptySequence);
 
     // Append chunks with inner arrays flattened
@@ -599,10 +599,10 @@ namespace Sass {
 
     // move all non empty items to the front, then erase the trailing ones
     choices.erase(std::remove_if(choices.begin(), choices.end(), checkForEmptyChild
-      <std::vector<std::vector<SelectorComponentObj>>>), choices.end());
+      <sass::vector<sass::vector<SelectorComponentObj>>>), choices.end());
 
     // permutate all possible paths through selectors
-    std::vector<std::vector<SelectorComponentObj>>
+    sass::vector<sass::vector<SelectorComponentObj>>
       results = flattenInner(permutate(choices));
 
     return results;

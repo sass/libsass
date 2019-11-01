@@ -35,7 +35,7 @@ namespace Sass {
         if (String_Constant_Obj str = Cast<String_Constant>(exp)) {
           str->quote_mark(0);
         }
-        std::string exp_src = exp->to_string(ctx.c_options);
+        sass::string exp_src = exp->to_string(ctx.c_options);
         SelectorListObj sel = Parser::parse_selector(exp_src.c_str(), ctx, traces);
         parsedSelectors.push_back(sel);
       }
@@ -89,7 +89,7 @@ namespace Sass {
         if (String_Constant* str = Cast<String_Constant>(exp)) {
           str->quote_mark(0);
         }
-        std::string exp_src = exp->to_string();
+        sass::string exp_src = exp->to_string();
         SelectorListObj sel = Parser::parse_selector(exp_src.c_str(), ctx, traces,
                                                      exp->pstate(), pstate.src,
                                                      /*allow_parent=*/true);
@@ -157,7 +157,7 @@ namespace Sass {
 
       for (size_t i = 0, L = sel->length(); i < L; ++i) {
         const SimpleSelectorObj& ss = sel->get(i);
-        std::string ss_string = ss->to_string() ;
+        sass::string ss_string = ss->to_string() ;
         l->append(SASS_MEMORY_NEW(String_Quoted, ss->pstate(), ss_string));
       }
 

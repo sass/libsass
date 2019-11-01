@@ -214,12 +214,12 @@ namespace Sass {
   // some often used typedefs
   // ###########################################################################
 
-  typedef std::vector<Block*> BlockStack;
-  typedef std::vector<Sass_Callee> CalleeStack;
-  typedef std::vector<AST_Node_Obj> CallStack;
-  typedef std::vector<CssMediaRuleObj> MediaStack;
-  typedef std::vector<SelectorListObj> SelectorStack;
-  typedef std::vector<Sass_Import_Entry> ImporterStack;
+  typedef sass::vector<Block*> BlockStack;
+  typedef sass::vector<Sass_Callee> CalleeStack;
+  typedef sass::vector<AST_Node_Obj> CallStack;
+  typedef sass::vector<CssMediaRuleObj> MediaStack;
+  typedef sass::vector<SelectorListObj> SelectorStack;
+  typedef sass::vector<Sass_Import_Entry> ImporterStack;
 
   // only to switch implementations for testing
   #define environment_map std::map

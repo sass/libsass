@@ -92,8 +92,8 @@ namespace Sass {
     virtual void operator()(CompoundSelector*);
     virtual void operator()(ComplexSelector*);
     virtual void operator()(SelectorList*);
-    virtual std::string lbracket(List*);
-    virtual std::string rbracket(List*);
+    virtual sass::string lbracket(List*);
+    virtual sass::string rbracket(List*);
 
   };
 

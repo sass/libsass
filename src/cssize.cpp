@@ -14,7 +14,7 @@ namespace Sass {
   Cssize::Cssize(Context& ctx)
   : traces(ctx.traces),
     block_stack(BlockStack()),
-    p_stack(std::vector<Statement*>())
+    p_stack(sass::vector<Statement*>())
   { }
 
   Statement* Cssize::parent()
@@ -401,9 +401,9 @@ namespace Sass {
     return result;
   }
 
-  std::vector<std::pair<bool, Block_Obj>> Cssize::slice_by_bubble(Block* b)
+  sass::vector<std::pair<bool, Block_Obj>> Cssize::slice_by_bubble(Block* b)
   {
-    std::vector<std::pair<bool, Block_Obj>> results;
+    sass::vector<std::pair<bool, Block_Obj>> results;
 
     for (size_t i = 0, L = b->length(); i < L; ++i) {
       Statement_Obj value = b->at(i);
@@ -427,7 +427,7 @@ namespace Sass {
   Block* Cssize::debubble(Block* children, Statement* parent)
   {
     Has_Block_Obj previous_parent;
-    std::vector<std::pair<bool, Block_Obj>> baz = slice_by_bubble(children);
+    sass::vector<std::pair<bool, Block_Obj>> baz = slice_by_bubble(children);
     Block_Obj result = SASS_MEMORY_NEW(Block, children->pstate());
 
     for (size_t i = 0, L = baz.size(); i < L; ++i) {

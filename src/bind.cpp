@@ -11,11 +11,11 @@
 
 namespace Sass {
 
-  void bind(std::string type, std::string name, Parameters_Obj ps, Arguments_Obj as, Env* env, Eval* eval, Backtraces& traces)
+  void bind(sass::string type, sass::string name, Parameters_Obj ps, Arguments_Obj as, Env* env, Eval* eval, Backtraces& traces)
   {
-    std::string callee(type + " " + name);
+    sass::string callee(type + " " + name);
 
-    std::map<std::string, Parameter_Obj> param_map;
+    std::map<sass::string, Parameter_Obj> param_map;
     List_Obj varargs = SASS_MEMORY_NEW(List, as->pstate());
     varargs->is_arglist(true); // enable keyword size handling
 
@@ -52,7 +52,7 @@ namespace Sass {
             }
           }
         }
-        std::stringstream msg;
+        sass::sstream msg;
         msg << "wrong number of arguments (" << LA << " for " << LP << ")";
         msg << " for `" << name << "'";
         return error(msg.str(), as->pstate(), traces);
@@ -100,7 +100,7 @@ namespace Sass {
           Map_Obj argmap = Cast<Map>(a->value());
           for (auto key : argmap->keys()) {
             if (String_Constant_Obj str = Cast<String_Constant>(key)) {
-              std::string param = unquote(str->value());
+              sass::string param = unquote(str->value());
               arglist->append(SASS_MEMORY_NEW(Argument,
                                               key->pstate(),
                                               argmap->at(key),
@@ -189,7 +189,7 @@ namespace Sass {
         } else {
           if (arglist->length() > LP - ip && !ps->has_rest_parameter()) {
             size_t arg_count = (arglist->length() + LA - 1);
-            std::stringstream msg;
+            sass::sstream msg;
             msg << callee << " takes " << LP;
             msg << (LP == 1 ? " argument" : " arguments");
             msg << " but " << arg_count;
@@ -226,10 +226,10 @@ namespace Sass {
             traces.push_back(Backtrace(key->pstate()));
             throw Exception::InvalidVarKwdType(key->pstate(), traces, key->inspect(), a);
           }
-          std::string param = "$" + unquote(val->value());
+          sass::string param = "$" + unquote(val->value());
 
           if (!param_map.count(param)) {
-            std::stringstream msg;
+            sass::sstream msg;
             msg << callee << " has no parameter named " << param;
             error(msg.str(), a->pstate(), traces);
           }
@@ -243,7 +243,7 @@ namespace Sass {
 
       if (a->name().empty()) {
         if (env->has_local(p->name())) {
-          std::stringstream msg;
+          sass::sstream msg;
           msg << "parameter " << p->name()
           << " provided more than once in call to " << callee;
           error(msg.str(), a->pstate(), traces);
@@ -258,21 +258,21 @@ namespace Sass {
           if (ps->has_rest_parameter()) {
             varargs->append(a);
           } else {
-            std::stringstream msg;
+            sass::sstream msg;
             msg << callee << " has no parameter named " << a->name();
             error(msg.str(), a->pstate(), traces);
           }
         }
         if (param_map[a->name()]) {
           if (param_map[a->name()]->is_rest_parameter()) {
-            std::stringstream msg;
+            sass::sstream msg;
             msg << "argument " << a->name() << " of " << callee
                 << "cannot be used as named argument";
             error(msg.str(), a->pstate(), traces);
           }
         }
         if (env->has_local(a->name())) {
-          std::stringstream msg;
+          sass::sstream msg;
           msg << "parameter " << p->name()
               << "provided more than once in call to " << callee;
           error(msg.str(), a->pstate(), traces);

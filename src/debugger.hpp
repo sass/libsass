@@ -17,15 +17,15 @@
 
 using namespace Sass;
 
-inline void debug_ast(AST_Node* node, std::string ind = "", Env* env = 0);
+inline void debug_ast(AST_Node* node, sass::string ind = "", Env* env = 0);
 
-inline std::string debug_vec(const AST_Node* node) {
+inline sass::string debug_vec(const AST_Node* node) {
   if (node == NULL) return "null";
   else return node->to_string();
 }
 
-inline std::string debug_dude(std::vector<std::vector<int>> vec) {
-  std::stringstream out;
+inline sass::string debug_dude(sass::vector<sass::vector<int>> vec) {
+  sass::sstream out;
   out << "{";
   bool joinOut = false;
   for (auto ct : vec) {
@@ -44,12 +44,12 @@ inline std::string debug_dude(std::vector<std::vector<int>> vec) {
   return out.str();
 }
 
-inline std::string debug_vec(std::string& str) {
+inline sass::string debug_vec(sass::string& str) {
   return str;
 }
 
-inline std::string debug_vec(Extension& ext) {
-  std::stringstream out;
+inline sass::string debug_vec(Extension& ext) {
+  sass::sstream out;
   out << debug_vec(ext.extender);
   out << " {@extend ";
   out << debug_vec(ext.target);
@@ -61,8 +61,8 @@ inline std::string debug_vec(Extension& ext) {
 }
 
 template <class T>
-inline std::string debug_vec(std::vector<T> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(sass::vector<T> vec) {
+  sass::sstream out;
   out << "[";
   for (size_t i = 0; i < vec.size(); i += 1) {
     if (i > 0) out << ", ";
@@ -73,8 +73,8 @@ inline std::string debug_vec(std::vector<T> vec) {
 }
 
 template <class T>
-inline std::string debug_vec(std::queue<T> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(std::queue<T> vec) {
+  sass::sstream out;
   out << "{";
   for (size_t i = 0; i < vec.size(); i += 1) {
     if (i > 0) out << ", ";
@@ -85,8 +85,8 @@ inline std::string debug_vec(std::queue<T> vec) {
 }
 
 template <class T, class U, class O>
-inline std::string debug_vec(std::map<T, U, O> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(std::map<T, U, O> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -102,8 +102,8 @@ inline std::string debug_vec(std::map<T, U, O> vec) {
 }
 
 template <class T, class U, class O, class V>
-inline std::string debug_vec(const ordered_map<T, U, O, V>& vec) {
-  std::stringstream out;
+inline sass::string debug_vec(const ordered_map<T, U, O, V>& vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -118,8 +118,8 @@ inline std::string debug_vec(const ordered_map<T, U, O, V>& vec) {
 }
 
 template <class T, class U, class O, class V>
-inline std::string debug_vec(std::unordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(std::unordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -135,8 +135,8 @@ inline std::string debug_vec(std::unordered_map<T, U, O, V> vec) {
 }
 
 template <class T, class U, class O, class V>
-inline std::string debug_keys(std::unordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_keys(std::unordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -149,8 +149,8 @@ inline std::string debug_keys(std::unordered_map<T, U, O, V> vec) {
   return out.str();
 }
 
-inline std::string debug_vec(ExtListSelSet& vec) {
-  std::stringstream out;
+inline sass::string debug_vec(ExtListSelSet& vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -165,8 +165,8 @@ inline std::string debug_vec(ExtListSelSet& vec) {
 
 /*
 template <class T, class U, class O, class V>
-inline std::string debug_values(tsl::ordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_values(tsl::ordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -180,8 +180,8 @@ inline std::string debug_values(tsl::ordered_map<T, U, O, V> vec) {
 }
  
 template <class T, class U, class O, class V>
-inline std::string debug_vec(tsl::ordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(tsl::ordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -197,8 +197,8 @@ inline std::string debug_vec(tsl::ordered_map<T, U, O, V> vec) {
 }
 
 template <class T, class U, class O, class V>
-inline std::string debug_vals(tsl::ordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_vals(tsl::ordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -212,8 +212,8 @@ inline std::string debug_vals(tsl::ordered_map<T, U, O, V> vec) {
 }
 
 template <class T, class U, class O, class V>
-inline std::string debug_keys(tsl::ordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_keys(tsl::ordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -228,8 +228,8 @@ inline std::string debug_keys(tsl::ordered_map<T, U, O, V> vec) {
 */
 
 template <class T, class U>
-inline std::string debug_vec(std::set<T, U> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(std::set<T, U> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto item : vec) {
@@ -243,8 +243,8 @@ inline std::string debug_vec(std::set<T, U> vec) {
 
 /*
 template <class T, class U, class O, class V>
-inline std::string debug_vec(tsl::ordered_set<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(tsl::ordered_set<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto item : vec) {
@@ -258,8 +258,8 @@ inline std::string debug_vec(tsl::ordered_set<T, U, O, V> vec) {
 */
 
 template <class T, class U, class O, class V>
-inline std::string debug_vec(std::unordered_set<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(std::unordered_set<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto item : vec) {
@@ -271,22 +271,22 @@ inline std::string debug_vec(std::unordered_set<T, U, O, V> vec) {
   return out.str();
 }
 
-inline std::string debug_bool(bool val) {
+inline sass::string debug_bool(bool val) {
   return val ? "true" : "false";
 }
-inline std::string debug_vec(ExtSmplSelSet* node) {
+inline sass::string debug_vec(ExtSmplSelSet* node) {
   if (node == NULL) return "null";
   else return debug_vec(*node);
 }
 
-inline void debug_ast(const AST_Node* node, std::string ind = "", Env* env = 0) {
+inline void debug_ast(const AST_Node* node, sass::string ind = "", Env* env = 0) {
   debug_ast(const_cast<AST_Node*>(node), ind, env);
 }
 
-inline std::string str_replace(std::string str, const std::string& oldStr, const std::string& newStr)
+inline sass::string str_replace(sass::string str, const sass::string& oldStr, const sass::string& newStr)
 {
   size_t pos = 0;
-  while((pos = str.find(oldStr, pos)) != std::string::npos)
+  while((pos = str.find(oldStr, pos)) != sass::string::npos)
   {
      str.replace(pos, oldStr.length(), newStr);
      pos += newStr.length();
@@ -294,25 +294,25 @@ inline std::string str_replace(std::string str, const std::string& oldStr, const
   return str;
 }
 
-inline std::string prettyprint(const std::string& str) {
-  std::string clean = str_replace(str, "\n", "\\n");
+inline sass::string prettyprint(const sass::string& str) {
+  sass::string clean = str_replace(str, "\n", "\\n");
   clean = str_replace(clean, "	", "\\t");
   clean = str_replace(clean, "\r", "\\r");
   return clean;
 }
 
-inline std::string longToHex(long long t) {
-  std::stringstream is;
+inline sass::string longToHex(long long t) {
+  sass::sstream is;
   is << std::hex << t;
   return is.str();
 }
 
-inline std::string pstate_source_position(AST_Node* node)
+inline sass::string pstate_source_position(AST_Node* node)
 {
-  std::stringstream str;
+  sass::sstream str;
   Position start(node->pstate());
   Position end(start + node->pstate().offset);
-  str << (start.file == std::string::npos ? 99999999 : start.file)
+  str << (start.file == sass::string::npos ? 99999999 : start.file)
     << "@[" << start.line << ":" << start.column << "]"
     << "-[" << end.line << ":" << end.column << "]";
 #ifdef DEBUG_SHARED_PTR
@@ -323,7 +323,7 @@ inline std::string pstate_source_position(AST_Node* node)
   return str.str();
 }
 
-inline void debug_ast(AST_Node* node, std::string ind, Env* env)
+inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
 {
   if (node == 0) return;
   if (ind == "") std::cerr << "####################################################################\n";
@@ -392,7 +392,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
       << (selector->has_real_parent_ref() ? " [real parent]": " -")
       << " -- ";
 
-      std::string del;
+      sass::string del;
       switch (selector->combinator()) {
         case SelectorCombinator::CHILD:    del = ">"; break;
         case SelectorCombinator::GENERAL:  del = "~"; break;
@@ -640,7 +640,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << ind << "Import " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
-    // std::vector<std::string>         files_;
+    // sass::vector<sass::string>         files_;
     for (auto imp : block->urls()) debug_ast(imp, ind + "@: ", env);
     debug_ast(block->import_queries(), ind + "@@ ");
   } else if (Cast<Assignment>(node)) {
@@ -734,7 +734,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " [interpolant: " << expression->is_interpolant() << "] ";
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [" << expression->name() << "]" << std::endl;
-    std::string name(expression->name());
+    sass::string name(expression->name());
     if (env && env->has(name)) debug_ast(Cast<Expression>((*env)[name]), ind + " -> ", env);
   } else if (Cast<Function_Call>(node)) {
     Function_Call* expression = Cast<Function_Call>(node);
@@ -955,7 +955,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
 
 
 /*
-inline void debug_ast(const AST_Node* node, std::string ind = "", Env* env = 0)
+inline void debug_ast(const AST_Node* node, sass::string ind = "", Env* env = 0)
 {
   debug_ast(const_cast<AST_Node*>(node), ind, env);
 }

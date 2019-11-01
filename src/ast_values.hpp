@@ -56,8 +56,8 @@ namespace Sass {
     ADD_PROPERTY(bool, from_selector)
   public:
     List(ParserState pstate, size_t size = 0, enum Sass_Separator sep = SASS_SPACE, bool argl = false, bool bracket = false);
-    std::string type() const override { return is_arglist_ ? "arglist" : "list"; }
-    static std::string type_name() { return "list"; }
+    sass::string type() const override { return is_arglist_ ? "arglist" : "list"; }
+    static sass::string type_name() { return "list"; }
     const char* sep_string(bool compressed = false) const {
       return separator() == SASS_SPACE ?
         " " : (compressed ? "," : ", ");
@@ -83,8 +83,8 @@ namespace Sass {
     void adjust_after_pushing(std::pair<Expression_Obj, Expression_Obj> p) override { is_expanded(false); }
   public:
     Map(ParserState pstate, size_t size = 0);
-    std::string type() const override { return "map"; }
-    static std::string type_name() { return "map"; }
+    sass::string type() const override { return "map"; }
+    static sass::string type_name() { return "map"; }
     bool is_invisible() const override { return empty(); }
     List_Obj to_list(ParserState& pstate);
 
@@ -113,8 +113,8 @@ namespace Sass {
     Binary_Expression(ParserState pstate,
                       Operand op, Expression_Obj lhs, Expression_Obj rhs);
 
-    const std::string type_name();
-    const std::string separator();
+    const sass::string type_name();
+    const sass::string separator();
     bool is_left_interpolant(void) const override;
     bool is_right_interpolant(void) const override;
     bool has_interpolant() const override;
@@ -140,11 +140,11 @@ namespace Sass {
   public:
     Function(ParserState pstate, Definition_Obj def, bool css);
 
-    std::string type() const override { return "function"; }
-    static std::string type_name() { return "function"; }
+    sass::string type() const override { return "function"; }
+    static sass::string type_name() { return "function"; }
     bool is_invisible() const override { return true; }
 
-    std::string name();
+    sass::string name();
 
     bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
@@ -164,15 +164,15 @@ namespace Sass {
     ADD_PROPERTY(void*, cookie)
     mutable size_t hash_;
   public:
-    Function_Call(ParserState pstate, std::string n, Arguments_Obj args, void* cookie);
-    Function_Call(ParserState pstate, std::string n, Arguments_Obj args, Function_Obj func);
-    Function_Call(ParserState pstate, std::string n, Arguments_Obj args);
+    Function_Call(ParserState pstate, sass::string n, Arguments_Obj args, void* cookie);
+    Function_Call(ParserState pstate, sass::string n, Arguments_Obj args, Function_Obj func);
+    Function_Call(ParserState pstate, sass::string n, Arguments_Obj args);
 
     Function_Call(ParserState pstate, String_Obj n, Arguments_Obj args, void* cookie);
     Function_Call(ParserState pstate, String_Obj n, Arguments_Obj args, Function_Obj func);
     Function_Call(ParserState pstate, String_Obj n, Arguments_Obj args);
 
-    std::string name() const;
+    sass::string name() const;
     bool is_css();
 
     bool operator==(const Expression& rhs) const override;
@@ -187,9 +187,9 @@ namespace Sass {
   // Variable references.
   ///////////////////////
   class Variable final : public PreValue {
-    ADD_CONSTREF(std::string, name)
+    ADD_CONSTREF(sass::string, name)
   public:
-    Variable(ParserState pstate, std::string n);
+    Variable(ParserState pstate, sass::string n);
     virtual bool operator==(const Expression& rhs) const override;
     virtual size_t hash() const override;
     ATTACH_AST_OPERATIONS(Variable)
@@ -204,12 +204,12 @@ namespace Sass {
     ADD_PROPERTY(bool, zero)
     mutable size_t hash_;
   public:
-    Number(ParserState pstate, double val, std::string u = "", bool zero = true);
+    Number(ParserState pstate, double val, sass::string u = "", bool zero = true);
 
     bool zero() { return zero_; }
 
-    std::string type() const override { return "number"; }
-    static std::string type_name() { return "number"; }
+    sass::string type() const override { return "number"; }
+    static sass::string type_name() { return "number"; }
 
     // cancel out unnecessary units
     // result will be in input units
@@ -233,15 +233,15 @@ namespace Sass {
   // Colors.
   //////////
   class Color : public Value {
-    ADD_CONSTREF(std::string, disp)
+    ADD_CONSTREF(sass::string, disp)
     HASH_PROPERTY(double, a)
   protected:
     mutable size_t hash_;
   public:
-    Color(ParserState pstate, double a = 1, const std::string disp = "");
+    Color(ParserState pstate, double a = 1, const sass::string disp = "");
 
-    std::string type() const override { return "color"; }
-    static std::string type_name() { return "color"; }
+    sass::string type() const override { return "color"; }
+    static sass::string type_name() { return "color"; }
 
     virtual size_t hash() const override = 0;
 
@@ -265,10 +265,10 @@ namespace Sass {
     HASH_PROPERTY(double, g)
     HASH_PROPERTY(double, b)
   public:
-    Color_RGBA(ParserState pstate, double r, double g, double b, double a = 1, const std::string disp = "");
+    Color_RGBA(ParserState pstate, double r, double g, double b, double a = 1, const sass::string disp = "");
 
-    std::string type() const override { return "color"; }
-    static std::string type_name() { return "color"; }
+    sass::string type() const override { return "color"; }
+    static sass::string type_name() { return "color"; }
 
     size_t hash() const override;
 
@@ -294,10 +294,10 @@ namespace Sass {
     HASH_PROPERTY(double, s)
     HASH_PROPERTY(double, l)
   public:
-    Color_HSLA(ParserState pstate, double h, double s, double l, double a = 1, const std::string disp = "");
+    Color_HSLA(ParserState pstate, double h, double s, double l, double a = 1, const sass::string disp = "");
 
-    std::string type() const override { return "color"; }
-    static std::string type_name() { return "color"; }
+    sass::string type() const override { return "color"; }
+    static sass::string type_name() { return "color"; }
 
     size_t hash() const override;
 
@@ -318,9 +318,9 @@ namespace Sass {
   // Errors from Sass_Values.
   //////////////////////////////
   class Custom_Error final : public Value {
-    ADD_CONSTREF(std::string, message)
+    ADD_CONSTREF(sass::string, message)
   public:
-    Custom_Error(ParserState pstate, std::string msg);
+    Custom_Error(ParserState pstate, sass::string msg);
     bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
     ATTACH_AST_OPERATIONS(Custom_Error)
@@ -331,9 +331,9 @@ namespace Sass {
   // Warnings from Sass_Values.
   //////////////////////////////
   class Custom_Warning final : public Value {
-    ADD_CONSTREF(std::string, message)
+    ADD_CONSTREF(sass::string, message)
   public:
-    Custom_Warning(ParserState pstate, std::string msg);
+    Custom_Warning(ParserState pstate, sass::string msg);
     bool operator< (const Expression& rhs) const override;
     bool operator== (const Expression& rhs) const override;
     ATTACH_AST_OPERATIONS(Custom_Warning)
@@ -350,8 +350,8 @@ namespace Sass {
     Boolean(ParserState pstate, bool val);
     operator bool() override { return value_; }
 
-    std::string type() const override { return "bool"; }
-    static std::string type_name() { return "bool"; }
+    sass::string type() const override { return "bool"; }
+    static sass::string type_name() { return "bool"; }
 
     size_t hash() const override;
 
@@ -371,7 +371,7 @@ namespace Sass {
   class String : public Value {
   public:
     String(ParserState pstate, bool delayed = false);
-    static std::string type_name() { return "string"; }
+    static sass::string type_name() { return "string"; }
     virtual ~String() = 0;
     virtual void rtrim() = 0;
     virtual bool operator<(const Expression& rhs) const override {
@@ -395,8 +395,8 @@ namespace Sass {
   public:
     String_Schema(ParserState pstate, size_t size = 0, bool css = true);
 
-    std::string type() const override { return "string"; }
-    static std::string type_name() { return "string"; }
+    sass::string type() const override { return "string"; }
+    static sass::string type_name() { return "string"; }
 
     bool is_left_interpolant(void) const override;
     bool is_right_interpolant(void) const override;
@@ -417,23 +417,23 @@ namespace Sass {
   ////////////////////////////////////////////////////////
   class String_Constant : public String {
     ADD_PROPERTY(char, quote_mark)
-    HASH_CONSTREF(std::string, value)
+    HASH_CONSTREF(sass::string, value)
   protected:
     mutable size_t hash_;
   public:
-    String_Constant(ParserState pstate, std::string val, bool css = true);
+    String_Constant(ParserState pstate, sass::string val, bool css = true);
     String_Constant(ParserState pstate, const char* beg, bool css = true);
     String_Constant(ParserState pstate, const char* beg, const char* end, bool css = true);
     String_Constant(ParserState pstate, const Token& tok, bool css = true);
-    std::string type() const override { return "string"; }
-    static std::string type_name() { return "string"; }
+    sass::string type() const override { return "string"; }
+    static sass::string type_name() { return "string"; }
     bool is_invisible() const override;
     virtual void rtrim() override;
     size_t hash() const override;
     bool operator< (const Expression& rhs) const override;
     bool operator==(const Expression& rhs) const override;
     // quotes are forced on inspection
-    virtual std::string inspect() const override;
+    virtual sass::string inspect() const override;
     ATTACH_AST_OPERATIONS(String_Constant)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -443,13 +443,13 @@ namespace Sass {
   ////////////////////////////////////////////////////////
   class String_Quoted final : public String_Constant {
   public:
-    String_Quoted(ParserState pstate, std::string val, char q = 0,
+    String_Quoted(ParserState pstate, sass::string val, char q = 0,
       bool keep_utf8_escapes = false, bool skip_unquoting = false,
       bool strict_unquoting = true, bool css = true);
     bool operator< (const Expression& rhs) const override;
     bool operator==(const Expression& rhs) const override;
     // quotes are forced on inspection
-    std::string inspect() const override;
+    sass::string inspect() const override;
     ATTACH_AST_OPERATIONS(String_Quoted)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -460,8 +460,8 @@ namespace Sass {
   class Null final : public Value {
   public:
     Null(ParserState pstate);
-    std::string type() const override { return "null"; }
-    static std::string type_name() { return "null"; }
+    sass::string type() const override { return "null"; }
+    static sass::string type_name() { return "null"; }
     bool is_invisible() const override { return true; }
     operator bool() override { return false; }
     bool is_false() override { return true; }
@@ -481,8 +481,8 @@ namespace Sass {
   class Parent_Reference final : public Value {
   public:
     Parent_Reference(ParserState pstate);
-    std::string type() const override { return "parent"; }
-    static std::string type_name() { return "parent"; }
+    sass::string type() const override { return "parent"; }
+    static sass::string type_name() { return "parent"; }
     bool operator< (const Expression& rhs) const override {
       return false; // they are always equal
     }

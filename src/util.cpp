@@ -76,7 +76,7 @@ namespace Sass {
     free(arr);
   }
 
-  char **copy_strings(const std::vector<std::string>& strings, char*** array, int skip) {
+  char **copy_strings(const sass::vector<sass::string>& strings, char*** array, int skip) {
     int num = static_cast<int>(strings.size()) - skip;
     char** arr = (char**) calloc(num + 1, sizeof(char*));
     if (arr == 0)
@@ -97,10 +97,10 @@ namespace Sass {
   }
 
   // read css string (handle multiline DELIM)
-  std::string read_css_string(const std::string& str, bool css)
+  sass::string read_css_string(const sass::string& str, bool css)
   {
     if (!css) return str;
-    std::string out("");
+    sass::string out("");
     bool esc = false;
     for (auto i : str) {
       if (i == '\\') {
@@ -125,9 +125,9 @@ namespace Sass {
 
   // double escape all escape sequences
   // keep unescaped quotes and backslashes
-  std::string evacuate_escapes(const std::string& str)
+  sass::string evacuate_escapes(const sass::string& str)
   {
-    std::string out("");
+    sass::string out("");
     bool esc = false;
     for (auto i : str) {
       if (i == '\\' && !esc) {
@@ -159,7 +159,7 @@ namespace Sass {
   }
 
   // bell characters are replaced with spaces
-  void newline_to_space(std::string& str)
+  void newline_to_space(sass::string& str)
   {
     std::replace(str.begin(), str.end(), '\n', ' ');
   }
@@ -168,14 +168,14 @@ namespace Sass {
   // 2. Replaces newlines with spaces.
   //
   // This method only considers LF and CRLF as newlines.
-  std::string string_to_output(const std::string& str)
+  sass::string string_to_output(const sass::string& str)
   {
-    std::string result;
+    sass::string result;
     result.reserve(str.size());
     std::size_t pos = 0;
     while (true) {
       const std::size_t newline = str.find_first_of("\n\r", pos);
-      if (newline == std::string::npos) break;
+      if (newline == sass::string::npos) break;
       result.append(str, pos, newline - pos);
       if (str[newline] == '\r') {
         if (str[newline + 1] == '\n') {
@@ -191,17 +191,17 @@ namespace Sass {
       }
       result += ' ';
       const std::size_t non_space = str.find_first_not_of(" \f\n\r\t\v", pos);
-      if (non_space != std::string::npos) {
+      if (non_space != sass::string::npos) {
         pos = non_space;
       }
     }
-    result.append(str, pos, std::string::npos);
+    result.append(str, pos, sass::string::npos);
     return result;
   }
 
-  std::string escape_string(const std::string& str)
+  sass::string escape_string(const sass::string& str)
   {
-    std::string out;
+    sass::string out;
     out.reserve(str.size());
     for (char c : str) {
       switch (c) {
@@ -221,9 +221,9 @@ namespace Sass {
     return out;
   }
 
-  std::string comment_to_compact_string(const std::string& text)
+  sass::string comment_to_compact_string(const sass::string& text)
   {
-    std::string str = "";
+    sass::string str = "";
     size_t has = 0;
     char prev = 0;
     bool clean = false;
@@ -270,10 +270,10 @@ namespace Sass {
     return quote_mark;
   }
 
-  std::string read_hex_escapes(const std::string& s)
+  sass::string read_hex_escapes(const sass::string& s)
   {
 
-    std::string result;
+    sass::string result;
     bool skipped = false;
 
     for (size_t i = 0, L = s.length(); i < L; ++i) {
@@ -339,7 +339,7 @@ namespace Sass {
 
   }
 
-  std::string unquote(const std::string& s, char* qd, bool keep_utf8_sequences, bool strict)
+  sass::string unquote(const sass::string& s, char* qd, bool keep_utf8_sequences, bool strict)
   {
 
     // not enough room for quotes
@@ -355,7 +355,7 @@ namespace Sass {
     else if (*s.begin() == '\'' && *s.rbegin() == '\'') q = '\'';
     else                                                return s;
 
-    std::string unq;
+    sass::string unq;
     unq.reserve(s.length()-2);
 
     for (size_t i = 1, L = s.length() - 1; i < L; ++i) {
@@ -431,16 +431,16 @@ namespace Sass {
 
   }
 
-  std::string quote(const std::string& s, char q)
+  sass::string quote(const sass::string& s, char q)
   {
 
     // autodetect with fallback to given quote
     q = detect_best_quotemark(s.c_str(), q);
 
     // return an empty quoted string
-    if (s.empty()) return std::string(2, q ? q : '"');
+    if (s.empty()) return sass::string(2, q ? q : '"');
 
-    std::string quoted;
+    sass::string quoted;
     quoted.reserve(s.length()+2);
     quoted.push_back(q);
 

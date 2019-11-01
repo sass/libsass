@@ -19,8 +19,8 @@ namespace Sass {
   // [list2] matches, as well as possibly additional elements.
   // ##########################################################################
   bool listIsSuperslector(
-    const std::vector<ComplexSelectorObj>& list1,
-    const std::vector<ComplexSelectorObj>& list2);
+    const sass::vector<ComplexSelectorObj>& list1,
+    const sass::vector<ComplexSelectorObj>& list2);
 
   // ##########################################################################
   // Returns whether [complex1] is a superselector of [complex2].
@@ -28,17 +28,17 @@ namespace Sass {
   // [complex2] matches, as well as possibly additional elements.
   // ##########################################################################
   bool complexIsSuperselector(
-    const std::vector<SelectorComponentObj>& complex1,
-    const std::vector<SelectorComponentObj>& complex2);
+    const sass::vector<SelectorComponentObj>& complex1,
+    const sass::vector<SelectorComponentObj>& complex2);
 
   // ##########################################################################
   // Returns all pseudo selectors in [compound] that have
   // a selector argument, and that have the given [name].
   // ##########################################################################
-  std::vector<Pseudo_Selector_Obj> selectorPseudoNamed(
-    CompoundSelectorObj compound, std::string name)
+  sass::vector<Pseudo_Selector_Obj> selectorPseudoNamed(
+    CompoundSelectorObj compound, sass::string name)
   {
-    std::vector<Pseudo_Selector_Obj> rv;
+    sass::vector<Pseudo_Selector_Obj> rv;
     for (SimpleSelectorObj sel : compound->elements()) {
       if (Pseudo_Selector_Obj pseudo = Cast<Pseudo_Selector>(sel)) {
         if (pseudo->isClass() && pseudo->selector()) {
@@ -192,15 +192,15 @@ namespace Sass {
     const Pseudo_Selector_Obj& pseudo1,
     const CompoundSelectorObj& compound2,
     // ToDo: is this really the most convenient way to do this?
-    std::vector<SelectorComponentObj>::const_iterator parents_from,
-    std::vector<SelectorComponentObj>::const_iterator parents_to)
+    sass::vector<SelectorComponentObj>::const_iterator parents_from,
+    sass::vector<SelectorComponentObj>::const_iterator parents_to)
   {
 
     // ToDo: move normalization function
-    std::string name(Util::unvendor(pseudo1->name()));
+    sass::string name(Util::unvendor(pseudo1->name()));
 
     if (name == "matches" || name == "any") {
-      std::vector<Pseudo_Selector_Obj> pseudos =
+      sass::vector<Pseudo_Selector_Obj> pseudos =
         selectorPseudoNamed(compound2, pseudo1->name());
       SelectorListObj selector1 = pseudo1->selector();
       for (Pseudo_Selector_Obj pseudo2 : pseudos) {
@@ -211,7 +211,7 @@ namespace Sass {
       }
 
       for (ComplexSelectorObj complex1 : selector1->elements()) {
-        std::vector<SelectorComponentObj> parents;
+        sass::vector<SelectorComponentObj> parents;
         for (auto cur = parents_from; cur != parents_to; cur++) {
           parents.push_back(*cur);
         }
@@ -223,7 +223,7 @@ namespace Sass {
 
     }
     else if (name == "has" || name == "host" || name == "host-context" || name == "slotted") {
-      std::vector<Pseudo_Selector_Obj> pseudos =
+      sass::vector<Pseudo_Selector_Obj> pseudos =
         selectorPseudoNamed(compound2, pseudo1->name());
       SelectorListObj selector1 = pseudo1->selector();
       for (Pseudo_Selector_Obj pseudo2 : pseudos) {
@@ -241,7 +241,7 @@ namespace Sass {
       return true;
     }
     else if (name == "current") {
-      std::vector<Pseudo_Selector_Obj> pseudos =
+      sass::vector<Pseudo_Selector_Obj> pseudos =
         selectorPseudoNamed(compound2, "current");
       for (Pseudo_Selector_Obj pseudo2 : pseudos) {
         if (ObjEqualityFn(pseudo1, pseudo2)) return true;
@@ -276,8 +276,8 @@ namespace Sass {
     const CompoundSelectorObj& compound1,
     const CompoundSelectorObj& compound2,
     // ToDo: is this really the most convenient way to do this?
-    const std::vector<SelectorComponentObj>::const_iterator parents_from,
-    const std::vector<SelectorComponentObj>::const_iterator parents_to)
+    const sass::vector<SelectorComponentObj>::const_iterator parents_from,
+    const sass::vector<SelectorComponentObj>::const_iterator parents_to)
   {
     // Every selector in [compound1.components] must have
     // a matching selector in [compound2.components].
@@ -317,7 +317,7 @@ namespace Sass {
   bool compoundIsSuperselector(
     const CompoundSelectorObj& compound1,
     const CompoundSelectorObj& compound2,
-    const std::vector<SelectorComponentObj>& parents)
+    const sass::vector<SelectorComponentObj>& parents)
   {
     return compoundIsSuperselector(
       compound1, compound2,
@@ -332,8 +332,8 @@ namespace Sass {
   // [complex2] matches, as well as possibly additional elements.
   // ##########################################################################
   bool complexIsSuperselector(
-    const std::vector<SelectorComponentObj>& complex1,
-    const std::vector<SelectorComponentObj>& complex2)
+    const sass::vector<SelectorComponentObj>& complex1,
+    const sass::vector<SelectorComponentObj>& complex2)
   {
 
     // Selectors with trailing operators are neither superselectors nor subselectors.
@@ -368,14 +368,14 @@ namespace Sass {
       CompoundSelectorObj compound2 = Cast<CompoundSelector>(complex2.back());
 
       if (remaining1 == 1) {
-        std::vector<SelectorComponentObj>::const_iterator parents_to = complex2.end();
-        std::vector<SelectorComponentObj>::const_iterator parents_from = complex2.begin();
+        sass::vector<SelectorComponentObj>::const_iterator parents_to = complex2.end();
+        sass::vector<SelectorComponentObj>::const_iterator parents_from = complex2.begin();
         std::advance(parents_from, i2 + 1); // equivalent to dart `.skip(i2 + 1)`
         bool rv = compoundIsSuperselector(compound1, compound2, parents_from, parents_to);
-        std::vector<SelectorComponentObj> pp;
+        sass::vector<SelectorComponentObj> pp;
 
-        std::vector<SelectorComponentObj>::const_iterator end = parents_to;
-        std::vector<SelectorComponentObj>::const_iterator beg = parents_from;
+        sass::vector<SelectorComponentObj>::const_iterator end = parents_to;
+        sass::vector<SelectorComponentObj>::const_iterator beg = parents_from;
         while (beg != end) {
           pp.push_back(*beg);
           beg++;
@@ -393,8 +393,8 @@ namespace Sass {
       for (; afterSuperselector < complex2.size(); afterSuperselector++) {
         SelectorComponentObj component2 = complex2[afterSuperselector - 1];
         if (CompoundSelectorObj compound2 = Cast<CompoundSelector>(component2)) {
-          std::vector<SelectorComponentObj>::const_iterator parents_to = complex2.begin();
-          std::vector<SelectorComponentObj>::const_iterator parents_from = complex2.begin();
+          sass::vector<SelectorComponentObj>::const_iterator parents_to = complex2.begin();
+          sass::vector<SelectorComponentObj>::const_iterator parents_from = complex2.begin();
           // complex2.take(afterSuperselector - 1).skip(i2 + 1)
           std::advance(parents_from, i2 + 1); // equivalent to dart `.skip`
           std::advance(parents_to, afterSuperselector); // equivalent to dart `.take`
@@ -464,8 +464,8 @@ namespace Sass {
   // since `B X` is a superselector of `B A X`.
   // ##########################################################################
   bool complexIsParentSuperselector(
-    const std::vector<SelectorComponentObj>& complex1,
-    const std::vector<SelectorComponentObj>& complex2)
+    const sass::vector<SelectorComponentObj>& complex1,
+    const sass::vector<SelectorComponentObj>& complex2)
   {
     // Try some simple heuristics to see if we can avoid allocations.
     if (complex1.empty() && complex2.empty()) return false;
@@ -473,8 +473,8 @@ namespace Sass {
     if (Cast<SelectorCombinator>(complex2.front())) return false;
     if (complex1.size() > complex2.size()) return false;
     // TODO(nweiz): There's got to be a way to do this without a bunch of extra allocations...
-    std::vector<SelectorComponentObj> cplx1(complex1);
-    std::vector<SelectorComponentObj> cplx2(complex2);
+    sass::vector<SelectorComponentObj> cplx1(complex1);
+    sass::vector<SelectorComponentObj> cplx2(complex2);
     CompoundSelectorObj base = SASS_MEMORY_NEW(CompoundSelector, "[tmp]");
     cplx1.push_back(base); cplx2.push_back(base);
     return complexIsSuperselector(cplx1, cplx2);
@@ -487,7 +487,7 @@ namespace Sass {
   // [complex] matches, as well as possibly additional elements.
   // ##########################################################################
   bool listHasSuperslectorForComplex(
-    std::vector<ComplexSelectorObj> list,
+    sass::vector<ComplexSelectorObj> list,
     ComplexSelectorObj complex)
   {
     // Return true if every [complex] selector on [list2]
@@ -507,8 +507,8 @@ namespace Sass {
   // [list2] matches, as well as possibly additional elements.
   // ##########################################################################
   bool listIsSuperslector(
-    const std::vector<ComplexSelectorObj>& list1,
-    const std::vector<ComplexSelectorObj>& list2)
+    const sass::vector<ComplexSelectorObj>& list1,
+    const sass::vector<ComplexSelectorObj>& list2)
   {
     // Return true if every [complex] selector on [list2]
     // is a super selector of the full selector [list1].

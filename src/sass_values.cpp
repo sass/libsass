@@ -285,7 +285,7 @@ extern "C" {
   {
     Value_Obj val = sass_value_to_ast_node(v);
     Sass_Inspect_Options options(compressed ? COMPRESSED : NESTED, precision);
-    std::string str(val->to_string(options));
+    sass::string str(val->to_string(options));
     return sass_make_qstring(str.c_str());
   }
 
@@ -356,7 +356,7 @@ extern "C" {
     catch (Exception::InvalidSass& e) { return sass_make_error(e.what()); }
     catch (std::bad_alloc&) { return sass_make_error("memory exhausted"); }
     catch (std::exception& e) { return sass_make_error(e.what()); }
-    catch (std::string& e) { return sass_make_error(e.c_str()); }
+    catch (sass::string& e) { return sass_make_error(e.c_str()); }
     catch (const char* e) { return sass_make_error(e); }
     catch (...) { return sass_make_error("unknown"); }
   }

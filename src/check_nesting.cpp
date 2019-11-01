@@ -7,12 +7,12 @@
 namespace Sass {
 
   CheckNesting::CheckNesting()
-  : parents(std::vector<Statement*>()),
-    traces(std::vector<Backtrace>()),
+  : parents(sass::vector<Statement*>()),
+    traces(sass::vector<Backtrace>()),
     parent(0), current_mixin_definition(0)
   { }
 
-  void error(AST_Node* node, Backtraces traces, std::string msg) {
+  void error(AST_Node* node, Backtraces traces, sass::string msg) {
     traces.push_back(Backtrace(node->pstate()));
     throw Exception::InvalidSass(node->pstate(), traces, msg);
   }
@@ -22,8 +22,8 @@ namespace Sass {
     Statement* old_parent = this->parent;
 
     if (At_Root_Block* root = Cast<At_Root_Block>(parent)) {
-      std::vector<Statement*> old_parents = this->parents;
-      std::vector<Statement*> new_parents;
+      sass::vector<Statement*> old_parents = this->parents;
+      sass::vector<Statement*> new_parents;
 
       for (size_t i = 0, L = this->parents.size(); i < L; i++) {
         Statement* p = this->parents.at(i);

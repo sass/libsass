@@ -5,7 +5,7 @@
 
 namespace Sass {
 
-  void str_rtrim(std::string& str, const std::string& delimiters = " \f\n\r\t\v")
+  void str_rtrim(sass::string& str, const sass::string& delimiters = " \f\n\r\t\v")
   {
     str.erase( str.find_last_not_of( delimiters ) + 1 );
   }
@@ -54,7 +54,7 @@ namespace Sass {
   size_t List::hash() const
   {
     if (hash_ == 0) {
-      hash_ = std::hash<std::string>()(sep_string());
+      hash_ = std::hash<sass::string>()(sep_string());
       hash_combine(hash_, std::hash<bool>()(is_bracketed()));
       for (size_t i = 0, L = length(); i < L; ++i)
         hash_combine(hash_, (elements()[i])->hash());
@@ -235,12 +235,12 @@ namespace Sass {
     return is_interpolant() || (right() && right()->is_right_interpolant());
   }
 
-  const std::string Binary_Expression::type_name()
+  const sass::string Binary_Expression::type_name()
   {
     return sass_op_to_name(optype());
   }
 
-  const std::string Binary_Expression::separator()
+  const sass::string Binary_Expression::separator()
   {
     return sass_op_separator(optype());
   }
@@ -326,7 +326,7 @@ namespace Sass {
     return false;
   }
 
-  std::string Function::name() {
+  sass::string Function::name() {
     if (definition_) {
       return definition_->name();
     }
@@ -346,13 +346,13 @@ namespace Sass {
   : PreValue(pstate), sname_(n), arguments_(args), via_call_(false), cookie_(0), hash_(0)
   { concrete_type(FUNCTION); }
 
-  Function_Call::Function_Call(ParserState pstate, std::string n, Arguments_Obj args, void* cookie)
+  Function_Call::Function_Call(ParserState pstate, sass::string n, Arguments_Obj args, void* cookie)
   : PreValue(pstate), sname_(SASS_MEMORY_NEW(String_Constant, pstate, n)), arguments_(args), func_(), via_call_(false), cookie_(cookie), hash_(0)
   { concrete_type(FUNCTION); }
-  Function_Call::Function_Call(ParserState pstate, std::string n, Arguments_Obj args, Function_Obj func)
+  Function_Call::Function_Call(ParserState pstate, sass::string n, Arguments_Obj args, Function_Obj func)
   : PreValue(pstate), sname_(SASS_MEMORY_NEW(String_Constant, pstate, n)), arguments_(args), func_(func), via_call_(false), cookie_(0), hash_(0)
   { concrete_type(FUNCTION); }
-  Function_Call::Function_Call(ParserState pstate, std::string n, Arguments_Obj args)
+  Function_Call::Function_Call(ParserState pstate, sass::string n, Arguments_Obj args)
   : PreValue(pstate), sname_(SASS_MEMORY_NEW(String_Constant, pstate, n)), arguments_(args), via_call_(false), cookie_(0), hash_(0)
   { concrete_type(FUNCTION); }
 
@@ -381,14 +381,14 @@ namespace Sass {
   size_t Function_Call::hash() const
   {
     if (hash_ == 0) {
-      hash_ = std::hash<std::string>()(name());
+      hash_ = std::hash<sass::string>()(name());
       for (auto argument : arguments()->elements())
         hash_combine(hash_, argument->hash());
     }
     return hash_;
   }
 
-  std::string Function_Call::name() const
+  sass::string Function_Call::name() const
   {
     return sname();
   }
@@ -401,7 +401,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Variable::Variable(ParserState pstate, std::string n)
+  Variable::Variable(ParserState pstate, sass::string n)
   : PreValue(pstate), name_(n)
   { concrete_type(VARIABLE); }
 
@@ -419,13 +419,13 @@ namespace Sass {
 
   size_t Variable::hash() const
   {
-    return std::hash<std::string>()(name());
+    return std::hash<sass::string>()(name());
   }
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Number::Number(ParserState pstate, double val, std::string u, bool zero)
+  Number::Number(ParserState pstate, double val, sass::string u, bool zero)
   : Value(pstate),
     Units(),
     value_(val),
@@ -438,12 +438,12 @@ namespace Sass {
       bool nominator = true;
       while (true) {
         r = u.find_first_of("*/", l);
-        std::string unit(u.substr(l, r == std::string::npos ? r : r - l));
+        sass::string unit(u.substr(l, r == sass::string::npos ? r : r - l));
         if (!unit.empty()) {
           if (nominator) numerators.push_back(unit);
           else denominators.push_back(unit);
         }
-        if (r == std::string::npos) break;
+        if (r == sass::string::npos) break;
         // ToDo: should error for multiple slashes
         // if (!nominator && u[r] == '/') error(...)
         if (u[r] == '/')
@@ -482,9 +482,9 @@ namespace Sass {
     if (hash_ == 0) {
       hash_ = std::hash<double>()(value_);
       for (const auto numerator : numerators)
-        hash_combine(hash_, std::hash<std::string>()(numerator));
+        hash_combine(hash_, std::hash<sass::string>()(numerator));
       for (const auto denominator : denominators)
-        hash_combine(hash_, std::hash<std::string>()(denominator));
+        hash_combine(hash_, std::hash<sass::string>()(denominator));
     }
     return hash_;
   }
@@ -549,7 +549,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Color::Color(ParserState pstate, double a, const std::string disp)
+  Color::Color(ParserState pstate, double a, const sass::string disp)
   : Value(pstate),
     disp_(disp), a_(a),
     hash_(0)
@@ -595,7 +595,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Color_RGBA::Color_RGBA(ParserState pstate, double r, double g, double b, double a, const std::string disp)
+  Color_RGBA::Color_RGBA(ParserState pstate, double r, double g, double b, double a, const sass::string disp)
   : Color(pstate, a, disp),
     r_(r), g_(g), b_(b)
   { concrete_type(COLOR); }
@@ -638,7 +638,7 @@ namespace Sass {
   size_t Color_RGBA::hash() const
   {
     if (hash_ == 0) {
-      hash_ = std::hash<std::string>()("RGBA");
+      hash_ = std::hash<sass::string>()("RGBA");
       hash_combine(hash_, std::hash<double>()(a_));
       hash_combine(hash_, std::hash<double>()(r_));
       hash_combine(hash_, std::hash<double>()(g_));
@@ -693,7 +693,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Color_HSLA::Color_HSLA(ParserState pstate, double h, double s, double l, double a, const std::string disp)
+  Color_HSLA::Color_HSLA(ParserState pstate, double h, double s, double l, double a, const sass::string disp)
   : Color(pstate, a, disp),
     h_(absmod(h, 360.0)),
     s_(clip(s, 0.0, 100.0)),
@@ -740,7 +740,7 @@ namespace Sass {
   size_t Color_HSLA::hash() const
   {
     if (hash_ == 0) {
-      hash_ = std::hash<std::string>()("HSLA");
+      hash_ = std::hash<sass::string>()("HSLA");
       hash_combine(hash_, std::hash<double>()(a_));
       hash_combine(hash_, std::hash<double>()(h_));
       hash_combine(hash_, std::hash<double>()(s_));
@@ -789,7 +789,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Custom_Error::Custom_Error(ParserState pstate, std::string msg)
+  Custom_Error::Custom_Error(ParserState pstate, sass::string msg)
   : Value(pstate), message_(msg)
   { concrete_type(C_ERROR); }
 
@@ -817,7 +817,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Custom_Warning::Custom_Warning(ParserState pstate, std::string msg)
+  Custom_Warning::Custom_Warning(ParserState pstate, sass::string msg)
   : Value(pstate), message_(msg)
   { concrete_type(C_WARNING); }
 
@@ -976,17 +976,17 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  String_Constant::String_Constant(ParserState pstate, std::string val, bool css)
+  String_Constant::String_Constant(ParserState pstate, sass::string val, bool css)
   : String(pstate), quote_mark_(0), value_(read_css_string(val, css)), hash_(0)
   { }
   String_Constant::String_Constant(ParserState pstate, const char* beg, bool css)
-  : String(pstate), quote_mark_(0), value_(read_css_string(std::string(beg), css)), hash_(0)
+  : String(pstate), quote_mark_(0), value_(read_css_string(sass::string(beg), css)), hash_(0)
   { }
   String_Constant::String_Constant(ParserState pstate, const char* beg, const char* end, bool css)
-  : String(pstate), quote_mark_(0), value_(read_css_string(std::string(beg, end-beg), css)), hash_(0)
+  : String(pstate), quote_mark_(0), value_(read_css_string(sass::string(beg, end-beg), css)), hash_(0)
   { }
   String_Constant::String_Constant(ParserState pstate, const Token& tok, bool css)
-  : String(pstate), quote_mark_(0), value_(read_css_string(std::string(tok.begin, tok.end), css)), hash_(0)
+  : String(pstate), quote_mark_(0), value_(read_css_string(sass::string(tok.begin, tok.end), css)), hash_(0)
   { }
 
   String_Constant::String_Constant(const String_Constant* ptr)
@@ -1023,7 +1023,7 @@ namespace Sass {
     return false;
   }
 
-  std::string String_Constant::inspect() const
+  sass::string String_Constant::inspect() const
   {
     return quote(value_, '*');
   }
@@ -1036,7 +1036,7 @@ namespace Sass {
   size_t String_Constant::hash() const
   {
     if (hash_ == 0) {
-      hash_ = std::hash<std::string>()(value_);
+      hash_ = std::hash<sass::string>()(value_);
     }
     return hash_;
   }
@@ -1044,7 +1044,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  String_Quoted::String_Quoted(ParserState pstate, std::string val, char q,
+  String_Quoted::String_Quoted(ParserState pstate, sass::string val, char q,
     bool keep_utf8_escapes, bool skip_unquoting,
     bool strict_unquoting, bool css)
   : String_Constant(pstate, val, css)
@@ -1082,7 +1082,7 @@ namespace Sass {
     return false;
   }
 
-  std::string String_Quoted::inspect() const
+  sass::string String_Quoted::inspect() const
   {
     return quote(value_, '*');
   }

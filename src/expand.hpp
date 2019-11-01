@@ -54,7 +54,7 @@ namespace Sass {
 
   private:
 
-    std::vector<CssMediaQuery_Obj> mergeMediaQueries(const std::vector<CssMediaQuery_Obj>& lhs, const std::vector<CssMediaQuery_Obj>& rhs);
+    sass::vector<CssMediaQuery_Obj> mergeMediaQueries(const sass::vector<CssMediaQuery_Obj>& lhs, const sass::vector<CssMediaQuery_Obj>& rhs);
 
   public:
     Expand(Context&, Env*, SelectorStack* stack = nullptr, SelectorStack* original = nullptr);

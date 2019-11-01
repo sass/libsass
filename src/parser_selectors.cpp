@@ -140,11 +140,11 @@ namespace Sass {
         // parent selector only allowed at start
         // upcoming Sass may allow also trailing
         ParserState state(pstate);
-        std::string found("&");
+        sass::string found("&");
         if (lex < identifier >()) {
-          found += std::string(lexed);
+          found += sass::string(lexed);
         }
-        std::string sel(seq->hasRealParent() ? "&" : "");
+        sass::string sel(seq->hasRealParent() ? "&" : "");
         if (!seq->empty()) { sel = seq->last()->to_string({ NESTED, 5 }); }
         // ToDo: parser should throw parser exceptions
         error("Invalid CSS after \"" + sel + "\": expected \"{\", was \"" + found + "\"\n\n"

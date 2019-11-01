@@ -22,7 +22,7 @@ namespace Sass {
     Signature variable_exists_sig = "variable-exists($name)";
     BUILT_IN(variable_exists)
     {
-      std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
+      sass::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
 
       if(d_env.has("$"+s)) {
         return SASS_MEMORY_NEW(Boolean, pstate, true);
@@ -35,7 +35,7 @@ namespace Sass {
     Signature global_variable_exists_sig = "global-variable-exists($name)";
     BUILT_IN(global_variable_exists)
     {
-      std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
+      sass::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
 
       if(d_env.has_global("$"+s)) {
         return SASS_MEMORY_NEW(Boolean, pstate, true);
@@ -53,7 +53,7 @@ namespace Sass {
         error("$name: " + (env["$name"]->to_string()) + " is not a string for `function-exists'", pstate, traces);
       }
 
-      std::string name = Util::normalize_underscores(unquote(ss->value()));
+      sass::string name = Util::normalize_underscores(unquote(ss->value()));
 
       if(d_env.has(name+"[f]")) {
         return SASS_MEMORY_NEW(Boolean, pstate, true);
@@ -66,7 +66,7 @@ namespace Sass {
     Signature mixin_exists_sig = "mixin-exists($name)";
     BUILT_IN(mixin_exists)
     {
-      std::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
+      sass::string s = Util::normalize_underscores(unquote(ARG("$name", String_Constant)->value()));
 
       if(d_env.has(s+"[m]")) {
         return SASS_MEMORY_NEW(Boolean, pstate, true);
@@ -79,9 +79,9 @@ namespace Sass {
     Signature feature_exists_sig = "feature-exists($feature)";
     BUILT_IN(feature_exists)
     {
-      std::string s = unquote(ARG("$feature", String_Constant)->value());
+      sass::string s = unquote(ARG("$feature", String_Constant)->value());
 
-      static const auto *const features = new std::unordered_set<std::string> {
+      static const auto *const features = new std::unordered_set<sass::string> {
         "global-variable-shadowing",
         "extend-selector-pseudoclass",
         "at-error",
@@ -94,7 +94,7 @@ namespace Sass {
     Signature call_sig = "call($function, $args...)";
     BUILT_IN(call)
     {
-      std::string function;
+      sass::string function;
       Function* ff = Cast<Function>(env["$function"]);
       String_Constant* ss = Cast<String_Constant>(env["$function"]);
 
@@ -111,7 +111,7 @@ namespace Sass {
       List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List));
 
       Arguments_Obj args = SASS_MEMORY_NEW(Arguments, pstate);
-      // std::string full_name(name + "[f]");
+      // sass::string full_name(name + "[f]");
       // Definition* def = d_env.has(full_name) ? Cast<Definition>((d_env)[full_name]) : 0;
       // Parameters* params = def ? def->parameters() : 0;
       // size_t param_size = params ? params->length() : 0;
@@ -216,8 +216,8 @@ namespace Sass {
         error("$name: " + (env["$name"]->to_string()) + " is not a string for `get-function'", pstate, traces);
       }
 
-      std::string name = Util::normalize_underscores(unquote(ss->value()));
-      std::string full_name = name + "[f]";
+      sass::string name = Util::normalize_underscores(unquote(ss->value()));
+      sass::string full_name = name + "[f]";
 
       Boolean_Obj css = ARG("$css", Boolean);
       if (!css->is_false()) {

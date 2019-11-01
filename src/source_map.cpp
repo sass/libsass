@@ -15,13 +15,13 @@
 
 namespace Sass {
   SourceMap::SourceMap() : current_position(0, 0, 0), file("stdin") { }
-  SourceMap::SourceMap(const std::string& file) : current_position(0, 0, 0), file(file) { }
+  SourceMap::SourceMap(const sass::string& file) : current_position(0, 0, 0), file(file) { }
 
-  std::string SourceMap::render_srcmap(Context &ctx) {
+  sass::string SourceMap::render_srcmap(Context &ctx) {
 
     const bool include_sources = ctx.c_options.source_map_contents;
-    const std::vector<std::string> links = ctx.srcmap_links;
-    const std::vector<Resource>& sources(ctx.resources);
+    const sass::vector<sass::string> links = ctx.srcmap_links;
+    const sass::vector<Resource>& sources(ctx.resources);
 
     JsonNode* json_srcmap = json_mkobject();
 
@@ -39,7 +39,7 @@ namespace Sass {
 
     JsonNode *json_sources = json_mkarray();
     for (size_t i = 0; i < source_index.size(); ++i) {
-      std::string source(links[source_index[i]]);
+      sass::string source(links[source_index[i]]);
       if (ctx.c_options.source_map_file_urls) {
         source = File::rel2abs(source);
         // check for windows abs path
@@ -72,19 +72,19 @@ namespace Sass {
     // no problem as we do not alter any identifiers
     json_append_member(json_srcmap, "names", json_names);
 
-    std::string mappings = serialize_mappings();
+    sass::string mappings = serialize_mappings();
     JsonNode *json_mappings = json_mkstring(mappings.c_str());
     json_append_member(json_srcmap, "mappings", json_mappings);
 
     char *str = json_stringify(json_srcmap, "\t");
-    std::string result = std::string(str);
+    sass::string result = sass::string(str);
     free(str);
     json_delete(json_srcmap);
     return result;
   }
 
-  std::string SourceMap::serialize_mappings() {
-    std::string result = "";
+  sass::string SourceMap::serialize_mappings() {
+    sass::string result = "";
 
     size_t previous_generated_line = 0;
     size_t previous_generated_column = 0;
@@ -101,7 +101,7 @@ namespace Sass {
       if (generated_line != previous_generated_line) {
         previous_generated_column = 0;
         if (generated_line > previous_generated_line) {
-          result += std::string(generated_line - previous_generated_line, ';');
+          result += sass::string(generated_line - previous_generated_line, ';');
           previous_generated_line = generated_line;
         }
       }

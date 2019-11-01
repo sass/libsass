@@ -1,6 +1,7 @@
 #ifndef SASS_UTIL_STRING_H
 #define SASS_UTIL_STRING_H
 
+#include "sass.hpp"
 #include <string>
 
 namespace Sass {
@@ -14,18 +15,18 @@ namespace Sass {
     // there is one edge case where this could give false positives
     // test could contain a (non-ascii) char exactly 32 below literal
     // ##########################################################################
-    bool equalsLiteral(const char* lit, const std::string& test);
+    bool equalsLiteral(const char* lit, const sass::string& test);
 
     // ###########################################################################
     // Returns [name] without a vendor prefix.
     // If [name] has no vendor prefix, it's returned as-is.
     // ###########################################################################
-    std::string unvendor(const std::string& name);
+    sass::string unvendor(const sass::string& name);
 
-    std::string rtrim(std::string str);
-    std::string normalize_newlines(const std::string& str);
-    std::string normalize_underscores(const std::string& str);
-    std::string normalize_decimals(const std::string& str);
+    sass::string rtrim(sass::string str);
+    sass::string normalize_newlines(const sass::string& str);
+    sass::string normalize_underscores(const sass::string& str);
+    sass::string normalize_decimals(const sass::string& str);
     char opening_bracket_for(char closing_bracket);
     char closing_bracket_for(char opening_bracket);
 
@@ -58,14 +59,14 @@ namespace Sass {
       return c;
     }
 
-    void ascii_str_tolower(std::string* s);
+    void ascii_str_tolower(sass::string* s);
 
     inline char ascii_toupper(unsigned char c) {
       if (c >= 'a' && c <= 'z') return c - 32;
       return c;
     }
 
-    void ascii_str_toupper(std::string* s);
+    void ascii_str_toupper(sass::string* s);
 
   }  // namespace Sass
 }  // namespace Util

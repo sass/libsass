@@ -12,7 +12,7 @@ namespace Sass {
 
   class CheckNesting : public Operation_CRTP<Statement*, CheckNesting> {
 
-    std::vector<Statement*>  parents;
+    sass::vector<Statement*>  parents;
     Backtraces                  traces;
     Statement*               parent;
     Definition*              current_mixin_definition;

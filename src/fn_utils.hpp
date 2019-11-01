@@ -37,7 +37,7 @@ namespace Sass {
   namespace Functions {
 
     template <typename T>
-    T* get_arg(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces)
+    T* get_arg(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces)
     {
       T* val = Cast<T>(env[argname]);
       if (!val) {
@@ -46,14 +46,14 @@ namespace Sass {
       return val;
     }
 
-    Map* get_arg_m(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces); // maps only
-    Number* get_arg_n(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces); // numbers only
-    double alpha_num(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces); // colors only
-    double color_num(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces); // colors only
-    double get_arg_r(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, double lo, double hi); // colors only
-    double get_arg_val(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces); // shared
-    SelectorListObj get_arg_sels(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, Context& ctx); // selectors only
-    CompoundSelectorObj get_arg_sel(const std::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, Context& ctx); // selectors only
+    Map* get_arg_m(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces); // maps only
+    Number* get_arg_n(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces); // numbers only
+    double alpha_num(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces); // colors only
+    double color_num(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces); // colors only
+    double get_arg_r(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, double lo, double hi); // colors only
+    double get_arg_val(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces); // shared
+    SelectorListObj get_arg_sels(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, Context& ctx); // selectors only
+    CompoundSelectorObj get_arg_sel(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, Context& ctx); // selectors only
 
   }
 

@@ -69,12 +69,12 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  SimpleSelector::SimpleSelector(ParserState pstate, std::string n)
+  SimpleSelector::SimpleSelector(ParserState pstate, sass::string n)
   : Selector(pstate), ns_(""), name_(n), has_ns_(false)
   {
     size_t pos = n.find('|');
     // found some namespace
-    if (pos != std::string::npos) {
+    if (pos != sass::string::npos) {
       has_ns_ = true;
       ns_ = n.substr(0, pos);
       name_ = n.substr(pos + 1);
@@ -87,7 +87,7 @@ namespace Sass {
     has_ns_(ptr->has_ns_)
   { }
 
-  std::string SimpleSelector::ns_name() const
+  sass::string SimpleSelector::ns_name() const
   {
     if (!has_ns_) return name_;
     else return ns_ + "|" + name_;
@@ -174,7 +174,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Placeholder_Selector::Placeholder_Selector(ParserState pstate, std::string n)
+  Placeholder_Selector::Placeholder_Selector(ParserState pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(PLACEHOLDER_SEL); }
   Placeholder_Selector::Placeholder_Selector(const Placeholder_Selector* ptr)
@@ -191,7 +191,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Type_Selector::Type_Selector(ParserState pstate, std::string n)
+  Type_Selector::Type_Selector(ParserState pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(TYPE_SEL); }
   Type_Selector::Type_Selector(const Type_Selector* ptr)
@@ -207,7 +207,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Class_Selector::Class_Selector(ParserState pstate, std::string n)
+  Class_Selector::Class_Selector(ParserState pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(CLASS_SEL); }
   Class_Selector::Class_Selector(const Class_Selector* ptr)
@@ -222,7 +222,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Id_Selector::Id_Selector(ParserState pstate, std::string n)
+  Id_Selector::Id_Selector(ParserState pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(ID_SEL); }
   Id_Selector::Id_Selector(const Id_Selector* ptr)
@@ -237,7 +237,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Attribute_Selector::Attribute_Selector(ParserState pstate, std::string n, std::string m, String_Obj v, char o)
+  Attribute_Selector::Attribute_Selector(ParserState pstate, sass::string n, sass::string m, String_Obj v, char o)
   : SimpleSelector(pstate, n), matcher_(m), value_(v), modifier_(o)
   { simple_type(ATTRIBUTE_SEL); }
   Attribute_Selector::Attribute_Selector(const Attribute_Selector* ptr)
@@ -251,7 +251,7 @@ namespace Sass {
   {
     if (hash_ == 0) {
       hash_combine(hash_, SimpleSelector::hash());
-      hash_combine(hash_, std::hash<std::string>()(matcher()));
+      hash_combine(hash_, std::hash<sass::string>()(matcher()));
       if (value_) hash_combine(hash_, value_->hash());
     }
     return hash_;
@@ -265,7 +265,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Pseudo_Selector::Pseudo_Selector(ParserState pstate, std::string name, bool element)
+  Pseudo_Selector::Pseudo_Selector(ParserState pstate, sass::string name, bool element)
   : SimpleSelector(pstate, name),
     normalized_(Util::unvendor(name)),
     argument_({}),
@@ -590,7 +590,7 @@ namespace Sass {
     return true;
   }
 
-  bool CompoundSelector::isSuperselectorOf(const CompoundSelector* sub, std::string wrapped) const
+  bool CompoundSelector::isSuperselectorOf(const CompoundSelector* sub, sass::string wrapped) const
   {
     CompoundSelector* rhs2 = const_cast<CompoundSelector*>(sub);
     CompoundSelector* lhs2 = const_cast<CompoundSelector*>(this);
@@ -653,26 +653,26 @@ namespace Sass {
   CssMediaQuery_Obj CssMediaQuery::merge(CssMediaQuery_Obj& other)
   {
 
-    std::string ourType = this->type();
+    sass::string ourType = this->type();
     Util::ascii_str_tolower(&ourType);
 
-    std::string theirType = other->type();
+    sass::string theirType = other->type();
     Util::ascii_str_tolower(&theirType);
 
-    std::string ourModifier = this->modifier();
+    sass::string ourModifier = this->modifier();
     Util::ascii_str_tolower(&ourModifier);
 
-    std::string theirModifier = other->modifier();
+    sass::string theirModifier = other->modifier();
     Util::ascii_str_tolower(&theirModifier);
 
-    std::string type;
-    std::string modifier;
-    std::vector<std::string> features;
+    sass::string type;
+    sass::string modifier;
+    sass::vector<sass::string> features;
 
     if (ourType.empty() && theirType.empty()) {
       CssMediaQuery_Obj query = SASS_MEMORY_NEW(CssMediaQuery, pstate());
-      std::vector<std::string> f1(this->features());
-      std::vector<std::string> f2(other->features());
+      sass::vector<sass::string> f1(this->features());
+      sass::vector<sass::string> f2(other->features());
       features.insert(features.end(), f1.begin(), f1.end());
       features.insert(features.end(), f2.begin(), f2.end());
       query->features(features);
@@ -681,9 +681,9 @@ namespace Sass {
 
     if ((ourModifier == "not") != (theirModifier == "not")) {
       if (ourType == theirType) {
-        std::vector<std::string> negativeFeatures =
+        sass::vector<sass::string> negativeFeatures =
           ourModifier == "not" ? this->features() : other->features();
-        std::vector<std::string> positiveFeatures =
+        sass::vector<sass::string> positiveFeatures =
           ourModifier == "not" ? other->features() : this->features();
 
         // If the negative features are a subset of the positive features, the
@@ -747,16 +747,16 @@ namespace Sass {
         // Omit the type if either input query did, since that indicates that they
         // aren't targeting a browser that requires "all and".
         type = (other->matchesAllTypes() && ourType.empty()) ? "" : theirType;
-        std::vector<std::string> f1(this->features());
-        std::vector<std::string> f2(other->features());
+        sass::vector<sass::string> f1(this->features());
+        sass::vector<sass::string> f2(other->features());
         features.insert(features.end(), f1.begin(), f1.end());
         features.insert(features.end(), f2.begin(), f2.end());
       }
       else if (other->matchesAllTypes()) {
         modifier = ourModifier;
         type = ourType;
-        std::vector<std::string> f1(this->features());
-        std::vector<std::string> f2(other->features());
+        sass::vector<sass::string> f1(this->features());
+        sass::vector<sass::string> f2(other->features());
         features.insert(features.end(), f1.begin(), f1.end());
         features.insert(features.end(), f2.begin(), f2.end());
       }
@@ -766,8 +766,8 @@ namespace Sass {
       else {
         modifier = ourModifier.empty() ? theirModifier : ourModifier;
         type = ourType;
-        std::vector<std::string> f1(this->features());
-        std::vector<std::string> f2(other->features());
+        sass::vector<sass::string> f1(this->features());
+        sass::vector<sass::string> f2(other->features());
         features.insert(features.end(), f1.begin(), f1.end());
         features.insert(features.end(), f2.begin(), f2.end());
       }
@@ -850,12 +850,12 @@ namespace Sass {
   // ToDo: this might be done easier with new selector format
   /////////////////////////////////////////////////////////////////////////
 
-  std::vector<ComplexSelectorObj>
+  sass::vector<ComplexSelectorObj>
     CompoundSelector::resolve_parent_refs(SelectorStack pstack, Backtraces& traces, bool implicit_parent)
   {
 
     auto parent = pstack.back();
-    std::vector<ComplexSelectorObj> rv;
+    sass::vector<ComplexSelectorObj> rv;
 
     for (SimpleSelectorObj simple : elements()) {
       if (Pseudo_Selector * pseudo = Cast<Pseudo_Selector>(simple)) {
@@ -940,11 +940,11 @@ namespace Sass {
 
   }
 
-  /* better return std::vector? only - is empty container anyway? */
+  /* better return sass::vector? only - is empty container anyway? */
   SelectorList* ComplexSelector::resolve_parent_refs(SelectorStack pstack, Backtraces& traces, bool implicit_parent)
   {
 
-    std::vector<std::vector<ComplexSelectorObj>> vars;
+    sass::vector<sass::vector<ComplexSelectorObj>> vars;
 
     auto parent = pstack.back();
 
@@ -977,7 +977,7 @@ namespace Sass {
     }
 
     // Need complex selectors to preserve linefeeds
-    std::vector<std::vector<ComplexSelectorObj>> res = permutateAlt(vars);
+    sass::vector<sass::vector<ComplexSelectorObj>> res = permutateAlt(vars);
 
     // std::reverse(std::begin(res), std::end(res));
 

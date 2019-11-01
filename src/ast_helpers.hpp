@@ -228,7 +228,7 @@ namespace Sass {
   // that can be written with pseudo-class syntax (CSS2 vs CSS3):
   // `:before`, `:after`, `:first-line`, or `:first-letter`
   // ##########################################################################
-  inline bool isFakePseudoElement(const std::string& name)
+  inline bool isFakePseudoElement(const sass::string& name)
   {
     return Util::equalsLiteral("after", name)
       || Util::equalsLiteral("before", name)
@@ -241,7 +241,7 @@ namespace Sass {
   // and that are subselectors of their arguments.
   // For example, `.foo` is a superselector of `:matches(.foo)`.
   // ##########################################################################
-  inline bool isSubselectorPseudo(const std::string& norm)
+  inline bool isSubselectorPseudo(const sass::string& norm)
   {
     return Util::equalsLiteral("any", norm)
       || Util::equalsLiteral("matches", norm)
@@ -253,7 +253,7 @@ namespace Sass {
   // ###########################################################################
   // Pseudo-class selectors that take unadorned selectors as arguments.
   // ###########################################################################
-  inline bool isSelectorPseudoClass(const std::string& test)
+  inline bool isSelectorPseudoClass(const sass::string& test)
   {
     return Util::equalsLiteral("not", test)
       || Util::equalsLiteral("matches", test)
@@ -268,7 +268,7 @@ namespace Sass {
   // ###########################################################################
   // Pseudo-element selectors that take unadorned selectors as arguments.
   // ###########################################################################
-  inline bool isSelectorPseudoElement(const std::string& test)
+  inline bool isSelectorPseudoElement(const sass::string& test)
   {
     return Util::equalsLiteral("slotted", test);
   }
@@ -277,7 +277,7 @@ namespace Sass {
   // ###########################################################################
   // Pseudo-element selectors that has binominals
   // ###########################################################################
-  inline bool isSelectorPseudoBinominal(const std::string& test)
+  inline bool isSelectorPseudoBinominal(const sass::string& test)
   {
     return Util::equalsLiteral("nth-child", test)
       || Util::equalsLiteral("nth-last-child", test);

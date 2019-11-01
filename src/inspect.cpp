@@ -412,11 +412,11 @@ namespace Sass {
     append_string(")");
   }
 
-  std::string Inspect::lbracket(List* list) {
+  sass::string Inspect::lbracket(List* list) {
     return list->is_bracketed() ? "[" : "(";
   }
 
-  std::string Inspect::rbracket(List* list) {
+  sass::string Inspect::rbracket(List* list) {
     return list->is_bracketed() ? "]" : ")";
   }
 
@@ -427,7 +427,7 @@ namespace Sass {
       append_string(rbracket(list));
       return;
     }
-    std::string sep(list->separator() == SASS_SPACE ? " " : ",");
+    sass::string sep(list->separator() == SASS_SPACE ? " " : ",");
     if ((output_style() != COMPRESSED) && sep == ",") sep += " ";
     else if (in_media_block && sep != " ") sep += " "; // verified
     if (list->empty()) return;
@@ -570,11 +570,11 @@ namespace Sass {
     // reduce units
     n->reduce();
 
-    std::stringstream ss;
+    sass::sstream ss;
     ss.precision(opt.precision);
     ss << std::fixed << n->value();
 
-    std::string res = ss.str();
+    sass::string res = ss.str();
     size_t s = res.length();
 
     // delete trailing zeros
@@ -627,14 +627,14 @@ namespace Sass {
   void Inspect::operator()(Color_RGBA* c)
   {
     // output the final token
-    std::stringstream ss;
+    sass::sstream ss;
 
     // original color name
     // maybe an unknown token
-    std::string name = c->disp();
+    sass::string name = c->disp();
 
     // resolved color
-    std::string res_name = name;
+    sass::string res_name = name;
 
     double r = Sass::round(cap_channel<0xff>(c->r()), opt.precision);
     double g = Sass::round(cap_channel<0xff>(c->g()), opt.precision);
@@ -656,7 +656,7 @@ namespace Sass {
         res_name = color_to_name(numval);
     }
 
-    std::stringstream hexlet;
+    sass::sstream hexlet;
     // dart sass compressed all colors in regular css always
     // ruby sass and libsass does it only when not delayed
     // since color math is going to be removed, this can go too

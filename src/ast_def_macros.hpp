@@ -70,18 +70,18 @@ private:
 #ifdef DEBUG_SHARED_PTR
 
 #define ATTACH_ABSTRACT_AST_OPERATIONS(klass) \
-  virtual klass* copy(std::string, size_t) const = 0; \
-  virtual klass* clone(std::string, size_t) const = 0; \
+  virtual klass* copy(sass::string, size_t) const = 0; \
+  virtual klass* clone(sass::string, size_t) const = 0; \
 
 #define ATTACH_VIRTUAL_AST_OPERATIONS(klass) \
   klass(const klass* ptr); \
-  virtual klass* copy(std::string, size_t) const override = 0; \
-  virtual klass* clone(std::string, size_t) const override = 0; \
+  virtual klass* copy(sass::string, size_t) const override = 0; \
+  virtual klass* clone(sass::string, size_t) const override = 0; \
 
 #define ATTACH_AST_OPERATIONS(klass) \
   klass(const klass* ptr); \
-  virtual klass* copy(std::string, size_t) const override; \
-  virtual klass* clone(std::string, size_t) const override; \
+  virtual klass* copy(sass::string, size_t) const override; \
+  virtual klass* clone(sass::string, size_t) const override; \
 
 #else
 
@@ -112,12 +112,12 @@ private:
 #ifdef DEBUG_SHARED_PTR
 
   #define IMPLEMENT_AST_OPERATORS(klass) \
-    klass* klass::copy(std::string file, size_t line) const { \
+    klass* klass::copy(sass::string file, size_t line) const { \
       klass* cpy = new klass(this); \
       cpy->trace(file, line); \
       return cpy; \
     } \
-    klass* klass::clone(std::string file, size_t line) const { \
+    klass* klass::clone(sass::string file, size_t line) const { \
       klass* cpy = copy(file, line); \
       cpy->cloneChildren(); \
       return cpy; \

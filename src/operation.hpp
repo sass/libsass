@@ -19,7 +19,7 @@ namespace Sass {
   #define ATTACH_ABSTRACT_CRTP_PERFORM_METHODS()\
     virtual void perform(Operation<void>* op) = 0; \
     virtual Value* perform(Operation<Value*>* op) = 0; \
-    virtual std::string perform(Operation<std::string>* op) = 0; \
+    virtual sass::string perform(Operation<sass::string>* op) = 0; \
     virtual AST_Node* perform(Operation<AST_Node*>* op) = 0; \
     virtual Selector* perform(Operation<Selector*>* op) = 0; \
     virtual Statement* perform(Operation<Statement*>* op) = 0; \
@@ -34,7 +34,7 @@ namespace Sass {
   #define ATTACH_CRTP_PERFORM_METHODS()\
     virtual void perform(Operation<void>* op) override { return (*op)(this); } \
     virtual Value* perform(Operation<Value*>* op) override { return (*op)(this); } \
-    virtual std::string perform(Operation<std::string>* op) override { return (*op)(this); } \
+    virtual sass::string perform(Operation<sass::string>* op) override { return (*op)(this); } \
     virtual AST_Node* perform(Operation<AST_Node*>* op) override { return (*op)(this); } \
     virtual Selector* perform(Operation<Selector*>* op) override { return (*op)(this); } \
     virtual Statement* perform(Operation<Statement*>* op) override { return (*op)(this); } \
@@ -213,7 +213,7 @@ namespace Sass {
     template <typename U> inline T fallback(U x)
     {
       throw std::runtime_error(
-        std::string(typeid(*this).name()) + ": CRTP not implemented for " + typeid(x).name());
+        sass::string(typeid(*this).name()) + ": CRTP not implemented for " + typeid(x).name());
     }
 
   };

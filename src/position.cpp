@@ -18,7 +18,7 @@ namespace Sass {
     *this = inc(string, string + strlen(string));
   }
 
-  Offset::Offset(const std::string& text)
+  Offset::Offset(const sass::string& text)
   : line(0), column(0)
   {
     *this = inc(text.c_str(), text.c_str() + text.size());

@@ -59,7 +59,7 @@ namespace Sass {
     bool gte(Expression_Obj lhs, Expression_Obj rhs) { return !cmp(lhs, rhs, Sass_OP::GTE) || eq(lhs, rhs); }
 
     /* colour math deprecation warning */
-    void op_color_deprecation(enum Sass_OP op, std::string lsh, std::string rhs, const ParserState& pstate)
+    void op_color_deprecation(enum Sass_OP op, sass::string lsh, sass::string rhs, const ParserState& pstate)
     {
       deprecated(
         "The operation `" + lsh + " " + sass_op_to_name(op) + " " + rhs +
@@ -77,13 +77,13 @@ namespace Sass {
       String_Quoted* lqstr = Cast<String_Quoted>(&lhs);
       String_Quoted* rqstr = Cast<String_Quoted>(&rhs);
 
-      std::string lstr(lqstr ? lqstr->value() : lhs.to_string(opt));
-      std::string rstr(rqstr ? rqstr->value() : rhs.to_string(opt));
+      sass::string lstr(lqstr ? lqstr->value() : lhs.to_string(opt));
+      sass::string rstr(rqstr ? rqstr->value() : rhs.to_string(opt));
 
       if (Cast<Null>(&lhs)) throw Exception::InvalidNullOperation(&lhs, &rhs, op);
       if (Cast<Null>(&rhs)) throw Exception::InvalidNullOperation(&lhs, &rhs, op);
 
-      std::string sep;
+      sass::string sep;
       switch (op) {
         case Sass_OP::ADD: sep = "";   break;
         case Sass_OP::SUB: sep = "-";  break;
@@ -152,7 +152,7 @@ namespace Sass {
       }
 
       if (op == Sass_OP::DIV && rval == 0) {
-        std::string result(lval ? "Infinity" : "NaN");
+        sass::string result(lval ? "Infinity" : "NaN");
         return SASS_MEMORY_NEW(String_Quoted, pstate, result);
       }
 
@@ -229,7 +229,7 @@ namespace Sass {
         }
         case Sass_OP::SUB:
         case Sass_OP::DIV: {
-          std::string color(rhs.to_string(opt));
+          sass::string color(rhs.to_string(opt));
           op_color_deprecation(op, lhs.to_string(), color, pstate);
           return SASS_MEMORY_NEW(String_Quoted,
                                 pstate,
