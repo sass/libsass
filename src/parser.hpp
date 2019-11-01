@@ -321,7 +321,7 @@ namespace Sass {
     Supports_Condition_Obj parse_supports_interpolation();
     Supports_Condition_Obj parse_supports_declaration();
     Supports_Condition_Obj parse_supports_condition_in_parens(bool parens_required);
-    At_Root_Block_Obj parse_at_root_block();
+    AtRootRuleObj parse_at_root_block();
     At_Root_Query_Obj parse_at_root_query();
     String_Schema_Obj parse_almost_any_value();
     Directive_Obj parse_directive();

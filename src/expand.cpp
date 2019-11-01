@@ -278,7 +278,7 @@ namespace Sass {
 
   }
 
-  Statement* Expand::operator()(At_Root_Block* a)
+  Statement* Expand::operator()(AtRootRule* a)
   {
     Block_Obj ab = a->block();
     ExpressionObj ae = a->expression();
@@ -292,7 +292,7 @@ namespace Sass {
                                        ;
 
     Block_Obj bb = ab ? operator()(ab) : NULL;
-    At_Root_Block_Obj aa = SASS_MEMORY_NEW(At_Root_Block,
+    AtRootRuleObj aa = SASS_MEMORY_NEW(AtRootRule,
                                         a->pstate(),
                                         bb,
                                         Cast<At_Root_Query>(ae));

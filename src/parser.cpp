@@ -2394,7 +2394,7 @@ namespace Sass {
     return cond;
   }
 
-  At_Root_Block_Obj Parser::parse_at_root_block()
+  AtRootRuleObj Parser::parse_at_root_block()
   {
     stack.push_back(Scope::AtRoot);
     SourceSpan at_source_position = pstate;
@@ -2413,7 +2413,7 @@ namespace Sass {
       body = SASS_MEMORY_NEW(Block, r->pstate(), 1, true);
       body->append(r);
     }
-    At_Root_Block_Obj at_root = SASS_MEMORY_NEW(At_Root_Block, at_source_position, body);
+    AtRootRuleObj at_root = SASS_MEMORY_NEW(AtRootRule, at_source_position, body);
     if (!expr.isNull()) at_root->expression(expr);
     stack.pop_back();
     return at_root;

@@ -259,7 +259,7 @@ namespace Sass {
     return debubble(mm->block(), mm);
   }
 
-  Statement* Cssize::operator()(At_Root_Block* m)
+  Statement* Cssize::operator()(AtRootRule* m)
   {
     bool tmp = false;
     for (size_t i = 0, L = p_stack.size(); i < L; ++i) {
@@ -308,7 +308,7 @@ namespace Sass {
     return bubble;
   }
 
-  Statement* Cssize::bubble(At_Root_Block* m)
+  Statement* Cssize::bubble(AtRootRule* m)
   {
     if (!m || !m->block()) return NULL;
     Block* bb = SASS_MEMORY_NEW(Block, this->parent()->pstate());
@@ -321,7 +321,7 @@ namespace Sass {
       wrapper_block->append(new_rule);
     }
 
-    At_Root_Block* mm = SASS_MEMORY_NEW(At_Root_Block,
+    AtRootRule* mm = SASS_MEMORY_NEW(AtRootRule,
                                         m->pstate(),
                                         wrapper_block,
                                         m->expression());

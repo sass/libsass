@@ -133,7 +133,7 @@ namespace Sass {
     feature_block->block()->perform(this);
   }
 
-  void Inspect::operator()(At_Root_Block* at_root_block)
+  void Inspect::operator()(AtRootRule* at_root_block)
   {
     append_indentation();
     append_token("@at-root ", at_root_block);

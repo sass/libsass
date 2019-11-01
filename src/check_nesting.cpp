@@ -21,7 +21,7 @@ namespace Sass {
   {
     Statement* old_parent = this->parent;
 
-    if (At_Root_Block* root = Cast<At_Root_Block>(parent)) {
+    if (AtRootRule* root = Cast<AtRootRule>(parent)) {
       sass::vector<Statement*> old_parents = this->parents;
       sass::vector<Statement*> new_parents;
 
@@ -45,7 +45,7 @@ namespace Sass {
         }
       }
 
-      At_Root_Block* ar = Cast<At_Root_Block>(parent);
+      AtRootRule* ar = Cast<AtRootRule>(parent);
       Block* ret = ar->block();
 
       if (ret != NULL) {
@@ -379,7 +379,7 @@ namespace Sass {
 
   bool CheckNesting::is_at_root_node(Statement* n)
   {
-    return Cast<At_Root_Block>(n) != NULL;
+    return Cast<AtRootRule>(n) != NULL;
   }
 
   bool CheckNesting::is_directive_node(Statement* n)

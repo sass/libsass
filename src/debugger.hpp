@@ -341,9 +341,9 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     << " [name:" << trace->name() << ", type: " << trace->type() << "]"
     << std::endl;
     debug_ast(trace->block(), ind + " ", env);
-  } else if (Cast<At_Root_Block>(node)) {
-    At_Root_Block* root_block = Cast<At_Root_Block>(node);
-    std::cerr << ind << "At_Root_Block " << root_block;
+  } else if (Cast<AtRootRule>(node)) {
+    AtRootRule* root_block = Cast<AtRootRule>(node);
+    std::cerr << ind << "AtRootRule " << root_block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << root_block->tabs();
     std::cerr << std::endl;

@@ -807,18 +807,18 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  At_Root_Block::At_Root_Block(SourceSpan pstate, Block_Obj b, At_Root_Query_Obj e)
+  AtRootRule::AtRootRule(SourceSpan pstate, Block_Obj b, At_Root_Query_Obj e)
   : ParentStatement(pstate, b), expression_(e)
   { statement_type(ATROOT); }
-  At_Root_Block::At_Root_Block(const At_Root_Block* ptr)
+  AtRootRule::AtRootRule(const AtRootRule* ptr)
   : ParentStatement(ptr), expression_(ptr->expression_)
   { statement_type(ATROOT); }
 
-  bool At_Root_Block::bubbles() {
+  bool AtRootRule::bubbles() {
     return true;
   }
 
-  bool At_Root_Block::exclude_node(Statement_Obj s) {
+  bool AtRootRule::exclude_node(Statement_Obj s) {
     if (expression() == nullptr)
     {
       return s->statement_type() == Statement::RULESET;
@@ -918,7 +918,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(Import);
   IMPLEMENT_AST_OPERATORS(Import_Stub);
   IMPLEMENT_AST_OPERATORS(Directive);
-  IMPLEMENT_AST_OPERATORS(At_Root_Block);
+  IMPLEMENT_AST_OPERATORS(AtRootRule);
   IMPLEMENT_AST_OPERATORS(WhileRule);
   IMPLEMENT_AST_OPERATORS(EachRule);
   IMPLEMENT_AST_OPERATORS(ForRule);

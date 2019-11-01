@@ -1011,13 +1011,13 @@ namespace Sass {
   ///////////
   // At-root.
   ///////////
-  class At_Root_Block final : public ParentStatement {
+  class AtRootRule final : public ParentStatement {
     ADD_PROPERTY(At_Root_Query_Obj, expression)
   public:
-    At_Root_Block(SourceSpan pstate, Block_Obj b = {}, At_Root_Query_Obj e = {});
+    AtRootRule(SourceSpan pstate, Block_Obj b = {}, At_Root_Query_Obj e = {});
     bool bubbles() override;
     bool exclude_node(Statement_Obj s);
-    ATTACH_AST_OPERATIONS(At_Root_Block)
+    ATTACH_AST_OPERATIONS(AtRootRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

@@ -69,7 +69,7 @@ namespace Sass {
     // Statement* operator()(CssMediaRule*);
 
     Statement* operator()(SupportsRule*);
-    Statement* operator()(At_Root_Block*);
+    Statement* operator()(AtRootRule*);
     Statement* operator()(Directive*);
     Statement* operator()(Declaration*);
     Statement* operator()(Assignment*);

@@ -39,7 +39,7 @@ namespace Sass {
   class Directive;
 
   class Keyframe_Rule;
-  class At_Root_Block;
+  class AtRootRule;
   class Assignment;
 
   class Import;
@@ -140,7 +140,7 @@ namespace Sass {
   IMPL_MEM_OBJ(SupportsRule);
   IMPL_MEM_OBJ(Directive);
   IMPL_MEM_OBJ(Keyframe_Rule);
-  IMPL_MEM_OBJ(At_Root_Block);
+  IMPL_MEM_OBJ(AtRootRule);
   IMPL_MEM_OBJ(Declaration);
   IMPL_MEM_OBJ(Assignment);
   IMPL_MEM_OBJ(Import);
