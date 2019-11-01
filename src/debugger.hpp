@@ -659,12 +659,12 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     debug_ast(block->value(), ind + " value: ", env);
     debug_ast(block->block(), ind + " ", env);
   } else if (Cast<Keyframe_Rule>(node)) {
-    Keyframe_Rule* has_block = Cast<Keyframe_Rule>(node);
-    std::cerr << ind << "Keyframe_Rule " << has_block;
+    Keyframe_Rule* ParentStatement = Cast<Keyframe_Rule>(node);
+    std::cerr << ind << "Keyframe_Rule " << ParentStatement;
     std::cerr << " (" << pstate_source_position(node) << ")";
-    std::cerr << " " << has_block->tabs() << std::endl;
-    if (has_block->name()) debug_ast(has_block->name(), ind + "@");
-    if (has_block->block()) for(const Statement_Obj& i : has_block->block()->elements()) { debug_ast(i, ind + " ", env); }
+    std::cerr << " " << ParentStatement->tabs() << std::endl;
+    if (ParentStatement->name()) debug_ast(ParentStatement->name(), ind + "@");
+    if (ParentStatement->block()) for(const Statement_Obj& i : ParentStatement->block()->elements()) { debug_ast(i, ind + " ", env); }
   } else if (Cast<Directive>(node)) {
     Directive* block = Cast<Directive>(node);
     std::cerr << ind << "Directive " << block;
@@ -937,12 +937,12 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
       case Expression::Type::PARENT: std::cerr << " [PARENT]"; break;
     }
     std::cerr << std::endl;
-  } else if (Cast<Has_Block>(node)) {
-    Has_Block* has_block = Cast<Has_Block>(node);
-    std::cerr << ind << "Has_Block " << has_block;
+  } else if (Cast<ParentStatement>(node)) {
+    ParentStatement* parent = Cast<ParentStatement>(node);
+    std::cerr << ind << "ParentStatement " << parent;
     std::cerr << " (" << pstate_source_position(node) << ")";
-    std::cerr << " " << has_block->tabs() << std::endl;
-    if (has_block->block()) for(const Statement_Obj& i : has_block->block()->elements()) { debug_ast(i, ind + " ", env); }
+    std::cerr << " " << parent->tabs() << std::endl;
+    if (parent->block()) for(const Statement_Obj& i : parent->block()->elements()) { debug_ast(i, ind + " ", env); }
   } else if (Cast<Statement>(node)) {
     Statement* statement = Cast<Statement>(node);
     std::cerr << ind << "Statement " << statement;

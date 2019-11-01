@@ -147,14 +147,14 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Has_Block::Has_Block(ParserState pstate, Block_Obj b)
+  ParentStatement::ParentStatement(ParserState pstate, Block_Obj b)
   : Statement(pstate), block_(b)
   { }
-  Has_Block::Has_Block(const Has_Block* ptr)
+  ParentStatement::ParentStatement(const ParentStatement* ptr)
   : Statement(ptr), block_(ptr->block_)
   { }
 
-  bool Has_Block::has_content()
+  bool ParentStatement::has_content()
   {
     return (block_ && block_->has_content()) || Statement::has_content();
   }
@@ -163,10 +163,10 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Ruleset::Ruleset(ParserState pstate, SelectorListObj s, Block_Obj b)
-  : Has_Block(pstate, b), selector_(s), schema_(), is_root_(false)
+  : ParentStatement(pstate, b), selector_(s), schema_(), is_root_(false)
   { statement_type(RULESET); }
   Ruleset::Ruleset(const Ruleset* ptr)
-  : Has_Block(ptr),
+  : ParentStatement(ptr),
     selector_(ptr->selector_),
     schema_(ptr->schema_),
     is_root_(ptr->is_root_)
@@ -201,10 +201,10 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Trace::Trace(ParserState pstate, sass::string n, Block_Obj b, char type)
-  : Has_Block(pstate, b), type_(type), name_(n)
+  : ParentStatement(pstate, b), type_(type), name_(n)
   { }
   Trace::Trace(const Trace* ptr)
-  : Has_Block(ptr),
+  : ParentStatement(ptr),
     type_(ptr->type_),
     name_(ptr->name_)
   { }
@@ -213,10 +213,10 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Directive::Directive(ParserState pstate, sass::string kwd, SelectorListObj sel, Block_Obj b, Expression_Obj val)
-  : Has_Block(pstate, b), keyword_(kwd), selector_(sel), value_(val) // set value manually if needed
+  : ParentStatement(pstate, b), keyword_(kwd), selector_(sel), value_(val) // set value manually if needed
   { statement_type(DIRECTIVE); }
   Directive::Directive(const Directive* ptr)
-  : Has_Block(ptr),
+  : ParentStatement(ptr),
     keyword_(ptr->keyword_),
     selector_(ptr->selector_),
     value_(ptr->value_) // set value manually if needed
@@ -241,20 +241,20 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Keyframe_Rule::Keyframe_Rule(ParserState pstate, Block_Obj b)
-  : Has_Block(pstate, b), name_()
+  : ParentStatement(pstate, b), name_()
   { statement_type(KEYFRAMERULE); }
   Keyframe_Rule::Keyframe_Rule(const Keyframe_Rule* ptr)
-  : Has_Block(ptr), name_(ptr->name_)
+  : ParentStatement(ptr), name_(ptr->name_)
   { statement_type(KEYFRAMERULE); }
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
   Declaration::Declaration(ParserState pstate, String_Obj prop, Expression_Obj val, bool i, bool c, Block_Obj b)
-  : Has_Block(pstate, b), property_(prop), value_(val), is_important_(i), is_custom_property_(c), is_indented_(false)
+  : ParentStatement(pstate, b), property_(prop), value_(val), is_important_(i), is_custom_property_(c), is_indented_(false)
   { statement_type(DECLARATION); }
   Declaration::Declaration(const Declaration* ptr)
-  : Has_Block(ptr),
+  : ParentStatement(ptr),
     property_(ptr->property_),
     value_(ptr->value_),
     is_important_(ptr->is_important_),
@@ -365,17 +365,17 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   If::If(ParserState pstate, Expression_Obj pred, Block_Obj con, Block_Obj alt)
-  : Has_Block(pstate, con), predicate_(pred), alternative_(alt)
+  : ParentStatement(pstate, con), predicate_(pred), alternative_(alt)
   { statement_type(IF); }
   If::If(const If* ptr)
-  : Has_Block(ptr),
+  : ParentStatement(ptr),
     predicate_(ptr->predicate_),
     alternative_(ptr->alternative_)
   { statement_type(IF); }
 
   bool If::has_content()
   {
-    return Has_Block::has_content() || (alternative_ && alternative_->has_content());
+    return ParentStatement::has_content() || (alternative_ && alternative_->has_content());
   }
 
   /////////////////////////////////////////////////////////////////////////
@@ -383,11 +383,11 @@ namespace Sass {
 
   For::For(ParserState pstate,
       sass::string var, Expression_Obj lo, Expression_Obj hi, Block_Obj b, bool inc)
-  : Has_Block(pstate, b),
+  : ParentStatement(pstate, b),
     variable_(var), lower_bound_(lo), upper_bound_(hi), is_inclusive_(inc)
   { statement_type(FOR); }
   For::For(const For* ptr)
-  : Has_Block(ptr),
+  : ParentStatement(ptr),
     variable_(ptr->variable_),
     lower_bound_(ptr->lower_bound_),
     upper_bound_(ptr->upper_bound_),
@@ -398,20 +398,20 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Each::Each(ParserState pstate, sass::vector<sass::string> vars, Expression_Obj lst, Block_Obj b)
-  : Has_Block(pstate, b), variables_(vars), list_(lst)
+  : ParentStatement(pstate, b), variables_(vars), list_(lst)
   { statement_type(EACH); }
   Each::Each(const Each* ptr)
-  : Has_Block(ptr), variables_(ptr->variables_), list_(ptr->list_)
+  : ParentStatement(ptr), variables_(ptr->variables_), list_(ptr->list_)
   { statement_type(EACH); }
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
   While::While(ParserState pstate, Expression_Obj pred, Block_Obj b)
-  : Has_Block(pstate, b), predicate_(pred)
+  : ParentStatement(pstate, b), predicate_(pred)
   { statement_type(WHILE); }
   While::While(const While* ptr)
-  : Has_Block(ptr), predicate_(ptr->predicate_)
+  : ParentStatement(ptr), predicate_(ptr->predicate_)
   { statement_type(WHILE); }
 
   /////////////////////////////////////////////////////////////////////////
@@ -446,7 +446,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Definition::Definition(const Definition* ptr)
-  : Has_Block(ptr),
+  : ParentStatement(ptr),
     name_(ptr->name_),
     parameters_(ptr->parameters_),
     environment_(ptr->environment_),
@@ -463,7 +463,7 @@ namespace Sass {
               Parameters_Obj params,
               Block_Obj b,
               Type t)
-  : Has_Block(pstate, b),
+  : ParentStatement(pstate, b),
     name_(n),
     parameters_(params),
     environment_(0),
@@ -481,7 +481,7 @@ namespace Sass {
               Parameters_Obj params,
               Native_Function func_ptr,
               bool overload_stub)
-  : Has_Block(pstate, {}),
+  : ParentStatement(pstate, {}),
     name_(n),
     parameters_(params),
     environment_(0),
@@ -498,7 +498,7 @@ namespace Sass {
               sass::string n,
               Parameters_Obj params,
               Sass_Function_Entry c_func)
-  : Has_Block(pstate, {}),
+  : ParentStatement(pstate, {}),
     name_(n),
     parameters_(params),
     environment_(0),
@@ -514,10 +514,10 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Mixin_Call::Mixin_Call(ParserState pstate, sass::string n, Arguments_Obj args, Parameters_Obj b_params, Block_Obj b)
-  : Has_Block(pstate, b), name_(n), arguments_(args), block_parameters_(b_params)
+  : ParentStatement(pstate, b), name_(n), arguments_(args), block_parameters_(b_params)
   { }
   Mixin_Call::Mixin_Call(const Mixin_Call* ptr)
-  : Has_Block(ptr),
+  : ParentStatement(ptr),
     name_(ptr->name_),
     arguments_(ptr->arguments_),
     block_parameters_(ptr->block_parameters_)
@@ -808,10 +808,10 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   At_Root_Block::At_Root_Block(ParserState pstate, Block_Obj b, At_Root_Query_Obj e)
-  : Has_Block(pstate, b), expression_(e)
+  : ParentStatement(pstate, b), expression_(e)
   { statement_type(ATROOT); }
   At_Root_Block::At_Root_Block(const At_Root_Block* ptr)
-  : Has_Block(ptr), expression_(ptr->expression_)
+  : ParentStatement(ptr), expression_(ptr->expression_)
   { statement_type(ATROOT); }
 
   bool At_Root_Block::bubbles() {

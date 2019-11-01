@@ -290,7 +290,7 @@ namespace Sass {
   Statement* Cssize::bubble(Directive* m)
   {
     Block* bb = SASS_MEMORY_NEW(Block, this->parent()->pstate());
-    Has_Block_Obj new_rule = Cast<Has_Block>(SASS_MEMORY_COPY(this->parent()));
+    ParentStatementObj new_rule = Cast<ParentStatement>(SASS_MEMORY_COPY(this->parent()));
     new_rule->block(bb);
     new_rule->tabs(this->parent()->tabs());
     new_rule->block()->concat(m->block());
@@ -312,7 +312,7 @@ namespace Sass {
   {
     if (!m || !m->block()) return NULL;
     Block* bb = SASS_MEMORY_NEW(Block, this->parent()->pstate());
-    Has_Block_Obj new_rule = Cast<Has_Block>(SASS_MEMORY_COPY(this->parent()));
+    ParentStatementObj new_rule = Cast<ParentStatement>(SASS_MEMORY_COPY(this->parent()));
     Block* wrapper_block = SASS_MEMORY_NEW(Block, m->block()->pstate());
     if (new_rule) {
       new_rule->block(bb);
@@ -426,7 +426,7 @@ namespace Sass {
 
   Block* Cssize::debubble(Block* children, Statement* parent)
   {
-    Has_Block_Obj previous_parent;
+    ParentStatementObj previous_parent;
     sass::vector<std::pair<bool, Block_Obj>> baz = slice_by_bubble(children);
     Block_Obj result = SASS_MEMORY_NEW(Block, children->pstate());
 

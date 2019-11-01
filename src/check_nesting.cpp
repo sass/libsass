@@ -75,7 +75,7 @@ namespace Sass {
     }
 
     if (!b) {
-      if (Has_Block* bb = Cast<Has_Block>(parent)) {
+      if (ParentStatement* bb = Cast<ParentStatement>(parent)) {
         b = bb->block();
       }
     }

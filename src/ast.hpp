@@ -515,21 +515,21 @@ namespace Sass {
   ////////////////////////////////////////////////////////////////////////
   // Abstract base class for statements that contain blocks of statements.
   ////////////////////////////////////////////////////////////////////////
-  class Has_Block : public Statement {
+  class ParentStatement : public Statement {
     ADD_PROPERTY(Block_Obj, block)
   public:
-    Has_Block(ParserState pstate, Block_Obj b);
-    Has_Block(const Has_Block* ptr); // copy constructor
-    virtual ~Has_Block() = 0; // virtual destructor
+    ParentStatement(ParserState pstate, Block_Obj b);
+    ParentStatement(const ParentStatement* ptr); // copy constructor
+    virtual ~ParentStatement() = 0; // virtual destructor
     virtual bool has_content() override;
   };
-  inline Has_Block::~Has_Block() { }
+  inline ParentStatement::~ParentStatement() { }
 
   /////////////////////////////////////////////////////////////////////////////
   // Rulesets (i.e., sets of styles headed by a selector and containing a block
   // of style declarations.
   /////////////////////////////////////////////////////////////////////////////
-  class Ruleset final : public Has_Block {
+  class Ruleset final : public ParentStatement {
     ADD_PROPERTY(SelectorListObj, selector)
     ADD_PROPERTY(Selector_Schema_Obj, schema)
     ADD_PROPERTY(bool, is_root);
@@ -556,7 +556,7 @@ namespace Sass {
   /////////////////
   // Trace.
   /////////////////
-  class Trace final : public Has_Block {
+  class Trace final : public ParentStatement {
     ADD_CONSTREF(char, type)
     ADD_CONSTREF(sass::string, name)
   public:
@@ -569,7 +569,7 @@ namespace Sass {
   // At-rules -- arbitrary directives beginning with "@" that may have an
   // optional statement block.
   ///////////////////////////////////////////////////////////////////////
-  class Directive final : public Has_Block {
+  class Directive final : public ParentStatement {
     ADD_CONSTREF(sass::string, keyword)
     ADD_PROPERTY(SelectorListObj, selector)
     ADD_PROPERTY(Expression_Obj, value)
@@ -585,7 +585,7 @@ namespace Sass {
   ///////////////////////////////////////////////////////////////////////
   // Keyframe-rules -- the child blocks of "@keyframes" nodes.
   ///////////////////////////////////////////////////////////////////////
-  class Keyframe_Rule final : public Has_Block {
+  class Keyframe_Rule final : public ParentStatement {
     // according to css spec, this should be <keyframes-name>
     // <keyframes-name> = <custom-ident> | <string>
     ADD_PROPERTY(SelectorListObj, name)
@@ -598,7 +598,7 @@ namespace Sass {
   ////////////////////////////////////////////////////////////////////////
   // Declarations -- style rules consisting of a property name and values.
   ////////////////////////////////////////////////////////////////////////
-  class Declaration final : public Has_Block {
+  class Declaration final : public ParentStatement {
     ADD_PROPERTY(String_Obj, property)
     ADD_PROPERTY(Expression_Obj, value)
     ADD_PROPERTY(bool, is_important)
@@ -703,7 +703,7 @@ namespace Sass {
   ////////////////////////////////////
   // The Sass `@if` control directive.
   ////////////////////////////////////
-  class If final : public Has_Block {
+  class If final : public ParentStatement {
     ADD_PROPERTY(Expression_Obj, predicate)
     ADD_PROPERTY(Block_Obj, alternative)
   public:
@@ -716,7 +716,7 @@ namespace Sass {
   /////////////////////////////////////
   // The Sass `@for` control directive.
   /////////////////////////////////////
-  class For final : public Has_Block {
+  class For final : public ParentStatement {
     ADD_CONSTREF(sass::string, variable)
     ADD_PROPERTY(Expression_Obj, lower_bound)
     ADD_PROPERTY(Expression_Obj, upper_bound)
@@ -730,7 +730,7 @@ namespace Sass {
   //////////////////////////////////////
   // The Sass `@each` control directive.
   //////////////////////////////////////
-  class Each final : public Has_Block {
+  class Each final : public ParentStatement {
     ADD_PROPERTY(sass::vector<sass::string>, variables)
     ADD_PROPERTY(Expression_Obj, list)
   public:
@@ -742,7 +742,7 @@ namespace Sass {
   ///////////////////////////////////////
   // The Sass `@while` control directive.
   ///////////////////////////////////////
-  class While final : public Has_Block {
+  class While final : public ParentStatement {
     ADD_PROPERTY(Expression_Obj, predicate)
   public:
     While(ParserState pstate, Expression_Obj pred, Block_Obj b);
@@ -765,7 +765,7 @@ namespace Sass {
   // Definitions for both mixins and functions. The two cases are distinguished
   // by a type tag.
   /////////////////////////////////////////////////////////////////////////////
-  class Definition final : public Has_Block {
+  class Definition final : public ParentStatement {
   public:
     enum Type { MIXIN, FUNCTION };
     ADD_CONSTREF(sass::string, name)
@@ -801,7 +801,7 @@ namespace Sass {
   //////////////////////////////////////
   // Mixin calls (i.e., `@include ...`).
   //////////////////////////////////////
-  class Mixin_Call final : public Has_Block {
+  class Mixin_Call final : public ParentStatement {
     ADD_CONSTREF(sass::string, name)
     ADD_PROPERTY(Arguments_Obj, arguments)
     ADD_PROPERTY(Parameters_Obj, block_parameters)
@@ -882,7 +882,7 @@ namespace Sass {
 
   // A Media Ruleset before it has been evaluated
   // Could be already final or an interpolation
-  class MediaRule final : public Has_Block {
+  class MediaRule final : public ParentStatement {
     ADD_PROPERTY(List_Obj, schema)
   public:
     MediaRule(ParserState pstate, Block_Obj block = {});
@@ -895,7 +895,7 @@ namespace Sass {
 
   // A Media Ruleset after it has been evaluated
   // Representing the static or resulting css
-  class CssMediaRule final : public Has_Block,
+  class CssMediaRule final : public ParentStatement,
     public Vectorized<CssMediaQuery_Obj> {
   public:
     CssMediaRule(ParserState pstate, Block_Obj b);
@@ -1011,7 +1011,7 @@ namespace Sass {
   ///////////
   // At-root.
   ///////////
-  class At_Root_Block final : public Has_Block {
+  class At_Root_Block final : public ParentStatement {
     ADD_PROPERTY(At_Root_Query_Obj, expression)
   public:
     At_Root_Block(ParserState pstate, Block_Obj b = {}, At_Root_Query_Obj e = {});

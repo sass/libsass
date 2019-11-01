@@ -10,10 +10,10 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Supports_Block::Supports_Block(ParserState pstate, Supports_Condition_Obj condition, Block_Obj block)
-  : Has_Block(pstate, block), condition_(condition)
+  : ParentStatement(pstate, block), condition_(condition)
   { statement_type(SUPPORTS); }
   Supports_Block::Supports_Block(const Supports_Block* ptr)
-  : Has_Block(ptr), condition_(ptr->condition_)
+  : ParentStatement(ptr), condition_(ptr->condition_)
   { statement_type(SUPPORTS); }
   bool Supports_Block::bubbles() { return true; }
 

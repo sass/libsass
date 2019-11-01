@@ -15,7 +15,7 @@ namespace Sass {
 
   class AST_Node;
 
-  class Has_Block;
+  class ParentStatement;
 
   class SimpleSelector;
 
@@ -150,7 +150,7 @@ namespace Sass {
   IMPL_MEM_OBJ(Debug);
   IMPL_MEM_OBJ(Comment);
   IMPL_MEM_OBJ(PreValue);
-  IMPL_MEM_OBJ(Has_Block);
+  IMPL_MEM_OBJ(ParentStatement);
   IMPL_MEM_OBJ(If);
   IMPL_MEM_OBJ(For);
   IMPL_MEM_OBJ(Each);
@@ -248,7 +248,7 @@ namespace Sass {
   DECLARE_BASE_CAST(AST_Node)
   DECLARE_BASE_CAST(Expression)
   DECLARE_BASE_CAST(Statement)
-  DECLARE_BASE_CAST(Has_Block)
+  DECLARE_BASE_CAST(ParentStatement)
   DECLARE_BASE_CAST(PreValue)
   DECLARE_BASE_CAST(Value)
   DECLARE_BASE_CAST(List)

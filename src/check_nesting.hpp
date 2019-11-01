@@ -33,7 +33,7 @@ namespace Sass {
       Statement* s = Cast<Statement>(x);
       if (s && this->should_visit(s)) {
         Block* b1 = Cast<Block>(s);
-        Has_Block* b2 = Cast<Has_Block>(s);
+        ParentStatement* b2 = Cast<ParentStatement>(s);
         if (b1 || b2) return visit_children(s);
       }
       return s;

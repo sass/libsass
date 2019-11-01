@@ -122,7 +122,7 @@ namespace Sass {
     if (!Util::isPrintable(r, output_style())) {
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         const Statement_Obj& stm = b->get(i);
-        if (Cast<Has_Block>(stm)) {
+        if (Cast<ParentStatement>(stm)) {
           if (!Cast<Declaration>(stm)) {
             stm->perform(this);
           }
@@ -210,7 +210,7 @@ namespace Sass {
     if (!Util::isPrintable(f, output_style())) {
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement_Obj stm = b->get(i);
-        if (Cast<Has_Block>(stm)) {
+        if (Cast<ParentStatement>(stm)) {
           stm->perform(this);
         }
       }

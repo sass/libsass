@@ -551,7 +551,7 @@ namespace Sass {
           return true;
         } else if (Declaration* d = Cast<Declaration>(stm)) {
           return isPrintable(d, style);
-        } else if (Has_Block* p = Cast<Has_Block>(stm)) {
+        } else if (ParentStatement* p = Cast<ParentStatement>(stm)) {
           Block_Obj pChildBlock = p->block();
           if (isPrintable(pChildBlock, style)) {
             hasPrintableChildBlocks = true;
@@ -609,7 +609,7 @@ namespace Sass {
         if (Cast<Declaration>(stm) || Cast<Directive>(stm)) {
           hasDeclarations = true;
         }
-        else if (Has_Block* b = Cast<Has_Block>(stm)) {
+        else if (ParentStatement* b = Cast<ParentStatement>(stm)) {
           Block_Obj pChildBlock = b->block();
           if (!b->is_invisible()) {
             if (isPrintable(pChildBlock, style)) {
@@ -656,7 +656,7 @@ namespace Sass {
             return true;
           }
         }
-        else if (Has_Block* b = Cast<Has_Block>(stm)) {
+        else if (ParentStatement* b = Cast<ParentStatement>(stm)) {
           if (isPrintable(b->block(), style)) {
             return true;
           }
@@ -709,7 +709,7 @@ namespace Sass {
             return true;
           }
         }
-        else if (Has_Block* b = Cast<Has_Block>(stm)) {
+        else if (ParentStatement* b = Cast<ParentStatement>(stm)) {
           if (isPrintable(b->block(), style)) {
             return true;
           }

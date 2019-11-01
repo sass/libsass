@@ -39,7 +39,7 @@ namespace Sass {
   ////////////////////
   // `@supports` rule.
   ////////////////////
-  class Supports_Block : public Has_Block {
+  class Supports_Block : public ParentStatement {
     ADD_PROPERTY(Supports_Condition_Obj, condition)
   public:
     Supports_Block(ParserState pstate, Supports_Condition_Obj condition, Block_Obj block = {});

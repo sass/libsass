@@ -601,14 +601,14 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   MediaRule::MediaRule(ParserState pstate, Block_Obj block) :
-    Has_Block(pstate, block),
+    ParentStatement(pstate, block),
     schema_({})
   {
     statement_type(MEDIA);
   }
 
   MediaRule::MediaRule(const MediaRule* ptr) :
-    Has_Block(ptr),
+    ParentStatement(ptr),
     schema_(ptr->schema_)
   {
     statement_type(MEDIA);
@@ -618,14 +618,14 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   CssMediaRule::CssMediaRule(ParserState pstate, Block_Obj block) :
-    Has_Block(pstate, block),
+    ParentStatement(pstate, block),
     Vectorized()
   {
     statement_type(MEDIA);
   }
 
   CssMediaRule::CssMediaRule(const CssMediaRule* ptr) :
-    Has_Block(ptr),
+    ParentStatement(ptr),
     Vectorized(*ptr)
   {
     statement_type(MEDIA);
