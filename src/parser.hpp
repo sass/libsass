@@ -324,7 +324,7 @@ namespace Sass {
     AtRootRuleObj parse_at_root_block();
     At_Root_Query_Obj parse_at_root_query();
     String_Schema_Obj parse_almost_any_value();
-    Directive_Obj parse_directive();
+    AtRuleObj parse_directive();
     WarningRuleObj parse_warning();
     ErrorRuleObj parse_error();
     DebugRuleObj parse_debug();

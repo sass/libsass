@@ -80,7 +80,7 @@ namespace Sass {
     return 0;
   }
 
-  Statement* Cssize::operator()(Directive* r)
+  Statement* Cssize::operator()(AtRule* r)
   {
     if (!r->block() || !r->block()->length()) return r;
 
@@ -90,7 +90,7 @@ namespace Sass {
     }
 
     p_stack.push_back(r);
-    Directive_Obj rr = SASS_MEMORY_NEW(Directive,
+    AtRuleObj rr = SASS_MEMORY_NEW(AtRule,
                                   r->pstate(),
                                   r->keyword(),
                                   r->selector(),
@@ -107,7 +107,7 @@ namespace Sass {
         Bubble_Obj s_obj = Cast<Bubble>(s);
         s = s_obj->node();
         if (s->statement_type() != Statement::DIRECTIVE) directive_exists = false;
-        else directive_exists = (Cast<Directive>(s)->keyword() == rr->keyword());
+        else directive_exists = (Cast<AtRule>(s)->keyword() == rr->keyword());
       }
 
     }
@@ -115,7 +115,7 @@ namespace Sass {
     Block* result = SASS_MEMORY_NEW(Block, rr->pstate());
     if (!(directive_exists || rr->is_keyframes()))
     {
-      Directive* empty_node = Cast<Directive>(rr);
+      AtRule* empty_node = Cast<AtRule>(rr);
       empty_node->block(SASS_MEMORY_NEW(Block, rr->block() ? rr->block()->pstate() : rr->pstate()));
       result->append(empty_node);
     }
@@ -287,7 +287,7 @@ namespace Sass {
     return bubble(m);
   }
 
-  Statement* Cssize::bubble(Directive* m)
+  Statement* Cssize::bubble(AtRule* m)
   {
     Block* bb = SASS_MEMORY_NEW(Block, this->parent()->pstate());
     ParentStatementObj new_rule = Cast<ParentStatement>(SASS_MEMORY_COPY(this->parent()));
@@ -297,7 +297,7 @@ namespace Sass {
 
     Block_Obj wrapper_block = SASS_MEMORY_NEW(Block, m->block() ? m->block()->pstate() : m->pstate());
     wrapper_block->append(new_rule);
-    Directive_Obj mm = SASS_MEMORY_NEW(Directive,
+    AtRuleObj mm = SASS_MEMORY_NEW(AtRule,
                                   m->pstate(),
                                   m->keyword(),
                                   m->selector(),

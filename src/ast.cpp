@@ -212,25 +212,25 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Directive::Directive(SourceSpan pstate, sass::string kwd, SelectorListObj sel, Block_Obj b, ExpressionObj val)
+  AtRule::AtRule(SourceSpan pstate, sass::string kwd, SelectorListObj sel, Block_Obj b, ExpressionObj val)
   : ParentStatement(pstate, b), keyword_(kwd), selector_(sel), value_(val) // set value manually if needed
   { statement_type(DIRECTIVE); }
-  Directive::Directive(const Directive* ptr)
+  AtRule::AtRule(const AtRule* ptr)
   : ParentStatement(ptr),
     keyword_(ptr->keyword_),
     selector_(ptr->selector_),
     value_(ptr->value_) // set value manually if needed
   { statement_type(DIRECTIVE); }
 
-  bool Directive::bubbles() { return is_keyframes() || is_media(); }
+  bool AtRule::bubbles() { return is_keyframes() || is_media(); }
 
-  bool Directive::is_media() {
+  bool AtRule::is_media() {
     return keyword_.compare("@-webkit-media") == 0 ||
             keyword_.compare("@-moz-media") == 0 ||
             keyword_.compare("@-o-media") == 0 ||
             keyword_.compare("@media") == 0;
   }
-  bool Directive::is_keyframes() {
+  bool AtRule::is_keyframes() {
     return keyword_.compare("@-webkit-keyframes") == 0 ||
             keyword_.compare("@-moz-keyframes") == 0 ||
             keyword_.compare("@-o-keyframes") == 0 ||
@@ -826,7 +826,7 @@ namespace Sass {
 
     if (s->statement_type() == Statement::DIRECTIVE)
     {
-      if (Directive_Obj dir = Cast<Directive>(s))
+      if (AtRuleObj dir = Cast<AtRule>(s))
       {
         sass::string keyword(dir->keyword());
         if (keyword.length() > 0) keyword.erase(0, 1);
@@ -845,7 +845,7 @@ namespace Sass {
     {
       return expression()->exclude("supports");
     }
-    if (Directive_Obj dir = Cast<Directive>(s))
+    if (AtRuleObj dir = Cast<AtRule>(s))
     {
       if (dir->is_keyframes()) return expression()->exclude("keyframes");
     }
@@ -917,7 +917,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(CssMediaQuery);
   IMPLEMENT_AST_OPERATORS(Import);
   IMPLEMENT_AST_OPERATORS(Import_Stub);
-  IMPLEMENT_AST_OPERATORS(Directive);
+  IMPLEMENT_AST_OPERATORS(AtRule);
   IMPLEMENT_AST_OPERATORS(AtRootRule);
   IMPLEMENT_AST_OPERATORS(WhileRule);
   IMPLEMENT_AST_OPERATORS(EachRule);

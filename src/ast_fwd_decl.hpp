@@ -36,7 +36,7 @@ namespace Sass {
   class CssMediaQuery;
 
   class SupportsRule;
-  class Directive;
+  class AtRule;
 
   class Keyframe_Rule;
   class AtRootRule;
@@ -138,7 +138,7 @@ namespace Sass {
   IMPL_MEM_OBJ(CssMediaRule);
   IMPL_MEM_OBJ(CssMediaQuery);
   IMPL_MEM_OBJ(SupportsRule);
-  IMPL_MEM_OBJ(Directive);
+  IMPL_MEM_OBJ(AtRule);
   IMPL_MEM_OBJ(Keyframe_Rule);
   IMPL_MEM_OBJ(AtRootRule);
   IMPL_MEM_OBJ(Declaration);

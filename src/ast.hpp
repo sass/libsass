@@ -569,16 +569,16 @@ namespace Sass {
   // At-rules -- arbitrary directives beginning with "@" that may have an
   // optional statement block.
   ///////////////////////////////////////////////////////////////////////
-  class Directive final : public ParentStatement {
+  class AtRule final : public ParentStatement {
     ADD_CONSTREF(sass::string, keyword)
     ADD_PROPERTY(SelectorListObj, selector)
     ADD_PROPERTY(ExpressionObj, value)
   public:
-    Directive(SourceSpan pstate, sass::string kwd, SelectorListObj sel = {}, Block_Obj b = {}, ExpressionObj val = {});
+    AtRule(SourceSpan pstate, sass::string kwd, SelectorListObj sel = {}, Block_Obj b = {}, ExpressionObj val = {});
     bool bubbles() override;
     bool is_media();
     bool is_keyframes();
-    ATTACH_AST_OPERATIONS(Directive)
+    ATTACH_AST_OPERATIONS(AtRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

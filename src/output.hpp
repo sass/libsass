@@ -30,7 +30,7 @@ namespace Sass {
     virtual void operator()(StyleRule*);
     virtual void operator()(SupportsRule*);
     virtual void operator()(CssMediaRule*);
-    virtual void operator()(Directive*);
+    virtual void operator()(AtRule*);
     virtual void operator()(Keyframe_Rule*);
     virtual void operator()(Import*);
     virtual void operator()(Comment*);

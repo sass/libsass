@@ -299,7 +299,7 @@ namespace Sass {
     return aa.detach();
   }
 
-  Statement* Expand::operator()(Directive* a)
+  Statement* Expand::operator()(AtRule* a)
   {
     LOCAL_FLAG(in_keyframes, a->is_keyframes());
     Block* ab = a->block();
@@ -310,7 +310,7 @@ namespace Sass {
     if (as) as = eval(as);
     popNullSelector();
     Block* bb = ab ? operator()(ab) : NULL;
-    Directive* aa = SASS_MEMORY_NEW(Directive,
+    AtRule* aa = SASS_MEMORY_NEW(AtRule,
                                   a->pstate(),
                                   a->keyword(),
                                   as,

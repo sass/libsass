@@ -24,7 +24,7 @@ namespace Sass {
     void operator()(StyleRule*);
     void operator()(CssMediaRule*);
     void operator()(SupportsRule*);
-    void operator()(Directive*);
+    void operator()(AtRule*);
 
     // ignore missed types
     template <typename U>

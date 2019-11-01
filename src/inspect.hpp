@@ -24,7 +24,7 @@ namespace Sass {
     virtual void operator()(Bubble*);
     virtual void operator()(SupportsRule*);
     virtual void operator()(AtRootRule*);
-    virtual void operator()(Directive*);
+    virtual void operator()(AtRule*);
     virtual void operator()(Keyframe_Rule*);
     virtual void operator()(Declaration*);
     virtual void operator()(Assignment*);

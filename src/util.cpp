@@ -547,7 +547,7 @@ namespace Sass {
       bool hasPrintableChildBlocks = false;
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement_Obj stm = b->at(i);
-        if (Cast<Directive>(stm)) {
+        if (Cast<AtRule>(stm)) {
           return true;
         } else if (Declaration* d = Cast<Declaration>(stm)) {
           return isPrintable(d, style);
@@ -606,7 +606,7 @@ namespace Sass {
       bool hasPrintableChildBlocks = false;
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement_Obj stm = b->at(i);
-        if (Cast<Declaration>(stm) || Cast<Directive>(stm)) {
+        if (Cast<Declaration>(stm) || Cast<AtRule>(stm)) {
           hasDeclarations = true;
         }
         else if (ParentStatement* b = Cast<ParentStatement>(stm)) {
@@ -634,7 +634,7 @@ namespace Sass {
       if (m->empty()) return false;
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement_Obj stm = b->at(i);
-        if (Cast<Directive>(stm)) return true;
+        if (Cast<AtRule>(stm)) return true;
         else if (Cast<Declaration>(stm)) return true;
         else if (Comment* c = Cast<Comment>(stm)) {
           if (isPrintable(c, style)) {
@@ -686,7 +686,7 @@ namespace Sass {
 
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement_Obj stm = b->at(i);
-        if (Cast<Declaration>(stm) || Cast<Directive>(stm)) {
+        if (Cast<Declaration>(stm) || Cast<AtRule>(stm)) {
           return true;
         }
         else if (Comment* c = Cast<Comment>(stm)) {

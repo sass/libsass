@@ -70,7 +70,7 @@ namespace Sass {
 
     Statement* operator()(SupportsRule*);
     Statement* operator()(AtRootRule*);
-    Statement* operator()(Directive*);
+    Statement* operator()(AtRule*);
     Statement* operator()(Declaration*);
     Statement* operator()(Assignment*);
     Statement* operator()(Import*);

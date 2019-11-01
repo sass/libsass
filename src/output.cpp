@@ -253,7 +253,7 @@ namespace Sass {
     }
   }
 
-  void Output::operator()(Directive* a)
+  void Output::operator()(AtRule* a)
   {
     sass::string      kwd   = a->keyword();
     Selector_Obj   s     = a->selector();

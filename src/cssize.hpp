@@ -26,7 +26,7 @@ namespace Sass {
     Statement* operator()(CssMediaRule*);
     Statement* operator()(SupportsRule*);
     Statement* operator()(AtRootRule*);
-    Statement* operator()(Directive*);
+    Statement* operator()(AtRule*);
     Statement* operator()(Keyframe_Rule*);
     Statement* operator()(Trace*);
     Statement* operator()(Declaration*);
@@ -49,7 +49,7 @@ namespace Sass {
 
     Statement* parent();
     sass::vector<std::pair<bool, Block_Obj>> slice_by_bubble(Block*);
-    Statement* bubble(Directive*);
+    Statement* bubble(AtRule*);
     Statement* bubble(AtRootRule*);
     Statement* bubble(CssMediaRule*);
     Statement* bubble(SupportsRule*);

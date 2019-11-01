@@ -665,9 +665,9 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     std::cerr << " " << ParentStatement->tabs() << std::endl;
     if (ParentStatement->name()) debug_ast(ParentStatement->name(), ind + "@");
     if (ParentStatement->block()) for(const Statement_Obj& i : ParentStatement->block()->elements()) { debug_ast(i, ind + " ", env); }
-  } else if (Cast<Directive>(node)) {
-    Directive* block = Cast<Directive>(node);
-    std::cerr << ind << "Directive " << block;
+  } else if (Cast<AtRule>(node)) {
+    AtRule* block = Cast<AtRule>(node);
+    std::cerr << ind << "AtRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [" << block->keyword() << "] " << block->tabs() << std::endl;
     debug_ast(block->selector(), ind + "~", env);

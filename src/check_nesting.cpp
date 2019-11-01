@@ -353,7 +353,7 @@ namespace Sass {
 
   bool CheckNesting::is_charset(Statement* n)
   {
-    Directive* d = Cast<Directive>(n);
+    AtRule* d = Cast<AtRule>(n);
     return d && d->keyword() == "charset";
   }
 
@@ -384,7 +384,7 @@ namespace Sass {
 
   bool CheckNesting::is_directive_node(Statement* n)
   {
-    return Cast<Directive>(n) ||
+    return Cast<AtRule>(n) ||
            Cast<Import>(n) ||
       Cast<MediaRule>(n) ||
       Cast<CssMediaRule>(n) ||

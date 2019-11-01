@@ -142,7 +142,7 @@ namespace Sass {
     if(at_root_block->block()) at_root_block->block()->perform(this);
   }
 
-  void Inspect::operator()(Directive* at_rule)
+  void Inspect::operator()(AtRule* at_rule)
   {
     append_indentation();
     append_token(at_rule->keyword(), at_rule);
