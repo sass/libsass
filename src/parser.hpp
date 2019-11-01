@@ -325,7 +325,7 @@ namespace Sass {
     At_Root_Query_Obj parse_at_root_query();
     String_Schema_Obj parse_almost_any_value();
     Directive_Obj parse_directive();
-    Warning_Obj parse_warning();
+    WarningRuleObj parse_warning();
     Error_Obj parse_error();
     Debug_Obj parse_debug();
 

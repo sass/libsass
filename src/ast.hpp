@@ -657,11 +657,11 @@ namespace Sass {
   //////////////////////////////
   // The Sass `@warn` directive.
   //////////////////////////////
-  class Warning final : public Statement {
+  class WarningRule final : public Statement {
     ADD_PROPERTY(Expression_Obj, message)
   public:
-    Warning(ParserState pstate, Expression_Obj msg);
-    ATTACH_AST_OPERATIONS(Warning)
+    WarningRule(ParserState pstate, Expression_Obj msg);
+    ATTACH_AST_OPERATIONS(WarningRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

@@ -75,7 +75,7 @@ namespace Sass {
     Statement* operator()(Assignment*);
     Statement* operator()(Import*);
     Statement* operator()(Import_Stub*);
-    Statement* operator()(Warning*);
+    Statement* operator()(WarningRule*);
     Statement* operator()(Error*);
     Statement* operator()(Debug*);
     Statement* operator()(Comment*);

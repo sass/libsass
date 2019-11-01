@@ -30,7 +30,7 @@ namespace Sass {
     virtual void operator()(Assignment*);
     virtual void operator()(Import*);
     virtual void operator()(Import_Stub*);
-    virtual void operator()(Warning*);
+    virtual void operator()(WarningRule*);
     virtual void operator()(Error*);
     virtual void operator()(Debug*);
     virtual void operator()(Comment*);

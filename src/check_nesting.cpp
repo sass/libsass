@@ -273,7 +273,7 @@ namespace Sass {
         Cast<Variable>(child) ||
         // Ruby Sass doesn't distinguish variables and assignments
         Cast<Assignment>(child) ||
-        Cast<Warning>(child) ||
+        Cast<WarningRule>(child) ||
         Cast<Error>(child)
     )) {
       error(child, traces, "Functions can only contain variable declarations and control directives.");
