@@ -87,7 +87,7 @@ namespace Sass {
     // they don't have any specific implementation (yet)
     IDSelector* operator()(IDSelector* s) { return s; };
     Class_Selector* operator()(Class_Selector* s) { return s; };
-    Type_Selector* operator()(Type_Selector* s) { return s; };
+    TypeSelector* operator()(TypeSelector* s) { return s; };
     Attribute_Selector* operator()(Attribute_Selector* s) { return s; };
     Placeholder_Selector* operator()(Placeholder_Selector* s) { return s; };
 

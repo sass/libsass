@@ -305,9 +305,9 @@ namespace Sass {
     return sel ? *this == *sel : false;
   }
 
-  bool Type_Selector::operator== (const SimpleSelector& rhs) const
+  bool TypeSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Type_Selector>(&rhs);
+    auto sel = Cast<TypeSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
@@ -344,7 +344,7 @@ namespace Sass {
     return name() == rhs.name();
   }
 
-  bool Type_Selector::operator== (const Type_Selector& rhs) const
+  bool TypeSelector::operator== (const TypeSelector& rhs) const
   {
     return is_ns_eq(rhs) && name() == rhs.name();
   }

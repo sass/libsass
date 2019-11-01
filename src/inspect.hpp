@@ -82,7 +82,7 @@ namespace Sass {
     // selectors
     virtual void operator()(Selector_Schema*);
     virtual void operator()(Placeholder_Selector*);
-    virtual void operator()(Type_Selector*);
+    virtual void operator()(TypeSelector*);
     virtual void operator()(Class_Selector*);
     virtual void operator()(IDSelector*);
     virtual void operator()(Attribute_Selector*);

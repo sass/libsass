@@ -454,9 +454,9 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " <<" << selector->ns_name() << ">>";
     std::cerr << std::endl;
-  } else if (Cast<Type_Selector>(node)) {
-    Type_Selector* selector = Cast<Type_Selector>(node);
-    std::cerr << ind << "Type_Selector " << selector;
+  } else if (Cast<TypeSelector>(node)) {
+    TypeSelector* selector = Cast<TypeSelector>(node);
+    std::cerr << ind << "TypeSelector " << selector;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " <<" << selector->ns_name() << ">>";

@@ -118,7 +118,7 @@ namespace Sass {
 
     /* helper function for syntax sugar */
     virtual IDSelector* getIdSelector() { return NULL; }
-    virtual Type_Selector* getTypeSelector() { return NULL; }
+    virtual TypeSelector* getTypeSelector() { return NULL; }
     virtual Pseudo_Selector* getPseudoSelector() { return NULL; }
 
     ComplexSelectorObj wrapInComplex();
@@ -159,16 +159,16 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////
   // Type selectors (and the universal selector) -- e.g., div, span, *.
   /////////////////////////////////////////////////////////////////////
-  class Type_Selector final : public SimpleSelector {
+  class TypeSelector final : public SimpleSelector {
   public:
-    Type_Selector(ParserState pstate, sass::string n);
+    TypeSelector(ParserState pstate, sass::string n);
     virtual unsigned long specificity() const override;
     SimpleSelector* unifyWith(const SimpleSelector*);
     CompoundSelector* unifyWith(CompoundSelector*) override;
-    Type_Selector* getTypeSelector() override { return this; }
+    TypeSelector* getTypeSelector() override { return this; }
     bool operator==(const SimpleSelector& rhs) const final override;
-    ATTACH_CMP_OPERATIONS(Type_Selector)
-    ATTACH_AST_OPERATIONS(Type_Selector)
+    ATTACH_CMP_OPERATIONS(TypeSelector)
+    ATTACH_AST_OPERATIONS(TypeSelector)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

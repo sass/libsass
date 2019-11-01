@@ -120,13 +120,13 @@ namespace Sass {
   // ##########################################################################
   // This is implemented in `selector/type.dart` as `PseudoSelector::unify`
   // ##########################################################################
-  CompoundSelector* Type_Selector::unifyWith(CompoundSelector* rhs)
+  CompoundSelector* TypeSelector::unifyWith(CompoundSelector* rhs)
   {
     if (rhs->empty()) {
       rhs->append(this);
       return rhs;
     }
-    Type_Selector* type = Cast<Type_Selector>(rhs->at(0));
+    TypeSelector* type = Cast<TypeSelector>(rhs->at(0));
     if (type != nullptr) {
       SimpleSelector* unified = unifyWith(type);
       if (unified == nullptr) {
@@ -206,7 +206,7 @@ namespace Sass {
   // or [TypeSelector]s. If no such selector can be produced, returns `null`.
   // Note: libsass handles universal selector directly within the type selector
   // ##########################################################################
-  SimpleSelector* Type_Selector::unifyWith(const SimpleSelector* rhs)
+  SimpleSelector* TypeSelector::unifyWith(const SimpleSelector* rhs)
   {
     bool rhs_ns = false;
     if (!(is_ns_eq(*rhs) || rhs->is_universal_ns())) {
@@ -229,7 +229,7 @@ namespace Sass {
     if (rhs_name) name(rhs->name());
     return this;
   }
-  // EO Type_Selector::unifyWith(const SimpleSelector*)
+  // EO TypeSelector::unifyWith(const SimpleSelector*)
 
   // ##########################################################################
   // Unify two complex selectors. Internally calls `unifyComplex`

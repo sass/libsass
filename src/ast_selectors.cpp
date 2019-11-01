@@ -191,14 +191,14 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Type_Selector::Type_Selector(ParserState pstate, sass::string n)
+  TypeSelector::TypeSelector(ParserState pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(TYPE_SEL); }
-  Type_Selector::Type_Selector(const Type_Selector* ptr)
+  TypeSelector::TypeSelector(const TypeSelector* ptr)
   : SimpleSelector(ptr)
   { simple_type(TYPE_SEL); }
 
-  unsigned long Type_Selector::specificity() const
+  unsigned long TypeSelector::specificity() const
   {
     if (name() == "*") return 0;
     else return Constants::Specificity_Element;
@@ -549,7 +549,7 @@ namespace Sass {
   {
     if (hasRealParent()) return true;
     // ToDo: dart sass has another check?
-    // if (Cast<Type_Selector>(front)) {
+    // if (Cast<TypeSelector>(front)) {
     //  if (front->ns() != "") return false;
     // }
     for (const SimpleSelector* s : elements()) {
@@ -887,7 +887,7 @@ namespace Sass {
               SimpleSelectorObj back = tail->last();
               SimpleSelectorObj front = first();
               auto simple_back = Cast<SimpleSelector>(back);
-              auto simple_front = Cast<Type_Selector>(front);
+              auto simple_front = Cast<TypeSelector>(front);
               if (simple_front && simple_back) {
                 simple_back = SASS_MEMORY_COPY(simple_back);
                 auto name = simple_back->name();
@@ -1021,7 +1021,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(Selector_Schema);
   IMPLEMENT_AST_OPERATORS(Placeholder_Selector);
   IMPLEMENT_AST_OPERATORS(Attribute_Selector);
-  IMPLEMENT_AST_OPERATORS(Type_Selector);
+  IMPLEMENT_AST_OPERATORS(TypeSelector);
   IMPLEMENT_AST_OPERATORS(Class_Selector);
   IMPLEMENT_AST_OPERATORS(IDSelector);
   IMPLEMENT_AST_OPERATORS(Pseudo_Selector);

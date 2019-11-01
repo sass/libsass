@@ -940,7 +940,7 @@ namespace Sass {
 
   }
 
-  void Inspect::operator()(Type_Selector* s)
+  void Inspect::operator()(TypeSelector* s)
   {
     append_token(s->ns_name(), s);
   }

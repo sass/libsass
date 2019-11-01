@@ -109,11 +109,11 @@ namespace Sass {
   // ##########################################################################
   // ##########################################################################
   bool typeIsSuperselectorOfCompound(
-    const Type_Selector_Obj& type,
+    const TypeSelectorObj& type,
     const CompoundSelectorObj& compound)
   {
     for (const SimpleSelectorObj& simple : compound->elements()) {
-      if (const Type_Selector_Obj& rhs = Cast<Type_Selector>(simple)) {
+      if (const TypeSelectorObj& rhs = Cast<TypeSelector>(simple)) {
         if (*type != *rhs) return true;
       }
     }
@@ -161,7 +161,7 @@ namespace Sass {
     const ComplexSelectorObj& parent)
   {
     for (const SimpleSelectorObj& simple2 : compound2->elements()) {
-      if (const Type_Selector_Obj& type2 = Cast<Type_Selector>(simple2)) {
+      if (const TypeSelectorObj& type2 = Cast<TypeSelector>(simple2)) {
         if (const CompoundSelectorObj& compound1 = Cast<CompoundSelector>(parent->last())) {
           if (typeIsSuperselectorOfCompound(type2, compound1)) return true;
         }

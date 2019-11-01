@@ -159,7 +159,7 @@ namespace Sass {
       // parse type selector
       else if (lex< re_type_selector >(false))
       {
-        seq->append(SASS_MEMORY_NEW(Type_Selector, pstate, lexed));
+        seq->append(SASS_MEMORY_NEW(TypeSelector, pstate, lexed));
       }
       // peek for abort conditions
       else if (peek< spaces >()) break;
