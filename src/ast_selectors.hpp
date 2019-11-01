@@ -117,7 +117,7 @@ namespace Sass {
     virtual CompoundSelector* unifyWith(CompoundSelector*);
 
     /* helper function for syntax sugar */
-    virtual Id_Selector* getIdSelector() { return NULL; }
+    virtual IDSelector* getIdSelector() { return NULL; }
     virtual Type_Selector* getTypeSelector() { return NULL; }
     virtual Pseudo_Selector* getPseudoSelector() { return NULL; }
 
@@ -188,15 +188,15 @@ namespace Sass {
   ////////////////////////////////////////////////
   // ID selectors -- i.e., #foo.
   ////////////////////////////////////////////////
-  class Id_Selector final : public SimpleSelector {
+  class IDSelector final : public SimpleSelector {
   public:
-    Id_Selector(ParserState pstate, sass::string n);
+    IDSelector(ParserState pstate, sass::string n);
     virtual unsigned long specificity() const override;
     CompoundSelector* unifyWith(CompoundSelector*) override;
-    Id_Selector* getIdSelector() final override { return this; }
+    IDSelector* getIdSelector() final override { return this; }
     bool operator==(const SimpleSelector& rhs) const final override;
-    ATTACH_CMP_OPERATIONS(Id_Selector)
-    ATTACH_AST_OPERATIONS(Id_Selector)
+    ATTACH_CMP_OPERATIONS(IDSelector)
+    ATTACH_AST_OPERATIONS(IDSelector)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

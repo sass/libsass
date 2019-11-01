@@ -222,14 +222,14 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Id_Selector::Id_Selector(ParserState pstate, sass::string n)
+  IDSelector::IDSelector(ParserState pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(ID_SEL); }
-  Id_Selector::Id_Selector(const Id_Selector* ptr)
+  IDSelector::IDSelector(const IDSelector* ptr)
   : SimpleSelector(ptr)
   { simple_type(ID_SEL); }
 
-  unsigned long Id_Selector::specificity() const
+  unsigned long IDSelector::specificity() const
   {
     return Constants::Specificity_ID;
   }
@@ -1023,7 +1023,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(Attribute_Selector);
   IMPLEMENT_AST_OPERATORS(Type_Selector);
   IMPLEMENT_AST_OPERATORS(Class_Selector);
-  IMPLEMENT_AST_OPERATORS(Id_Selector);
+  IMPLEMENT_AST_OPERATORS(IDSelector);
   IMPLEMENT_AST_OPERATORS(Pseudo_Selector);
   IMPLEMENT_AST_OPERATORS(SelectorCombinator);
   IMPLEMENT_AST_OPERATORS(CompoundSelector);

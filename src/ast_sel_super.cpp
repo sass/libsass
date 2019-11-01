@@ -124,11 +124,11 @@ namespace Sass {
   // ##########################################################################
   // ##########################################################################
   bool idIsSuperselectorOfCompound(
-    const Id_Selector_Obj& id,
+    const IDSelectorObj& id,
     const CompoundSelectorObj& compound)
   {
     for (const SimpleSelectorObj& simple : compound->elements()) {
-      if (const Id_Selector_Obj& rhs = Cast<Id_Selector>(simple)) {
+      if (const IDSelectorObj& rhs = Cast<IDSelector>(simple)) {
         if (*id != *rhs) return true;
       }
     }
@@ -166,7 +166,7 @@ namespace Sass {
           if (typeIsSuperselectorOfCompound(type2, compound1)) return true;
         }
       }
-      else if (const Id_Selector_Obj& id2 = Cast<Id_Selector>(simple2)) {
+      else if (const IDSelectorObj& id2 = Cast<IDSelector>(simple2)) {
         if (const CompoundSelectorObj& compound1 = Cast<CompoundSelector>(parent->last())) {
           if (idIsSuperselectorOfCompound(id2, compound1)) return true;
         }

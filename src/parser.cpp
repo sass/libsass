@@ -680,7 +680,7 @@ namespace Sass {
       return SASS_MEMORY_NEW(Class_Selector, pstate, lexed);
     }
     else if (lex< id_name >()) {
-      return SASS_MEMORY_NEW(Id_Selector, pstate, lexed);
+      return SASS_MEMORY_NEW(IDSelector, pstate, lexed);
     }
     else if (lex< alternatives < variable, number, static_reference_combinator > >()) {
       return SASS_MEMORY_NEW(Type_Selector, pstate, lexed);

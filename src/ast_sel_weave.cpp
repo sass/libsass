@@ -24,7 +24,7 @@ namespace Sass {
   // ##########################################################################
   bool isUnique(const SimpleSelector* simple)
   {
-    if (Cast<Id_Selector>(simple)) return true;
+    if (Cast<IDSelector>(simple)) return true;
     if (const Pseudo_Selector * pseudo = Cast<Pseudo_Selector>(simple)) {
       if (pseudo->is_pseudo_element()) return true;
     }

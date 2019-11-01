@@ -299,9 +299,9 @@ namespace Sass {
   /*#########################################################################*/
   /*#########################################################################*/
 
-  bool Id_Selector::operator== (const SimpleSelector& rhs) const
+  bool IDSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Id_Selector>(&rhs);
+    auto sel = Cast<IDSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
@@ -338,7 +338,7 @@ namespace Sass {
   /*#########################################################################*/
   /*#########################################################################*/
 
-  bool Id_Selector::operator== (const Id_Selector& rhs) const
+  bool IDSelector::operator== (const IDSelector& rhs) const
   {
     // ID has no namespacing
     return name() == rhs.name();

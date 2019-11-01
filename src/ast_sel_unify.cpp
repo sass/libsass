@@ -143,10 +143,10 @@ namespace Sass {
   // ##########################################################################
   // This is implemented in `selector/id.dart` as `PseudoSelector::unify`
   // ##########################################################################
-  CompoundSelector* Id_Selector::unifyWith(CompoundSelector* rhs)
+  CompoundSelector* IDSelector::unifyWith(CompoundSelector* rhs)
   {
     for (const SimpleSelector* sel : rhs->elements()) {
-      if (const Id_Selector* id_sel = Cast<Id_Selector>(sel)) {
+      if (const IDSelector* id_sel = Cast<IDSelector>(sel)) {
         if (id_sel->name() != name()) return nullptr;
       }
     }
