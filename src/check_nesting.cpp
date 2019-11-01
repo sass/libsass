@@ -204,7 +204,7 @@ namespace Sass {
   // {
   //   for (auto pp : this->parents) {
   //     if (
-  //         Cast<Each>(pp) ||
+  //         Cast<EachRule>(pp) ||
   //         Cast<For>(pp) ||
   //         Cast<If>(pp) ||
   //         Cast<WhileRule>(pp) ||
@@ -229,7 +229,7 @@ namespace Sass {
   {
     for (Statement* pp : this->parents) {
       if (
-          Cast<Each>(pp) ||
+          Cast<EachRule>(pp) ||
           Cast<For>(pp) ||
           Cast<If>(pp) ||
           Cast<WhileRule>(pp) ||
@@ -246,7 +246,7 @@ namespace Sass {
   {
     for (Statement* pp : this->parents) {
       if (
-          Cast<Each>(pp) ||
+          Cast<EachRule>(pp) ||
           Cast<For>(pp) ||
           Cast<If>(pp) ||
           Cast<WhileRule>(pp) ||
@@ -262,7 +262,7 @@ namespace Sass {
   void CheckNesting::invalid_function_child(Statement* child)
   {
     if (!(
-        Cast<Each>(child) ||
+        Cast<EachRule>(child) ||
         Cast<For>(child) ||
         Cast<If>(child) ||
         Cast<WhileRule>(child) ||
@@ -283,7 +283,7 @@ namespace Sass {
   void CheckNesting::invalid_prop_child(Statement* child)
   {
     if (!(
-        Cast<Each>(child) ||
+        Cast<EachRule>(child) ||
         Cast<For>(child) ||
         Cast<If>(child) ||
         Cast<WhileRule>(child) ||
@@ -343,7 +343,7 @@ namespace Sass {
                              !is_at_root_node(grandparent);
 
     return Cast<Import>(parent) ||
-           Cast<Each>(parent) ||
+           Cast<EachRule>(parent) ||
            Cast<For>(parent) ||
            Cast<If>(parent) ||
            Cast<WhileRule>(parent) ||

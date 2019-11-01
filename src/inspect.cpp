@@ -310,7 +310,7 @@ namespace Sass {
     loop->block()->perform(this);
   }
 
-  void Inspect::operator()(Each* loop)
+  void Inspect::operator()(EachRule* loop)
   {
     append_indentation();
     append_token("@each", loop);

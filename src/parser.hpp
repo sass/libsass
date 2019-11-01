@@ -302,7 +302,7 @@ namespace Sass {
     String_Obj parse_identifier_schema();
     If_Obj parse_if_directive(bool else_if = false);
     For_Obj parse_for_directive();
-    Each_Obj parse_each_directive();
+    EachRuleObj parse_each_directive();
     WhileRuleObj parse_while_directive();
     MediaRule_Obj parseMediaRule();
     sass::vector<CssMediaQuery_Obj> parseCssMediaQueries();

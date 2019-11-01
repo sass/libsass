@@ -223,7 +223,7 @@ namespace Sass {
 
   // Eval does not create a new env scope
   // But iteration vars are reset afterwards
-  Expression* Eval::operator()(Each* e)
+  Expression* Eval::operator()(EachRule* e)
   {
     sass::vector<sass::string> variables(e->variables());
     Expression_Obj expr = e->list()->perform(this);

@@ -38,7 +38,7 @@ namespace Sass {
     // Statement* operator()(Comment*);
     // Statement* operator()(If*);
     // Statement* operator()(For*);
-    // Statement* operator()(Each*);
+    // Statement* operator()(EachRule*);
     // Statement* operator()(WhileRule*);
     // Statement* operator()(Return*);
     // Statement* operator()(ExtendRule*);
