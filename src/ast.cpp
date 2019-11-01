@@ -212,7 +212,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Directive::Directive(ParserState pstate, sass::string kwd, SelectorListObj sel, Block_Obj b, Expression_Obj val)
+  Directive::Directive(ParserState pstate, sass::string kwd, SelectorListObj sel, Block_Obj b, ExpressionObj val)
   : ParentStatement(pstate, b), keyword_(kwd), selector_(sel), value_(val) // set value manually if needed
   { statement_type(DIRECTIVE); }
   Directive::Directive(const Directive* ptr)
@@ -250,7 +250,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Declaration::Declaration(ParserState pstate, String_Obj prop, Expression_Obj val, bool i, bool c, Block_Obj b)
+  Declaration::Declaration(ParserState pstate, String_Obj prop, ExpressionObj val, bool i, bool c, Block_Obj b)
   : ParentStatement(pstate, b), property_(prop), value_(val), is_important_(i), is_custom_property_(c), is_indented_(false)
   { statement_type(DECLARATION); }
   Declaration::Declaration(const Declaration* ptr)
@@ -271,7 +271,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Assignment::Assignment(ParserState pstate, sass::string var, Expression_Obj val, bool is_default, bool is_global)
+  Assignment::Assignment(ParserState pstate, sass::string var, ExpressionObj val, bool is_default, bool is_global)
   : Statement(pstate), variable_(var), value_(val), is_default_(is_default), is_global_(is_global)
   { statement_type(ASSIGNMENT); }
   Assignment::Assignment(const Assignment* ptr)
@@ -287,7 +287,7 @@ namespace Sass {
 
   Import::Import(ParserState pstate)
   : Statement(pstate),
-    urls_(sass::vector<Expression_Obj>()),
+    urls_(sass::vector<ExpressionObj>()),
     incs_(sass::vector<Include>()),
     import_queries_()
   { statement_type(IMPORT); }
@@ -299,7 +299,7 @@ namespace Sass {
   { statement_type(IMPORT); }
 
   sass::vector<Include>& Import::incs() { return incs_; }
-  sass::vector<Expression_Obj>& Import::urls() { return urls_; }
+  sass::vector<ExpressionObj>& Import::urls() { return urls_; }
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
@@ -317,7 +317,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  WarningRule::WarningRule(ParserState pstate, Expression_Obj msg)
+  WarningRule::WarningRule(ParserState pstate, ExpressionObj msg)
   : Statement(pstate), message_(msg)
   { statement_type(WARNING); }
   WarningRule::WarningRule(const WarningRule* ptr)
@@ -327,7 +327,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  ErrorRule::ErrorRule(ParserState pstate, Expression_Obj msg)
+  ErrorRule::ErrorRule(ParserState pstate, ExpressionObj msg)
   : Statement(pstate), message_(msg)
   { statement_type(ERROR); }
   ErrorRule::ErrorRule(const ErrorRule* ptr)
@@ -337,7 +337,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  DebugRule::DebugRule(ParserState pstate, Expression_Obj val)
+  DebugRule::DebugRule(ParserState pstate, ExpressionObj val)
   : Statement(pstate), value_(val)
   { statement_type(DEBUGSTMT); }
   DebugRule::DebugRule(const DebugRule* ptr)
@@ -364,7 +364,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  If::If(ParserState pstate, Expression_Obj pred, Block_Obj con, Block_Obj alt)
+  If::If(ParserState pstate, ExpressionObj pred, Block_Obj con, Block_Obj alt)
   : ParentStatement(pstate, con), predicate_(pred), alternative_(alt)
   { statement_type(IF); }
   If::If(const If* ptr)
@@ -382,7 +382,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   ForRule::ForRule(ParserState pstate,
-      sass::string var, Expression_Obj lo, Expression_Obj hi, Block_Obj b, bool inc)
+      sass::string var, ExpressionObj lo, ExpressionObj hi, Block_Obj b, bool inc)
   : ParentStatement(pstate, b),
     variable_(var), lower_bound_(lo), upper_bound_(hi), is_inclusive_(inc)
   { statement_type(FOR); }
@@ -397,7 +397,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  EachRule::EachRule(ParserState pstate, sass::vector<sass::string> vars, Expression_Obj lst, Block_Obj b)
+  EachRule::EachRule(ParserState pstate, sass::vector<sass::string> vars, ExpressionObj lst, Block_Obj b)
   : ParentStatement(pstate, b), variables_(vars), list_(lst)
   { statement_type(EACH); }
   EachRule::EachRule(const EachRule* ptr)
@@ -407,7 +407,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  WhileRule::WhileRule(ParserState pstate, Expression_Obj pred, Block_Obj b)
+  WhileRule::WhileRule(ParserState pstate, ExpressionObj pred, Block_Obj b)
   : ParentStatement(pstate, b), predicate_(pred)
   { statement_type(WHILE); }
   WhileRule::WhileRule(const WhileRule* ptr)
@@ -417,7 +417,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Return::Return(ParserState pstate, Expression_Obj val)
+  Return::Return(ParserState pstate, ExpressionObj val)
   : Statement(pstate), value_(val)
   { statement_type(RETURN); }
   Return::Return(const Return* ptr)
@@ -557,7 +557,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Unary_Expression::Unary_Expression(ParserState pstate, Type t, Expression_Obj o)
+  Unary_Expression::Unary_Expression(ParserState pstate, Type t, ExpressionObj o)
   : Expression(pstate), optype_(t), operand_(o), hash_(0)
   { }
   Unary_Expression::Unary_Expression(const Unary_Expression* ptr)
@@ -602,7 +602,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Argument::Argument(ParserState pstate, Expression_Obj val, sass::string n, bool rest, bool keyword)
+  Argument::Argument(ParserState pstate, ExpressionObj val, sass::string n, bool rest, bool keyword)
   : Expression(pstate), value_(val), name_(n), is_rest_argument_(rest), is_keyword_argument_(keyword), hash_(0)
   {
     if (!name_.empty() && is_rest_argument_) {
@@ -739,12 +739,12 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Media_Query::Media_Query(ParserState pstate, String_Obj t, size_t s, bool n, bool r)
-  : Expression(pstate), Vectorized<Media_Query_Expression_Obj>(s),
+  : Expression(pstate), Vectorized<Media_Query_ExpressionObj>(s),
     media_type_(t), is_negated_(n), is_restricted_(r)
   { }
   Media_Query::Media_Query(const Media_Query* ptr)
   : Expression(ptr),
-    Vectorized<Media_Query_Expression_Obj>(*ptr),
+    Vectorized<Media_Query_ExpressionObj>(*ptr),
     media_type_(ptr->media_type_),
     is_negated_(ptr->is_negated_),
     is_restricted_(ptr->is_restricted_)
@@ -754,7 +754,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Media_Query_Expression::Media_Query_Expression(ParserState pstate,
-                          Expression_Obj f, Expression_Obj v, bool i)
+                          ExpressionObj f, ExpressionObj v, bool i)
   : Expression(pstate), feature_(f), value_(v), is_interpolated_(i)
   { }
   Media_Query_Expression::Media_Query_Expression(const Media_Query_Expression* ptr)
@@ -767,7 +767,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  At_Root_Query::At_Root_Query(ParserState pstate, Expression_Obj f, Expression_Obj v, bool i)
+  At_Root_Query::At_Root_Query(ParserState pstate, ExpressionObj f, ExpressionObj v, bool i)
   : Expression(pstate), feature_(f), value_(v)
   { }
   At_Root_Query::At_Root_Query(const At_Root_Query* ptr)
@@ -855,7 +855,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Parameter::Parameter(ParserState pstate, sass::string n, Expression_Obj def, bool rest)
+  Parameter::Parameter(ParserState pstate, sass::string n, ExpressionObj def, bool rest)
   : AST_Node(pstate), name_(n), default_value_(def), is_rest_parameter_(rest)
   { }
   Parameter::Parameter(const Parameter* ptr)

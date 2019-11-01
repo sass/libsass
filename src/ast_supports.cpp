@@ -68,7 +68,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Supports_Declaration::Supports_Declaration(ParserState pstate, Expression_Obj f, Expression_Obj v)
+  Supports_Declaration::Supports_Declaration(ParserState pstate, ExpressionObj f, ExpressionObj v)
   : Supports_Condition(pstate), feature_(f), value_(v)
   { }
   Supports_Declaration::Supports_Declaration(const Supports_Declaration* ptr)
@@ -85,7 +85,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Supports_Interpolation::Supports_Interpolation(ParserState pstate, Expression_Obj v)
+  Supports_Interpolation::Supports_Interpolation(ParserState pstate, ExpressionObj v)
   : Supports_Condition(pstate), value_(v)
   { }
   Supports_Interpolation::Supports_Interpolation(const Supports_Interpolation* ptr)

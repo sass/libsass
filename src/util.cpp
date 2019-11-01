@@ -589,7 +589,7 @@ namespace Sass {
 
     bool isPrintable(Declaration* d, Sass_Output_Style style)
     {
-      Expression_Obj val = d->value();
+      ExpressionObj val = d->value();
       if (String_Quoted_Obj sq = Cast<String_Quoted>(val)) return isPrintable(sq.ptr(), style);
       if (String_Constant_Obj sc = Cast<String_Constant>(val)) return isPrintable(sc.ptr(), style);
       return true;

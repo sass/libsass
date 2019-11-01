@@ -21,7 +21,7 @@ namespace Sass {
       List_Obj arglist = SASS_MEMORY_COPY(ARG("$args", List)); // copy
       Map_Obj result = SASS_MEMORY_NEW(Map, pstate, 1);
       for (size_t i = arglist->size(), L = arglist->length(); i < L; ++i) {
-        Expression_Obj obj = arglist->at(i);
+        ExpressionObj obj = arglist->at(i);
         Argument_Obj arg = (Argument*) obj.ptr(); // XXX
         sass::string name = sass::string(arg->name());
         name = name.erase(0, 1); // sanitize name (remove dollar sign)
@@ -104,7 +104,7 @@ namespace Sass {
       Map_Obj m = Cast<Map>(env["$list"]);
       List_Obj l = Cast<List>(env["$list"]);
       Number_Obj n = ARG("$n", Number);
-      Expression_Obj v = ARG("$value", Expression);
+      ExpressionObj v = ARG("$value", Expression);
       if (!l) {
         l = SASS_MEMORY_NEW(List, pstate, 1);
         l->append(ARG("$list", Expression));
@@ -127,7 +127,7 @@ namespace Sass {
     {
       Map_Obj m = Cast<Map>(env["$list"]);
       List_Obj l = Cast<List>(env["$list"]);
-      Expression_Obj v = ARG("$value", Expression);
+      ExpressionObj v = ARG("$value", Expression);
       if (!l) {
         l = SASS_MEMORY_NEW(List, pstate, 1);
         l->append(ARG("$list", Expression));
@@ -190,7 +190,7 @@ namespace Sass {
     {
       Map_Obj m = Cast<Map>(env["$list"]);
       List_Obj l = Cast<List>(env["$list"]);
-      Expression_Obj v = ARG("$val", Expression);
+      ExpressionObj v = ARG("$val", Expression);
       if (SelectorList * sl = Cast<SelectorList>(env["$list"])) {
         l = Cast<List>(Listize::perform(sl));
       }

@@ -110,7 +110,7 @@ namespace Sass {
         error("At least one argument must be passed.", pstate, traces);
       }
       for (size_t i = 0; i < L; ++i) {
-        Expression_Obj val = arglist->value_at_index(i);
+        ExpressionObj val = arglist->value_at_index(i);
         Number_Obj xi = Cast<Number>(val);
         if (!xi) {
           error("\"" + val->to_string(ctx.c_options) + "\" is not a number for `min'", pstate, traces);
@@ -132,7 +132,7 @@ namespace Sass {
         error("At least one argument must be passed.", pstate, traces);
       }
       for (size_t i = 0; i < L; ++i) {
-        Expression_Obj val = arglist->value_at_index(i);
+        ExpressionObj val = arglist->value_at_index(i);
         Number_Obj xi = Cast<Number>(val);
         if (!xi) {
           error("\"" + val->to_string(ctx.c_options) + "\" is not a number for `max'", pstate, traces);

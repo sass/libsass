@@ -94,10 +94,10 @@ namespace Sass {
   /////////////////////////////////////////////////////
   class Supports_Declaration : public Supports_Condition {
   private:
-    ADD_PROPERTY(Expression_Obj, feature);
-    ADD_PROPERTY(Expression_Obj, value);
+    ADD_PROPERTY(ExpressionObj, feature);
+    ADD_PROPERTY(ExpressionObj, value);
   public:
-    Supports_Declaration(ParserState pstate, Expression_Obj f, Expression_Obj v);
+    Supports_Declaration(ParserState pstate, ExpressionObj f, ExpressionObj v);
     virtual bool needs_parens(Supports_Condition_Obj cond) const override;
     ATTACH_AST_OPERATIONS(Supports_Declaration)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -108,9 +108,9 @@ namespace Sass {
   ///////////////////////////////////////////////
   class Supports_Interpolation : public Supports_Condition {
   private:
-    ADD_PROPERTY(Expression_Obj, value);
+    ADD_PROPERTY(ExpressionObj, value);
   public:
-    Supports_Interpolation(ParserState pstate, Expression_Obj v);
+    Supports_Interpolation(ParserState pstate, ExpressionObj v);
     virtual bool needs_parens(Supports_Condition_Obj cond) const override;
     ATTACH_AST_OPERATIONS(Supports_Interpolation)
     ATTACH_CRTP_PERFORM_METHODS()

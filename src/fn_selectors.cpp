@@ -25,7 +25,7 @@ namespace Sass {
       // Parse args into vector of selectors
       SelectorStack parsedSelectors;
       for (size_t i = 0, L = arglist->length(); i < L; ++i) {
-        Expression_Obj exp = Cast<Expression>(arglist->value_at_index(i));
+        ExpressionObj exp = Cast<Expression>(arglist->value_at_index(i));
         if (exp->concrete_type() == Expression::NULL_VAL) {
           error(
             "$selectors: null is not a valid selector: it must be a string,\n"

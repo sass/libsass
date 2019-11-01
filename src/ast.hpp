@@ -184,17 +184,17 @@ namespace Sass {
 
 namespace std {
   template<>
-  struct hash<Sass::Expression_Obj>
+  struct hash<Sass::ExpressionObj>
   {
-    size_t operator()(Sass::Expression_Obj s) const
+    size_t operator()(Sass::ExpressionObj s) const
     {
       return s->hash();
     }
   };
   template<>
-  struct equal_to<Sass::Expression_Obj>
+  struct equal_to<Sass::ExpressionObj>
   {
-    bool operator()( Sass::Expression_Obj lhs,  Sass::Expression_Obj rhs) const
+    bool operator()( Sass::ExpressionObj lhs,  Sass::ExpressionObj rhs) const
     {
       return lhs->hash() == rhs->hash();
     }
@@ -440,10 +440,10 @@ namespace Sass {
     const sass::vector<K>& keys() const { return _keys; }
     const sass::vector<T>& values() const { return _values; }
 
-//    std::unordered_map<Expression_Obj, Expression_Obj>::iterator end() { return elements_.end(); }
-//    std::unordered_map<Expression_Obj, Expression_Obj>::iterator begin() { return elements_.begin(); }
-//    std::unordered_map<Expression_Obj, Expression_Obj>::const_iterator end() const { return elements_.end(); }
-//    std::unordered_map<Expression_Obj, Expression_Obj>::const_iterator begin() const { return elements_.begin(); }
+//    std::unordered_map<ExpressionObj, ExpressionObj>::iterator end() { return elements_.end(); }
+//    std::unordered_map<ExpressionObj, ExpressionObj>::iterator begin() { return elements_.begin(); }
+//    std::unordered_map<ExpressionObj, ExpressionObj>::const_iterator end() const { return elements_.end(); }
+//    std::unordered_map<ExpressionObj, ExpressionObj>::const_iterator begin() const { return elements_.begin(); }
 
   };
   template <typename K, typename T, typename U>
@@ -572,9 +572,9 @@ namespace Sass {
   class Directive final : public ParentStatement {
     ADD_CONSTREF(sass::string, keyword)
     ADD_PROPERTY(SelectorListObj, selector)
-    ADD_PROPERTY(Expression_Obj, value)
+    ADD_PROPERTY(ExpressionObj, value)
   public:
-    Directive(ParserState pstate, sass::string kwd, SelectorListObj sel = {}, Block_Obj b = {}, Expression_Obj val = {});
+    Directive(ParserState pstate, sass::string kwd, SelectorListObj sel = {}, Block_Obj b = {}, ExpressionObj val = {});
     bool bubbles() override;
     bool is_media();
     bool is_keyframes();
@@ -600,12 +600,12 @@ namespace Sass {
   ////////////////////////////////////////////////////////////////////////
   class Declaration final : public ParentStatement {
     ADD_PROPERTY(String_Obj, property)
-    ADD_PROPERTY(Expression_Obj, value)
+    ADD_PROPERTY(ExpressionObj, value)
     ADD_PROPERTY(bool, is_important)
     ADD_PROPERTY(bool, is_custom_property)
     ADD_PROPERTY(bool, is_indented)
   public:
-    Declaration(ParserState pstate, String_Obj prop, Expression_Obj val, bool i = false, bool c = false, Block_Obj b = {});
+    Declaration(ParserState pstate, String_Obj prop, ExpressionObj val, bool i = false, bool c = false, Block_Obj b = {});
     bool is_invisible() const override;
     ATTACH_AST_OPERATIONS(Declaration)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -616,11 +616,11 @@ namespace Sass {
   /////////////////////////////////////
   class Assignment final : public Statement {
     ADD_CONSTREF(sass::string, variable)
-    ADD_PROPERTY(Expression_Obj, value)
+    ADD_PROPERTY(ExpressionObj, value)
     ADD_PROPERTY(bool, is_default)
     ADD_PROPERTY(bool, is_global)
   public:
-    Assignment(ParserState pstate, sass::string var, Expression_Obj val, bool is_default = false, bool is_global = false);
+    Assignment(ParserState pstate, sass::string var, ExpressionObj val, bool is_default = false, bool is_global = false);
     ATTACH_AST_OPERATIONS(Assignment)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -630,13 +630,13 @@ namespace Sass {
   // necessary to store a list of each in an Import node.
   ////////////////////////////////////////////////////////////////////////////
   class Import final : public Statement {
-    sass::vector<Expression_Obj> urls_;
+    sass::vector<ExpressionObj> urls_;
     sass::vector<Include>        incs_;
     ADD_PROPERTY(List_Obj,      import_queries);
   public:
     Import(ParserState pstate);
     sass::vector<Include>& incs();
-    sass::vector<Expression_Obj>& urls();
+    sass::vector<ExpressionObj>& urls();
     ATTACH_AST_OPERATIONS(Import)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -658,9 +658,9 @@ namespace Sass {
   // The Sass `@warn` directive.
   //////////////////////////////
   class WarningRule final : public Statement {
-    ADD_PROPERTY(Expression_Obj, message)
+    ADD_PROPERTY(ExpressionObj, message)
   public:
-    WarningRule(ParserState pstate, Expression_Obj msg);
+    WarningRule(ParserState pstate, ExpressionObj msg);
     ATTACH_AST_OPERATIONS(WarningRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -669,9 +669,9 @@ namespace Sass {
   // The Sass `@error` directive.
   ///////////////////////////////
   class ErrorRule final : public Statement {
-    ADD_PROPERTY(Expression_Obj, message)
+    ADD_PROPERTY(ExpressionObj, message)
   public:
-    ErrorRule(ParserState pstate, Expression_Obj msg);
+    ErrorRule(ParserState pstate, ExpressionObj msg);
     ATTACH_AST_OPERATIONS(ErrorRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -680,9 +680,9 @@ namespace Sass {
   // The Sass `@debug` directive.
   ///////////////////////////////
   class DebugRule final : public Statement {
-    ADD_PROPERTY(Expression_Obj, value)
+    ADD_PROPERTY(ExpressionObj, value)
   public:
-    DebugRule(ParserState pstate, Expression_Obj val);
+    DebugRule(ParserState pstate, ExpressionObj val);
     ATTACH_AST_OPERATIONS(DebugRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -704,10 +704,10 @@ namespace Sass {
   // The Sass `@if` control directive.
   ////////////////////////////////////
   class If final : public ParentStatement {
-    ADD_PROPERTY(Expression_Obj, predicate)
+    ADD_PROPERTY(ExpressionObj, predicate)
     ADD_PROPERTY(Block_Obj, alternative)
   public:
-    If(ParserState pstate, Expression_Obj pred, Block_Obj con, Block_Obj alt = {});
+    If(ParserState pstate, ExpressionObj pred, Block_Obj con, Block_Obj alt = {});
     virtual bool has_content() override;
     ATTACH_AST_OPERATIONS(If)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -718,11 +718,11 @@ namespace Sass {
   /////////////////////////////////////
   class ForRule final : public ParentStatement {
     ADD_CONSTREF(sass::string, variable)
-    ADD_PROPERTY(Expression_Obj, lower_bound)
-    ADD_PROPERTY(Expression_Obj, upper_bound)
+    ADD_PROPERTY(ExpressionObj, lower_bound)
+    ADD_PROPERTY(ExpressionObj, upper_bound)
     ADD_PROPERTY(bool, is_inclusive)
   public:
-    ForRule(ParserState pstate, sass::string var, Expression_Obj lo, Expression_Obj hi, Block_Obj b, bool inc);
+    ForRule(ParserState pstate, sass::string var, ExpressionObj lo, ExpressionObj hi, Block_Obj b, bool inc);
     ATTACH_AST_OPERATIONS(ForRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -732,9 +732,9 @@ namespace Sass {
   //////////////////////////////////////
   class EachRule final : public ParentStatement {
     ADD_PROPERTY(sass::vector<sass::string>, variables)
-    ADD_PROPERTY(Expression_Obj, list)
+    ADD_PROPERTY(ExpressionObj, list)
   public:
-    EachRule(ParserState pstate, sass::vector<sass::string> vars, Expression_Obj lst, Block_Obj b);
+    EachRule(ParserState pstate, sass::vector<sass::string> vars, ExpressionObj lst, Block_Obj b);
     ATTACH_AST_OPERATIONS(EachRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -743,9 +743,9 @@ namespace Sass {
   // The Sass `@while` control directive.
   ///////////////////////////////////////
   class WhileRule final : public ParentStatement {
-    ADD_PROPERTY(Expression_Obj, predicate)
+    ADD_PROPERTY(ExpressionObj, predicate)
   public:
-    WhileRule(ParserState pstate, Expression_Obj pred, Block_Obj b);
+    WhileRule(ParserState pstate, ExpressionObj pred, Block_Obj b);
     ATTACH_AST_OPERATIONS(WhileRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -754,9 +754,9 @@ namespace Sass {
   // The @return directive for use inside SassScript functions.
   /////////////////////////////////////////////////////////////
   class Return final : public Statement {
-    ADD_PROPERTY(Expression_Obj, value)
+    ADD_PROPERTY(ExpressionObj, value)
   public:
-    Return(ParserState pstate, Expression_Obj val);
+    Return(ParserState pstate, ExpressionObj val);
     ATTACH_AST_OPERATIONS(Return)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -830,10 +830,10 @@ namespace Sass {
     enum Type { PLUS, MINUS, NOT, SLASH };
   private:
     HASH_PROPERTY(Type, optype)
-    HASH_PROPERTY(Expression_Obj, operand)
+    HASH_PROPERTY(ExpressionObj, operand)
     mutable size_t hash_;
   public:
-    Unary_Expression(ParserState pstate, Type t, Expression_Obj o);
+    Unary_Expression(ParserState pstate, Type t, ExpressionObj o);
     const sass::string type_name();
     virtual bool operator==(const Expression& rhs) const override;
     size_t hash() const override;
@@ -845,13 +845,13 @@ namespace Sass {
   // Individual argument objects for mixin and function calls.
   ////////////////////////////////////////////////////////////
   class Argument final : public Expression {
-    HASH_PROPERTY(Expression_Obj, value)
+    HASH_PROPERTY(ExpressionObj, value)
     HASH_CONSTREF(sass::string, name)
     ADD_PROPERTY(bool, is_rest_argument)
     ADD_PROPERTY(bool, is_keyword_argument)
     mutable size_t hash_;
   public:
-    Argument(ParserState pstate, Expression_Obj val, sass::string n = "", bool rest = false, bool keyword = false);
+    Argument(ParserState pstate, ExpressionObj val, sass::string n = "", bool rest = false, bool keyword = false);
     void set_delayed(bool delayed) override;
     bool operator==(const Expression& rhs) const override;
     size_t hash() const override;
@@ -970,7 +970,7 @@ namespace Sass {
   // ToDo: only used for interpolation case
   ////////////////////////////////////////////////////
   class Media_Query final : public Expression,
-                            public Vectorized<Media_Query_Expression_Obj> {
+                            public Vectorized<Media_Query_ExpressionObj> {
     ADD_PROPERTY(String_Obj, media_type)
     ADD_PROPERTY(bool, is_negated)
     ADD_PROPERTY(bool, is_restricted)
@@ -985,11 +985,11 @@ namespace Sass {
   // ToDo: only used for interpolation case
   ////////////////////////////////////////////////////
   class Media_Query_Expression final : public Expression {
-    ADD_PROPERTY(Expression_Obj, feature)
-    ADD_PROPERTY(Expression_Obj, value)
+    ADD_PROPERTY(ExpressionObj, feature)
+    ADD_PROPERTY(ExpressionObj, value)
     ADD_PROPERTY(bool, is_interpolated)
   public:
-    Media_Query_Expression(ParserState pstate, Expression_Obj f, Expression_Obj v, bool i = false);
+    Media_Query_Expression(ParserState pstate, ExpressionObj f, ExpressionObj v, bool i = false);
     ATTACH_AST_OPERATIONS(Media_Query_Expression)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -999,10 +999,10 @@ namespace Sass {
   /////////////////////////////////////////////////
   class At_Root_Query final : public Expression {
   private:
-    ADD_PROPERTY(Expression_Obj, feature)
-    ADD_PROPERTY(Expression_Obj, value)
+    ADD_PROPERTY(ExpressionObj, feature)
+    ADD_PROPERTY(ExpressionObj, value)
   public:
-    At_Root_Query(ParserState pstate, Expression_Obj f = {}, Expression_Obj v = {}, bool i = false);
+    At_Root_Query(ParserState pstate, ExpressionObj f = {}, ExpressionObj v = {}, bool i = false);
     bool exclude(sass::string str);
     ATTACH_AST_OPERATIONS(At_Root_Query)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -1026,10 +1026,10 @@ namespace Sass {
   /////////////////////////////////////////////////////////
   class Parameter final : public AST_Node {
     ADD_CONSTREF(sass::string, name)
-    ADD_PROPERTY(Expression_Obj, default_value)
+    ADD_PROPERTY(ExpressionObj, default_value)
     ADD_PROPERTY(bool, is_rest_parameter)
   public:
-    Parameter(ParserState pstate, sass::string n, Expression_Obj def = {}, bool rest = false);
+    Parameter(ParserState pstate, sass::string n, ExpressionObj def = {}, bool rest = false);
     ATTACH_AST_OPERATIONS(Parameter)
     ATTACH_CRTP_PERFORM_METHODS()
   };

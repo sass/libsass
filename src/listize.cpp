@@ -54,7 +54,7 @@ namespace Sass {
     for (auto component : sel->elements()) {
       if (CompoundSelectorObj compound = Cast<CompoundSelector>(component)) {
         if (!compound->empty()) {
-          Expression_Obj hh = compound->perform(this);
+          ExpressionObj hh = compound->perform(this);
           if (hh) l->append(hh);
         }
       }

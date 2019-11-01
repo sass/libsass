@@ -257,7 +257,7 @@ namespace Sass {
   {
     sass::string      kwd   = a->keyword();
     Selector_Obj   s     = a->selector();
-    Expression_Obj v     = a->value();
+    ExpressionObj v     = a->value();
     Block_Obj      b     = a->block();
 
     append_indentation();

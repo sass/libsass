@@ -230,7 +230,7 @@ namespace Sass {
 
   Statement* Expand::operator()(Supports_Block* f)
   {
-    Expression_Obj condition = f->condition()->perform(&eval);
+    ExpressionObj condition = f->condition()->perform(&eval);
     Supports_Block_Obj ff = SASS_MEMORY_NEW(Supports_Block,
                                        f->pstate(),
                                        Cast<Supports_Condition>(condition),
@@ -256,7 +256,7 @@ namespace Sass {
 
   Statement* Expand::operator()(MediaRule* m)
   {
-    Expression_Obj mq = eval(m->schema());
+    ExpressionObj mq = eval(m->schema());
     sass::string str_mq(mq->to_css(ctx.c_options));
     char* str = sass_copy_c_string(str_mq.c_str());
     ctx.strings.push_back(str);
@@ -281,7 +281,7 @@ namespace Sass {
   Statement* Expand::operator()(At_Root_Block* a)
   {
     Block_Obj ab = a->block();
-    Expression_Obj ae = a->expression();
+    ExpressionObj ae = a->expression();
 
     if (ae) ae = ae->perform(&eval);
     else ae = SASS_MEMORY_NEW(At_Root_Query, a->pstate());
@@ -323,14 +323,14 @@ namespace Sass {
   {
     Block_Obj ab = d->block();
     String_Obj old_p = d->property();
-    Expression_Obj prop = old_p->perform(&eval);
+    ExpressionObj prop = old_p->perform(&eval);
     String_Obj new_p = Cast<String>(prop);
     // we might get a color back
     if (!new_p) {
       sass::string str(prop->to_string(ctx.c_options));
       new_p = SASS_MEMORY_NEW(String_Constant, old_p->pstate(), str);
     }
-    Expression_Obj value = d->value();
+    ExpressionObj value = d->value();
     if (value) value = value->perform(&eval);
     Block_Obj bb = ab ? operator()(ab) : NULL;
     if (!bb) {
@@ -360,7 +360,7 @@ namespace Sass {
     if (a->is_global()) {
       if (a->is_default()) {
         if (env->has_global(var)) {
-          Expression_Obj e = Cast<Expression>(env->get_global(var));
+          ExpressionObj e = Cast<Expression>(env->get_global(var));
           if (!e || e->concrete_type() == Expression::NULL_VAL) {
             env->set_global(var, a->value()->perform(&eval));
           }
@@ -379,7 +379,7 @@ namespace Sass {
         while (cur && cur->is_lexical()) {
           if (cur->has_local(var)) {
             if (AST_Node_Obj node = cur->get_local(var)) {
-              Expression_Obj e = Cast<Expression>(node);
+              ExpressionObj e = Cast<Expression>(node);
               if (!e || e->concrete_type() == Expression::NULL_VAL) {
                 cur->set_local(var, a->value()->perform(&eval));
               }
@@ -395,7 +395,7 @@ namespace Sass {
       }
       else if (env->has_global(var)) {
         if (AST_Node_Obj node = env->get_global(var)) {
-          Expression_Obj e = Cast<Expression>(node);
+          ExpressionObj e = Cast<Expression>(node);
           if (!e || e->concrete_type() == Expression::NULL_VAL) {
             env->set_global(var, a->value()->perform(&eval));
           }
@@ -418,7 +418,7 @@ namespace Sass {
   {
     Import_Obj result = SASS_MEMORY_NEW(Import, imp->pstate());
     if (imp->import_queries() && imp->import_queries()->size()) {
-      Expression_Obj ex = imp->import_queries()->perform(&eval);
+      ExpressionObj ex = imp->import_queries()->perform(&eval);
       result->import_queries(Cast<List>(ex));
     }
     for ( size_t i = 0, S = imp->urls().size(); i < S; ++i) {
@@ -499,7 +499,7 @@ namespace Sass {
     Env env(environment(), true);
     env_stack.push_back(&env);
     call_stack.push_back(i);
-    Expression_Obj rv = i->predicate()->perform(&eval);
+    ExpressionObj rv = i->predicate()->perform(&eval);
     if (*rv) {
       append_block(i->block());
     }
@@ -517,12 +517,12 @@ namespace Sass {
   Statement* Expand::operator()(ForRule* f)
   {
     sass::string variable(f->variable());
-    Expression_Obj low = f->lower_bound()->perform(&eval);
+    ExpressionObj low = f->lower_bound()->perform(&eval);
     if (low->concrete_type() != Expression::NUMBER) {
       traces.push_back(Backtrace(low->pstate()));
       throw Exception::TypeMismatch(traces, *low, "integer");
     }
-    Expression_Obj high = f->upper_bound()->perform(&eval);
+    ExpressionObj high = f->upper_bound()->perform(&eval);
     if (high->concrete_type() != Expression::NUMBER) {
       traces.push_back(Backtrace(high->pstate()));
       throw Exception::TypeMismatch(traces, *high, "integer");
@@ -572,14 +572,14 @@ namespace Sass {
   Statement* Expand::operator()(EachRule* e)
   {
     sass::vector<sass::string> variables(e->variables());
-    Expression_Obj expr = e->list()->perform(&eval);
+    ExpressionObj expr = e->list()->perform(&eval);
     List_Obj list;
     Map_Obj map;
     if (expr->concrete_type() == Expression::MAP) {
       map = Cast<Map>(expr);
     }
     else if (SelectorList * ls = Cast<SelectorList>(expr)) {
-      Expression_Obj rv = Listize::perform(ls);
+      ExpressionObj rv = Listize::perform(ls);
       list = Cast<List>(rv);
     }
     else if (expr->concrete_type() != Expression::LIST) {
@@ -597,8 +597,8 @@ namespace Sass {
 
     if (map) {
       for (auto key : map->keys()) {
-        Expression_Obj k = key->perform(&eval);
-        Expression_Obj v = map->at(key)->perform(&eval);
+        ExpressionObj k = key->perform(&eval);
+        ExpressionObj v = map->at(key)->perform(&eval);
 
         if (variables.size() == 1) {
           List_Obj variable = SASS_MEMORY_NEW(List, map->pstate(), 2, SASS_SPACE);
@@ -618,7 +618,7 @@ namespace Sass {
         list = Cast<List>(list);
       }
       for (size_t i = 0, L = list->length(); i < L; ++i) {
-        Expression_Obj item = list->at(i);
+        ExpressionObj item = list->at(i);
         // unwrap value if the expression is an argument
         if (Argument_Obj arg = Cast<Argument>(item)) item = arg->value();
         // check if we got passed a list of args (investigate)
@@ -629,7 +629,7 @@ namespace Sass {
             env.set_local(variables[0], var);
           } else {
             for (size_t j = 0, K = variables.size(); j < K; ++j) {
-              Expression_Obj res = j >= scalars->length()
+              ExpressionObj res = j >= scalars->length()
                 ? SASS_MEMORY_NEW(Null, expr->pstate())
                 : (*scalars)[j]->perform(&eval);
               env.set_local(variables[j], res);
@@ -639,7 +639,7 @@ namespace Sass {
           if (variables.size() > 0) {
             env.set_local(variables.at(0), item);
             for (size_t j = 1, K = variables.size(); j < K; ++j) {
-              Expression_Obj res = SASS_MEMORY_NEW(Null, expr->pstate());
+              ExpressionObj res = SASS_MEMORY_NEW(Null, expr->pstate());
               env.set_local(variables[j], res);
             }
           }
@@ -654,12 +654,12 @@ namespace Sass {
 
   Statement* Expand::operator()(WhileRule* w)
   {
-    Expression_Obj pred = w->predicate();
+    ExpressionObj pred = w->predicate();
     Block* body = w->block();
     Env env(environment(), true);
     env_stack.push_back(&env);
     call_stack.push_back(w);
-    Expression_Obj cond = pred->perform(&eval);
+    ExpressionObj cond = pred->perform(&eval);
     while (!cond->is_false()) {
       append_block(body);
       cond = pred->perform(&eval);
@@ -780,7 +780,7 @@ namespace Sass {
     if (c->block() && c->name() != "@content" && !body->has_content()) {
       error("Mixin \"" + c->name() + "\" does not accept a content block.", c->pstate(), traces);
     }
-    Expression_Obj rv = c->arguments()->perform(&eval);
+    ExpressionObj rv = c->arguments()->perform(&eval);
     Arguments_Obj args = Cast<Arguments>(rv);
     sass::string msg(", in mixin `" + c->name() + "`");
     traces.push_back(Backtrace(c->pstate(), msg));

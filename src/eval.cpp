@@ -150,10 +150,10 @@ namespace Sass {
 
   Expression* Eval::operator()(If* i)
   {
-    Expression_Obj rv;
+    ExpressionObj rv;
     Env env(environment());
     env_stack().push_back(&env);
-    Expression_Obj cond = i->predicate()->perform(this);
+    ExpressionObj cond = i->predicate()->perform(this);
     if (!cond->is_false()) {
       rv = i->block()->perform(this);
     }
@@ -170,12 +170,12 @@ namespace Sass {
   Expression* Eval::operator()(ForRule* f)
   {
     sass::string variable(f->variable());
-    Expression_Obj low = f->lower_bound()->perform(this);
+    ExpressionObj low = f->lower_bound()->perform(this);
     if (low->concrete_type() != Expression::NUMBER) {
       traces.push_back(Backtrace(low->pstate()));
       throw Exception::TypeMismatch(traces, *low, "integer");
     }
-    Expression_Obj high = f->upper_bound()->perform(this);
+    ExpressionObj high = f->upper_bound()->perform(this);
     if (high->concrete_type() != Expression::NUMBER) {
       traces.push_back(Backtrace(high->pstate()));
       throw Exception::TypeMismatch(traces, *high, "integer");
@@ -226,7 +226,7 @@ namespace Sass {
   Expression* Eval::operator()(EachRule* e)
   {
     sass::vector<sass::string> variables(e->variables());
-    Expression_Obj expr = e->list()->perform(this);
+    ExpressionObj expr = e->list()->perform(this);
     Env env(environment(), true);
     env_stack().push_back(&env);
     List_Obj list;
@@ -235,7 +235,7 @@ namespace Sass {
       map = Cast<Map>(expr);
     }
     else if (SelectorList * ls = Cast<SelectorList>(expr)) {
-      Expression_Obj rv = Listize::perform(ls);
+      ExpressionObj rv = Listize::perform(ls);
       list = Cast<List>(rv);
     }
     else if (expr->concrete_type() != Expression::LIST) {
@@ -247,11 +247,11 @@ namespace Sass {
     }
 
     Block_Obj body = e->block();
-    Expression_Obj val;
+    ExpressionObj val;
 
     if (map) {
-      for (Expression_Obj key : map->keys()) {
-        Expression_Obj value = map->at(key);
+      for (ExpressionObj key : map->keys()) {
+        ExpressionObj value = map->at(key);
 
         if (variables.size() == 1) {
           List* variable = SASS_MEMORY_NEW(List, map->pstate(), 2, SASS_SPACE);
@@ -309,13 +309,13 @@ namespace Sass {
 
   Expression* Eval::operator()(WhileRule* w)
   {
-    Expression_Obj pred = w->predicate();
+    ExpressionObj pred = w->predicate();
     Block_Obj body = w->block();
     Env env(environment(), true);
     env_stack().push_back(&env);
-    Expression_Obj cond = pred->perform(this);
+    ExpressionObj cond = pred->perform(this);
     while (!cond->is_false()) {
-      Expression_Obj val = body->perform(this);
+      ExpressionObj val = body->perform(this);
       if (val) {
         env_stack().pop_back();
         return val.detach();
@@ -335,7 +335,7 @@ namespace Sass {
   {
     Sass_Output_Style outstyle = options().output_style;
     options().output_style = NESTED;
-    Expression_Obj message = w->message()->perform(this);
+    ExpressionObj message = w->message()->perform(this);
     Env* env = environment();
 
     // try to use generic function
@@ -383,7 +383,7 @@ namespace Sass {
   {
     Sass_Output_Style outstyle = options().output_style;
     options().output_style = NESTED;
-    Expression_Obj message = e->message()->perform(this);
+    ExpressionObj message = e->message()->perform(this);
     Env* env = environment();
 
     // try to use generic function
@@ -427,7 +427,7 @@ namespace Sass {
   {
     Sass_Output_Style outstyle = options().output_style;
     options().output_style = NESTED;
-    Expression_Obj message = d->value()->perform(this);
+    ExpressionObj message = d->value()->perform(this);
     Env* env = environment();
 
     // try to use generic function
@@ -482,8 +482,8 @@ namespace Sass {
                                 l->length() / 2);
       for (size_t i = 0, L = l->length(); i < L; i += 2)
       {
-        Expression_Obj key = (*l)[i+0]->perform(this);
-        Expression_Obj val = (*l)[i+1]->perform(this);
+        ExpressionObj key = (*l)[i+0]->perform(this);
+        ExpressionObj val = (*l)[i+1]->perform(this);
         // make sure the color key never displays its real name
         key->is_delayed(true); // verified
         *lm << std::make_pair(key, val);
@@ -549,8 +549,8 @@ namespace Sass {
   Expression* Eval::operator()(Binary_Expression* b_in)
   {
 
-    Expression_Obj lhs = b_in->left();
-    Expression_Obj rhs = b_in->right();
+    ExpressionObj lhs = b_in->left();
+    ExpressionObj rhs = b_in->right();
     enum Sass_OP op_type = b_in->optype();
 
     if (op_type == Sass_OP::AND) {
@@ -574,7 +574,7 @@ namespace Sass {
       rhs = operator()(r_v);
     }
 
-    Binary_Expression_Obj b = b_in;
+    Binary_ExpressionObj b = b_in;
 
     // Evaluate sub-expressions early on
     while (Binary_Expression* l_b = Cast<Binary_Expression>(lhs)) {
@@ -686,7 +686,7 @@ namespace Sass {
     if (String_Schema* s_l = Cast<String_Schema>(b->left())) {
       if (!s_l->has_interpolant() && (!s_l->is_right_interpolant())) {
         ret_schema = SASS_MEMORY_NEW(String_Schema, b->pstate());
-        Binary_Expression_Obj bin_ex = SASS_MEMORY_NEW(Binary_Expression, b->pstate(),
+        Binary_ExpressionObj bin_ex = SASS_MEMORY_NEW(Binary_Expression, b->pstate(),
                                                     b->op(), s_l->last(), b->right());
         bin_ex->is_delayed(b->left()->is_delayed() || b->right()->is_delayed()); // unverified
         for (size_t i = 0; i < s_l->length() - 1; ++i) {
@@ -700,7 +700,7 @@ namespace Sass {
 
       if (!s_r->has_interpolant() && (!s_r->is_left_interpolant() || op_type == Sass_OP::DIV)) {
         ret_schema = SASS_MEMORY_NEW(String_Schema, b->pstate());
-        Binary_Expression_Obj bin_ex = SASS_MEMORY_NEW(Binary_Expression, b->pstate(),
+        Binary_ExpressionObj bin_ex = SASS_MEMORY_NEW(Binary_Expression, b->pstate(),
                                                     b->op(), b->left(), s_r->first());
         bin_ex->is_delayed(b->left()->is_delayed() || b->right()->is_delayed()); // verified
         ret_schema->append(bin_ex->perform(this));
@@ -742,8 +742,8 @@ namespace Sass {
     // Is one of the operands an interpolant?
     String_Schema_Obj s1 = Cast<String_Schema>(b->left());
     String_Schema_Obj s2 = Cast<String_Schema>(b->right());
-    Binary_Expression_Obj b1 = Cast<Binary_Expression>(b->left());
-    Binary_Expression_Obj b2 = Cast<Binary_Expression>(b->right());
+    Binary_ExpressionObj b1 = Cast<Binary_Expression>(b->left());
+    Binary_ExpressionObj b2 = Cast<Binary_Expression>(b->right());
 
     bool schema_op = false;
 
@@ -814,7 +814,7 @@ namespace Sass {
 
     // ToDo: throw error in op functions
     // ToDo: then catch and re-throw them
-    Expression_Obj rv;
+    ExpressionObj rv;
     try {
       ParserState pstate(b->pstate());
       if (l_type == Expression::NUMBER && r_type == Expression::NUMBER) {
@@ -895,7 +895,7 @@ namespace Sass {
 
   Expression* Eval::operator()(Unary_Expression* u)
   {
-    Expression_Obj operand = u->operand()->perform(this);
+    ExpressionObj operand = u->operand()->perform(this);
     if (u->optype() == Unary_Expression::NOT) {
       Boolean* result = SASS_MEMORY_NEW(Boolean, u->pstate(), (bool)*operand);
       result->value(!result->value());
@@ -925,7 +925,7 @@ namespace Sass {
       else if (Color* color = Cast<Color>(operand)) {
         // Use the color name if this was eval with one
         if (color->disp().length() > 0) {
-          Unary_Expression_Obj cpy = SASS_MEMORY_COPY(u);
+          Unary_ExpressionObj cpy = SASS_MEMORY_COPY(u);
           cpy->operand(SASS_MEMORY_NEW(String_Constant, operand->pstate(), color->disp()));
           return SASS_MEMORY_NEW(String_Quoted,
                                  cpy->pstate(),
@@ -933,7 +933,7 @@ namespace Sass {
         }
       }
       else {
-        Unary_Expression_Obj cpy = SASS_MEMORY_COPY(u);
+        Unary_ExpressionObj cpy = SASS_MEMORY_COPY(u);
         cpy->operand(operand);
         return SASS_MEMORY_NEW(String_Quoted,
                                cpy->pstate(),
@@ -958,8 +958,8 @@ namespace Sass {
     }
 
     if (Cast<String_Schema>(c->sname())) {
-      Expression_Obj evaluated_name = c->sname()->perform(this);
-      Expression_Obj evaluated_args = c->arguments()->perform(this);
+      ExpressionObj evaluated_name = c->sname()->perform(this);
+      ExpressionObj evaluated_args = c->arguments()->perform(this);
       sass::string str(evaluated_name->to_string());
       str += evaluated_args->to_string();
       return SASS_MEMORY_NEW(String_Constant, c->pstate(), str);
@@ -1026,7 +1026,7 @@ namespace Sass {
       def = Cast<Definition>((*env)[resolved_name]);
     }
 
-    Expression_Obj     result = c;
+    ExpressionObj     result = c;
     Block_Obj          body   = def->block();
     Native_Function func   = def->native_function();
     Sass_Function_Entry c_function = def->c_function();
@@ -1096,7 +1096,7 @@ namespace Sass {
         Parameter_Obj param = params->at(i);
         sass::string key = param->name();
         AST_Node_Obj node = fn_env.get_local(key);
-        Expression_Obj arg = Cast<Expression>(node);
+        ExpressionObj arg = Cast<Expression>(node);
         sass_list_set_value(c_args, i, arg->perform(&ast2c));
       }
       union Sass_Value* c_val = c_func(c_args, c_function, compiler());
@@ -1133,7 +1133,7 @@ namespace Sass {
 
   Expression* Eval::operator()(Variable* v)
   {
-    Expression_Obj value;
+    ExpressionObj value;
     Env* env = environment();
     const sass::string& name(v->name());
     EnvResult rv(env->find(name));
@@ -1169,7 +1169,7 @@ namespace Sass {
     return b;
   }
 
-  void Eval::interpolation(Context& ctx, sass::string& res, Expression_Obj ex, bool into_quotes, bool was_itpl) {
+  void Eval::interpolation(Context& ctx, sass::string& res, ExpressionObj ex, bool into_quotes, bool was_itpl) {
 
     bool needs_closing_brace = false;
 
@@ -1214,7 +1214,7 @@ namespace Sass {
       List_Obj ll = SASS_MEMORY_NEW(List, l->pstate(), 0, l->separator());
       // this fixes an issue with bourbon sample, not really sure why
       // if (l->size() && Cast<Null>((*l)[0])) { res += ""; }
-      for(Expression_Obj item : *l) {
+      for(ExpressionObj item : *l) {
         item->is_interpolant(l->is_interpolant());
         sass::string rl(""); interpolation(ctx, rl, item, into_quotes, l->is_interpolant());
         bool is_null = Cast<Null>(item) != 0; // rl != ""
@@ -1278,7 +1278,7 @@ namespace Sass {
       bool is_quoted = Cast<String_Quoted>((*s)[i]) != NULL;
       if (was_quoted && !(*s)[i]->is_interpolant() && !was_interpolant) { res += " "; }
       else if (i > 0 && is_quoted && !(*s)[i]->is_interpolant() && !was_interpolant) { res += " "; }
-      Expression_Obj ex = (*s)[i]->perform(this);
+      ExpressionObj ex = (*s)[i]->perform(this);
       interpolation(ctx, res, ex, into_quotes, ex->is_interpolant());
       was_quoted = Cast<String_Quoted>((*s)[i]) != NULL;
       was_interpolant = (*s)[i]->is_interpolant();
@@ -1356,9 +1356,9 @@ namespace Sass {
 
   Expression* Eval::operator()(At_Root_Query* e)
   {
-    Expression_Obj feature = e->feature();
+    ExpressionObj feature = e->feature();
     feature = (feature ? feature->perform(this) : 0);
-    Expression_Obj value = e->value();
+    ExpressionObj value = e->value();
     value = (value ? value->perform(this) : 0);
     Expression* ee = SASS_MEMORY_NEW(At_Root_Query,
                                      e->pstate(),
@@ -1385,14 +1385,14 @@ namespace Sass {
 
   Expression* Eval::operator()(Media_Query_Expression* e)
   {
-    Expression_Obj feature = e->feature();
+    ExpressionObj feature = e->feature();
     feature = (feature ? feature->perform(this) : 0);
     if (feature && Cast<String_Quoted>(feature)) {
       feature = SASS_MEMORY_NEW(String_Quoted,
                                   feature->pstate(),
                                   Cast<String_Quoted>(feature)->value());
     }
-    Expression_Obj value = e->value();
+    ExpressionObj value = e->value();
     value = (value ? value->perform(this) : 0);
     if (value && Cast<String_Quoted>(value)) {
       // XXX: this is never hit via spec tests
@@ -1414,7 +1414,7 @@ namespace Sass {
 
   Expression* Eval::operator()(Argument* a)
   {
-    Expression_Obj val = a->value()->perform(this);
+    ExpressionObj val = a->value()->perform(this);
     bool is_rest_argument = a->is_rest_argument();
     bool is_keyword_argument = a->is_keyword_argument();
 
@@ -1446,7 +1446,7 @@ namespace Sass {
     Arguments_Obj aa = SASS_MEMORY_NEW(Arguments, a->pstate());
     if (a->length() == 0) return aa.detach();
     for (size_t i = 0, L = a->length(); i < L; ++i) {
-      Expression_Obj rv = (*a)[i]->perform(this);
+      ExpressionObj rv = (*a)[i]->perform(this);
       Argument* arg = Cast<Argument>(rv);
       if (!(arg->is_rest_argument() || arg->is_keyword_argument())) {
         aa->append(arg);
@@ -1454,8 +1454,8 @@ namespace Sass {
     }
 
     if (a->has_rest_argument()) {
-      Expression_Obj rest = a->get_rest_argument()->perform(this);
-      Expression_Obj splat = Cast<Argument>(rest)->value()->perform(this);
+      ExpressionObj rest = a->get_rest_argument()->perform(this);
+      ExpressionObj splat = Cast<Argument>(rest)->value()->perform(this);
 
       Sass_Separator separator = SASS_COMMA;
       List* ls = Cast<List>(splat);
@@ -1482,9 +1482,9 @@ namespace Sass {
     }
 
     if (a->has_keyword_argument()) {
-      Expression_Obj rv = a->get_keyword_argument()->perform(this);
+      ExpressionObj rv = a->get_keyword_argument()->perform(this);
       Argument* rvarg = Cast<Argument>(rv);
-      Expression_Obj kwarg = rvarg->value()->perform(this);
+      ExpressionObj kwarg = rvarg->value()->perform(this);
 
       aa->append(SASS_MEMORY_NEW(Argument, kwarg->pstate(), kwarg, "", false, true));
     }
@@ -1500,7 +1500,7 @@ namespace Sass {
   {
     LOCAL_FLAG(is_in_selector_schema, true);
     // the parser will look for a brace to end the selector
-    Expression_Obj sel = s->contents()->perform(this);
+    ExpressionObj sel = s->contents()->perform(this);
     sass::string result_str(sel->to_string(options()));
     result_str = unquote(Util::rtrim(result_str));
     char* temp_cstr = sass_copy_c_string(result_str.c_str());

@@ -116,14 +116,14 @@ namespace Sass {
       // Parameters* params = def ? def->parameters() : 0;
       // size_t param_size = params ? params->length() : 0;
       for (size_t i = 0, L = arglist->length(); i < L; ++i) {
-        Expression_Obj expr = arglist->value_at_index(i);
+        ExpressionObj expr = arglist->value_at_index(i);
         // if (params && params->has_rest_parameter()) {
         //   Parameter_Obj p = param_size > i ? (*params)[i] : 0;
         //   List* list = Cast<List>(expr);
         //   if (list && p && !p->is_rest_parameter()) expr = (*list)[0];
         // }
         if (arglist->is_arglist()) {
-          Expression_Obj obj = arglist->at(i);
+          ExpressionObj obj = arglist->at(i);
           Argument_Obj arg = (Argument*) obj.ptr(); // XXX
           args->append(SASS_MEMORY_NEW(Argument,
                                        pstate,
@@ -157,9 +157,9 @@ namespace Sass {
     BUILT_IN(sass_if)
     {
       Expand expand(ctx, &d_env, &selector_stack, &original_stack);
-      Expression_Obj cond = ARG("$condition", Expression)->perform(&expand.eval);
+      ExpressionObj cond = ARG("$condition", Expression)->perform(&expand.eval);
       bool is_true = !cond->is_false();
-      Expression_Obj res = ARG(is_true ? "$if-true" : "$if-false", Expression);
+      ExpressionObj res = ARG(is_true ? "$if-true" : "$if-false", Expression);
       Value_Obj qwe = Cast<Value>(res->perform(&expand.eval));
       // res = res->perform(&expand.eval.val_eval);
       qwe->set_delayed(false); // clone?

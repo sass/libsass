@@ -180,7 +180,7 @@ namespace Sass {
     append_colon_separator();
 
     if (dec->value()->concrete_type() == Expression::SELECTOR) {
-      Expression_Obj ls = Listize::perform(dec->value());
+      ExpressionObj ls = Listize::perform(dec->value());
       ls->perform(this);
     } else {
       dec->value()->perform(this);
@@ -461,7 +461,7 @@ namespace Sass {
     for (size_t i = 0, L = list->size(); i < L; ++i) {
       if (list->separator() == SASS_HASH)
       { sep[0] = i % 2 ? ':' : ','; }
-      Expression_Obj list_item = list->at(i);
+      ExpressionObj list_item = list->at(i);
       if (output_style() != TO_SASS) {
         if (list_item->is_invisible()) {
           // this fixes an issue with "" in a list

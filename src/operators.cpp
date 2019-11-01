@@ -31,7 +31,7 @@ namespace Sass {
     };
 
     /* static function, has no pstate or traces */
-    bool eq(Expression_Obj lhs, Expression_Obj rhs)
+    bool eq(ExpressionObj lhs, ExpressionObj rhs)
     {
       // operation is undefined if one is not a number
       if (!lhs || !rhs) throw Exception::UndefinedOperation(lhs, rhs, Sass_OP::EQ);
@@ -40,7 +40,7 @@ namespace Sass {
     }
 
     /* static function, throws OperationError, has no pstate or traces */
-    bool cmp(Expression_Obj lhs, Expression_Obj rhs, const Sass_OP op)
+    bool cmp(ExpressionObj lhs, ExpressionObj rhs, const Sass_OP op)
     {
       // can only compare numbers!?
       Number_Obj l = Cast<Number>(lhs);
@@ -52,11 +52,11 @@ namespace Sass {
     }
 
     /* static functions, throws OperationError, has no pstate or traces */
-    bool lt(Expression_Obj lhs, Expression_Obj rhs) { return cmp(lhs, rhs, Sass_OP::LT); }
-    bool neq(Expression_Obj lhs, Expression_Obj rhs) { return eq(lhs, rhs) == false; }
-    bool gt(Expression_Obj lhs, Expression_Obj rhs) { return !cmp(lhs, rhs, Sass_OP::GT) && neq(lhs, rhs); }
-    bool lte(Expression_Obj lhs, Expression_Obj rhs) { return cmp(lhs, rhs, Sass_OP::LTE) || eq(lhs, rhs); }
-    bool gte(Expression_Obj lhs, Expression_Obj rhs) { return !cmp(lhs, rhs, Sass_OP::GTE) || eq(lhs, rhs); }
+    bool lt(ExpressionObj lhs, ExpressionObj rhs) { return cmp(lhs, rhs, Sass_OP::LT); }
+    bool neq(ExpressionObj lhs, ExpressionObj rhs) { return eq(lhs, rhs) == false; }
+    bool gt(ExpressionObj lhs, ExpressionObj rhs) { return !cmp(lhs, rhs, Sass_OP::GT) && neq(lhs, rhs); }
+    bool lte(ExpressionObj lhs, ExpressionObj rhs) { return cmp(lhs, rhs, Sass_OP::LTE) || eq(lhs, rhs); }
+    bool gte(ExpressionObj lhs, ExpressionObj rhs) { return !cmp(lhs, rhs, Sass_OP::GTE) || eq(lhs, rhs); }
 
     /* colour math deprecation warning */
     void op_color_deprecation(enum Sass_OP op, sass::string lsh, sass::string rhs, const ParserState& pstate)

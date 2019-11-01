@@ -73,7 +73,7 @@ namespace Sass {
                                               rest->separator(),
                                               true);
               // wrap each item from list as an argument
-              for (Expression_Obj item : rest->elements()) {
+              for (ExpressionObj item : rest->elements()) {
                 if (Argument_Obj arg = Cast<Argument>(item)) {
                   arglist->append(SASS_MEMORY_COPY(arg)); // copy
                 } else {
@@ -130,7 +130,7 @@ namespace Sass {
             // skip any list completely if empty
             if (ls && ls->empty() && a->is_rest_argument()) continue;
 
-            Expression_Obj value = a->value();
+            ExpressionObj value = a->value();
             if (Argument_Obj arg = Cast<Argument>(value)) {
               arglist->append(arg);
             }
@@ -141,7 +141,7 @@ namespace Sass {
                 arglist->separator(rest->separator());
 
                 for (size_t i = 0, L = rest->length(); i < L; ++i) {
-                  Expression_Obj obj = rest->value_at_index(i);
+                  ExpressionObj obj = rest->value_at_index(i);
                   arglist->append(SASS_MEMORY_NEW(Argument,
                                                 obj->pstate(),
                                                 obj,
@@ -177,7 +177,7 @@ namespace Sass {
         // normal param and rest arg
         List_Obj arglist = Cast<List>(a->value());
         if (!arglist) {
-          if (Expression_Obj arg = Cast<Expression>(a->value())) {
+          if (ExpressionObj arg = Cast<Expression>(a->value())) {
             arglist = SASS_MEMORY_NEW(List, a->pstate(), 1);
             arglist->append(arg);
           }
@@ -202,7 +202,7 @@ namespace Sass {
           }
         }
         // otherwise move one of the rest args into the param, converting to argument if necessary
-        Expression_Obj obj = arglist->at(0);
+        ExpressionObj obj = arglist->at(0);
         if (!(a = Cast<Argument>(obj))) {
           Expression* a_to_convert = obj;
           a = SASS_MEMORY_NEW(Argument,

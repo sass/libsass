@@ -275,18 +275,18 @@ namespace Sass {
     bool parse_block_node(bool is_root = false);
 
     Declaration_Obj parse_declaration();
-    Expression_Obj parse_map();
-    Expression_Obj parse_bracket_list();
-    Expression_Obj parse_list(bool delayed = false);
-    Expression_Obj parse_comma_list(bool delayed = false);
-    Expression_Obj parse_space_list();
-    Expression_Obj parse_disjunction();
-    Expression_Obj parse_conjunction();
-    Expression_Obj parse_relation();
-    Expression_Obj parse_expression();
-    Expression_Obj parse_operators();
-    Expression_Obj parse_factor();
-    Expression_Obj parse_value();
+    ExpressionObj parse_map();
+    ExpressionObj parse_bracket_list();
+    ExpressionObj parse_list(bool delayed = false);
+    ExpressionObj parse_comma_list(bool delayed = false);
+    ExpressionObj parse_space_list();
+    ExpressionObj parse_disjunction();
+    ExpressionObj parse_conjunction();
+    ExpressionObj parse_relation();
+    ExpressionObj parse_expression();
+    ExpressionObj parse_operators();
+    ExpressionObj parse_factor();
+    ExpressionObj parse_value();
     Function_Call_Obj parse_calc_function();
     Function_Call_Obj parse_function_call();
     Function_Call_Obj parse_function_call_schema();
@@ -313,7 +313,7 @@ namespace Sass {
     void parse_charset_directive();
     List_Obj parse_media_queries();
     Media_Query_Obj parse_media_query();
-    Media_Query_Expression_Obj parse_media_expression();
+    Media_Query_ExpressionObj parse_media_expression();
     Supports_Block_Obj parse_supports_directive();
     Supports_Condition_Obj parse_supports_condition(bool top_level);
     Supports_Condition_Obj parse_supports_negation();
@@ -332,11 +332,11 @@ namespace Sass {
     Value* color_or_string(const sass::string& lexed) const;
 
     // be more like ruby sass
-    Expression_Obj lex_almost_any_value_token();
-    Expression_Obj lex_almost_any_value_chars();
-    Expression_Obj lex_interp_string();
-    Expression_Obj lex_interp_uri();
-    Expression_Obj lex_interpolation();
+    ExpressionObj lex_almost_any_value_token();
+    ExpressionObj lex_almost_any_value_chars();
+    ExpressionObj lex_interp_string();
+    ExpressionObj lex_interp_uri();
+    ExpressionObj lex_interpolation();
 
     // these will throw errors
     Token lex_variable();
@@ -348,28 +348,28 @@ namespace Sass {
     Lookahead lookahead_for_selector(const char* start = 0);
     Lookahead lookahead_for_include(const char* start = 0);
 
-    Expression_Obj fold_operands(Expression_Obj base, sass::vector<Expression_Obj>& operands, Operand op);
-    Expression_Obj fold_operands(Expression_Obj base, sass::vector<Expression_Obj>& operands, sass::vector<Operand>& ops, size_t i = 0);
+    ExpressionObj fold_operands(ExpressionObj base, sass::vector<ExpressionObj>& operands, Operand op);
+    ExpressionObj fold_operands(ExpressionObj base, sass::vector<ExpressionObj>& operands, sass::vector<Operand>& ops, size_t i = 0);
 
     void throw_syntax_error(sass::string message, size_t ln = 0);
     void throw_read_error(sass::string message, size_t ln = 0);
 
 
     template <Prelexer::prelexer open, Prelexer::prelexer close>
-    Expression_Obj lex_interp()
+    ExpressionObj lex_interp()
     {
       if (lex < open >(false)) {
         String_Schema_Obj schema = SASS_MEMORY_NEW(String_Schema, pstate);
         // std::cerr << "LEX [[" << sass::string(lexed) << "]]\n";
         schema->append(SASS_MEMORY_NEW(String_Constant, pstate, lexed));
         if (position[0] == '#' && position[1] == '{') {
-          Expression_Obj itpl = lex_interpolation();
+          ExpressionObj itpl = lex_interpolation();
           if (!itpl.isNull()) schema->append(itpl);
           while (lex < close >(false)) {
             // std::cerr << "LEX [[" << sass::string(lexed) << "]]\n";
             schema->append(SASS_MEMORY_NEW(String_Constant, pstate, lexed));
             if (position[0] == '#' && position[1] == '{') {
-              Expression_Obj itpl = lex_interpolation();
+              ExpressionObj itpl = lex_interpolation();
               if (!itpl.isNull()) schema->append(itpl);
             } else {
               return schema;

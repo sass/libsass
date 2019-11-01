@@ -119,7 +119,7 @@ namespace Sass {
     }
 
     SelectorListObj get_arg_sels(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, Context& ctx) {
-      Expression_Obj exp = ARG(argname, Expression);
+      ExpressionObj exp = ARG(argname, Expression);
       if (exp->concrete_type() == Expression::NULL_VAL) {
         sass::sstream msg;
         msg << argname << ": null is not a valid selector: it must be a string,\n";
@@ -134,7 +134,7 @@ namespace Sass {
     }
 
     CompoundSelectorObj get_arg_sel(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, Context& ctx) {
-      Expression_Obj exp = ARG(argname, Expression);
+      ExpressionObj exp = ARG(argname, Expression);
       if (exp->concrete_type() == Expression::NULL_VAL) {
         sass::sstream msg;
         msg << argname << ": null is not a string for `" << function_name(sig) << "'";

@@ -35,7 +35,7 @@ namespace Sass {
 
   List::List(ParserState pstate, size_t size, enum Sass_Separator sep, bool argl, bool bracket)
   : Value(pstate),
-    Vectorized<Expression_Obj>(size),
+    Vectorized<ExpressionObj>(size),
     separator_(sep),
     is_arglist_(argl),
     is_bracketed_(bracket),
@@ -44,7 +44,7 @@ namespace Sass {
 
   List::List(const List* ptr)
   : Value(ptr),
-    Vectorized<Expression_Obj>(*ptr),
+    Vectorized<ExpressionObj>(*ptr),
     separator_(ptr->separator_),
     is_arglist_(ptr->is_arglist_),
     is_bracketed_(ptr->is_bracketed_),
@@ -109,7 +109,7 @@ namespace Sass {
     // arglist expects a list of arguments
     // so we need to break before keywords
     for (size_t i = 0, L = length(); i < L; ++i) {
-      Expression_Obj obj = this->at(i);
+      ExpressionObj obj = this->at(i);
       if (Argument* arg = Cast<Argument>(obj)) {
         if (!arg->name().empty()) return i;
       }
@@ -118,8 +118,8 @@ namespace Sass {
   }
 
 
-  Expression_Obj List::value_at_index(size_t i) {
-    Expression_Obj obj = this->at(i);
+  ExpressionObj List::value_at_index(size_t i) {
+    ExpressionObj obj = this->at(i);
     if (is_arglist_) {
       if (Argument* arg = Cast<Argument>(obj)) {
         return arg->value();
@@ -214,7 +214,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Binary_Expression::Binary_Expression(ParserState pstate,
-                    Operand op, Expression_Obj lhs, Expression_Obj rhs)
+                    Operand op, ExpressionObj lhs, ExpressionObj rhs)
   : PreValue(pstate), op_(op), left_(lhs), right_(rhs), hash_(0)
   { }
 

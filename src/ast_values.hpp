@@ -47,8 +47,8 @@ namespace Sass {
   // Lists of values, both comma- and space-separated (distinguished by a
   // type-tag.) Also used to represent variable-length argument lists.
   ///////////////////////////////////////////////////////////////////////
-  class List : public Value, public Vectorized<Expression_Obj> {
-    void adjust_after_pushing(Expression_Obj e) override { is_expanded(false); }
+  class List : public Value, public Vectorized<ExpressionObj> {
+    void adjust_after_pushing(ExpressionObj e) override { is_expanded(false); }
   private:
     ADD_PROPERTY(enum Sass_Separator, separator)
     ADD_PROPERTY(bool, is_arglist)
@@ -63,7 +63,7 @@ namespace Sass {
         " " : (compressed ? "," : ", ");
     }
     bool is_invisible() const override { return empty() && !is_bracketed(); }
-    Expression_Obj value_at_index(size_t i);
+    ExpressionObj value_at_index(size_t i);
 
     virtual size_t hash() const override;
     virtual size_t size() const;
@@ -79,8 +79,8 @@ namespace Sass {
   ///////////////////////////////////////////////////////////////////////
   // Key value paris.
   ///////////////////////////////////////////////////////////////////////
-  class Map : public Value, public Hashed<Expression_Obj, Expression_Obj, Map_Obj> {
-    void adjust_after_pushing(std::pair<Expression_Obj, Expression_Obj> p) override { is_expanded(false); }
+  class Map : public Value, public Hashed<ExpressionObj, ExpressionObj, Map_Obj> {
+    void adjust_after_pushing(std::pair<ExpressionObj, ExpressionObj> p) override { is_expanded(false); }
   public:
     Map(ParserState pstate, size_t size = 0);
     sass::string type() const override { return "map"; }
@@ -106,12 +106,12 @@ namespace Sass {
   class Binary_Expression : public PreValue {
   private:
     HASH_PROPERTY(Operand, op)
-    HASH_PROPERTY(Expression_Obj, left)
-    HASH_PROPERTY(Expression_Obj, right)
+    HASH_PROPERTY(ExpressionObj, left)
+    HASH_PROPERTY(ExpressionObj, right)
     mutable size_t hash_;
   public:
     Binary_Expression(ParserState pstate,
-                      Operand op, Expression_Obj lhs, Expression_Obj rhs);
+                      Operand op, ExpressionObj lhs, ExpressionObj rhs);
 
     const sass::string type_name();
     const sass::string separator();

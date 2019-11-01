@@ -32,7 +32,7 @@ namespace Sass {
       const List* l = Cast<List>(val);
       union Sass_Value* list = sass_make_list(l->size(), l->separator(), l->is_bracketed());
       for (size_t i = 0, L = l->length(); i < L; ++i) {
-        Expression_Obj obj = l->at(i);
+        ExpressionObj obj = l->at(i);
         auto val = ast_node_to_sass_value(obj);
         sass_list_set_value(list, i, val);
       }
@@ -42,7 +42,7 @@ namespace Sass {
     {
       const Map* m = Cast<Map>(val);
       union Sass_Value* map = sass_make_map(m->length());
-      size_t i = 0; for (Expression_Obj key : m->keys()) {
+      size_t i = 0; for (ExpressionObj key : m->keys()) {
         sass_map_set_key(map, i, ast_node_to_sass_value(key));
         sass_map_set_value(map, i, ast_node_to_sass_value(m->at(key)));
         ++ i;
