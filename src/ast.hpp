@@ -529,14 +529,14 @@ namespace Sass {
   // Rulesets (i.e., sets of styles headed by a selector and containing a block
   // of style declarations.
   /////////////////////////////////////////////////////////////////////////////
-  class Ruleset final : public ParentStatement {
+  class StyleRule final : public ParentStatement {
     ADD_PROPERTY(SelectorListObj, selector)
     ADD_PROPERTY(Selector_Schema_Obj, schema)
     ADD_PROPERTY(bool, is_root);
   public:
-    Ruleset(ParserState pstate, SelectorListObj s = {}, Block_Obj b = {});
+    StyleRule(ParserState pstate, SelectorListObj s = {}, Block_Obj b = {});
     bool is_invisible() const override;
-    ATTACH_AST_OPERATIONS(Ruleset)
+    ATTACH_AST_OPERATIONS(StyleRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 
@@ -880,7 +880,7 @@ namespace Sass {
   };
 
 
-  // A Media Ruleset before it has been evaluated
+  // A Media StyleRule before it has been evaluated
   // Could be already final or an interpolation
   class MediaRule final : public ParentStatement {
     ADD_PROPERTY(List_Obj, schema)
@@ -893,7 +893,7 @@ namespace Sass {
     ATTACH_CRTP_PERFORM_METHODS()
   };
 
-  // A Media Ruleset after it has been evaluated
+  // A Media StyleRule after it has been evaluated
   // Representing the static or resulting css
   class CssMediaRule final : public ParentStatement,
     public Vectorized<CssMediaQuery_Obj> {

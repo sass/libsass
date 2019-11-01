@@ -162,17 +162,17 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Ruleset::Ruleset(ParserState pstate, SelectorListObj s, Block_Obj b)
+  StyleRule::StyleRule(ParserState pstate, SelectorListObj s, Block_Obj b)
   : ParentStatement(pstate, b), selector_(s), schema_(), is_root_(false)
   { statement_type(RULESET); }
-  Ruleset::Ruleset(const Ruleset* ptr)
+  StyleRule::StyleRule(const StyleRule* ptr)
   : ParentStatement(ptr),
     selector_(ptr->selector_),
     schema_(ptr->schema_),
     is_root_(ptr->is_root_)
   { statement_type(RULESET); }
 
-  bool Ruleset::is_invisible() const {
+  bool StyleRule::is_invisible() const {
     if (const SelectorList * sl = Cast<SelectorList>(selector())) {
       for (size_t i = 0, L = sl->length(); i < L; i += 1)
         if (!(*sl)[i]->isInvisible()) return false;
@@ -911,7 +911,7 @@ namespace Sass {
   // If you forget to add a class here you will get
   // undefined reference to `vtable for Sass::Class'
 
-  IMPLEMENT_AST_OPERATORS(Ruleset);
+  IMPLEMENT_AST_OPERATORS(StyleRule);
   IMPLEMENT_AST_OPERATORS(MediaRule);
   IMPLEMENT_AST_OPERATORS(CssMediaRule);
   IMPLEMENT_AST_OPERATORS(CssMediaQuery);

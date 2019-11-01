@@ -515,7 +515,7 @@ namespace Sass {
   }
 
   // a ruleset connects a selector and a block
-  Ruleset_Obj Parser::parse_ruleset(Lookahead lookahead)
+  StyleRuleObj Parser::parse_ruleset(Lookahead lookahead)
   {
     NESTING_GUARD(nestings);
     // inherit is_root from parent block
@@ -524,7 +524,7 @@ namespace Sass {
     // make sure to move up the the last position
     lex < optional_css_whitespace >(false, true);
     // create the connector object (add parts later)
-    Ruleset_Obj ruleset = SASS_MEMORY_NEW(Ruleset, pstate);
+    StyleRuleObj ruleset = SASS_MEMORY_NEW(StyleRule, pstate);
     // parse selector static or as schema to be evaluated later
     if (lookahead.parsable) {
       ruleset->selector(parseSelectorList(false));
@@ -2409,7 +2409,7 @@ namespace Sass {
       body = parse_block(true);
     }
     else if ((lookahead_result = lookahead_for_selector(position)).found) {
-      Ruleset_Obj r = parse_ruleset(lookahead_result);
+      StyleRuleObj r = parse_ruleset(lookahead_result);
       body = SASS_MEMORY_NEW(Block, r->pstate(), 1, true);
       body->append(r);
     }

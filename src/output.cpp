@@ -111,7 +111,7 @@ namespace Sass {
     }
   }
 
-  void Output::operator()(Ruleset* r)
+  void Output::operator()(StyleRule* r)
   {
     Block_Obj b = r->block();
     SelectorListObj s = r->selector();

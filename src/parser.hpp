@@ -259,7 +259,7 @@ namespace Sass {
     Arguments_Obj parse_arguments();
     Argument_Obj parse_argument();
     Assignment_Obj parse_assignment();
-    Ruleset_Obj parse_ruleset(Lookahead lookahead);
+    StyleRuleObj parse_ruleset(Lookahead lookahead);
     SelectorListObj parseSelectorList(bool chroot);
     ComplexSelectorObj parseComplexSelector(bool chroot);
     Selector_Schema_Obj parse_selector_schema(const char* end_of_selector, bool chroot);

@@ -712,8 +712,8 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     debug_ast(block->arguments(), ind + " args: ", env);
     debug_ast(block->block_parameters(), ind + " block_params: ", env);
     if (block->block()) debug_ast(block->block(), ind + " ", env);
-  } else if (Ruleset* ruleset = Cast<Ruleset>(node)) {
-    std::cerr << ind << "Ruleset " << ruleset;
+  } else if (StyleRule* ruleset = Cast<StyleRule>(node)) {
+    std::cerr << ind << "StyleRule " << ruleset;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [indent: " << ruleset->tabs() << "]";
     std::cerr << (ruleset->is_invisible() ? " [INVISIBLE]" : "");

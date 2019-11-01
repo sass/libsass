@@ -42,7 +42,7 @@ namespace Sass {
 
   }
 
-  void Inspect::operator()(Ruleset* ruleset)
+  void Inspect::operator()(StyleRule* ruleset)
   {
     if (ruleset->selector()) {
       ruleset->selector()->perform(this);

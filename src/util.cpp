@@ -529,7 +529,7 @@ namespace Sass {
 
   namespace Util {
 
-    bool isPrintable(Ruleset* r, Sass_Output_Style style) {
+    bool isPrintable(StyleRule* r, Sass_Output_Style style) {
       if (r == NULL) {
         return false;
       }
@@ -641,7 +641,7 @@ namespace Sass {
             return true;
           }
         }
-        else if (Ruleset* r = Cast<Ruleset>(stm)) {
+        else if (StyleRule* r = Cast<StyleRule>(stm)) {
           if (isPrintable(r, style)) {
             return true;
           }
@@ -694,7 +694,7 @@ namespace Sass {
             return true;
           }
         }
-        else if (Ruleset* r = Cast<Ruleset>(stm)) {
+        else if (StyleRule* r = Cast<StyleRule>(stm)) {
           if (isPrintable(r, style)) {
             return true;
           }

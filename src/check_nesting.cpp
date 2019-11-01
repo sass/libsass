@@ -192,7 +192,7 @@ namespace Sass {
   void CheckNesting::invalid_extend_parent(Statement* parent, AST_Node* node)
   {
     if (!(
-        Cast<Ruleset>(parent) ||
+        Cast<StyleRule>(parent) ||
         Cast<Mixin_Call>(parent) ||
         is_mixin(parent)
     )) {
@@ -301,7 +301,7 @@ namespace Sass {
     if (!(
         is_mixin(parent) ||
         is_directive_node(parent) ||
-        Cast<Ruleset>(parent) ||
+        Cast<StyleRule>(parent) ||
         Cast<Keyframe_Rule>(parent) ||
         Cast<Declaration>(parent) ||
         Cast<Mixin_Call>(parent)
@@ -371,7 +371,7 @@ namespace Sass {
 
   bool CheckNesting::is_root_node(Statement* n)
   {
-    if (Cast<Ruleset>(n)) return false;
+    if (Cast<StyleRule>(n)) return false;
 
     Block* b = Cast<Block>(n);
     return b && b->is_root();

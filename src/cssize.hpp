@@ -21,7 +21,7 @@ namespace Sass {
     ~Cssize() { }
 
     Block* operator()(Block*);
-    Statement* operator()(Ruleset*);
+    Statement* operator()(StyleRule*);
     // Statement* operator()(Bubble*);
     Statement* operator()(CssMediaRule*);
     Statement* operator()(Supports_Block*);

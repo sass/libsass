@@ -61,11 +61,11 @@ namespace Sass {
     ~Expand() { }
 
     Block* operator()(Block*);
-    Statement* operator()(Ruleset*);
+    Statement* operator()(StyleRule*);
 
     Statement* operator()(MediaRule*);
 
-    // Css Ruleset is already static
+    // Css StyleRule is already static
     // Statement* operator()(CssMediaRule*);
 
     Statement* operator()(Supports_Block*);

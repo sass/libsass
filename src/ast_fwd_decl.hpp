@@ -27,7 +27,7 @@ namespace Sass {
   class Statement;
   class Value;
   class Declaration;
-  class Ruleset;
+  class StyleRule;
   class Bubble;
   class Trace;
 
@@ -131,7 +131,7 @@ namespace Sass {
   IMPL_MEM_OBJ(AST_Node);
   IMPL_MEM_OBJ(Statement);
   IMPL_MEM_OBJ(Block);
-  IMPL_MEM_OBJ(Ruleset);
+  IMPL_MEM_OBJ(StyleRule);
   IMPL_MEM_OBJ(Bubble);
   IMPL_MEM_OBJ(Trace);
   IMPL_MEM_OBJ(MediaRule);

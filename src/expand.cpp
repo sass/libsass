@@ -162,7 +162,7 @@ namespace Sass {
     return bb.detach();
   }
 
-  Statement* Expand::operator()(Ruleset* r)
+  Statement* Expand::operator()(StyleRule* r)
   {
     LOCAL_FLAG(old_at_root_without_rule, at_root_without_rule);
 
@@ -213,7 +213,7 @@ namespace Sass {
     if (r->block()) blk = operator()(r->block());
     popFromOriginalStack();
     popFromSelectorStack();
-    Ruleset* rr = SASS_MEMORY_NEW(Ruleset,
+    StyleRule* rr = SASS_MEMORY_NEW(StyleRule,
                                   r->pstate(),
                                   evaled,
                                   blk);
@@ -820,7 +820,7 @@ namespace Sass {
     }
     block_stack.push_back(trace_block);
     for (auto bb : body->elements()) {
-      if (Ruleset* r = Cast<Ruleset>(bb)) {
+      if (StyleRule* r = Cast<StyleRule>(bb)) {
         r->is_root(trace_block->is_root());
       }
       Statement_Obj ith = bb->perform(this);

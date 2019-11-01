@@ -60,7 +60,7 @@ namespace Sass {
       if (rule->block()) operator()(rule->block());
     }
 
-    void Remove_Placeholders::operator()(Ruleset* r)
+    void Remove_Placeholders::operator()(StyleRule* r)
     {
       if (SelectorListObj sl = r->selector()) {
         // Set the new placeholder selector list

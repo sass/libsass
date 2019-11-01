@@ -142,7 +142,7 @@ namespace Sass {
     return debubble(rr->block(), rr);
   }
 
-  Statement* Cssize::operator()(Ruleset* r)
+  Statement* Cssize::operator()(StyleRule* r)
   {
     p_stack.push_back(r);
     // this can return a string schema
@@ -155,7 +155,7 @@ namespace Sass {
     if (Cast<Statement>(bb) == NULL) {
       error("Illegal nesting: Only properties may be nested beneath properties.", r->block()->pstate(), traces);
     }
-    Ruleset_Obj rr = SASS_MEMORY_NEW(Ruleset,
+    StyleRuleObj rr = SASS_MEMORY_NEW(StyleRule,
                                   r->pstate(),
                                   r->selector(),
                                   bb);
@@ -331,10 +331,10 @@ namespace Sass {
 
   Statement* Cssize::bubble(Supports_Block* m)
   {
-    Ruleset_Obj parent = Cast<Ruleset>(SASS_MEMORY_COPY(this->parent()));
+    StyleRuleObj parent = Cast<StyleRule>(SASS_MEMORY_COPY(this->parent()));
 
     Block* bb = SASS_MEMORY_NEW(Block, parent->block()->pstate());
-    Ruleset* new_rule = SASS_MEMORY_NEW(Ruleset,
+    StyleRule* new_rule = SASS_MEMORY_NEW(StyleRule,
                                         parent->pstate(),
                                         parent->selector(),
                                         bb);
@@ -356,10 +356,10 @@ namespace Sass {
 
   Statement* Cssize::bubble(CssMediaRule* m)
   {
-    Ruleset_Obj parent = Cast<Ruleset>(SASS_MEMORY_COPY(this->parent()));
+    StyleRuleObj parent = Cast<StyleRule>(SASS_MEMORY_COPY(this->parent()));
 
     Block* bb = SASS_MEMORY_NEW(Block, parent->block()->pstate());
-    Ruleset* new_rule = SASS_MEMORY_NEW(Ruleset,
+    StyleRule* new_rule = SASS_MEMORY_NEW(StyleRule,
       parent->pstate(),
       parent->selector(),
       bb);
@@ -380,7 +380,7 @@ namespace Sass {
 
   bool Cssize::bubblable(Statement* s)
   {
-    return Cast<Ruleset>(s) || s->bubbles();
+    return Cast<StyleRule>(s) || s->bubbles();
   }
 
   Block* Cssize::flatten(const Block* b)
