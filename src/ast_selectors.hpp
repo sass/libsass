@@ -42,7 +42,7 @@ namespace Sass {
   protected:
     mutable size_t hash_;
   public:
-    Selector(ParserState pstate);
+    Selector(SourceSpan pstate);
     virtual ~Selector() = 0;
     size_t hash() const override = 0;
     virtual bool has_real_parent_ref() const;
@@ -68,7 +68,7 @@ namespace Sass {
     // store computed hash
     mutable size_t hash_;
   public:
-    Selector_Schema(ParserState pstate, String_Obj c);
+    Selector_Schema(SourceSpan pstate, String_Obj c);
 
     bool has_real_parent_ref() const;
     // selector schema is not yet a final selector, so we do not
@@ -98,7 +98,7 @@ namespace Sass {
     ADD_PROPERTY(Simple_Type, simple_type)
     HASH_PROPERTY(bool, has_ns)
   public:
-    SimpleSelector(ParserState pstate, sass::string n = "");
+    SimpleSelector(SourceSpan pstate, sass::string n = "");
     virtual sass::string ns_name() const;
     size_t hash() const override;
     virtual bool empty() const;
@@ -146,7 +146,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   class PlaceholderSelector final : public SimpleSelector {
   public:
-    PlaceholderSelector(ParserState pstate, sass::string n);
+    PlaceholderSelector(SourceSpan pstate, sass::string n);
     bool isInvisible() const override { return true; }
     virtual unsigned long specificity() const override;
     virtual bool has_placeholder() override;
@@ -161,7 +161,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////
   class TypeSelector final : public SimpleSelector {
   public:
-    TypeSelector(ParserState pstate, sass::string n);
+    TypeSelector(SourceSpan pstate, sass::string n);
     virtual unsigned long specificity() const override;
     SimpleSelector* unifyWith(const SimpleSelector*);
     CompoundSelector* unifyWith(CompoundSelector*) override;
@@ -177,7 +177,7 @@ namespace Sass {
   ////////////////////////////////////////////////
   class ClassSelector final : public SimpleSelector {
   public:
-    ClassSelector(ParserState pstate, sass::string n);
+    ClassSelector(SourceSpan pstate, sass::string n);
     virtual unsigned long specificity() const override;
     bool operator==(const SimpleSelector& rhs) const final override;
     ATTACH_CMP_OPERATIONS(ClassSelector)
@@ -190,7 +190,7 @@ namespace Sass {
   ////////////////////////////////////////////////
   class IDSelector final : public SimpleSelector {
   public:
-    IDSelector(ParserState pstate, sass::string n);
+    IDSelector(SourceSpan pstate, sass::string n);
     virtual unsigned long specificity() const override;
     CompoundSelector* unifyWith(CompoundSelector*) override;
     IDSelector* getIdSelector() final override { return this; }
@@ -209,7 +209,7 @@ namespace Sass {
     ADD_PROPERTY(String_Obj, value) // might be interpolated
     ADD_PROPERTY(char, modifier);
   public:
-    AttributeSelector(ParserState pstate, sass::string n, sass::string m, String_Obj v, char o = 0);
+    AttributeSelector(SourceSpan pstate, sass::string n, sass::string m, String_Obj v, char o = 0);
     size_t hash() const override;
     virtual unsigned long specificity() const override;
     bool operator==(const SimpleSelector& rhs) const final override;
@@ -229,7 +229,7 @@ namespace Sass {
     ADD_PROPERTY(bool, isSyntacticClass)
     ADD_PROPERTY(bool, isClass)
   public:
-    PseudoSelector(ParserState pstate, sass::string n, bool element = false);
+    PseudoSelector(SourceSpan pstate, sass::string n, bool element = false);
     virtual bool is_pseudo_element() const override;
     size_t hash() const override;
 
@@ -269,7 +269,7 @@ namespace Sass {
     // line break before list separator
     ADD_PROPERTY(bool, hasPreLineFeed)
   public:
-    ComplexSelector(ParserState pstate);
+    ComplexSelector(SourceSpan pstate);
 
     // Returns true if the first components
     // is a compound selector and fullfills
@@ -310,7 +310,7 @@ namespace Sass {
     // line break after list separator
     ADD_PROPERTY(bool, hasPostLineBreak)
   public:
-    SelectorComponent(ParserState pstate, bool postLineBreak = false);
+    SelectorComponent(SourceSpan pstate, bool postLineBreak = false);
     size_t hash() const override = 0;
     void cloneChildren() override;
 
@@ -357,7 +357,7 @@ namespace Sass {
     HASH_CONSTREF(Combinator, combinator)
 
   public:
-    SelectorCombinator(ParserState pstate, Combinator combinator, bool postLineBreak = false);
+    SelectorCombinator(SourceSpan pstate, Combinator combinator, bool postLineBreak = false);
 
     bool has_real_parent_ref() const override { return false; }
     bool has_placeholder() const override { return false; }
@@ -407,7 +407,7 @@ namespace Sass {
     ADD_PROPERTY(bool, hasRealParent)
     ADD_PROPERTY(bool, extended)
   public:
-    CompoundSelector(ParserState pstate, bool postLineBreak = false);
+    CompoundSelector(SourceSpan pstate, bool postLineBreak = false);
 
     // Returns true if this compound selector
     // fullfills various criteria.
@@ -459,7 +459,7 @@ namespace Sass {
     // ToDo: should be at ExtendRule?
     ADD_PROPERTY(bool, is_optional)
   public:
-    SelectorList(ParserState pstate, size_t s = 0);
+    SelectorList(SourceSpan pstate, size_t s = 0);
     sass::string type() const override { return "list"; }
     size_t hash() const override;
 
@@ -501,8 +501,8 @@ namespace Sass {
     ADD_PROPERTY(SelectorListObj, selector)
     ADD_PROPERTY(Selector_Schema_Obj, schema)
   public:
-    ExtendRule(ParserState pstate, SelectorListObj s);
-    ExtendRule(ParserState pstate, Selector_Schema_Obj s);
+    ExtendRule(SourceSpan pstate, SelectorListObj s);
+    ExtendRule(SourceSpan pstate, Selector_Schema_Obj s);
     ATTACH_AST_OPERATIONS(ExtendRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };

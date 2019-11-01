@@ -277,7 +277,7 @@ namespace Sass {
     // ToDo: we clean it, but still not very elegant!?
     strings.push_back(sass_copy_c_string(inc.abs_path.c_str()));
     // create the initial parser state from resource
-    ParserState pstate(strings.back(), contents, idx);
+    SourceSpan pstate(strings.back(), contents, idx);
 
     // check existing import stack for possible recursion
     for (size_t i = 0; i < import_stack.size() - 2; ++i) {
@@ -317,7 +317,7 @@ namespace Sass {
 
   // register include with resolved path and its content
   // memory of the resources will be freed by us on exit
-  void Context::register_resource(const Include& inc, const Resource& res, ParserState& prstate)
+  void Context::register_resource(const Include& inc, const Resource& res, SourceSpan& prstate)
   {
     traces.push_back(Backtrace(prstate));
     register_resource(inc, res);
@@ -325,7 +325,7 @@ namespace Sass {
   }
 
   // Add a new import to the context (called from `import_url`)
-  Include Context::load_import(const Importer& imp, ParserState pstate)
+  Include Context::load_import(const Importer& imp, SourceSpan pstate)
   {
 
     // search for valid imports (ie. partials) on the filesystem
@@ -366,7 +366,7 @@ namespace Sass {
 
   void Context::import_url (Import* imp, sass::string load_path, const sass::string& ctx_path) {
 
-    ParserState pstate(imp->pstate());
+    SourceSpan pstate(imp->pstate());
     sass::string imp_path(unquote(load_path));
     sass::string protocol("file");
 
@@ -403,7 +403,7 @@ namespace Sass {
 
 
   // call custom importers on the given (unquoted) load_path and eventually parse the resulting style_sheet
-  bool Context::call_loader(const sass::string& load_path, const char* ctx_path, ParserState& pstate, Import* imp, sass::vector<Sass_Importer_Entry> importers, bool only_one)
+  bool Context::call_loader(const sass::string& load_path, const char* ctx_path, SourceSpan& pstate, Import* imp, sass::vector<Sass_Importer_Entry> importers, bool only_one)
   {
     // unique counter
     size_t count = 0;
@@ -441,7 +441,7 @@ namespace Sass {
           if (const char* err_message = sass_import_get_error_message(include_ent)) {
             if (source || srcmap) register_resource({ importer, uniq_path }, { source, srcmap }, pstate);
             if (line == sass::string::npos && column == sass::string::npos) error(err_message, pstate, traces);
-            else error(err_message, ParserState(ctx_path, source, Position(line, column)), traces);
+            else error(err_message, SourceSpan(ctx_path, source, Position(line, column)), traces);
           }
           // content for import was set
           else if (source) {
@@ -517,7 +517,7 @@ namespace Sass {
     return sass_copy_c_string(emitted.buffer.c_str());
   }
 
-  void Context::apply_custom_headers(Block_Obj root, const char* ctx_path, ParserState pstate)
+  void Context::apply_custom_headers(Block_Obj root, const char* ctx_path, SourceSpan pstate)
   {
     // create a custom import to resolve headers
     Import_Obj imp = SASS_MEMORY_NEW(Import, pstate);
@@ -729,7 +729,7 @@ namespace Sass {
   void register_overload_stub(Context& ctx, sass::string name, Env* env)
   {
     Definition* stub = SASS_MEMORY_NEW(Definition,
-                                       ParserState("[built-in function]"),
+                                       SourceSpan("[built-in function]"),
                                        0,
                                        name,
                                        {},

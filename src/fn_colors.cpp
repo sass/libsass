@@ -21,7 +21,7 @@ namespace Sass {
              starts_with(str, "var(");
     }
 
-    void hsla_alpha_percent_deprecation(const ParserState& pstate, const sass::string val)
+    void hsla_alpha_percent_deprecation(const SourceSpan& pstate, const sass::string val)
     {
 
       sass::string msg("Passing a percentage as the alpha value to hsla() will be interpreted");
@@ -145,7 +145,7 @@ namespace Sass {
       return SASS_MEMORY_NEW(Number, pstate, color->b());
     }
 
-    Color_RGBA* colormix(Context& ctx, ParserState& pstate, Color* color1, Color* color2, double weight) {
+    Color_RGBA* colormix(Context& ctx, SourceSpan& pstate, Color* color1, Color* color2, double weight) {
       Color_RGBA_Obj c1 = color1->toRGBA();
       Color_RGBA_Obj c2 = color2->toRGBA();
       double p = weight/100;

@@ -162,7 +162,7 @@ namespace Sass {
   }
 
   namespace Colors {
-    const ParserState color_table("[COLOR TABLE]");
+    const SourceSpan color_table("[COLOR TABLE]");
     const Color_RGBA aliceblue(color_table, 240, 248, 255, 1);
     const Color_RGBA antiquewhite(color_table, 250, 235, 215, 1);
     const Color_RGBA cyan(color_table, 0, 255, 255, 1);

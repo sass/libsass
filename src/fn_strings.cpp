@@ -12,7 +12,7 @@ namespace Sass {
 
   namespace Functions {
 
-    void handle_utf8_error (const ParserState& pstate, Backtraces traces)
+    void handle_utf8_error (const SourceSpan& pstate, Backtraces traces)
     {
       try {
        throw;

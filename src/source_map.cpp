@@ -183,15 +183,15 @@ namespace Sass {
     mappings.push_back(Mapping(node->pstate() + node->pstate().offset, current_position));
   }
 
-  ParserState SourceMap::remap(const ParserState& pstate) {
+  SourceSpan SourceMap::remap(const SourceSpan& pstate) {
     for (size_t i = 0; i < mappings.size(); ++i) {
       if (
         mappings[i].generated_position.file == pstate.file &&
         mappings[i].generated_position.line == pstate.line &&
         mappings[i].generated_position.column == pstate.column
-      ) return ParserState(pstate.path, pstate.src, mappings[i].original_position, pstate.offset);
+      ) return SourceSpan(pstate.path, pstate.src, mappings[i].original_position, pstate.offset);
     }
-    return ParserState(pstate.path, pstate.src, Position(-1, -1, -1), Offset(0, 0));
+    return SourceSpan(pstate.path, pstate.src, Position(-1, -1, -1), Offset(0, 0));
 
   }
 

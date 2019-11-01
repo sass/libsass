@@ -8,7 +8,7 @@
 
 namespace Sass {
 
-  Value* c2ast(union Sass_Value* v, Backtraces traces, ParserState pstate)
+  Value* c2ast(union Sass_Value* v, Backtraces traces, SourceSpan pstate)
   {
     using std::strlen;
     using std::strcpy;

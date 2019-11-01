@@ -23,7 +23,7 @@ namespace Sass {
   using namespace Constants;
   using namespace Prelexer;
 
-  Parser Parser::from_c_str(const char* beg, Context& ctx, Backtraces traces, ParserState pstate, const char* source, bool allow_parent)
+  Parser Parser::from_c_str(const char* beg, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source, bool allow_parent)
   {
     pstate.offset.column = 0;
     pstate.offset.line = 0;
@@ -37,7 +37,7 @@ namespace Sass {
     return p;
   }
 
-  Parser Parser::from_c_str(const char* beg, const char* end, Context& ctx, Backtraces traces, ParserState pstate, const char* source, bool allow_parent)
+  Parser Parser::from_c_str(const char* beg, const char* end, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source, bool allow_parent)
   {
     pstate.offset.column = 0;
     pstate.offset.line = 0;
@@ -59,7 +59,7 @@ namespace Sass {
       pstate.offset.line = 0;
     }
 
-  SelectorListObj Parser::parse_selector(const char* beg, Context& ctx, Backtraces traces, ParserState pstate, const char* source, bool allow_parent)
+  SelectorListObj Parser::parse_selector(const char* beg, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source, bool allow_parent)
   {
     Parser p = Parser::from_c_str(beg, ctx, traces, pstate, source, allow_parent);
     // ToDo: remap the source-map entries somehow
@@ -72,7 +72,7 @@ namespace Sass {
            && ! peek_css<exactly<'{'>>(start);
   }
 
-  Parser Parser::from_token(Token t, Context& ctx, Backtraces traces, ParserState pstate, const char* source)
+  Parser Parser::from_token(Token t, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source)
   {
     Parser p(ctx, pstate, traces);
     p.source   = source ? source : t.begin;
@@ -388,7 +388,7 @@ namespace Sass {
     sass::string name(Util::normalize_underscores(lexed));
     if (which_type == Definition::FUNCTION && (name == "and" || name == "or" || name == "not"))
     { error("Invalid function name \"" + name + "\"."); }
-    ParserState source_position_of_def = pstate;
+    SourceSpan source_position_of_def = pstate;
     Parameters_Obj params = parse_parameters();
     if (which_type == Definition::MIXIN) stack.push_back(Scope::Mixin);
     else stack.push_back(Scope::Function);
@@ -423,7 +423,7 @@ namespace Sass {
     while (lex< alternatives < spaces, block_comment > >());
     lex < variable >();
     sass::string name(Util::normalize_underscores(lexed));
-    ParserState pos = pstate;
+    SourceSpan pos = pstate;
     ExpressionObj val;
     bool is_rest = false;
     while (lex< alternatives < spaces, block_comment > >());
@@ -469,7 +469,7 @@ namespace Sass {
     if (peek_css< sequence < variable, optional_css_comments, exactly<':'> > >()) {
       lex_css< variable >();
       sass::string name(Util::normalize_underscores(lexed));
-      ParserState p = pstate;
+      SourceSpan p = pstate;
       lex_css< exactly<':'> >();
       ExpressionObj val = parse_space_list();
       arg = SASS_MEMORY_NEW(Argument, p, val, name);
@@ -493,7 +493,7 @@ namespace Sass {
   Assignment_Obj Parser::parse_assignment()
   {
     sass::string name(Util::normalize_underscores(lexed));
-    ParserState var_source_position = pstate;
+    SourceSpan var_source_position = pstate;
     if (!lex< exactly<':'> >()) error("expected ':' after " + name + " in assignment statement");
     if (peek_css< alternatives < exactly<';'>, end_of_file > >()) {
       css_error("Invalid CSS", " after ", ": expected expression (e.g. 1px, bold), was ");
@@ -711,7 +711,7 @@ namespace Sass {
   {
     lex< pseudo_not >();
     sass::string name(lexed);
-    ParserState nsource_position = pstate;
+    SourceSpan nsource_position = pstate;
     SelectorListObj negated = parseSelectorList(true);
     if (!lex< exactly<')'> >()) {
       error("negated selector is missing ')'");
@@ -746,7 +746,7 @@ namespace Sass {
 
         sass::string name(lexed);
         name.erase(name.size() - 1);
-        ParserState p = pstate;
+        SourceSpan p = pstate;
 
         // specially parse nth-child pseudo selectors
         if (lex_css < sequence < binomial, word_boundary >>()) {
@@ -823,7 +823,7 @@ namespace Sass {
 
   AttributeSelectorObj Parser::parse_attribute_selector()
   {
-    ParserState p = pstate;
+    SourceSpan p = pstate;
     if (!lex_css< attribute_name >()) error("invalid attribute name in attribute selector");
     sass::string name(lexed);
     if (lex_css< re_attr_sensitive_close >()) {
@@ -965,7 +965,7 @@ namespace Sass {
       map->append(value);
     }
 
-    ParserState ps = map->pstate();
+    SourceSpan ps = map->pstate();
     ps.offset = pstate - ps + pstate.offset;
     map->pstate(ps);
 
@@ -1095,7 +1095,7 @@ namespace Sass {
   {
     NESTING_GUARD(nestings);
     advanceToNextToken();
-    ParserState state(pstate);
+    SourceSpan state(pstate);
     // parse the left hand side conjunction
     ExpressionObj conj = parse_conjunction();
     // parse multiple right hand sides
@@ -1117,7 +1117,7 @@ namespace Sass {
   {
     NESTING_GUARD(nestings);
     advanceToNextToken();
-    ParserState state(pstate);
+    SourceSpan state(pstate);
     // parse the left hand side relation
     ExpressionObj rel = parse_relation();
     // parse multiple right hand sides
@@ -1140,7 +1140,7 @@ namespace Sass {
   {
     NESTING_GUARD(nestings);
     advanceToNextToken();
-    ParserState state(pstate);
+    SourceSpan state(pstate);
     // parse the left hand side expression
     ExpressionObj lhs = parse_expression();
     sass::vector<ExpressionObj> operands;
@@ -1193,7 +1193,7 @@ namespace Sass {
   {
     NESTING_GUARD(nestings);
     advanceToNextToken();
-    ParserState state(pstate);
+    SourceSpan state(pstate);
     // parses multiple add and subtract operations
     // NOTE: make sure that identifiers starting with
     // NOTE: dashes do NOT count as subtract operation
@@ -1237,7 +1237,7 @@ namespace Sass {
   {
     NESTING_GUARD(nestings);
     advanceToNextToken();
-    ParserState state(pstate);
+    SourceSpan state(pstate);
     ExpressionObj factor = parse_factor();
     // if it's a singleton, return it (don't wrap it)
     sass::vector<ExpressionObj> operands; // factors
@@ -1351,7 +1351,7 @@ namespace Sass {
               (L > 2 && parsed.substr(0, 3) == "-0.") );
   }
 
-  Number* Parser::lexed_number(const ParserState& pstate, const sass::string& parsed)
+  Number* Parser::lexed_number(const SourceSpan& pstate, const sass::string& parsed)
   {
     Number* nr = SASS_MEMORY_NEW(Number,
                                     pstate,
@@ -1363,7 +1363,7 @@ namespace Sass {
     return nr;
   }
 
-  Number* Parser::lexed_percentage(const ParserState& pstate, const sass::string& parsed)
+  Number* Parser::lexed_percentage(const SourceSpan& pstate, const sass::string& parsed)
   {
     Number* nr = SASS_MEMORY_NEW(Number,
                                     pstate,
@@ -1375,7 +1375,7 @@ namespace Sass {
     return nr;
   }
 
-  Number* Parser::lexed_dimension(const ParserState& pstate, const sass::string& parsed)
+  Number* Parser::lexed_dimension(const SourceSpan& pstate, const sass::string& parsed)
   {
     size_t L = parsed.length();
     size_t num_pos = parsed.find_first_not_of(" \n\r\t");
@@ -1396,7 +1396,7 @@ namespace Sass {
     return nr;
   }
 
-  Value* Parser::lexed_hex_color(const ParserState& pstate, const sass::string& parsed)
+  Value* Parser::lexed_hex_color(const SourceSpan& pstate, const sass::string& parsed)
   {
     Color_RGBA* color = NULL;
     if (parsed[0] != '#') {
@@ -1912,9 +1912,9 @@ namespace Sass {
   {
     lex< identifier >();
     sass::string name(lexed);
-    ParserState call_pos = pstate;
+    SourceSpan call_pos = pstate;
     lex< exactly<'('> >();
-    ParserState arg_pos = pstate;
+    SourceSpan arg_pos = pstate;
     const char* arg_beg = position;
     parse_list();
     const char* arg_end = position;
@@ -1996,7 +1996,7 @@ namespace Sass {
     if (Util::normalize_underscores(name) == "content-exists" && stack.back() != Scope::Mixin)
     { error("Cannot call content-exists() except within a mixin."); }
 
-    ParserState call_pos = pstate;
+    SourceSpan call_pos = pstate;
     Arguments_Obj args = parse_arguments();
     return SASS_MEMORY_NEW(Function_Call, call_pos, name, args);
   }
@@ -2004,7 +2004,7 @@ namespace Sass {
   Function_Call_Obj Parser::parse_function_call_schema()
   {
     String_Obj name = parse_identifier_schema();
-    ParserState source_position_of_call = pstate;
+    SourceSpan source_position_of_call = pstate;
     Arguments_Obj args = parse_arguments();
 
     return SASS_MEMORY_NEW(Function_Call, source_position_of_call, name, args);
@@ -2012,7 +2012,7 @@ namespace Sass {
 
   Content_Obj Parser::parse_content_directive()
   {
-    ParserState call_pos = pstate;
+    SourceSpan call_pos = pstate;
     Arguments_Obj args = parse_arguments();
 
     return SASS_MEMORY_NEW(Content, call_pos, args);
@@ -2021,7 +2021,7 @@ namespace Sass {
   If_Obj Parser::parse_if_directive(bool else_if)
   {
     stack.push_back(Scope::Control);
-    ParserState if_source_position = pstate;
+    SourceSpan if_source_position = pstate;
     bool root = block_stack.back()->is_root();
     ExpressionObj predicate = parse_list();
     Block_Obj block = parse_block(root);
@@ -2043,7 +2043,7 @@ namespace Sass {
   ForRuleObj Parser::parse_for_directive()
   {
     stack.push_back(Scope::Control);
-    ParserState for_source_position = pstate;
+    SourceSpan for_source_position = pstate;
     bool root = block_stack.back()->is_root();
     lex_variable();
     sass::string var(Util::normalize_underscores(lexed));
@@ -2088,7 +2088,7 @@ namespace Sass {
   EachRuleObj Parser::parse_each_directive()
   {
     stack.push_back(Scope::Control);
-    ParserState each_source_position = pstate;
+    SourceSpan each_source_position = pstate;
     bool root = block_stack.back()->is_root();
     sass::vector<sass::string> vars;
     lex_variable();
@@ -2397,7 +2397,7 @@ namespace Sass {
   At_Root_Block_Obj Parser::parse_at_root_block()
   {
     stack.push_back(Scope::AtRoot);
-    ParserState at_source_position = pstate;
+    SourceSpan at_source_position = pstate;
     Block_Obj body;
     At_Root_Query_Obj expr;
     Lookahead lookahead_result;
@@ -2892,7 +2892,7 @@ namespace Sass {
   void Parser::error(sass::string msg, Position pos)
   {
     Position p(pos.line ? pos : before_token);
-    ParserState pstate(path, source, p, Offset(0, 0));
+    SourceSpan pstate(path, source, p, Offset(0, 0));
     // `pstate.src` may not outlive stack unwind so we must copy it.
     // This is needed since we often parse dynamically generated code,
     // e.g. for interpolations, and we normally don't want to keep this

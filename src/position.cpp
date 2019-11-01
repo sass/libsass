@@ -117,13 +117,13 @@ namespace Sass {
   : Offset(line, column), file(file) { }
 
 
-  ParserState::ParserState(const char* path, const char* src, const size_t file)
+  SourceSpan::SourceSpan(const char* path, const char* src, const size_t file)
   : Position(file, 0, 0), path(path), src(src), offset(0, 0), token() { }
 
-  ParserState::ParserState(const char* path, const char* src, const Position& position, Offset offset)
+  SourceSpan::SourceSpan(const char* path, const char* src, const Position& position, Offset offset)
   : Position(position), path(path), src(src), offset(offset), token() { }
 
-  ParserState::ParserState(const char* path, const char* src, const Token& token, const Position& position, Offset offset)
+  SourceSpan::SourceSpan(const char* path, const char* src, const Token& token, const Position& position, Offset offset)
   : Position(position), path(path), src(src), offset(offset), token(token) { }
 
   Position Position::add(const char* begin, const char* end)

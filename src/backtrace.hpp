@@ -10,10 +10,10 @@ namespace Sass {
 
   struct Backtrace {
 
-    ParserState pstate;
+    SourceSpan pstate;
     sass::string caller;
 
-    Backtrace(ParserState pstate, sass::string c = "")
+    Backtrace(SourceSpan pstate, sass::string c = "")
     : pstate(pstate),
       caller(c)
     { }

@@ -11,7 +11,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Selector::Selector(ParserState pstate)
+  Selector::Selector(SourceSpan pstate)
   : Expression(pstate),
     hash_(0)
   { concrete_type(SELECTOR); }
@@ -30,7 +30,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Selector_Schema::Selector_Schema(ParserState pstate, String_Obj c)
+  Selector_Schema::Selector_Schema(SourceSpan pstate, String_Obj c)
   : AST_Node(pstate),
     contents_(c),
     connect_parent_(true),
@@ -69,7 +69,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  SimpleSelector::SimpleSelector(ParserState pstate, sass::string n)
+  SimpleSelector::SimpleSelector(SourceSpan pstate, sass::string n)
   : Selector(pstate), ns_(""), name_(n), has_ns_(false)
   {
     size_t pos = n.find('|');
@@ -174,7 +174,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  PlaceholderSelector::PlaceholderSelector(ParserState pstate, sass::string n)
+  PlaceholderSelector::PlaceholderSelector(SourceSpan pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(PLACEHOLDER_SEL); }
   PlaceholderSelector::PlaceholderSelector(const PlaceholderSelector* ptr)
@@ -191,7 +191,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  TypeSelector::TypeSelector(ParserState pstate, sass::string n)
+  TypeSelector::TypeSelector(SourceSpan pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(TYPE_SEL); }
   TypeSelector::TypeSelector(const TypeSelector* ptr)
@@ -207,7 +207,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  ClassSelector::ClassSelector(ParserState pstate, sass::string n)
+  ClassSelector::ClassSelector(SourceSpan pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(CLASS_SEL); }
   ClassSelector::ClassSelector(const ClassSelector* ptr)
@@ -222,7 +222,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  IDSelector::IDSelector(ParserState pstate, sass::string n)
+  IDSelector::IDSelector(SourceSpan pstate, sass::string n)
   : SimpleSelector(pstate, n)
   { simple_type(ID_SEL); }
   IDSelector::IDSelector(const IDSelector* ptr)
@@ -237,7 +237,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  AttributeSelector::AttributeSelector(ParserState pstate, sass::string n, sass::string m, String_Obj v, char o)
+  AttributeSelector::AttributeSelector(SourceSpan pstate, sass::string n, sass::string m, String_Obj v, char o)
   : SimpleSelector(pstate, n), matcher_(m), value_(v), modifier_(o)
   { simple_type(ATTRIBUTE_SEL); }
   AttributeSelector::AttributeSelector(const AttributeSelector* ptr)
@@ -265,7 +265,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  PseudoSelector::PseudoSelector(ParserState pstate, sass::string name, bool element)
+  PseudoSelector::PseudoSelector(SourceSpan pstate, sass::string name, bool element)
   : SimpleSelector(pstate, name),
     normalized_(Util::unvendor(name)),
     argument_({}),
@@ -340,7 +340,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  SelectorList::SelectorList(ParserState pstate, size_t s)
+  SelectorList::SelectorList(SourceSpan pstate, size_t s)
   : Selector(pstate),
     Vectorized<ComplexSelectorObj>(s),
     is_optional_(false)
@@ -391,7 +391,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  ComplexSelector::ComplexSelector(ParserState pstate)
+  ComplexSelector::ComplexSelector(SourceSpan pstate)
   : Selector(pstate),
     Vectorized<SelectorComponentObj>(),
     chroots_(false),
@@ -469,7 +469,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  SelectorComponent::SelectorComponent(ParserState pstate, bool postLineBreak)
+  SelectorComponent::SelectorComponent(SourceSpan pstate, bool postLineBreak)
   : Selector(pstate),
     hasPostLineBreak_(postLineBreak)
   {
@@ -500,7 +500,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  SelectorCombinator::SelectorCombinator(ParserState pstate, SelectorCombinator::Combinator combinator, bool postLineBreak)
+  SelectorCombinator::SelectorCombinator(SourceSpan pstate, SelectorCombinator::Combinator combinator, bool postLineBreak)
     : SelectorComponent(pstate, postLineBreak),
     combinator_(combinator)
   {
@@ -522,7 +522,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  CompoundSelector::CompoundSelector(ParserState pstate, bool postLineBreak)
+  CompoundSelector::CompoundSelector(SourceSpan pstate, bool postLineBreak)
     : SelectorComponent(pstate, postLineBreak),
       Vectorized<SimpleSelectorObj>(),
       hasRealParent_(false),
@@ -600,7 +600,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  MediaRule::MediaRule(ParserState pstate, Block_Obj block) :
+  MediaRule::MediaRule(SourceSpan pstate, Block_Obj block) :
     ParentStatement(pstate, block),
     schema_({})
   {
@@ -617,7 +617,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  CssMediaRule::CssMediaRule(ParserState pstate, Block_Obj block) :
+  CssMediaRule::CssMediaRule(SourceSpan pstate, Block_Obj block) :
     ParentStatement(pstate, block),
     Vectorized()
   {
@@ -631,7 +631,7 @@ namespace Sass {
     statement_type(MEDIA);
   }
 
-  CssMediaQuery::CssMediaQuery(ParserState pstate) :
+  CssMediaQuery::CssMediaQuery(SourceSpan pstate) :
     AST_Node(pstate),
     modifier_(""),
     type_(""),

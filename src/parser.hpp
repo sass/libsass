@@ -34,7 +34,7 @@ struct Lookahead {
 
 namespace Sass {
 
-  class Parser : public ParserState {
+  class Parser : public SourceSpan {
   public:
 
     enum Scope { Root, Mixin, Function, Media, Control, Properties, Rules, AtRoot };
@@ -47,7 +47,7 @@ namespace Sass {
     const char* end;
     Position before_token;
     Position after_token;
-    ParserState pstate;
+    SourceSpan pstate;
     Backtraces traces;
     size_t indentation;
     size_t nestings;
@@ -55,20 +55,20 @@ namespace Sass {
 
     Token lexed;
 
-    Parser(Context& ctx, const ParserState& pstate, Backtraces traces, bool allow_parent = true)
-    : ParserState(pstate), ctx(ctx), block_stack(), stack(0),
+    Parser(Context& ctx, const SourceSpan& pstate, Backtraces traces, bool allow_parent = true)
+    : SourceSpan(pstate), ctx(ctx), block_stack(), stack(0),
       source(0), position(0), end(0), before_token(pstate), after_token(pstate),
       pstate(pstate), traces(traces), indentation(0), nestings(0), allow_parent(allow_parent)
     {
       stack.push_back(Scope::Root);
     }
 
-    // static Parser from_string(const sass::string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
-    static Parser from_c_str(const char* src, Context& ctx, Backtraces, ParserState pstate = ParserState("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
-    static Parser from_c_str(const char* beg, const char* end, Context& ctx, Backtraces, ParserState pstate = ParserState("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
-    static Parser from_token(Token t, Context& ctx, Backtraces, ParserState pstate = ParserState("[TOKEN]"), const char* source = nullptr);
+    // static Parser from_string(const sass::string& src, Context& ctx, SourceSpan pstate = SourceSpan("[STRING]"));
+    static Parser from_c_str(const char* src, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
+    static Parser from_c_str(const char* beg, const char* end, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
+    static Parser from_token(Token t, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[TOKEN]"), const char* source = nullptr);
     // special static parsers to convert strings into certain selectors
-    static SelectorListObj parse_selector(const char* src, Context& ctx, Backtraces, ParserState pstate = ParserState("[SELECTOR]"), const char* source = nullptr, bool allow_parent = true);
+    static SelectorListObj parse_selector(const char* src, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[SELECTOR]"), const char* source = nullptr, bool allow_parent = true);
 
 #ifdef __clang__
 
@@ -84,7 +84,7 @@ namespace Sass {
 
 
     // skip current token and next whitespace
-    // moves ParserState right before next token
+    // moves SourceSpan right before next token
     void advanceToNextToken();
 
     bool peek_newline(const char* start = 0);
@@ -189,7 +189,7 @@ namespace Sass {
       after_token.add(it_before_token, it_after_token);
 
       // ToDo: could probably do this incremental on original object (API wants offset?)
-      pstate = ParserState(path, source, lexed, before_token, after_token - before_token);
+      pstate = SourceSpan(path, source, lexed, before_token, after_token - before_token);
 
       // advance internal char iterator
       return position = it_after_token;
@@ -208,7 +208,7 @@ namespace Sass {
       const char* oldpos = position;
       Position bt = before_token;
       Position at = after_token;
-      ParserState op = pstate;
+      SourceSpan op = pstate;
       // throw away comments
       // update srcmap position
       lex < Prelexer::css_comments >();
@@ -383,10 +383,10 @@ namespace Sass {
     }
 
   public:
-    static Number* lexed_number(const ParserState& pstate, const sass::string& parsed);
-    static Number* lexed_dimension(const ParserState& pstate, const sass::string& parsed);
-    static Number* lexed_percentage(const ParserState& pstate, const sass::string& parsed);
-    static Value* lexed_hex_color(const ParserState& pstate, const sass::string& parsed);
+    static Number* lexed_number(const SourceSpan& pstate, const sass::string& parsed);
+    static Number* lexed_dimension(const SourceSpan& pstate, const sass::string& parsed);
+    static Number* lexed_percentage(const SourceSpan& pstate, const sass::string& parsed);
+    static Value* lexed_hex_color(const SourceSpan& pstate, const sass::string& parsed);
   private:
     Number* lexed_number(const sass::string& parsed) { return lexed_number(pstate, parsed); };
     Number* lexed_dimension(const sass::string& parsed) { return lexed_dimension(pstate, parsed); };

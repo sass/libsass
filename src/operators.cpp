@@ -59,7 +59,7 @@ namespace Sass {
     bool gte(ExpressionObj lhs, ExpressionObj rhs) { return !cmp(lhs, rhs, Sass_OP::GTE) || eq(lhs, rhs); }
 
     /* colour math deprecation warning */
-    void op_color_deprecation(enum Sass_OP op, sass::string lsh, sass::string rhs, const ParserState& pstate)
+    void op_color_deprecation(enum Sass_OP op, sass::string lsh, sass::string rhs, const SourceSpan& pstate)
     {
       deprecated(
         "The operation `" + lsh + " " + sass_op_to_name(op) + " " + rhs +
@@ -70,7 +70,7 @@ namespace Sass {
     }
 
     /* static function, throws OperationError, has no traces but optional pstate for returned value */
-    Value* op_strings(Sass::Operand operand, Value& lhs, Value& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
+    Value* op_strings(Sass::Operand operand, Value& lhs, Value& rhs, struct Sass_Inspect_Options opt, const SourceSpan& pstate, bool delayed)
     {
       enum Sass_OP op = operand.operand;
 
@@ -121,7 +121,7 @@ namespace Sass {
 
     /* ToDo: allow to operate also with hsla colors */
     /* static function, throws OperationError, has no traces but optional pstate for returned value */
-    Value* op_colors(enum Sass_OP op, const Color_RGBA& lhs, const Color_RGBA& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
+    Value* op_colors(enum Sass_OP op, const Color_RGBA& lhs, const Color_RGBA& rhs, struct Sass_Inspect_Options opt, const SourceSpan& pstate, bool delayed)
     {
 
       if (lhs.a() != rhs.a()) {
@@ -142,7 +142,7 @@ namespace Sass {
     }
 
     /* static function, throws OperationError, has no traces but optional pstate for returned value */
-    Value* op_numbers(enum Sass_OP op, const Number& lhs, const Number& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
+    Value* op_numbers(enum Sass_OP op, const Number& lhs, const Number& rhs, struct Sass_Inspect_Options opt, const SourceSpan& pstate, bool delayed)
     {
       double lval = lhs.value();
       double rval = rhs.value();
@@ -212,7 +212,7 @@ namespace Sass {
     }
 
     /* static function, throws OperationError, has no traces but optional pstate for returned value */
-    Value* op_number_color(enum Sass_OP op, const Number& lhs, const Color_RGBA& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
+    Value* op_number_color(enum Sass_OP op, const Number& lhs, const Color_RGBA& rhs, struct Sass_Inspect_Options opt, const SourceSpan& pstate, bool delayed)
     {
       double lval = lhs.value();
 
@@ -243,7 +243,7 @@ namespace Sass {
     }
 
     /* static function, throws OperationError, has no traces but optional pstate for returned value */
-    Value* op_color_number(enum Sass_OP op, const Color_RGBA& lhs, const Number& rhs, struct Sass_Inspect_Options opt, const ParserState& pstate, bool delayed)
+    Value* op_color_number(enum Sass_OP op, const Color_RGBA& lhs, const Number& rhs, struct Sass_Inspect_Options opt, const SourceSpan& pstate, bool delayed)
     {
       double rval = rhs.value();
 

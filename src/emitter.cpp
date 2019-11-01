@@ -53,7 +53,7 @@ namespace Sass {
   { wbuf.smap.add_open_mapping(node); }
   void Emitter::add_close_mapping(const AST_Node* node)
   { wbuf.smap.add_close_mapping(node); }
-  ParserState Emitter::remap(const ParserState& pstate)
+  SourceSpan Emitter::remap(const SourceSpan& pstate)
   { return wbuf.smap.remap(pstate); }
 
   // MAIN BUFFER MANIPULATION

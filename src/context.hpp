@@ -20,13 +20,13 @@ namespace Sass {
   class Context {
   public:
     void import_url (Import* imp, sass::string load_path, const sass::string& ctx_path);
-    bool call_headers(const sass::string& load_path, const char* ctx_path, ParserState& pstate, Import* imp)
+    bool call_headers(const sass::string& load_path, const char* ctx_path, SourceSpan& pstate, Import* imp)
     { return call_loader(load_path, ctx_path, pstate, imp, c_headers, false); };
-    bool call_importers(const sass::string& load_path, const char* ctx_path, ParserState& pstate, Import* imp)
+    bool call_importers(const sass::string& load_path, const char* ctx_path, SourceSpan& pstate, Import* imp)
     { return call_loader(load_path, ctx_path, pstate, imp, c_importers, true); };
 
   private:
-    bool call_loader(const sass::string& load_path, const char* ctx_path, ParserState& pstate, Import* imp, sass::vector<Sass_Importer_Entry> importers, bool only_one = true);
+    bool call_loader(const sass::string& load_path, const char* ctx_path, SourceSpan& pstate, Import* imp, sass::vector<Sass_Importer_Entry> importers, bool only_one = true);
 
   public:
     const sass::string CWD;
@@ -60,7 +60,7 @@ namespace Sass {
     sass::vector<sass::string> plugin_paths; // relative paths to load plugins
     sass::vector<sass::string> include_paths; // lookup paths for includes
 
-    void apply_custom_headers(Block_Obj root, const char* path, ParserState pstate);
+    void apply_custom_headers(Block_Obj root, const char* path, SourceSpan pstate);
 
     sass::vector<Sass_Importer_Entry> c_headers;
     sass::vector<Sass_Importer_Entry> c_importers;
@@ -85,9 +85,9 @@ namespace Sass {
     virtual char* render_srcmap();
 
     void register_resource(const Include&, const Resource&);
-    void register_resource(const Include&, const Resource&, ParserState&);
+    void register_resource(const Include&, const Resource&, SourceSpan&);
     sass::vector<Include> find_includes(const Importer& import);
-    Include load_import(const Importer&, ParserState pstate);
+    Include load_import(const Importer&, SourceSpan pstate);
 
     Sass_Output_Style output_style() { return c_options.output_style; };
     sass::vector<sass::string> get_included_files(bool skip = false, size_t headers = 0);

@@ -30,10 +30,10 @@ namespace Sass {
         sass::string msg;
         sass::string prefix;
       public:
-        ParserState pstate;
+        SourceSpan pstate;
         Backtraces traces;
       public:
-        Base(ParserState pstate, sass::string msg, Backtraces traces);
+        Base(SourceSpan pstate, sass::string msg, Backtraces traces);
         virtual const char* errtype() const { return prefix.c_str(); }
         virtual const char* what() const throw() { return msg.c_str(); }
         virtual ~Base() throw() {};
@@ -52,7 +52,7 @@ namespace Sass {
           other.owned_src = nullptr;
         }
 
-        InvalidSass(ParserState pstate, Backtraces traces, sass::string msg, char* owned_src = nullptr);
+        InvalidSass(SourceSpan pstate, Backtraces traces, sass::string msg, char* owned_src = nullptr);
         virtual ~InvalidSass() throw() { sass_free_memory(owned_src); };
         char *owned_src;
     };
@@ -72,7 +72,7 @@ namespace Sass {
         sass::string arg;
         sass::string fntype;
       public:
-        MissingArgument(ParserState pstate, Backtraces traces, sass::string fn, sass::string arg, sass::string fntype);
+        MissingArgument(SourceSpan pstate, Backtraces traces, sass::string fn, sass::string arg, sass::string fntype);
         virtual ~MissingArgument() throw() {};
     };
 
@@ -83,7 +83,7 @@ namespace Sass {
         sass::string type;
         const Value* value;
       public:
-        InvalidArgumentType(ParserState pstate, Backtraces traces, sass::string fn, sass::string arg, sass::string type, const Value* value = 0);
+        InvalidArgumentType(SourceSpan pstate, Backtraces traces, sass::string fn, sass::string arg, sass::string type, const Value* value = 0);
         virtual ~InvalidArgumentType() throw() {};
     };
 
@@ -92,19 +92,19 @@ namespace Sass {
         sass::string name;
         const Argument* arg;
       public:
-        InvalidVarKwdType(ParserState pstate, Backtraces traces, sass::string name, const Argument* arg = 0);
+        InvalidVarKwdType(SourceSpan pstate, Backtraces traces, sass::string name, const Argument* arg = 0);
         virtual ~InvalidVarKwdType() throw() {};
     };
 
     class InvalidSyntax : public Base {
       public:
-        InvalidSyntax(ParserState pstate, Backtraces traces, sass::string msg);
+        InvalidSyntax(SourceSpan pstate, Backtraces traces, sass::string msg);
         virtual ~InvalidSyntax() throw() {};
     };
 
     class NestingLimitError : public Base {
       public:
-        NestingLimitError(ParserState pstate, Backtraces traces, sass::string msg = def_nesting_limit);
+        NestingLimitError(SourceSpan pstate, Backtraces traces, sass::string msg = def_nesting_limit);
         virtual ~NestingLimitError() throw() {};
     };
 
@@ -210,13 +210,13 @@ namespace Sass {
 
     class SassValueError : public Base {
     public:
-      SassValueError(Backtraces traces, ParserState pstate, OperationError& err);
+      SassValueError(Backtraces traces, SourceSpan pstate, OperationError& err);
       virtual ~SassValueError() throw() {};
     };
 
     class TopLevelParent : public Base {
     public:
-      TopLevelParent(Backtraces traces, ParserState pstate);
+      TopLevelParent(Backtraces traces, SourceSpan pstate);
       virtual ~TopLevelParent() throw() {};
     };
 
@@ -234,17 +234,17 @@ namespace Sass {
 
   }
 
-  void warn(sass::string msg, ParserState pstate);
-  void warn(sass::string msg, ParserState pstate, Backtrace* bt);
-  void warning(sass::string msg, ParserState pstate);
+  void warn(sass::string msg, SourceSpan pstate);
+  void warn(sass::string msg, SourceSpan pstate, Backtrace* bt);
+  void warning(sass::string msg, SourceSpan pstate);
 
-  void deprecated_function(sass::string msg, ParserState pstate);
-  void deprecated(sass::string msg, sass::string msg2, bool with_column, ParserState pstate);
-  void deprecated_bind(sass::string msg, ParserState pstate);
-  // void deprecated(sass::string msg, ParserState pstate, Backtrace* bt);
+  void deprecated_function(sass::string msg, SourceSpan pstate);
+  void deprecated(sass::string msg, sass::string msg2, bool with_column, SourceSpan pstate);
+  void deprecated_bind(sass::string msg, SourceSpan pstate);
+  // void deprecated(sass::string msg, SourceSpan pstate, Backtrace* bt);
 
-  void coreError(sass::string msg, ParserState pstate);
-  void error(sass::string msg, ParserState pstate, Backtraces& traces);
+  void coreError(sass::string msg, SourceSpan pstate);
+  void error(sass::string msg, SourceSpan pstate, Backtraces& traces);
 
 }
 

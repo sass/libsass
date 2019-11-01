@@ -42,7 +42,7 @@ namespace Sass {
   class SupportsRule : public ParentStatement {
     ADD_PROPERTY(Supports_Condition_Obj, condition)
   public:
-    SupportsRule(ParserState pstate, Supports_Condition_Obj condition, Block_Obj block = {});
+    SupportsRule(SourceSpan pstate, Supports_Condition_Obj condition, Block_Obj block = {});
     bool bubbles() override;
     ATTACH_AST_OPERATIONS(SupportsRule)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -53,7 +53,7 @@ namespace Sass {
   //////////////////////////////////////////////////////
   class Supports_Condition : public Expression {
   public:
-    Supports_Condition(ParserState pstate);
+    Supports_Condition(SourceSpan pstate);
     virtual bool needs_parens(Supports_Condition_Obj cond) const { return false; }
     ATTACH_AST_OPERATIONS(Supports_Condition)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -70,7 +70,7 @@ namespace Sass {
     ADD_PROPERTY(Supports_Condition_Obj, right);
     ADD_PROPERTY(Operand, operand);
   public:
-    Supports_Operator(ParserState pstate, Supports_Condition_Obj l, Supports_Condition_Obj r, Operand o);
+    Supports_Operator(SourceSpan pstate, Supports_Condition_Obj l, Supports_Condition_Obj r, Operand o);
     virtual bool needs_parens(Supports_Condition_Obj cond) const override;
     ATTACH_AST_OPERATIONS(Supports_Operator)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -83,7 +83,7 @@ namespace Sass {
   private:
     ADD_PROPERTY(Supports_Condition_Obj, condition);
   public:
-    Supports_Negation(ParserState pstate, Supports_Condition_Obj c);
+    Supports_Negation(SourceSpan pstate, Supports_Condition_Obj c);
     virtual bool needs_parens(Supports_Condition_Obj cond) const override;
     ATTACH_AST_OPERATIONS(Supports_Negation)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -97,7 +97,7 @@ namespace Sass {
     ADD_PROPERTY(ExpressionObj, feature);
     ADD_PROPERTY(ExpressionObj, value);
   public:
-    Supports_Declaration(ParserState pstate, ExpressionObj f, ExpressionObj v);
+    Supports_Declaration(SourceSpan pstate, ExpressionObj f, ExpressionObj v);
     virtual bool needs_parens(Supports_Condition_Obj cond) const override;
     ATTACH_AST_OPERATIONS(Supports_Declaration)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -110,7 +110,7 @@ namespace Sass {
   private:
     ADD_PROPERTY(ExpressionObj, value);
   public:
-    Supports_Interpolation(ParserState pstate, ExpressionObj v);
+    Supports_Interpolation(SourceSpan pstate, ExpressionObj v);
     virtual bool needs_parens(Supports_Condition_Obj cond) const override;
     ATTACH_AST_OPERATIONS(Supports_Interpolation)
     ATTACH_CRTP_PERFORM_METHODS()

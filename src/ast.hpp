@@ -55,9 +55,9 @@ namespace Sass {
   // Abstract base class for all abstract syntax tree nodes.
   //////////////////////////////////////////////////////////
   class AST_Node : public SharedObj {
-    ADD_PROPERTY(ParserState, pstate)
+    ADD_PROPERTY(SourceSpan, pstate)
   public:
-    AST_Node(ParserState pstate)
+    AST_Node(SourceSpan pstate)
     : pstate_(pstate)
     { }
     AST_Node(const AST_Node* ptr)
@@ -83,7 +83,7 @@ namespace Sass {
     // generic find function (not fully implemented yet)
     // ToDo: add specific implementions to all children
     virtual bool find ( bool (*f)(AST_Node_Obj) ) { return f(this); };
-    void update_pstate(const ParserState& pstate);
+    void update_pstate(const SourceSpan& pstate);
     Offset off() { return pstate(); }
     Position pos() { return pstate(); }
 
@@ -153,7 +153,7 @@ namespace Sass {
     ADD_PROPERTY(bool, is_interpolant)
     ADD_PROPERTY(Type, concrete_type)
   public:
-    Expression(ParserState pstate, bool d = false, bool e = false, bool i = false, Type ct = NONE);
+    Expression(SourceSpan pstate, bool d = false, bool e = false, bool i = false, Type ct = NONE);
     virtual operator bool() { return true; }
     virtual ~Expression() { }
     virtual bool is_invisible() const { return false; }
@@ -486,7 +486,7 @@ namespace Sass {
     ADD_PROPERTY(size_t, tabs)
     ADD_PROPERTY(bool, group_end)
   public:
-    Statement(ParserState pstate, Type st = NONE, size_t t = 0);
+    Statement(SourceSpan pstate, Type st = NONE, size_t t = 0);
     virtual ~Statement() = 0; // virtual destructor
     // needed for rearranging nested rulesets during CSS emission
     virtual bool bubbles();
@@ -505,7 +505,7 @@ namespace Sass {
   protected:
     void adjust_after_pushing(Statement_Obj s) override {}
   public:
-    Block(ParserState pstate, size_t s = 0, bool r = false);
+    Block(SourceSpan pstate, size_t s = 0, bool r = false);
     bool isInvisible() const;
     bool has_content() override;
     ATTACH_AST_OPERATIONS(Block)
@@ -518,7 +518,7 @@ namespace Sass {
   class ParentStatement : public Statement {
     ADD_PROPERTY(Block_Obj, block)
   public:
-    ParentStatement(ParserState pstate, Block_Obj b);
+    ParentStatement(SourceSpan pstate, Block_Obj b);
     ParentStatement(const ParentStatement* ptr); // copy constructor
     virtual ~ParentStatement() = 0; // virtual destructor
     virtual bool has_content() override;
@@ -534,7 +534,7 @@ namespace Sass {
     ADD_PROPERTY(Selector_Schema_Obj, schema)
     ADD_PROPERTY(bool, is_root);
   public:
-    StyleRule(ParserState pstate, SelectorListObj s = {}, Block_Obj b = {});
+    StyleRule(SourceSpan pstate, SelectorListObj s = {}, Block_Obj b = {});
     bool is_invisible() const override;
     ATTACH_AST_OPERATIONS(StyleRule)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -547,7 +547,7 @@ namespace Sass {
     ADD_PROPERTY(Statement_Obj, node)
     ADD_PROPERTY(bool, group_end)
   public:
-    Bubble(ParserState pstate, Statement_Obj n, Statement_Obj g = {}, size_t t = 0);
+    Bubble(SourceSpan pstate, Statement_Obj n, Statement_Obj g = {}, size_t t = 0);
     bool bubbles() override;
     ATTACH_AST_OPERATIONS(Bubble)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -560,7 +560,7 @@ namespace Sass {
     ADD_CONSTREF(char, type)
     ADD_CONSTREF(sass::string, name)
   public:
-    Trace(ParserState pstate, sass::string n, Block_Obj b = {}, char type = 'm');
+    Trace(SourceSpan pstate, sass::string n, Block_Obj b = {}, char type = 'm');
     ATTACH_AST_OPERATIONS(Trace)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -574,7 +574,7 @@ namespace Sass {
     ADD_PROPERTY(SelectorListObj, selector)
     ADD_PROPERTY(ExpressionObj, value)
   public:
-    Directive(ParserState pstate, sass::string kwd, SelectorListObj sel = {}, Block_Obj b = {}, ExpressionObj val = {});
+    Directive(SourceSpan pstate, sass::string kwd, SelectorListObj sel = {}, Block_Obj b = {}, ExpressionObj val = {});
     bool bubbles() override;
     bool is_media();
     bool is_keyframes();
@@ -590,7 +590,7 @@ namespace Sass {
     // <keyframes-name> = <custom-ident> | <string>
     ADD_PROPERTY(SelectorListObj, name)
   public:
-    Keyframe_Rule(ParserState pstate, Block_Obj b);
+    Keyframe_Rule(SourceSpan pstate, Block_Obj b);
     ATTACH_AST_OPERATIONS(Keyframe_Rule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -605,7 +605,7 @@ namespace Sass {
     ADD_PROPERTY(bool, is_custom_property)
     ADD_PROPERTY(bool, is_indented)
   public:
-    Declaration(ParserState pstate, String_Obj prop, ExpressionObj val, bool i = false, bool c = false, Block_Obj b = {});
+    Declaration(SourceSpan pstate, String_Obj prop, ExpressionObj val, bool i = false, bool c = false, Block_Obj b = {});
     bool is_invisible() const override;
     ATTACH_AST_OPERATIONS(Declaration)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -620,7 +620,7 @@ namespace Sass {
     ADD_PROPERTY(bool, is_default)
     ADD_PROPERTY(bool, is_global)
   public:
-    Assignment(ParserState pstate, sass::string var, ExpressionObj val, bool is_default = false, bool is_global = false);
+    Assignment(SourceSpan pstate, sass::string var, ExpressionObj val, bool is_default = false, bool is_global = false);
     ATTACH_AST_OPERATIONS(Assignment)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -634,7 +634,7 @@ namespace Sass {
     sass::vector<Include>        incs_;
     ADD_PROPERTY(List_Obj,      import_queries);
   public:
-    Import(ParserState pstate);
+    Import(SourceSpan pstate);
     sass::vector<Include>& incs();
     sass::vector<ExpressionObj>& urls();
     ATTACH_AST_OPERATIONS(Import)
@@ -646,7 +646,7 @@ namespace Sass {
   class Import_Stub final : public Statement {
     Include resource_;
   public:
-    Import_Stub(ParserState pstate, Include res);
+    Import_Stub(SourceSpan pstate, Include res);
     Include resource();
     sass::string imp_path();
     sass::string abs_path();
@@ -660,7 +660,7 @@ namespace Sass {
   class WarningRule final : public Statement {
     ADD_PROPERTY(ExpressionObj, message)
   public:
-    WarningRule(ParserState pstate, ExpressionObj msg);
+    WarningRule(SourceSpan pstate, ExpressionObj msg);
     ATTACH_AST_OPERATIONS(WarningRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -671,7 +671,7 @@ namespace Sass {
   class ErrorRule final : public Statement {
     ADD_PROPERTY(ExpressionObj, message)
   public:
-    ErrorRule(ParserState pstate, ExpressionObj msg);
+    ErrorRule(SourceSpan pstate, ExpressionObj msg);
     ATTACH_AST_OPERATIONS(ErrorRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -682,7 +682,7 @@ namespace Sass {
   class DebugRule final : public Statement {
     ADD_PROPERTY(ExpressionObj, value)
   public:
-    DebugRule(ParserState pstate, ExpressionObj val);
+    DebugRule(SourceSpan pstate, ExpressionObj val);
     ATTACH_AST_OPERATIONS(DebugRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -694,7 +694,7 @@ namespace Sass {
     ADD_PROPERTY(String_Obj, text)
     ADD_PROPERTY(bool, is_important)
   public:
-    Comment(ParserState pstate, String_Obj txt, bool is_important);
+    Comment(SourceSpan pstate, String_Obj txt, bool is_important);
     virtual bool is_invisible() const override;
     ATTACH_AST_OPERATIONS(Comment)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -707,7 +707,7 @@ namespace Sass {
     ADD_PROPERTY(ExpressionObj, predicate)
     ADD_PROPERTY(Block_Obj, alternative)
   public:
-    If(ParserState pstate, ExpressionObj pred, Block_Obj con, Block_Obj alt = {});
+    If(SourceSpan pstate, ExpressionObj pred, Block_Obj con, Block_Obj alt = {});
     virtual bool has_content() override;
     ATTACH_AST_OPERATIONS(If)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -722,7 +722,7 @@ namespace Sass {
     ADD_PROPERTY(ExpressionObj, upper_bound)
     ADD_PROPERTY(bool, is_inclusive)
   public:
-    ForRule(ParserState pstate, sass::string var, ExpressionObj lo, ExpressionObj hi, Block_Obj b, bool inc);
+    ForRule(SourceSpan pstate, sass::string var, ExpressionObj lo, ExpressionObj hi, Block_Obj b, bool inc);
     ATTACH_AST_OPERATIONS(ForRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -734,7 +734,7 @@ namespace Sass {
     ADD_PROPERTY(sass::vector<sass::string>, variables)
     ADD_PROPERTY(ExpressionObj, list)
   public:
-    EachRule(ParserState pstate, sass::vector<sass::string> vars, ExpressionObj lst, Block_Obj b);
+    EachRule(SourceSpan pstate, sass::vector<sass::string> vars, ExpressionObj lst, Block_Obj b);
     ATTACH_AST_OPERATIONS(EachRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -745,7 +745,7 @@ namespace Sass {
   class WhileRule final : public ParentStatement {
     ADD_PROPERTY(ExpressionObj, predicate)
   public:
-    WhileRule(ParserState pstate, ExpressionObj pred, Block_Obj b);
+    WhileRule(SourceSpan pstate, ExpressionObj pred, Block_Obj b);
     ATTACH_AST_OPERATIONS(WhileRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -756,7 +756,7 @@ namespace Sass {
   class Return final : public Statement {
     ADD_PROPERTY(ExpressionObj, value)
   public:
-    Return(ParserState pstate, ExpressionObj val);
+    Return(SourceSpan pstate, ExpressionObj val);
     ATTACH_AST_OPERATIONS(Return)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -778,18 +778,18 @@ namespace Sass {
     ADD_PROPERTY(bool, is_overload_stub)
     ADD_PROPERTY(Signature, signature)
   public:
-    Definition(ParserState pstate,
+    Definition(SourceSpan pstate,
                sass::string n,
                Parameters_Obj params,
                Block_Obj b,
                Type t);
-    Definition(ParserState pstate,
+    Definition(SourceSpan pstate,
                Signature sig,
                sass::string n,
                Parameters_Obj params,
                Native_Function func_ptr,
                bool overload_stub = false);
-    Definition(ParserState pstate,
+    Definition(SourceSpan pstate,
                Signature sig,
                sass::string n,
                Parameters_Obj params,
@@ -806,7 +806,7 @@ namespace Sass {
     ADD_PROPERTY(Arguments_Obj, arguments)
     ADD_PROPERTY(Parameters_Obj, block_parameters)
   public:
-    Mixin_Call(ParserState pstate, sass::string n, Arguments_Obj args, Parameters_Obj b_params = {}, Block_Obj b = {});
+    Mixin_Call(SourceSpan pstate, sass::string n, Arguments_Obj args, Parameters_Obj b_params = {}, Block_Obj b = {});
     ATTACH_AST_OPERATIONS(Mixin_Call)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -817,7 +817,7 @@ namespace Sass {
   class Content final : public Statement {
     ADD_PROPERTY(Arguments_Obj, arguments)
   public:
-    Content(ParserState pstate, Arguments_Obj args);
+    Content(SourceSpan pstate, Arguments_Obj args);
     ATTACH_AST_OPERATIONS(Content)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -833,7 +833,7 @@ namespace Sass {
     HASH_PROPERTY(ExpressionObj, operand)
     mutable size_t hash_;
   public:
-    Unary_Expression(ParserState pstate, Type t, ExpressionObj o);
+    Unary_Expression(SourceSpan pstate, Type t, ExpressionObj o);
     const sass::string type_name();
     virtual bool operator==(const Expression& rhs) const override;
     size_t hash() const override;
@@ -851,7 +851,7 @@ namespace Sass {
     ADD_PROPERTY(bool, is_keyword_argument)
     mutable size_t hash_;
   public:
-    Argument(ParserState pstate, ExpressionObj val, sass::string n = "", bool rest = false, bool keyword = false);
+    Argument(SourceSpan pstate, ExpressionObj val, sass::string n = "", bool rest = false, bool keyword = false);
     void set_delayed(bool delayed) override;
     bool operator==(const Expression& rhs) const override;
     size_t hash() const override;
@@ -871,7 +871,7 @@ namespace Sass {
   protected:
     void adjust_after_pushing(Argument_Obj a) override;
   public:
-    Arguments(ParserState pstate);
+    Arguments(SourceSpan pstate);
     void set_delayed(bool delayed) override;
     Argument_Obj get_rest_argument();
     Argument_Obj get_keyword_argument();
@@ -885,7 +885,7 @@ namespace Sass {
   class MediaRule final : public ParentStatement {
     ADD_PROPERTY(List_Obj, schema)
   public:
-    MediaRule(ParserState pstate, Block_Obj block = {});
+    MediaRule(SourceSpan pstate, Block_Obj block = {});
 
     bool bubbles() override { return true; };
     bool is_invisible() const override { return false; };
@@ -898,7 +898,7 @@ namespace Sass {
   class CssMediaRule final : public ParentStatement,
     public Vectorized<CssMediaQuery_Obj> {
   public:
-    CssMediaRule(ParserState pstate, Block_Obj b);
+    CssMediaRule(SourceSpan pstate, Block_Obj b);
     bool bubbles() override { return true; };
     bool isInvisible() const { return empty(); }
     bool is_invisible() const override { return false; };
@@ -935,7 +935,7 @@ namespace Sass {
     ADD_PROPERTY(sass::vector<sass::string>, features);
 
   public:
-    CssMediaQuery(ParserState pstate);
+    CssMediaQuery(SourceSpan pstate);
 
     // Check if two instances are considered equal
     bool operator== (const CssMediaQuery& rhs) const;
@@ -975,7 +975,7 @@ namespace Sass {
     ADD_PROPERTY(bool, is_negated)
     ADD_PROPERTY(bool, is_restricted)
   public:
-    Media_Query(ParserState pstate, String_Obj t = {}, size_t s = 0, bool n = false, bool r = false);
+    Media_Query(SourceSpan pstate, String_Obj t = {}, size_t s = 0, bool n = false, bool r = false);
     ATTACH_AST_OPERATIONS(Media_Query)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -989,7 +989,7 @@ namespace Sass {
     ADD_PROPERTY(ExpressionObj, value)
     ADD_PROPERTY(bool, is_interpolated)
   public:
-    Media_Query_Expression(ParserState pstate, ExpressionObj f, ExpressionObj v, bool i = false);
+    Media_Query_Expression(SourceSpan pstate, ExpressionObj f, ExpressionObj v, bool i = false);
     ATTACH_AST_OPERATIONS(Media_Query_Expression)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -1002,7 +1002,7 @@ namespace Sass {
     ADD_PROPERTY(ExpressionObj, feature)
     ADD_PROPERTY(ExpressionObj, value)
   public:
-    At_Root_Query(ParserState pstate, ExpressionObj f = {}, ExpressionObj v = {}, bool i = false);
+    At_Root_Query(SourceSpan pstate, ExpressionObj f = {}, ExpressionObj v = {}, bool i = false);
     bool exclude(sass::string str);
     ATTACH_AST_OPERATIONS(At_Root_Query)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -1014,7 +1014,7 @@ namespace Sass {
   class At_Root_Block final : public ParentStatement {
     ADD_PROPERTY(At_Root_Query_Obj, expression)
   public:
-    At_Root_Block(ParserState pstate, Block_Obj b = {}, At_Root_Query_Obj e = {});
+    At_Root_Block(SourceSpan pstate, Block_Obj b = {}, At_Root_Query_Obj e = {});
     bool bubbles() override;
     bool exclude_node(Statement_Obj s);
     ATTACH_AST_OPERATIONS(At_Root_Block)
@@ -1029,7 +1029,7 @@ namespace Sass {
     ADD_PROPERTY(ExpressionObj, default_value)
     ADD_PROPERTY(bool, is_rest_parameter)
   public:
-    Parameter(ParserState pstate, sass::string n, ExpressionObj def = {}, bool rest = false);
+    Parameter(SourceSpan pstate, sass::string n, ExpressionObj def = {}, bool rest = false);
     ATTACH_AST_OPERATIONS(Parameter)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -1045,7 +1045,7 @@ namespace Sass {
   protected:
     void adjust_after_pushing(Parameter_Obj p) override;
   public:
-    Parameters(ParserState pstate);
+    Parameters(SourceSpan pstate);
     ATTACH_AST_OPERATIONS(Parameters)
     ATTACH_CRTP_PERFORM_METHODS()
   };

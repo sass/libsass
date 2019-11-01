@@ -414,7 +414,7 @@ namespace Sass {
       //   // don't be that strict
       //   return s;
       //   // this basically always means an internal error and not users fault
-      //   error("Unescaped delimiter in string to unquote found. [" + s + "]", ParserState("[UNQUOTE]"));
+      //   error("Unescaped delimiter in string to unquote found. [" + s + "]", SourceSpan("[UNQUOTE]"));
       // }
       else {
         if (strict && !skipped) {

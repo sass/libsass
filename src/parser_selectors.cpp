@@ -139,7 +139,7 @@ namespace Sass {
       {
         // parent selector only allowed at start
         // upcoming Sass may allow also trailing
-        ParserState state(pstate);
+        SourceSpan state(pstate);
         sass::string found("&");
         if (lex < identifier >()) {
           found += sass::string(lexed);

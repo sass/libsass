@@ -10,12 +10,12 @@ namespace Sass {
 
   Definition* make_native_function(Signature sig, Native_Function func, Context& ctx)
   {
-    Parser sig_parser = Parser::from_c_str(sig, ctx, ctx.traces, ParserState("[built-in function]"));
+    Parser sig_parser = Parser::from_c_str(sig, ctx, ctx.traces, SourceSpan("[built-in function]"));
     sig_parser.lex<Prelexer::identifier>();
     sass::string name(Util::normalize_underscores(sig_parser.lexed));
     Parameters_Obj params = sig_parser.parse_parameters();
     return SASS_MEMORY_NEW(Definition,
-                          ParserState("[built-in function]"),
+                          SourceSpan("[built-in function]"),
                           sig,
                           name,
                           params,
@@ -28,7 +28,7 @@ namespace Sass {
     using namespace Prelexer;
 
     const char* sig = sass_function_get_signature(c_func);
-    Parser sig_parser = Parser::from_c_str(sig, ctx, ctx.traces, ParserState("[c function]"));
+    Parser sig_parser = Parser::from_c_str(sig, ctx, ctx.traces, SourceSpan("[c function]"));
     // allow to overload generic callback plus @warn, @error and @debug with custom functions
     sig_parser.lex < alternatives < identifier, exactly <'*'>,
                                     exactly < Constants::warn_kwd >,
@@ -38,7 +38,7 @@ namespace Sass {
     sass::string name(Util::normalize_underscores(sig_parser.lexed));
     Parameters_Obj params = sig_parser.parse_parameters();
     return SASS_MEMORY_NEW(Definition,
-                          ParserState("[c function]"),
+                          SourceSpan("[c function]"),
                           sig,
                           name,
                           params,
@@ -53,7 +53,7 @@ namespace Sass {
       return str.substr(0, str.find('('));
     }
 
-    Map* get_arg_m(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces)
+    Map* get_arg_m(const sass::string& argname, Env& env, Signature sig, SourceSpan pstate, Backtraces traces)
     {
       AST_Node* value = env[argname];
       if (Map* map = Cast<Map>(value)) return map;
@@ -64,7 +64,7 @@ namespace Sass {
       return get_arg<Map>(argname, env, sig, pstate, traces);
     }
 
-    double get_arg_r(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, double lo, double hi)
+    double get_arg_r(const sass::string& argname, Env& env, Signature sig, SourceSpan pstate, Backtraces traces, double lo, double hi)
     {
       Number* val = get_arg<Number>(argname, env, sig, pstate, traces);
       Number tmpnr(val);
@@ -79,7 +79,7 @@ namespace Sass {
       return v;
     }
 
-    Number* get_arg_n(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces)
+    Number* get_arg_n(const sass::string& argname, Env& env, Signature sig, SourceSpan pstate, Backtraces traces)
     {
       Number* val = get_arg<Number>(argname, env, sig, pstate, traces);
       val = SASS_MEMORY_COPY(val);
@@ -87,7 +87,7 @@ namespace Sass {
       return val;
     }
 
-    double get_arg_val(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces)
+    double get_arg_val(const sass::string& argname, Env& env, Signature sig, SourceSpan pstate, Backtraces traces)
     {
       Number* val = get_arg<Number>(argname, env, sig, pstate, traces);
       Number tmpnr(val);
@@ -95,7 +95,7 @@ namespace Sass {
       return tmpnr.value();
     }
 
-    double color_num(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces)
+    double color_num(const sass::string& argname, Env& env, Signature sig, SourceSpan pstate, Backtraces traces)
     {
       Number* val = get_arg<Number>(argname, env, sig, pstate, traces);
       Number tmpnr(val);
@@ -107,7 +107,7 @@ namespace Sass {
       }
     }
 
-    double alpha_num(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces) {
+    double alpha_num(const sass::string& argname, Env& env, Signature sig, SourceSpan pstate, Backtraces traces) {
       Number* val = get_arg<Number>(argname, env, sig, pstate, traces);
       Number tmpnr(val);
       tmpnr.reduce();
@@ -118,7 +118,7 @@ namespace Sass {
       }
     }
 
-    SelectorListObj get_arg_sels(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, Context& ctx) {
+    SelectorListObj get_arg_sels(const sass::string& argname, Env& env, Signature sig, SourceSpan pstate, Backtraces traces, Context& ctx) {
       ExpressionObj exp = ARG(argname, Expression);
       if (exp->concrete_type() == Expression::NULL_VAL) {
         sass::sstream msg;
@@ -133,7 +133,7 @@ namespace Sass {
       return Parser::parse_selector(exp_src.c_str(), ctx, traces, exp->pstate(), pstate.src, /*allow_parent=*/false);
     }
 
-    CompoundSelectorObj get_arg_sel(const sass::string& argname, Env& env, Signature sig, ParserState pstate, Backtraces traces, Context& ctx) {
+    CompoundSelectorObj get_arg_sel(const sass::string& argname, Env& env, Signature sig, SourceSpan pstate, Backtraces traces, Context& ctx) {
       ExpressionObj exp = ARG(argname, Expression);
       if (exp->concrete_type() == Expression::NULL_VAL) {
         sass::sstream msg;

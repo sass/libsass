@@ -142,7 +142,7 @@ namespace Sass {
   // Helper function used by `weaveParents`
   // ##########################################################################
   bool cmpChunkForParentSuperselector(
-    const sass::vector< sass::vector<SelectorComponentObj>>& seq,
+    const sass::vector<sass::vector<SelectorComponentObj>>& seq,
     const sass::vector<SelectorComponentObj>& group)
   {
     return seq.empty() || complexIsParentSuperselector(seq.front(), group);

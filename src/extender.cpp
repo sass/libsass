@@ -673,7 +673,7 @@ namespace Sass {
     // Taking in a reference here makes MSVC debug stuck!?
     const sass::vector<SimpleSelectorObj>& simples) const
   {
-    CompoundSelectorObj compound = SASS_MEMORY_NEW(CompoundSelector, ParserState("[ext]"));
+    CompoundSelectorObj compound = SASS_MEMORY_NEW(CompoundSelector, SourceSpan("[ext]"));
     compound->concat(simples);
     Extension extension(compound->wrapInComplex());
     // extension.specificity = sourceSpecificity[simple];

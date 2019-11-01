@@ -13,7 +13,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  PreValue::PreValue(ParserState pstate, bool d, bool e, bool i, Type ct)
+  PreValue::PreValue(SourceSpan pstate, bool d, bool e, bool i, Type ct)
   : Expression(pstate, d, e, i, ct)
   { }
   PreValue::PreValue(const PreValue* ptr)
@@ -23,7 +23,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Value::Value(ParserState pstate, bool d, bool e, bool i, Type ct)
+  Value::Value(SourceSpan pstate, bool d, bool e, bool i, Type ct)
   : PreValue(pstate, d, e, i, ct)
   { }
   Value::Value(const Value* ptr)
@@ -33,7 +33,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  List::List(ParserState pstate, size_t size, enum Sass_Separator sep, bool argl, bool bracket)
+  List::List(SourceSpan pstate, size_t size, enum Sass_Separator sep, bool argl, bool bracket)
   : Value(pstate),
     Vectorized<ExpressionObj>(size),
     separator_(sep),
@@ -134,7 +134,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Map::Map(ParserState pstate, size_t size)
+  Map::Map(SourceSpan pstate, size_t size)
   : Value(pstate),
     Hashed(size)
   { concrete_type(MAP); }
@@ -185,7 +185,7 @@ namespace Sass {
     return false;
   }
 
-  List_Obj Map::to_list(ParserState& pstate) {
+  List_Obj Map::to_list(SourceSpan& pstate) {
     List_Obj ret = SASS_MEMORY_NEW(List, pstate, length(), SASS_COMMA);
 
     for (auto key : keys()) {
@@ -213,7 +213,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Binary_Expression::Binary_Expression(ParserState pstate,
+  Binary_Expression::Binary_Expression(SourceSpan pstate,
                     Operand op, ExpressionObj lhs, ExpressionObj rhs)
   : PreValue(pstate), op_(op), left_(lhs), right_(rhs), hash_(0)
   { }
@@ -292,7 +292,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Function::Function(ParserState pstate, Definition_Obj def, bool css)
+  Function::Function(SourceSpan pstate, Definition_Obj def, bool css)
   : Value(pstate), definition_(def), is_css_(css)
   { concrete_type(FUNCTION_VAL); }
 
@@ -336,23 +336,23 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Function_Call::Function_Call(ParserState pstate, String_Obj n, Arguments_Obj args, void* cookie)
+  Function_Call::Function_Call(SourceSpan pstate, String_Obj n, Arguments_Obj args, void* cookie)
   : PreValue(pstate), sname_(n), arguments_(args), func_(), via_call_(false), cookie_(cookie), hash_(0)
   { concrete_type(FUNCTION); }
-  Function_Call::Function_Call(ParserState pstate, String_Obj n, Arguments_Obj args, Function_Obj func)
+  Function_Call::Function_Call(SourceSpan pstate, String_Obj n, Arguments_Obj args, Function_Obj func)
   : PreValue(pstate), sname_(n), arguments_(args), func_(func), via_call_(false), cookie_(0), hash_(0)
   { concrete_type(FUNCTION); }
-  Function_Call::Function_Call(ParserState pstate, String_Obj n, Arguments_Obj args)
+  Function_Call::Function_Call(SourceSpan pstate, String_Obj n, Arguments_Obj args)
   : PreValue(pstate), sname_(n), arguments_(args), via_call_(false), cookie_(0), hash_(0)
   { concrete_type(FUNCTION); }
 
-  Function_Call::Function_Call(ParserState pstate, sass::string n, Arguments_Obj args, void* cookie)
+  Function_Call::Function_Call(SourceSpan pstate, sass::string n, Arguments_Obj args, void* cookie)
   : PreValue(pstate), sname_(SASS_MEMORY_NEW(String_Constant, pstate, n)), arguments_(args), func_(), via_call_(false), cookie_(cookie), hash_(0)
   { concrete_type(FUNCTION); }
-  Function_Call::Function_Call(ParserState pstate, sass::string n, Arguments_Obj args, Function_Obj func)
+  Function_Call::Function_Call(SourceSpan pstate, sass::string n, Arguments_Obj args, Function_Obj func)
   : PreValue(pstate), sname_(SASS_MEMORY_NEW(String_Constant, pstate, n)), arguments_(args), func_(func), via_call_(false), cookie_(0), hash_(0)
   { concrete_type(FUNCTION); }
-  Function_Call::Function_Call(ParserState pstate, sass::string n, Arguments_Obj args)
+  Function_Call::Function_Call(SourceSpan pstate, sass::string n, Arguments_Obj args)
   : PreValue(pstate), sname_(SASS_MEMORY_NEW(String_Constant, pstate, n)), arguments_(args), via_call_(false), cookie_(0), hash_(0)
   { concrete_type(FUNCTION); }
 
@@ -401,7 +401,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Variable::Variable(ParserState pstate, sass::string n)
+  Variable::Variable(SourceSpan pstate, sass::string n)
   : PreValue(pstate), name_(n)
   { concrete_type(VARIABLE); }
 
@@ -425,7 +425,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Number::Number(ParserState pstate, double val, sass::string u, bool zero)
+  Number::Number(SourceSpan pstate, double val, sass::string u, bool zero)
   : Value(pstate),
     Units(),
     value_(val),
@@ -549,7 +549,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Color::Color(ParserState pstate, double a, const sass::string disp)
+  Color::Color(SourceSpan pstate, double a, const sass::string disp)
   : Value(pstate),
     disp_(disp), a_(a),
     hash_(0)
@@ -595,7 +595,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Color_RGBA::Color_RGBA(ParserState pstate, double r, double g, double b, double a, const sass::string disp)
+  Color_RGBA::Color_RGBA(SourceSpan pstate, double r, double g, double b, double a, const sass::string disp)
   : Color(pstate, a, disp),
     r_(r), g_(g), b_(b)
   { concrete_type(COLOR); }
@@ -693,7 +693,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Color_HSLA::Color_HSLA(ParserState pstate, double h, double s, double l, double a, const sass::string disp)
+  Color_HSLA::Color_HSLA(SourceSpan pstate, double h, double s, double l, double a, const sass::string disp)
   : Color(pstate, a, disp),
     h_(absmod(h, 360.0)),
     s_(clip(s, 0.0, 100.0)),
@@ -789,7 +789,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Custom_Error::Custom_Error(ParserState pstate, sass::string msg)
+  Custom_Error::Custom_Error(SourceSpan pstate, sass::string msg)
   : Value(pstate), message_(msg)
   { concrete_type(C_ERROR); }
 
@@ -817,7 +817,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Custom_Warning::Custom_Warning(ParserState pstate, sass::string msg)
+  Custom_Warning::Custom_Warning(SourceSpan pstate, sass::string msg)
   : Value(pstate), message_(msg)
   { concrete_type(C_WARNING); }
 
@@ -845,7 +845,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Boolean::Boolean(ParserState pstate, bool val)
+  Boolean::Boolean(SourceSpan pstate, bool val)
   : Value(pstate), value_(val),
     hash_(0)
   { concrete_type(BOOLEAN); }
@@ -883,7 +883,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  String::String(ParserState pstate, bool delayed)
+  String::String(SourceSpan pstate, bool delayed)
   : Value(pstate, delayed)
   { concrete_type(STRING); }
   String::String(const String* ptr)
@@ -893,7 +893,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  String_Schema::String_Schema(ParserState pstate, size_t size, bool css)
+  String_Schema::String_Schema(SourceSpan pstate, size_t size, bool css)
   : String(pstate), Vectorized<PreValueObj>(size), css_(css), hash_(0)
   { concrete_type(STRING); }
 
@@ -976,16 +976,16 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  String_Constant::String_Constant(ParserState pstate, sass::string val, bool css)
+  String_Constant::String_Constant(SourceSpan pstate, sass::string val, bool css)
   : String(pstate), quote_mark_(0), value_(read_css_string(val, css)), hash_(0)
   { }
-  String_Constant::String_Constant(ParserState pstate, const char* beg, bool css)
+  String_Constant::String_Constant(SourceSpan pstate, const char* beg, bool css)
   : String(pstate), quote_mark_(0), value_(read_css_string(sass::string(beg), css)), hash_(0)
   { }
-  String_Constant::String_Constant(ParserState pstate, const char* beg, const char* end, bool css)
+  String_Constant::String_Constant(SourceSpan pstate, const char* beg, const char* end, bool css)
   : String(pstate), quote_mark_(0), value_(read_css_string(sass::string(beg, end-beg), css)), hash_(0)
   { }
-  String_Constant::String_Constant(ParserState pstate, const Token& tok, bool css)
+  String_Constant::String_Constant(SourceSpan pstate, const Token& tok, bool css)
   : String(pstate), quote_mark_(0), value_(read_css_string(sass::string(tok.begin, tok.end), css)), hash_(0)
   { }
 
@@ -1044,7 +1044,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  String_Quoted::String_Quoted(ParserState pstate, sass::string val, char q,
+  String_Quoted::String_Quoted(SourceSpan pstate, sass::string val, char q,
     bool keep_utf8_escapes, bool skip_unquoting,
     bool strict_unquoting, bool css)
   : String_Constant(pstate, val, css)
@@ -1090,7 +1090,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Null::Null(ParserState pstate)
+  Null::Null(SourceSpan pstate)
   : Value(pstate)
   { concrete_type(NULL_VAL); }
 
@@ -1119,7 +1119,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Parent_Reference::Parent_Reference(ParserState pstate)
+  Parent_Reference::Parent_Reference(SourceSpan pstate)
   : Value(pstate)
   { concrete_type(PARENT); }
 

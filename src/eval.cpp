@@ -816,7 +816,7 @@ namespace Sass {
     // ToDo: then catch and re-throw them
     ExpressionObj rv;
     try {
-      ParserState pstate(b->pstate());
+      SourceSpan pstate(b->pstate());
       if (l_type == Expression::NUMBER && r_type == Expression::NUMBER) {
         Number* l_n = Cast<Number>(lhs);
         Number* r_n = Cast<Number>(rhs);

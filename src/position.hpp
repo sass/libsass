@@ -99,17 +99,17 @@ namespace Sass {
     bool operator==(Token t)  { return to_string() == t.to_string(); }
   };
 
-  class ParserState : public Position {
+  class SourceSpan : public Position {
 
     public: // c-tor
-      ParserState(const char* path, const char* src = 0, const size_t file = sass::string::npos);
-      ParserState(const char* path, const char* src, const Position& position, Offset offset = Offset(0, 0));
-      ParserState(const char* path, const char* src, const Token& token, const Position& position, Offset offset = Offset(0, 0));
+      SourceSpan(const char* path, const char* src = 0, const size_t file = sass::string::npos);
+      SourceSpan(const char* path, const char* src, const Position& position, Offset offset = Offset(0, 0));
+      SourceSpan(const char* path, const char* src, const Token& token, const Position& position, Offset offset = Offset(0, 0));
 
     public: // down casts
       Offset off() { return *this; }
       Position pos() { return *this; }
-      ParserState pstate() { return *this; }
+      SourceSpan pstate() { return *this; }
 
     public:
       const char* path;
