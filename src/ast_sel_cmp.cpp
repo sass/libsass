@@ -323,9 +323,9 @@ namespace Sass {
     return sel ? *this == *sel : false;
   }
 
-  bool Attribute_Selector::operator== (const SimpleSelector& rhs) const
+  bool AttributeSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Attribute_Selector>(&rhs);
+    auto sel = Cast<AttributeSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
@@ -361,7 +361,7 @@ namespace Sass {
     return name() == rhs.name();
   }
 
-  bool Attribute_Selector::operator== (const Attribute_Selector& rhs) const
+  bool AttributeSelector::operator== (const AttributeSelector& rhs) const
   {
     // smaller return, equal go on, bigger abort
     if (is_ns_eq(rhs)) {

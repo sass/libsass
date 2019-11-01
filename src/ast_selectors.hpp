@@ -203,18 +203,18 @@ namespace Sass {
   ///////////////////////////////////////////////////
   // Attribute selectors -- e.g., [src*=".jpg"], etc.
   ///////////////////////////////////////////////////
-  class Attribute_Selector final : public SimpleSelector {
+  class AttributeSelector final : public SimpleSelector {
     ADD_CONSTREF(sass::string, matcher)
     // this cannot be changed to obj atm!!!!!!????!!!!!!!
     ADD_PROPERTY(String_Obj, value) // might be interpolated
     ADD_PROPERTY(char, modifier);
   public:
-    Attribute_Selector(ParserState pstate, sass::string n, sass::string m, String_Obj v, char o = 0);
+    AttributeSelector(ParserState pstate, sass::string n, sass::string m, String_Obj v, char o = 0);
     size_t hash() const override;
     virtual unsigned long specificity() const override;
     bool operator==(const SimpleSelector& rhs) const final override;
-    ATTACH_CMP_OPERATIONS(Attribute_Selector)
-    ATTACH_AST_OPERATIONS(Attribute_Selector)
+    ATTACH_CMP_OPERATIONS(AttributeSelector)
+    ATTACH_AST_OPERATIONS(AttributeSelector)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

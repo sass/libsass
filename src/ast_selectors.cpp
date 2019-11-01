@@ -237,17 +237,17 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Attribute_Selector::Attribute_Selector(ParserState pstate, sass::string n, sass::string m, String_Obj v, char o)
+  AttributeSelector::AttributeSelector(ParserState pstate, sass::string n, sass::string m, String_Obj v, char o)
   : SimpleSelector(pstate, n), matcher_(m), value_(v), modifier_(o)
   { simple_type(ATTRIBUTE_SEL); }
-  Attribute_Selector::Attribute_Selector(const Attribute_Selector* ptr)
+  AttributeSelector::AttributeSelector(const AttributeSelector* ptr)
   : SimpleSelector(ptr),
     matcher_(ptr->matcher_),
     value_(ptr->value_),
     modifier_(ptr->modifier_)
   { simple_type(ATTRIBUTE_SEL); }
 
-  size_t Attribute_Selector::hash() const
+  size_t AttributeSelector::hash() const
   {
     if (hash_ == 0) {
       hash_combine(hash_, SimpleSelector::hash());
@@ -257,7 +257,7 @@ namespace Sass {
     return hash_;
   }
 
-  unsigned long Attribute_Selector::specificity() const
+  unsigned long AttributeSelector::specificity() const
   {
     return Constants::Specificity_Attr;
   }
@@ -1020,7 +1020,7 @@ namespace Sass {
 
   IMPLEMENT_AST_OPERATORS(Selector_Schema);
   IMPLEMENT_AST_OPERATORS(Placeholder_Selector);
-  IMPLEMENT_AST_OPERATORS(Attribute_Selector);
+  IMPLEMENT_AST_OPERATORS(AttributeSelector);
   IMPLEMENT_AST_OPERATORS(TypeSelector);
   IMPLEMENT_AST_OPERATORS(ClassSelector);
   IMPLEMENT_AST_OPERATORS(IDSelector);

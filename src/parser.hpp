@@ -268,7 +268,7 @@ namespace Sass {
     PseudoSelectorObj parse_negated_selector2();
     Expression* parse_binominal();
     SimpleSelectorObj parse_pseudo_selector();
-    Attribute_Selector_Obj parse_attribute_selector();
+    AttributeSelectorObj parse_attribute_selector();
     Block_Obj parse_block(bool is_root = false);
     Block_Obj parse_css_block(bool is_root = false);
     bool parse_block_nodes(bool is_root = false);

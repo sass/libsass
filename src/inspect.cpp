@@ -955,7 +955,7 @@ namespace Sass {
     append_token(s->ns_name(), s);
   }
 
-  void Inspect::operator()(Attribute_Selector* s)
+  void Inspect::operator()(AttributeSelector* s)
   {
     append_string("[");
     add_open_mapping(s);
