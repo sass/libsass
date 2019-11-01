@@ -716,14 +716,14 @@ namespace Sass {
   /////////////////////////////////////
   // The Sass `@for` control directive.
   /////////////////////////////////////
-  class For final : public ParentStatement {
+  class ForRule final : public ParentStatement {
     ADD_CONSTREF(sass::string, variable)
     ADD_PROPERTY(Expression_Obj, lower_bound)
     ADD_PROPERTY(Expression_Obj, upper_bound)
     ADD_PROPERTY(bool, is_inclusive)
   public:
-    For(ParserState pstate, sass::string var, Expression_Obj lo, Expression_Obj hi, Block_Obj b, bool inc);
-    ATTACH_AST_OPERATIONS(For)
+    ForRule(ParserState pstate, sass::string var, Expression_Obj lo, Expression_Obj hi, Block_Obj b, bool inc);
+    ATTACH_AST_OPERATIONS(ForRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

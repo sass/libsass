@@ -2040,7 +2040,7 @@ namespace Sass {
     return SASS_MEMORY_NEW(If, if_source_position, predicate, block, alternative);
   }
 
-  For_Obj Parser::parse_for_directive()
+  ForRuleObj Parser::parse_for_directive()
   {
     stack.push_back(Scope::Control);
     ParserState for_source_position = pstate;
@@ -2056,7 +2056,7 @@ namespace Sass {
     Expression_Obj upper_bound = parse_expression();
     Block_Obj body = parse_block(root);
     stack.pop_back();
-    return SASS_MEMORY_NEW(For, for_source_position, var, lower_bound, upper_bound, body, inclusive);
+    return SASS_MEMORY_NEW(ForRule, for_source_position, var, lower_bound, upper_bound, body, inclusive);
   }
 
   // helper to parse a var token

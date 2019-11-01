@@ -514,7 +514,7 @@ namespace Sass {
 
   // For does not create a new env scope
   // But iteration vars are reset afterwards
-  Statement* Expand::operator()(For* f)
+  Statement* Expand::operator()(ForRule* f)
   {
     sass::string variable(f->variable());
     Expression_Obj low = f->lower_bound()->perform(&eval);
