@@ -39,12 +39,12 @@ namespace Sass {
   ////////////////////
   // `@supports` rule.
   ////////////////////
-  class Supports_Block : public ParentStatement {
+  class SupportsRule : public ParentStatement {
     ADD_PROPERTY(Supports_Condition_Obj, condition)
   public:
-    Supports_Block(ParserState pstate, Supports_Condition_Obj condition, Block_Obj block = {});
+    SupportsRule(ParserState pstate, Supports_Condition_Obj condition, Block_Obj block = {});
     bool bubbles() override;
-    ATTACH_AST_OPERATIONS(Supports_Block)
+    ATTACH_AST_OPERATIONS(SupportsRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

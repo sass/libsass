@@ -595,7 +595,7 @@ namespace Sass {
       return true;
     }
 
-    bool isPrintable(Supports_Block* f, Sass_Output_Style style) {
+    bool isPrintable(SupportsRule* f, Sass_Output_Style style) {
       if (f == NULL) {
         return false;
       }
@@ -646,7 +646,7 @@ namespace Sass {
             return true;
           }
         }
-        else if (Supports_Block* f = Cast<Supports_Block>(stm)) {
+        else if (SupportsRule* f = Cast<SupportsRule>(stm)) {
           if (isPrintable(f, style)) {
             return true;
           }
@@ -699,7 +699,7 @@ namespace Sass {
             return true;
           }
         }
-        else if (Supports_Block* f = Cast<Supports_Block>(stm)) {
+        else if (SupportsRule* f = Cast<SupportsRule>(stm)) {
           if (isPrintable(f, style)) {
             return true;
           }

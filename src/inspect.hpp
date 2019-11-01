@@ -22,7 +22,7 @@ namespace Sass {
     virtual void operator()(Block*);
     virtual void operator()(StyleRule*);
     virtual void operator()(Bubble*);
-    virtual void operator()(Supports_Block*);
+    virtual void operator()(SupportsRule*);
     virtual void operator()(At_Root_Block*);
     virtual void operator()(Directive*);
     virtual void operator()(Keyframe_Rule*);

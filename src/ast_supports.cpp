@@ -9,13 +9,13 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Supports_Block::Supports_Block(ParserState pstate, Supports_Condition_Obj condition, Block_Obj block)
+  SupportsRule::SupportsRule(ParserState pstate, Supports_Condition_Obj condition, Block_Obj block)
   : ParentStatement(pstate, block), condition_(condition)
   { statement_type(SUPPORTS); }
-  Supports_Block::Supports_Block(const Supports_Block* ptr)
+  SupportsRule::SupportsRule(const SupportsRule* ptr)
   : ParentStatement(ptr), condition_(ptr->condition_)
   { statement_type(SUPPORTS); }
-  bool Supports_Block::bubbles() { return true; }
+  bool SupportsRule::bubbles() { return true; }
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
@@ -101,7 +101,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  IMPLEMENT_AST_OPERATORS(Supports_Block);
+  IMPLEMENT_AST_OPERATORS(SupportsRule);
   IMPLEMENT_AST_OPERATORS(Supports_Condition);
   IMPLEMENT_AST_OPERATORS(Supports_Operator);
   IMPLEMENT_AST_OPERATORS(Supports_Negation);

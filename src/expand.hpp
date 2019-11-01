@@ -68,7 +68,7 @@ namespace Sass {
     // Css StyleRule is already static
     // Statement* operator()(CssMediaRule*);
 
-    Statement* operator()(Supports_Block*);
+    Statement* operator()(SupportsRule*);
     Statement* operator()(At_Root_Block*);
     Statement* operator()(Directive*);
     Statement* operator()(Declaration*);

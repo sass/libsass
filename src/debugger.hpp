@@ -537,9 +537,9 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     std::cerr << " [" << (query->type()) << "] ";
     std::cerr << " " << debug_vec(query->features());
     std::cerr << std::endl;
-  } else if (Cast<Supports_Block>(node)) {
-    Supports_Block* block = Cast<Supports_Block>(node);
-    std::cerr << ind << "Supports_Block " << block;
+  } else if (Cast<SupportsRule>(node)) {
+    SupportsRule* block = Cast<SupportsRule>(node);
+    std::cerr << ind << "SupportsRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
     debug_ast(block->condition(), ind + " =@ ");

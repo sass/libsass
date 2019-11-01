@@ -51,7 +51,7 @@ namespace Sass {
     virtual T operator()(StyleRule* x)                = 0;
     virtual T operator()(Bubble* x)                 = 0;
     virtual T operator()(Trace* x)                  = 0;
-    virtual T operator()(Supports_Block* x)         = 0;
+    virtual T operator()(SupportsRule* x)         = 0;
     virtual T operator()(MediaRule* x) = 0;
     virtual T operator()(CssMediaRule* x) = 0;
     virtual T operator()(CssMediaQuery* x) = 0;
@@ -137,7 +137,7 @@ namespace Sass {
     T operator()(StyleRule* x)                { return static_cast<D*>(this)->fallback(x); }
     T operator()(Bubble* x)                 { return static_cast<D*>(this)->fallback(x); }
     T operator()(Trace* x)                  { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Supports_Block* x)         { return static_cast<D*>(this)->fallback(x); }
+    T operator()(SupportsRule* x)         { return static_cast<D*>(this)->fallback(x); }
     T operator()(MediaRule* x) { return static_cast<D*>(this)->fallback(x); }
     T operator()(CssMediaRule* x) { return static_cast<D*>(this)->fallback(x); }
     T operator()(CssMediaQuery* x) { return static_cast<D*>(this)->fallback(x); }

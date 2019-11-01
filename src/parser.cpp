@@ -2292,11 +2292,11 @@ namespace Sass {
 
   // lexed after `kwd_supports_directive`
   // these are very similar to media blocks
-  Supports_Block_Obj Parser::parse_supports_directive()
+  SupportsRuleObj Parser::parse_supports_directive()
   {
     Supports_Condition_Obj cond = parse_supports_condition(/*top_level=*/true);
     // create the ast node object for the support queries
-    Supports_Block_Obj query = SASS_MEMORY_NEW(Supports_Block, pstate, cond);
+    SupportsRuleObj query = SASS_MEMORY_NEW(SupportsRule, pstate, cond);
     // additional block is mandatory
     // parse inner block
     query->block(parse_block());

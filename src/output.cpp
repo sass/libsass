@@ -199,7 +199,7 @@ namespace Sass {
     append_scope_closer();
   }
 
-  void Output::operator()(Supports_Block* f)
+  void Output::operator()(SupportsRule* f)
   {
     if (f->is_invisible()) return;
 

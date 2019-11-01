@@ -24,7 +24,7 @@ namespace Sass {
     Statement* operator()(StyleRule*);
     // Statement* operator()(Bubble*);
     Statement* operator()(CssMediaRule*);
-    Statement* operator()(Supports_Block*);
+    Statement* operator()(SupportsRule*);
     Statement* operator()(At_Root_Block*);
     Statement* operator()(Directive*);
     Statement* operator()(Keyframe_Rule*);
@@ -52,7 +52,7 @@ namespace Sass {
     Statement* bubble(Directive*);
     Statement* bubble(At_Root_Block*);
     Statement* bubble(CssMediaRule*);
-    Statement* bubble(Supports_Block*);
+    Statement* bubble(SupportsRule*);
 
     Block* debubble(Block* children, Statement* parent = 0);
     Block* flatten(const Block*);

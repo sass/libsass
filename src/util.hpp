@@ -92,7 +92,7 @@ namespace Sass {
   namespace Util {
 
     bool isPrintable(StyleRule* r, Sass_Output_Style style = NESTED);
-    bool isPrintable(Supports_Block* r, Sass_Output_Style style = NESTED);
+    bool isPrintable(SupportsRule* r, Sass_Output_Style style = NESTED);
     bool isPrintable(CssMediaRule* r, Sass_Output_Style style = NESTED);
     bool isPrintable(Comment* b, Sass_Output_Style style = NESTED);
     bool isPrintable(Block_Obj b, Sass_Output_Style style = NESTED);

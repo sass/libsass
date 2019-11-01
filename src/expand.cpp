@@ -228,10 +228,10 @@ namespace Sass {
     return rr;
   }
 
-  Statement* Expand::operator()(Supports_Block* f)
+  Statement* Expand::operator()(SupportsRule* f)
   {
     ExpressionObj condition = f->condition()->perform(&eval);
-    Supports_Block_Obj ff = SASS_MEMORY_NEW(Supports_Block,
+    SupportsRuleObj ff = SASS_MEMORY_NEW(SupportsRule,
                                        f->pstate(),
                                        Cast<Supports_Condition>(condition),
                                        operator()(f->block()));

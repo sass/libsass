@@ -28,7 +28,7 @@ namespace Sass {
 
     virtual void operator()(Map*);
     virtual void operator()(StyleRule*);
-    virtual void operator()(Supports_Block*);
+    virtual void operator()(SupportsRule*);
     virtual void operator()(CssMediaRule*);
     virtual void operator()(Directive*);
     virtual void operator()(Keyframe_Rule*);

@@ -314,7 +314,7 @@ namespace Sass {
     List_Obj parse_media_queries();
     Media_Query_Obj parse_media_query();
     Media_Query_ExpressionObj parse_media_expression();
-    Supports_Block_Obj parse_supports_directive();
+    SupportsRuleObj parse_supports_directive();
     Supports_Condition_Obj parse_supports_condition(bool top_level);
     Supports_Condition_Obj parse_supports_negation();
     Supports_Condition_Obj parse_supports_operator(bool top_level);

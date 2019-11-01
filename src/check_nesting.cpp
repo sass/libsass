@@ -388,6 +388,6 @@ namespace Sass {
            Cast<Import>(n) ||
       Cast<MediaRule>(n) ||
       Cast<CssMediaRule>(n) ||
-      Cast<Supports_Block>(n);
+      Cast<SupportsRule>(n);
   }
 }

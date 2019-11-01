@@ -23,7 +23,7 @@ namespace Sass {
     void operator()(Block*);
     void operator()(StyleRule*);
     void operator()(CssMediaRule*);
-    void operator()(Supports_Block*);
+    void operator()(SupportsRule*);
     void operator()(Directive*);
 
     // ignore missed types

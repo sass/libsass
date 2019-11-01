@@ -124,7 +124,7 @@ namespace Sass {
     }
   }
 
-  void Inspect::operator()(Supports_Block* feature_block)
+  void Inspect::operator()(SupportsRule* feature_block)
   {
     append_indentation();
     append_token("@supports", feature_block);

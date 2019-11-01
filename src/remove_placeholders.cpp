@@ -73,7 +73,7 @@ namespace Sass {
       }
     }
 
-    void Remove_Placeholders::operator()(Supports_Block* m)
+    void Remove_Placeholders::operator()(SupportsRule* m)
     {
       if (m->block()) operator()(m->block());
     }

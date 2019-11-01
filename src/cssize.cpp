@@ -238,7 +238,7 @@ namespace Sass {
     return debubble(mm->block(), mm);
   }
 
-  Statement* Cssize::operator()(Supports_Block* m)
+  Statement* Cssize::operator()(SupportsRule* m)
   {
     if (!m->block()->length())
     { return m; }
@@ -248,7 +248,7 @@ namespace Sass {
 
     p_stack.push_back(m);
 
-    Supports_Block_Obj mm = SASS_MEMORY_NEW(Supports_Block,
+    SupportsRuleObj mm = SASS_MEMORY_NEW(SupportsRule,
                                        m->pstate(),
                                        m->condition(),
                                        operator()(m->block()));
@@ -329,7 +329,7 @@ namespace Sass {
     return bubble;
   }
 
-  Statement* Cssize::bubble(Supports_Block* m)
+  Statement* Cssize::bubble(SupportsRule* m)
   {
     StyleRuleObj parent = Cast<StyleRule>(SASS_MEMORY_COPY(this->parent()));
 
@@ -343,7 +343,7 @@ namespace Sass {
 
     Block* wrapper_block = SASS_MEMORY_NEW(Block, m->block()->pstate());
     wrapper_block->append(new_rule);
-    Supports_Block* mm = SASS_MEMORY_NEW(Supports_Block,
+    SupportsRule* mm = SASS_MEMORY_NEW(SupportsRule,
                                        m->pstate(),
                                        m->condition(),
                                        wrapper_block);
