@@ -590,9 +590,9 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     std::cerr << ind << "Error " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
-  } else if (Cast<Debug>(node)) {
-    Debug* block = Cast<Debug>(node);
-    std::cerr << ind << "Debug " << block;
+  } else if (Cast<DebugRule>(node)) {
+    DebugRule* block = Cast<DebugRule>(node);
+    std::cerr << ind << "DebugRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
     debug_ast(block->value(), ind + " ");

@@ -268,7 +268,7 @@ namespace Sass {
         Cast<While>(child) ||
         Cast<Trace>(child) ||
         Cast<Comment>(child) ||
-        Cast<Debug>(child) ||
+        Cast<DebugRule>(child) ||
         Cast<Return>(child) ||
         Cast<Variable>(child) ||
         // Ruby Sass doesn't distinguish variables and assignments

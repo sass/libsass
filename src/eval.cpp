@@ -423,7 +423,7 @@ namespace Sass {
     return 0;
   }
 
-  Expression* Eval::operator()(Debug* d)
+  Expression* Eval::operator()(DebugRule* d)
   {
     Sass_Output_Style outstyle = options().output_style;
     options().output_style = NESTED;

@@ -473,7 +473,7 @@ namespace Sass {
     return 0;
   }
 
-  Statement* Expand::operator()(Debug* d)
+  Statement* Expand::operator()(DebugRule* d)
   {
     // eval handles this too, because warnings may occur in functions
     d->perform(&eval);

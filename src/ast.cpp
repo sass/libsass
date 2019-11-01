@@ -337,10 +337,10 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Debug::Debug(ParserState pstate, Expression_Obj val)
+  DebugRule::DebugRule(ParserState pstate, Expression_Obj val)
   : Statement(pstate), value_(val)
   { statement_type(DEBUGSTMT); }
-  Debug::Debug(const Debug* ptr)
+  DebugRule::DebugRule(const DebugRule* ptr)
   : Statement(ptr), value_(ptr->value_)
   { statement_type(DEBUGSTMT); }
 
@@ -927,7 +927,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(ExtendRule);
   IMPLEMENT_AST_OPERATORS(Media_Query);
   IMPLEMENT_AST_OPERATORS(Media_Query_Expression);
-  IMPLEMENT_AST_OPERATORS(Debug);
+  IMPLEMENT_AST_OPERATORS(DebugRule);
   IMPLEMENT_AST_OPERATORS(Error);
   IMPLEMENT_AST_OPERATORS(WarningRule);
   IMPLEMENT_AST_OPERATORS(Assignment);
