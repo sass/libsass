@@ -668,11 +668,11 @@ namespace Sass {
   ///////////////////////////////
   // The Sass `@error` directive.
   ///////////////////////////////
-  class Error final : public Statement {
+  class ErrorRule final : public Statement {
     ADD_PROPERTY(Expression_Obj, message)
   public:
-    Error(ParserState pstate, Expression_Obj msg);
-    ATTACH_AST_OPERATIONS(Error)
+    ErrorRule(ParserState pstate, Expression_Obj msg);
+    ATTACH_AST_OPERATIONS(ErrorRule)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 
