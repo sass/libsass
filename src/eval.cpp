@@ -307,7 +307,7 @@ namespace Sass {
     return val.detach();
   }
 
-  Expression* Eval::operator()(While* w)
+  Expression* Eval::operator()(WhileRule* w)
   {
     Expression_Obj pred = w->predicate();
     Block_Obj body = w->block();

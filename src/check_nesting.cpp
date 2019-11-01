@@ -207,7 +207,7 @@ namespace Sass {
   //         Cast<Each>(pp) ||
   //         Cast<For>(pp) ||
   //         Cast<If>(pp) ||
-  //         Cast<While>(pp) ||
+  //         Cast<WhileRule>(pp) ||
   //         Cast<Trace>(pp) ||
   //         Cast<Mixin_Call>(pp) ||
   //         is_mixin(pp)
@@ -232,7 +232,7 @@ namespace Sass {
           Cast<Each>(pp) ||
           Cast<For>(pp) ||
           Cast<If>(pp) ||
-          Cast<While>(pp) ||
+          Cast<WhileRule>(pp) ||
           Cast<Trace>(pp) ||
           Cast<Mixin_Call>(pp) ||
           is_mixin(pp)
@@ -249,7 +249,7 @@ namespace Sass {
           Cast<Each>(pp) ||
           Cast<For>(pp) ||
           Cast<If>(pp) ||
-          Cast<While>(pp) ||
+          Cast<WhileRule>(pp) ||
           Cast<Trace>(pp) ||
           Cast<Mixin_Call>(pp) ||
           is_mixin(pp)
@@ -265,7 +265,7 @@ namespace Sass {
         Cast<Each>(child) ||
         Cast<For>(child) ||
         Cast<If>(child) ||
-        Cast<While>(child) ||
+        Cast<WhileRule>(child) ||
         Cast<Trace>(child) ||
         Cast<Comment>(child) ||
         Cast<DebugRule>(child) ||
@@ -286,7 +286,7 @@ namespace Sass {
         Cast<Each>(child) ||
         Cast<For>(child) ||
         Cast<If>(child) ||
-        Cast<While>(child) ||
+        Cast<WhileRule>(child) ||
         Cast<Trace>(child) ||
         Cast<Comment>(child) ||
         Cast<Declaration>(child) ||
@@ -346,7 +346,7 @@ namespace Sass {
            Cast<Each>(parent) ||
            Cast<For>(parent) ||
            Cast<If>(parent) ||
-           Cast<While>(parent) ||
+           Cast<WhileRule>(parent) ||
            Cast<Trace>(parent) ||
            valid_bubble_node;
   }

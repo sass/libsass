@@ -652,7 +652,7 @@ namespace Sass {
     return 0;
   }
 
-  Statement* Expand::operator()(While* w)
+  Statement* Expand::operator()(WhileRule* w)
   {
     Expression_Obj pred = w->predicate();
     Block* body = w->block();

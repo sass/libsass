@@ -407,10 +407,10 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  While::While(ParserState pstate, Expression_Obj pred, Block_Obj b)
+  WhileRule::WhileRule(ParserState pstate, Expression_Obj pred, Block_Obj b)
   : ParentStatement(pstate, b), predicate_(pred)
   { statement_type(WHILE); }
-  While::While(const While* ptr)
+  WhileRule::WhileRule(const WhileRule* ptr)
   : ParentStatement(ptr), predicate_(ptr->predicate_)
   { statement_type(WHILE); }
 
@@ -919,7 +919,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(Import_Stub);
   IMPLEMENT_AST_OPERATORS(Directive);
   IMPLEMENT_AST_OPERATORS(At_Root_Block);
-  IMPLEMENT_AST_OPERATORS(While);
+  IMPLEMENT_AST_OPERATORS(WhileRule);
   IMPLEMENT_AST_OPERATORS(Each);
   IMPLEMENT_AST_OPERATORS(For);
   IMPLEMENT_AST_OPERATORS(If);
