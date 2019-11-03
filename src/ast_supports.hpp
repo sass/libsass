@@ -40,9 +40,9 @@ namespace Sass {
   // `@supports` rule.
   ////////////////////
   class SupportsRule : public ParentStatement {
-    ADD_PROPERTY(Supports_Condition_Obj, condition)
+    ADD_PROPERTY(SupportsConditionObj, condition)
   public:
-    SupportsRule(SourceSpan pstate, Supports_Condition_Obj condition, Block_Obj block = {});
+    SupportsRule(SourceSpan pstate, SupportsConditionObj condition, Block_Obj block = {});
     bool bubbles() override;
     ATTACH_AST_OPERATIONS(SupportsRule)
     ATTACH_CRTP_PERFORM_METHODS()
@@ -51,27 +51,27 @@ namespace Sass {
   //////////////////////////////////////////////////////
   // The abstract superclass of all Supports conditions.
   //////////////////////////////////////////////////////
-  class Supports_Condition : public Expression {
+  class SupportsCondition : public Expression {
   public:
-    Supports_Condition(SourceSpan pstate);
-    virtual bool needs_parens(Supports_Condition_Obj cond) const { return false; }
-    ATTACH_AST_OPERATIONS(Supports_Condition)
+    SupportsCondition(SourceSpan pstate);
+    virtual bool needs_parens(SupportsConditionObj cond) const { return false; }
+    ATTACH_AST_OPERATIONS(SupportsCondition)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 
   ////////////////////////////////////////////////////////////
   // An operator condition (e.g. `CONDITION1 and CONDITION2`).
   ////////////////////////////////////////////////////////////
-  class Supports_Operator : public Supports_Condition {
+  class Supports_Operator : public SupportsCondition {
   public:
     enum Operand { AND, OR };
   private:
-    ADD_PROPERTY(Supports_Condition_Obj, left);
-    ADD_PROPERTY(Supports_Condition_Obj, right);
+    ADD_PROPERTY(SupportsConditionObj, left);
+    ADD_PROPERTY(SupportsConditionObj, right);
     ADD_PROPERTY(Operand, operand);
   public:
-    Supports_Operator(SourceSpan pstate, Supports_Condition_Obj l, Supports_Condition_Obj r, Operand o);
-    virtual bool needs_parens(Supports_Condition_Obj cond) const override;
+    Supports_Operator(SourceSpan pstate, SupportsConditionObj l, SupportsConditionObj r, Operand o);
+    virtual bool needs_parens(SupportsConditionObj cond) const override;
     ATTACH_AST_OPERATIONS(Supports_Operator)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -79,12 +79,12 @@ namespace Sass {
   //////////////////////////////////////////
   // A negation condition (`not CONDITION`).
   //////////////////////////////////////////
-  class Supports_Negation : public Supports_Condition {
+  class Supports_Negation : public SupportsCondition {
   private:
-    ADD_PROPERTY(Supports_Condition_Obj, condition);
+    ADD_PROPERTY(SupportsConditionObj, condition);
   public:
-    Supports_Negation(SourceSpan pstate, Supports_Condition_Obj c);
-    virtual bool needs_parens(Supports_Condition_Obj cond) const override;
+    Supports_Negation(SourceSpan pstate, SupportsConditionObj c);
+    virtual bool needs_parens(SupportsConditionObj cond) const override;
     ATTACH_AST_OPERATIONS(Supports_Negation)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -92,13 +92,13 @@ namespace Sass {
   /////////////////////////////////////////////////////
   // A declaration condition (e.g. `(feature: value)`).
   /////////////////////////////////////////////////////
-  class Supports_Declaration : public Supports_Condition {
+  class Supports_Declaration : public SupportsCondition {
   private:
     ADD_PROPERTY(ExpressionObj, feature);
     ADD_PROPERTY(ExpressionObj, value);
   public:
     Supports_Declaration(SourceSpan pstate, ExpressionObj f, ExpressionObj v);
-    virtual bool needs_parens(Supports_Condition_Obj cond) const override;
+    virtual bool needs_parens(SupportsConditionObj cond) const override;
     ATTACH_AST_OPERATIONS(Supports_Declaration)
     ATTACH_CRTP_PERFORM_METHODS()
   };
@@ -106,12 +106,12 @@ namespace Sass {
   ///////////////////////////////////////////////
   // An interpolation condition (e.g. `#{$var}`).
   ///////////////////////////////////////////////
-  class Supports_Interpolation : public Supports_Condition {
+  class Supports_Interpolation : public SupportsCondition {
   private:
     ADD_PROPERTY(ExpressionObj, value);
   public:
     Supports_Interpolation(SourceSpan pstate, ExpressionObj v);
-    virtual bool needs_parens(Supports_Condition_Obj cond) const override;
+    virtual bool needs_parens(SupportsConditionObj cond) const override;
     ATTACH_AST_OPERATIONS(Supports_Interpolation)
     ATTACH_CRTP_PERFORM_METHODS()
   };

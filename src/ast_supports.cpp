@@ -9,7 +9,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  SupportsRule::SupportsRule(SourceSpan pstate, Supports_Condition_Obj condition, Block_Obj block)
+  SupportsRule::SupportsRule(SourceSpan pstate, SupportsConditionObj condition, Block_Obj block)
   : ParentStatement(pstate, block), condition_(condition)
   { statement_type(SUPPORTS); }
   SupportsRule::SupportsRule(const SupportsRule* ptr)
@@ -20,28 +20,28 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Supports_Condition::Supports_Condition(SourceSpan pstate)
+  SupportsCondition::SupportsCondition(SourceSpan pstate)
   : Expression(pstate)
   { }
 
-  Supports_Condition::Supports_Condition(const Supports_Condition* ptr)
+  SupportsCondition::SupportsCondition(const SupportsCondition* ptr)
   : Expression(ptr)
   { }
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Supports_Operator::Supports_Operator(SourceSpan pstate, Supports_Condition_Obj l, Supports_Condition_Obj r, Operand o)
-  : Supports_Condition(pstate), left_(l), right_(r), operand_(o)
+  Supports_Operator::Supports_Operator(SourceSpan pstate, SupportsConditionObj l, SupportsConditionObj r, Operand o)
+  : SupportsCondition(pstate), left_(l), right_(r), operand_(o)
   { }
   Supports_Operator::Supports_Operator(const Supports_Operator* ptr)
-  : Supports_Condition(ptr),
+  : SupportsCondition(ptr),
     left_(ptr->left_),
     right_(ptr->right_),
     operand_(ptr->operand_)
   { }
 
-  bool Supports_Operator::needs_parens(Supports_Condition_Obj cond) const
+  bool Supports_Operator::needs_parens(SupportsConditionObj cond) const
   {
     if (Supports_Operator_Obj op = Cast<Supports_Operator>(cond)) {
       return op->operand() != operand();
@@ -52,14 +52,14 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Supports_Negation::Supports_Negation(SourceSpan pstate, Supports_Condition_Obj c)
-  : Supports_Condition(pstate), condition_(c)
+  Supports_Negation::Supports_Negation(SourceSpan pstate, SupportsConditionObj c)
+  : SupportsCondition(pstate), condition_(c)
   { }
   Supports_Negation::Supports_Negation(const Supports_Negation* ptr)
-  : Supports_Condition(ptr), condition_(ptr->condition_)
+  : SupportsCondition(ptr), condition_(ptr->condition_)
   { }
 
-  bool Supports_Negation::needs_parens(Supports_Condition_Obj cond) const
+  bool Supports_Negation::needs_parens(SupportsConditionObj cond) const
   {
     return Cast<Supports_Negation>(cond) ||
            Cast<Supports_Operator>(cond);
@@ -69,15 +69,15 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Supports_Declaration::Supports_Declaration(SourceSpan pstate, ExpressionObj f, ExpressionObj v)
-  : Supports_Condition(pstate), feature_(f), value_(v)
+  : SupportsCondition(pstate), feature_(f), value_(v)
   { }
   Supports_Declaration::Supports_Declaration(const Supports_Declaration* ptr)
-  : Supports_Condition(ptr),
+  : SupportsCondition(ptr),
     feature_(ptr->feature_),
     value_(ptr->value_)
   { }
 
-  bool Supports_Declaration::needs_parens(Supports_Condition_Obj cond) const
+  bool Supports_Declaration::needs_parens(SupportsConditionObj cond) const
   {
     return false;
   }
@@ -86,14 +86,14 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   Supports_Interpolation::Supports_Interpolation(SourceSpan pstate, ExpressionObj v)
-  : Supports_Condition(pstate), value_(v)
+  : SupportsCondition(pstate), value_(v)
   { }
   Supports_Interpolation::Supports_Interpolation(const Supports_Interpolation* ptr)
-  : Supports_Condition(ptr),
+  : SupportsCondition(ptr),
     value_(ptr->value_)
   { }
 
-  bool Supports_Interpolation::needs_parens(Supports_Condition_Obj cond) const
+  bool Supports_Interpolation::needs_parens(SupportsConditionObj cond) const
   {
     return false;
   }
@@ -102,7 +102,7 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
 
   IMPLEMENT_AST_OPERATORS(SupportsRule);
-  IMPLEMENT_AST_OPERATORS(Supports_Condition);
+  IMPLEMENT_AST_OPERATORS(SupportsCondition);
   IMPLEMENT_AST_OPERATORS(Supports_Operator);
   IMPLEMENT_AST_OPERATORS(Supports_Negation);
   IMPLEMENT_AST_OPERATORS(Supports_Declaration);

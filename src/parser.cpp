@@ -2294,7 +2294,7 @@ namespace Sass {
   // these are very similar to media blocks
   SupportsRuleObj Parser::parse_supports_directive()
   {
-    Supports_Condition_Obj cond = parse_supports_condition(/*top_level=*/true);
+    SupportsConditionObj cond = parse_supports_condition(/*top_level=*/true);
     // create the ast node object for the support queries
     SupportsRuleObj query = SASS_MEMORY_NEW(SupportsRule, pstate, cond);
     // additional block is mandatory
@@ -2306,26 +2306,26 @@ namespace Sass {
 
   // parse one query operation
   // may encounter nested queries
-  Supports_Condition_Obj Parser::parse_supports_condition(bool top_level)
+  SupportsConditionObj Parser::parse_supports_condition(bool top_level)
   {
     lex < css_whitespace >();
-    Supports_Condition_Obj cond;
+    SupportsConditionObj cond;
     if ((cond = parse_supports_negation())) return cond;
     if ((cond = parse_supports_operator(top_level))) return cond;
     if ((cond = parse_supports_interpolation())) return cond;
     return cond;
   }
 
-  Supports_Condition_Obj Parser::parse_supports_negation()
+  SupportsConditionObj Parser::parse_supports_negation()
   {
     if (!lex < kwd_not >()) return {};
-    Supports_Condition_Obj cond = parse_supports_condition_in_parens(/*parens_required=*/true);
+    SupportsConditionObj cond = parse_supports_condition_in_parens(/*parens_required=*/true);
     return SASS_MEMORY_NEW(Supports_Negation, pstate, cond);
   }
 
-  Supports_Condition_Obj Parser::parse_supports_operator(bool top_level)
+  SupportsConditionObj Parser::parse_supports_operator(bool top_level)
   {
-    Supports_Condition_Obj cond = parse_supports_condition_in_parens(/*parens_required=*/top_level);
+    SupportsConditionObj cond = parse_supports_condition_in_parens(/*parens_required=*/top_level);
     if (cond.isNull()) return {};
 
     while (true) {
@@ -2334,15 +2334,15 @@ namespace Sass {
       else if(!lex < kwd_or >()) { break; }
 
       lex < css_whitespace >();
-      Supports_Condition_Obj right = parse_supports_condition_in_parens(/*parens_required=*/true);
+      SupportsConditionObj right = parse_supports_condition_in_parens(/*parens_required=*/true);
 
-      // Supports_Condition* cc = SASS_MEMORY_NEW(Supports_Condition, *static_cast<Supports_Condition*>(cond));
+      // SupportsCondition* cc = SASS_MEMORY_NEW(SupportsCondition, *static_cast<SupportsCondition*>(cond));
       cond = SASS_MEMORY_NEW(Supports_Operator, pstate, cond, right, op);
     }
     return cond;
   }
 
-  Supports_Condition_Obj Parser::parse_supports_interpolation()
+  SupportsConditionObj Parser::parse_supports_interpolation()
   {
     if (!lex < interpolant >()) return {};
 
@@ -2354,9 +2354,9 @@ namespace Sass {
 
   // TODO: This needs some major work. Although feature conditions
   // look like declarations their semantics differ significantly
-  Supports_Condition_Obj Parser::parse_supports_declaration()
+  SupportsConditionObj Parser::parse_supports_declaration()
   {
-    Supports_Condition* cond;
+    SupportsCondition* cond;
     // parse something declaration like
     ExpressionObj feature = parse_expression();
     ExpressionObj expression;
@@ -2372,9 +2372,9 @@ namespace Sass {
     return cond;
   }
 
-  Supports_Condition_Obj Parser::parse_supports_condition_in_parens(bool parens_required)
+  SupportsConditionObj Parser::parse_supports_condition_in_parens(bool parens_required)
   {
-    Supports_Condition_Obj interp = parse_supports_interpolation();
+    SupportsConditionObj interp = parse_supports_interpolation();
     if (interp != nullptr) return interp;
 
     if (!lex < exactly <'('> >()) {
@@ -2386,7 +2386,7 @@ namespace Sass {
     }
     lex < css_whitespace >();
 
-    Supports_Condition_Obj cond = parse_supports_condition(/*top_level=*/false);
+    SupportsConditionObj cond = parse_supports_condition(/*top_level=*/false);
     if (cond.isNull()) cond = parse_supports_declaration();
     if (!lex < exactly <')'> >()) error("unclosed parenthesis in @supports declaration");
 

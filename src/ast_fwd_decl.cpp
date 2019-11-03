@@ -23,7 +23,7 @@ namespace Sass {
   IMPLEMENT_BASE_CAST(List)
   IMPLEMENT_BASE_CAST(String)
   IMPLEMENT_BASE_CAST(String_Constant)
-  IMPLEMENT_BASE_CAST(Supports_Condition)
+  IMPLEMENT_BASE_CAST(SupportsCondition)
   IMPLEMENT_BASE_CAST(Selector)
   IMPLEMENT_BASE_CAST(SelectorComponent)
   IMPLEMENT_BASE_CAST(SimpleSelector)

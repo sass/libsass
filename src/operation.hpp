@@ -25,7 +25,7 @@ namespace Sass {
     virtual Statement* perform(Operation<Statement*>* op) = 0; \
     virtual Expression* perform(Operation<Expression*>* op) = 0; \
     virtual union Sass_Value* perform(Operation<union Sass_Value*>* op) = 0; \
-    virtual Supports_Condition* perform(Operation<Supports_Condition*>* op) = 0; \
+    virtual SupportsCondition* perform(Operation<SupportsCondition*>* op) = 0; \
 
   // you must add operators to every class
   // ensures `this` of actual instance type
@@ -40,7 +40,7 @@ namespace Sass {
     virtual Statement* perform(Operation<Statement*>* op) override { return (*op)(this); } \
     virtual Expression* perform(Operation<Expression*>* op) override { return (*op)(this); } \
     virtual union Sass_Value* perform(Operation<union Sass_Value*>* op) override { return (*op)(this); } \
-    virtual Supports_Condition* perform(Operation<Supports_Condition*>* op) override { return (*op)(this); } \
+    virtual SupportsCondition* perform(Operation<SupportsCondition*>* op) override { return (*op)(this); } \
 
   template<typename T>
   class Operation {
@@ -94,7 +94,7 @@ namespace Sass {
     virtual T operator()(String_Schema* x)          = 0;
     virtual T operator()(String_Quoted* x)          = 0;
     virtual T operator()(String_Constant* x)        = 0;
-    virtual T operator()(Supports_Condition* x)     = 0;
+    virtual T operator()(SupportsCondition* x)     = 0;
     virtual T operator()(Supports_Operator* x)      = 0;
     virtual T operator()(Supports_Negation* x)      = 0;
     virtual T operator()(Supports_Declaration* x)   = 0;
@@ -180,7 +180,7 @@ namespace Sass {
     T operator()(String_Schema* x)          { return static_cast<D*>(this)->fallback(x); }
     T operator()(String_Constant* x)        { return static_cast<D*>(this)->fallback(x); }
     T operator()(String_Quoted* x)          { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Supports_Condition* x)     { return static_cast<D*>(this)->fallback(x); }
+    T operator()(SupportsCondition* x)     { return static_cast<D*>(this)->fallback(x); }
     T operator()(Supports_Operator* x)      { return static_cast<D*>(this)->fallback(x); }
     T operator()(Supports_Negation* x)      { return static_cast<D*>(this)->fallback(x); }
     T operator()(Supports_Declaration* x)   { return static_cast<D*>(this)->fallback(x); }

@@ -85,7 +85,7 @@ namespace Sass {
 
   class Media_Query;
   class Media_Query_Expression;
-  class Supports_Condition;
+  class SupportsCondition;
   class Supports_Operator;
   class Supports_Negation;
   class Supports_Declaration;
@@ -182,7 +182,7 @@ namespace Sass {
   IMPL_MEM_OBJ(String_Quoted);
   IMPL_MEM_OBJ(Media_Query);
   IMPL_MEM_OBJ(Media_Query_Expression);
-  IMPL_MEM_OBJ(Supports_Condition);
+  IMPL_MEM_OBJ(SupportsCondition);
   IMPL_MEM_OBJ(Supports_Operator);
   IMPL_MEM_OBJ(Supports_Negation);
   IMPL_MEM_OBJ(Supports_Declaration);
@@ -255,7 +255,7 @@ namespace Sass {
   DECLARE_BASE_CAST(Color)
   DECLARE_BASE_CAST(String)
   DECLARE_BASE_CAST(String_Constant)
-  DECLARE_BASE_CAST(Supports_Condition)
+  DECLARE_BASE_CAST(SupportsCondition)
   DECLARE_BASE_CAST(Selector)
   DECLARE_BASE_CAST(SimpleSelector)
   DECLARE_BASE_CAST(SelectorComponent)

@@ -233,7 +233,7 @@ namespace Sass {
     ExpressionObj condition = f->condition()->perform(&eval);
     SupportsRuleObj ff = SASS_MEMORY_NEW(SupportsRule,
                                        f->pstate(),
-                                       Cast<Supports_Condition>(condition),
+                                       Cast<SupportsCondition>(condition),
                                        operator()(f->block()));
     return ff.detach();
   }

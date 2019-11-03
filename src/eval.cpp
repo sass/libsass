@@ -1319,8 +1319,8 @@ namespace Sass {
     Expression* right = c->right()->perform(this);
     Supports_Operator* cc = SASS_MEMORY_NEW(Supports_Operator,
                                  c->pstate(),
-                                 Cast<Supports_Condition>(left),
-                                 Cast<Supports_Condition>(right),
+                                 Cast<SupportsCondition>(left),
+                                 Cast<SupportsCondition>(right),
                                  c->operand());
     return cc;
   }
@@ -1330,7 +1330,7 @@ namespace Sass {
     Expression* condition = c->condition()->perform(this);
     Supports_Negation* cc = SASS_MEMORY_NEW(Supports_Negation,
                                  c->pstate(),
-                                 Cast<Supports_Condition>(condition));
+                                 Cast<SupportsCondition>(condition));
     return cc;
   }
 
