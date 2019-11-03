@@ -1325,10 +1325,10 @@ namespace Sass {
     return cc;
   }
 
-  Expression* Eval::operator()(Supports_Negation* c)
+  Expression* Eval::operator()(SupportsNegation* c)
   {
     Expression* condition = c->condition()->perform(this);
-    Supports_Negation* cc = SASS_MEMORY_NEW(Supports_Negation,
+    SupportsNegation* cc = SASS_MEMORY_NEW(SupportsNegation,
                                  c->pstate(),
                                  Cast<SupportsCondition>(condition));
     return cc;

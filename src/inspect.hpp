@@ -63,7 +63,7 @@ namespace Sass {
     virtual void operator()(Custom_Error*);
     virtual void operator()(Custom_Warning*);
     virtual void operator()(SupportsOperation*);
-    virtual void operator()(Supports_Negation*);
+    virtual void operator()(SupportsNegation*);
     virtual void operator()(Supports_Declaration*);
     virtual void operator()(Supports_Interpolation*);
     virtual void operator()(MediaRule*);

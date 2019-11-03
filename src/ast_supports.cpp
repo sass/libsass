@@ -46,22 +46,22 @@ namespace Sass {
     if (SupportsOperationObj op = Cast<SupportsOperation>(cond)) {
       return op->operand() != operand();
     }
-    return Cast<Supports_Negation>(cond) != NULL;
+    return Cast<SupportsNegation>(cond) != NULL;
   }
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Supports_Negation::Supports_Negation(SourceSpan pstate, SupportsConditionObj c)
+  SupportsNegation::SupportsNegation(SourceSpan pstate, SupportsConditionObj c)
   : SupportsCondition(pstate), condition_(c)
   { }
-  Supports_Negation::Supports_Negation(const Supports_Negation* ptr)
+  SupportsNegation::SupportsNegation(const SupportsNegation* ptr)
   : SupportsCondition(ptr), condition_(ptr->condition_)
   { }
 
-  bool Supports_Negation::needs_parens(SupportsConditionObj cond) const
+  bool SupportsNegation::needs_parens(SupportsConditionObj cond) const
   {
-    return Cast<Supports_Negation>(cond) ||
+    return Cast<SupportsNegation>(cond) ||
            Cast<SupportsOperation>(cond);
   }
 
@@ -104,7 +104,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(SupportsRule);
   IMPLEMENT_AST_OPERATORS(SupportsCondition);
   IMPLEMENT_AST_OPERATORS(SupportsOperation);
-  IMPLEMENT_AST_OPERATORS(Supports_Negation);
+  IMPLEMENT_AST_OPERATORS(SupportsNegation);
   IMPLEMENT_AST_OPERATORS(Supports_Declaration);
   IMPLEMENT_AST_OPERATORS(Supports_Interpolation);
 

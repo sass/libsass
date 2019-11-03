@@ -79,13 +79,13 @@ namespace Sass {
   //////////////////////////////////////////
   // A negation condition (`not CONDITION`).
   //////////////////////////////////////////
-  class Supports_Negation : public SupportsCondition {
+  class SupportsNegation : public SupportsCondition {
   private:
     ADD_PROPERTY(SupportsConditionObj, condition);
   public:
-    Supports_Negation(SourceSpan pstate, SupportsConditionObj c);
+    SupportsNegation(SourceSpan pstate, SupportsConditionObj c);
     virtual bool needs_parens(SupportsConditionObj cond) const override;
-    ATTACH_AST_OPERATIONS(Supports_Negation)
+    ATTACH_AST_OPERATIONS(SupportsNegation)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

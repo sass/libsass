@@ -2320,7 +2320,7 @@ namespace Sass {
   {
     if (!lex < kwd_not >()) return {};
     SupportsConditionObj cond = parse_supports_condition_in_parens(/*parens_required=*/true);
-    return SASS_MEMORY_NEW(Supports_Negation, pstate, cond);
+    return SASS_MEMORY_NEW(SupportsNegation, pstate, cond);
   }
 
   SupportsConditionObj Parser::parse_supports_operator(bool top_level)

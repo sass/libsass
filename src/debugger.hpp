@@ -551,9 +551,9 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     << std::endl;
     debug_ast(block->left(), ind + " left) ");
     debug_ast(block->right(), ind + " right) ");
-  } else if (Cast<Supports_Negation>(node)) {
-    Supports_Negation* block = Cast<Supports_Negation>(node);
-    std::cerr << ind << "Supports_Negation " << block;
+  } else if (Cast<SupportsNegation>(node)) {
+    SupportsNegation* block = Cast<SupportsNegation>(node);
+    std::cerr << ind << "SupportsNegation " << block;
     std::cerr << " (" << pstate_source_position(node) << ")"
     << std::endl;
     debug_ast(block->condition(), ind + " condition) ");

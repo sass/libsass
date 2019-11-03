@@ -779,7 +779,7 @@ namespace Sass {
     if (so->needs_parens(so->right())) append_string(")");
   }
 
-  void Inspect::operator()(Supports_Negation* sn)
+  void Inspect::operator()(SupportsNegation* sn)
   {
     append_token("not", sn);
     append_mandatory_space();
