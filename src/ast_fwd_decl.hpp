@@ -88,7 +88,7 @@ namespace Sass {
   class SupportsCondition;
   class SupportsOperation;
   class SupportsNegation;
-  class Supports_Declaration;
+  class SupportsDeclaration;
   class Supports_Interpolation;
   
   class At_Root_Query;
@@ -185,7 +185,7 @@ namespace Sass {
   IMPL_MEM_OBJ(SupportsCondition);
   IMPL_MEM_OBJ(SupportsOperation);
   IMPL_MEM_OBJ(SupportsNegation);
-  IMPL_MEM_OBJ(Supports_Declaration);
+  IMPL_MEM_OBJ(SupportsDeclaration);
   IMPL_MEM_OBJ(Supports_Interpolation);
   IMPL_MEM_OBJ(At_Root_Query);
   IMPL_MEM_OBJ(Null);

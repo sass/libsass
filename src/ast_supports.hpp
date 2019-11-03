@@ -92,14 +92,14 @@ namespace Sass {
   /////////////////////////////////////////////////////
   // A declaration condition (e.g. `(feature: value)`).
   /////////////////////////////////////////////////////
-  class Supports_Declaration : public SupportsCondition {
+  class SupportsDeclaration : public SupportsCondition {
   private:
     ADD_PROPERTY(ExpressionObj, feature);
     ADD_PROPERTY(ExpressionObj, value);
   public:
-    Supports_Declaration(SourceSpan pstate, ExpressionObj f, ExpressionObj v);
+    SupportsDeclaration(SourceSpan pstate, ExpressionObj f, ExpressionObj v);
     virtual bool needs_parens(SupportsConditionObj cond) const override;
-    ATTACH_AST_OPERATIONS(Supports_Declaration)
+    ATTACH_AST_OPERATIONS(SupportsDeclaration)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 

@@ -2364,7 +2364,7 @@ namespace Sass {
       expression = parse_list(DELAYED);
     }
     if (!feature || !expression) error("@supports condition expected declaration");
-    cond = SASS_MEMORY_NEW(Supports_Declaration,
+    cond = SASS_MEMORY_NEW(SupportsDeclaration,
                      feature->pstate(),
                      feature,
                      expression);

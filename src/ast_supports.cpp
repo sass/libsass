@@ -68,16 +68,16 @@ namespace Sass {
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Supports_Declaration::Supports_Declaration(SourceSpan pstate, ExpressionObj f, ExpressionObj v)
+  SupportsDeclaration::SupportsDeclaration(SourceSpan pstate, ExpressionObj f, ExpressionObj v)
   : SupportsCondition(pstate), feature_(f), value_(v)
   { }
-  Supports_Declaration::Supports_Declaration(const Supports_Declaration* ptr)
+  SupportsDeclaration::SupportsDeclaration(const SupportsDeclaration* ptr)
   : SupportsCondition(ptr),
     feature_(ptr->feature_),
     value_(ptr->value_)
   { }
 
-  bool Supports_Declaration::needs_parens(SupportsConditionObj cond) const
+  bool SupportsDeclaration::needs_parens(SupportsConditionObj cond) const
   {
     return false;
   }
@@ -105,7 +105,7 @@ namespace Sass {
   IMPLEMENT_AST_OPERATORS(SupportsCondition);
   IMPLEMENT_AST_OPERATORS(SupportsOperation);
   IMPLEMENT_AST_OPERATORS(SupportsNegation);
-  IMPLEMENT_AST_OPERATORS(Supports_Declaration);
+  IMPLEMENT_AST_OPERATORS(SupportsDeclaration);
   IMPLEMENT_AST_OPERATORS(Supports_Interpolation);
 
   /////////////////////////////////////////////////////////////////////////

@@ -564,9 +564,9 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     << std::endl;
     debug_ast(block->feature(), ind + " feature) ");
     debug_ast(block->value(), ind + " value) ");
-  } else if (Cast<Supports_Declaration>(node)) {
-    Supports_Declaration* block = Cast<Supports_Declaration>(node);
-    std::cerr << ind << "Supports_Declaration " << block;
+  } else if (Cast<SupportsDeclaration>(node)) {
+    SupportsDeclaration* block = Cast<SupportsDeclaration>(node);
+    std::cerr << ind << "SupportsDeclaration " << block;
     std::cerr << " (" << pstate_source_position(node) << ")"
     << std::endl;
     debug_ast(block->feature(), ind + " feature) ");

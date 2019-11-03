@@ -69,7 +69,7 @@ namespace Sass {
     Expression* operator()(At_Root_Query*);
     Expression* operator()(SupportsOperation*);
     Expression* operator()(SupportsNegation*);
-    Expression* operator()(Supports_Declaration*);
+    Expression* operator()(SupportsDeclaration*);
     Expression* operator()(Supports_Interpolation*);
     Expression* operator()(Null*);
     Expression* operator()(Argument*);

@@ -1334,11 +1334,11 @@ namespace Sass {
     return cc;
   }
 
-  Expression* Eval::operator()(Supports_Declaration* c)
+  Expression* Eval::operator()(SupportsDeclaration* c)
   {
     Expression* feature = c->feature()->perform(this);
     Expression* value = c->value()->perform(this);
-    Supports_Declaration* cc = SASS_MEMORY_NEW(Supports_Declaration,
+    SupportsDeclaration* cc = SASS_MEMORY_NEW(SupportsDeclaration,
                               c->pstate(),
                               feature,
                               value);

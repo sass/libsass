@@ -788,7 +788,7 @@ namespace Sass {
     if (sn->needs_parens(sn->condition())) append_string(")");
   }
 
-  void Inspect::operator()(Supports_Declaration* sd)
+  void Inspect::operator()(SupportsDeclaration* sd)
   {
     append_string("(");
     sd->feature()->perform(this);
