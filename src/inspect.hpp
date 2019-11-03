@@ -62,7 +62,7 @@ namespace Sass {
     virtual void operator()(String_Quoted*);
     virtual void operator()(Custom_Error*);
     virtual void operator()(Custom_Warning*);
-    virtual void operator()(Supports_Operator*);
+    virtual void operator()(SupportsOperation*);
     virtual void operator()(Supports_Negation*);
     virtual void operator()(Supports_Declaration*);
     virtual void operator()(Supports_Interpolation*);

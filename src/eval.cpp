@@ -1313,11 +1313,11 @@ namespace Sass {
     return str;
   }
 
-  Expression* Eval::operator()(Supports_Operator* c)
+  Expression* Eval::operator()(SupportsOperation* c)
   {
     Expression* left = c->left()->perform(this);
     Expression* right = c->right()->perform(this);
-    Supports_Operator* cc = SASS_MEMORY_NEW(Supports_Operator,
+    SupportsOperation* cc = SASS_MEMORY_NEW(SupportsOperation,
                                  c->pstate(),
                                  Cast<SupportsCondition>(left),
                                  Cast<SupportsCondition>(right),

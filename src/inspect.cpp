@@ -757,18 +757,18 @@ namespace Sass {
     append_token(w->message(), w);
   }
 
-  void Inspect::operator()(Supports_Operator* so)
+  void Inspect::operator()(SupportsOperation* so)
   {
 
     if (so->needs_parens(so->left())) append_string("(");
     so->left()->perform(this);
     if (so->needs_parens(so->left())) append_string(")");
 
-    if (so->operand() == Supports_Operator::AND) {
+    if (so->operand() == SupportsOperation::AND) {
       append_mandatory_space();
       append_token("and", so);
       append_mandatory_space();
-    } else if (so->operand() == Supports_Operator::OR) {
+    } else if (so->operand() == SupportsOperation::OR) {
       append_mandatory_space();
       append_token("or", so);
       append_mandatory_space();

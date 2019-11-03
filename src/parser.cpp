@@ -2329,15 +2329,15 @@ namespace Sass {
     if (cond.isNull()) return {};
 
     while (true) {
-      Supports_Operator::Operand op = Supports_Operator::OR;
-      if (lex < kwd_and >()) { op = Supports_Operator::AND; }
+      SupportsOperation::Operand op = SupportsOperation::OR;
+      if (lex < kwd_and >()) { op = SupportsOperation::AND; }
       else if(!lex < kwd_or >()) { break; }
 
       lex < css_whitespace >();
       SupportsConditionObj right = parse_supports_condition_in_parens(/*parens_required=*/true);
 
       // SupportsCondition* cc = SASS_MEMORY_NEW(SupportsCondition, *static_cast<SupportsCondition*>(cond));
-      cond = SASS_MEMORY_NEW(Supports_Operator, pstate, cond, right, op);
+      cond = SASS_MEMORY_NEW(SupportsOperation, pstate, cond, right, op);
     }
     return cond;
   }

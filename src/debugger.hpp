@@ -544,9 +544,9 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     std::cerr << " " << block->tabs() << std::endl;
     debug_ast(block->condition(), ind + " =@ ");
     debug_ast(block->block(), ind + " <>");
-  } else if (Cast<Supports_Operator>(node)) {
-    Supports_Operator* block = Cast<Supports_Operator>(node);
-    std::cerr << ind << "Supports_Operator " << block;
+  } else if (Cast<SupportsOperation>(node)) {
+    SupportsOperation* block = Cast<SupportsOperation>(node);
+    std::cerr << ind << "SupportsOperation " << block;
     std::cerr << " (" << pstate_source_position(node) << ")"
     << std::endl;
     debug_ast(block->left(), ind + " left) ");

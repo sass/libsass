@@ -86,7 +86,7 @@ namespace Sass {
   class Media_Query;
   class Media_Query_Expression;
   class SupportsCondition;
-  class Supports_Operator;
+  class SupportsOperation;
   class Supports_Negation;
   class Supports_Declaration;
   class Supports_Interpolation;
@@ -183,7 +183,7 @@ namespace Sass {
   IMPL_MEM_OBJ(Media_Query);
   IMPL_MEM_OBJ(Media_Query_Expression);
   IMPL_MEM_OBJ(SupportsCondition);
-  IMPL_MEM_OBJ(Supports_Operator);
+  IMPL_MEM_OBJ(SupportsOperation);
   IMPL_MEM_OBJ(Supports_Negation);
   IMPL_MEM_OBJ(Supports_Declaration);
   IMPL_MEM_OBJ(Supports_Interpolation);

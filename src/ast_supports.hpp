@@ -62,7 +62,7 @@ namespace Sass {
   ////////////////////////////////////////////////////////////
   // An operator condition (e.g. `CONDITION1 and CONDITION2`).
   ////////////////////////////////////////////////////////////
-  class Supports_Operator : public SupportsCondition {
+  class SupportsOperation : public SupportsCondition {
   public:
     enum Operand { AND, OR };
   private:
@@ -70,9 +70,9 @@ namespace Sass {
     ADD_PROPERTY(SupportsConditionObj, right);
     ADD_PROPERTY(Operand, operand);
   public:
-    Supports_Operator(SourceSpan pstate, SupportsConditionObj l, SupportsConditionObj r, Operand o);
+    SupportsOperation(SourceSpan pstate, SupportsConditionObj l, SupportsConditionObj r, Operand o);
     virtual bool needs_parens(SupportsConditionObj cond) const override;
-    ATTACH_AST_OPERATIONS(Supports_Operator)
+    ATTACH_AST_OPERATIONS(SupportsOperation)
     ATTACH_CRTP_PERFORM_METHODS()
   };
 
