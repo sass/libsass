@@ -142,6 +142,7 @@ namespace Sass {
   // ##########################################################################
   bool Extender::checkForUnsatisfiedExtends(Extension& unsatisfied) const
   {
+    if (selectors.empty()) return false;
     ExtSmplSelSet originals = getSimpleSelectors();
     for (auto target : extensions) {
       SimpleSelector* key = target.first;
