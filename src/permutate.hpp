@@ -24,6 +24,7 @@ namespace Sass {
 
     size_t L = in.size(), n = 0;
 
+    if (L == 0) return {};
     // Exit early if any entry is empty
     for (size_t i = 0; i < L; i += 1) {
       if (in[i].size() == 0) return {};
@@ -80,12 +81,18 @@ namespace Sass {
 
     size_t L = in.size();
     size_t n = in.size() - 1;
+
+    if (L == 0) return {};
+    // Exit early if any entry is empty
+    for (size_t i = 0; i < L; i += 1) {
+      if (in[i].size() == 0) return {};
+    }
+
     size_t* state = new size_t[L];
     std::vector< std::vector<T>> out;
 
     // First initialize all states for every permutation group
     for (size_t i = 0; i < L; i += 1) {
-      if (in[i].size() == 0) return {};
       state[i] = in[i].size() - 1;
     }
 
@@ -104,10 +111,8 @@ namespace Sass {
       // Current group finished
       if (state[n] == 0) {
         // Find position of next decrement
-        while (n > 0 && state[--n] == 0)
-        {
+        while (n > 0 && state[--n] == 0) {}
 
-        }
         // Check for end condition
         if (state[n] != 0) {
           // Decrease next on the left side
