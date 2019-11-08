@@ -1,4 +1,9 @@
+#include "c2ast.hpp"
+
 #include "ast.hpp"
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
 #include "units.hpp"
 #include "position.hpp"
 #include "backtrace.hpp"

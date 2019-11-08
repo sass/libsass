@@ -33,7 +33,7 @@
 #include "sass2scss.h"
 
 // add namespace for c++
-namespace Sass
+namespace Sass2Scss
 {
 
 	// return the actual prettify value from options
@@ -873,10 +873,7 @@ namespace Sass
 		return &cstr[0];
 
 	}
-	// EO sass2scss
-
-}
-// EO namespace
+} // namespace Sass2Scss
 
 // implement for c
 extern "C"
@@ -884,7 +881,7 @@ extern "C"
 
 	char* ADDCALL sass2scss (const char* sass, const int options)
 	{
-		return Sass::sass2scss(sass, options);
+		return Sass2Scss::sass2scss(sass, options);
 	}
 
 	// Get compiled sass2scss version

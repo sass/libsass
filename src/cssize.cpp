@@ -7,6 +7,9 @@
 #include <vector>
 
 #include "cssize.hpp"
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
 #include "context.hpp"
 
 namespace Sass {

@@ -4,10 +4,13 @@
 
 #include "ast.hpp"
 
+#include "ast_selectors.hpp"
+#include "util.hpp"
+
 namespace Sass {
 
   // ##########################################################################
-  // Returns the contents of a [SelectorList] that matches only 
+  // Returns the contents of a [SelectorList] that matches only
   // elements that are matched by both [complex1] and [complex2].
   // If no such list can be produced, returns `null`.
   // ##########################################################################

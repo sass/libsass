@@ -3,6 +3,8 @@
 #include "sass.hpp"
 
 #include <cstring>
+
+#include "ast_values.hpp"
 #include "util.hpp"
 #include "context.hpp"
 #include "values.hpp"

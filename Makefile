@@ -172,9 +172,27 @@ ifneq (Cygwin,$(UNAME))
 endif
 endif
 
+AMALGAM ?= 0
+AMALGAM_INLINE ?= 0
+AMALGAM_SOURCE_INCLUDE := build/libsass-amalgam-include.cpp
+AMALGAM_SOURCE_INLINE := build/libsass-amalgam-inline.cpp
+
+ifeq (1,$(AMALGAM_INLINE))
+AMALGAM_SOURCE := $(AMALGAM_SOURCE_INLINE)
+else
+AMALGAM_SOURCE := $(AMALGAM_SOURCE_INCLUDE)
+endif
+
+AMALGAM_SOURCE_DIR := $(abspath $(dir $(AMALGAM_SOURCE)))
+
 include Makefile.conf
-OBJECTS = $(addprefix src/,$(SOURCES:.cpp=.o))
-COBJECTS = $(addprefix src/,$(CSOURCES:.c=.o))
+ifeq (1,$(AMALGAM))
+	OBJECTS = $(AMALGAM_SOURCE:.cpp=.o)
+	COBJECTS =
+else
+	OBJECTS = $(addprefix src/,$(SOURCES:.cpp=.o))
+	COBJECTS = $(addprefix src/,$(CSOURCES:.c=.o))
+endif
 RCOBJECTS = $(RESOURCES:.rc=.o)
 
 DEBUG_LVL ?= NONE
@@ -184,6 +202,7 @@ CLEANUPS += $(RCOBJECTS)
 CLEANUPS += $(COBJECTS)
 CLEANUPS += $(OBJECTS)
 CLEANUPS += $(LIBSASS_LIB)
+CLEANUPS += $(AMALGAM_SOURCE_INCLUDE) $(AMALGAM_SOURCE_INLINE)
 
 all: $(BUILD)
 
@@ -198,6 +217,28 @@ debug-shared: LDFLAGS := -g $(filter-out -O2,$(LDFLAGS))
 debug-shared: CFLAGS := -g -DDEBUG -DDEBUG_LVL="$(DEBUG_LVL)" $(filter-out -O2,$(CFLAGS))
 debug-shared: CXXFLAGS := -g -DDEBUG -DDEBUG_LVL="$(DEBUG_LVL)" $(filter-out -O2,$(CXXFLAGS))
 debug-shared: shared
+
+AMALGAMATE_BIN := script/amalgamate/build/amalgamate
+
+$(AMALGAMATE_BIN): script/amalgamate/amalgamate.cpp
+	$(MAKE) -C script/amalgamate build/amalgamate
+
+$(AMALGAM_SOURCE_DIR):
+	$(MKDIR) $(AMALGAM_SOURCE_DIR)
+
+ifeq (1,$(AMALGAM_INLINE))
+AMALGAM_INLINE_FLAG := true
+else
+AMALGAM_INLINE_FLAG := false
+endif
+
+$(AMALGAM_SOURCE): $(AMALGAMATE_BIN) $(addprefix src/,$(SOURCES)) $(addprefix src/,$(CSOURCES)) | $(AMALGAM_SOURCE_DIR)
+	$(AMALGAMATE_BIN) --out=$(AMALGAM_SOURCE) --inline=$(AMALGAM_INLINE_FLAG)
+
+ifneq (1,$(AMALGAM_INLINE))
+$(AMALGAM_SOURCE:.cpp=.o): $(AMALGAM_SOURCE)
+	$(CXX) $(CXXFLAGS) -I src -c -o $@ $<
+endif
 
 lib:
 	$(MKDIR) lib

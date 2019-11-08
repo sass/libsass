@@ -1,4 +1,7 @@
 #include "ast.hpp"
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
 #include "expand.hpp"
 #include "fn_utils.hpp"
 #include "fn_miscs.hpp"

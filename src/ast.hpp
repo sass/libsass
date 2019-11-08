@@ -1052,10 +1052,6 @@ namespace Sass {
 
 }
 
-#include "ast_values.hpp"
-#include "ast_supports.hpp"
-#include "ast_selectors.hpp"
-
 #ifdef __clang__
 
 // #pragma clang diagnostic pop

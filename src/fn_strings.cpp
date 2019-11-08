@@ -4,6 +4,8 @@
 
 #include "utf8.h"
 #include "ast.hpp"
+#include "ast_values.hpp"
+#include "context.hpp"
 #include "fn_utils.hpp"
 #include "fn_strings.hpp"
 #include "util_string.hpp"

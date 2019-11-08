@@ -6,6 +6,9 @@
 #include <typeinfo>
 #include <string>
 
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
 #include "listize.hpp"
 #include "context.hpp"
 #include "backtrace.hpp"

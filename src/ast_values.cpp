@@ -2,6 +2,8 @@
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
 #include "ast.hpp"
+#include "ast_values.hpp"
+#include "util.hpp"
 
 namespace Sass {
 

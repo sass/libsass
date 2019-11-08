@@ -3,6 +3,9 @@
 #include "sass.hpp"
 
 #include "ast.hpp"
+#include "ast_selectors.hpp"
+#include "ast_values.hpp"
+#include "context.hpp"
 #include "to_value.hpp"
 
 namespace Sass {

@@ -2,6 +2,10 @@
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
 
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
+#include "constants.hpp"
 #include "parser.hpp"
 #include "color_maps.hpp"
 #include "util_string.hpp"

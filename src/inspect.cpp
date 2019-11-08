@@ -10,6 +10,9 @@
 #include <stdint.h>
 
 #include "ast.hpp"
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
 #include "inspect.hpp"
 #include "context.hpp"
 #include "listize.hpp"

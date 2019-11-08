@@ -1,5 +1,8 @@
 #include <numeric>
 
+#include "ast_selectors.hpp"
+#include "ast_supports.hpp"
+#include "ast_values.hpp"
 #include "parser.hpp"
 #include "extender.hpp"
 #include "listize.hpp"

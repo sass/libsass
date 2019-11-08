@@ -178,7 +178,7 @@ inline std::string debug_values(tsl::ordered_map<T, U, O, V> vec) {
   out << "}";
   return out.str();
 }
- 
+
 template <class T, class U, class O, class V>
 inline std::string debug_vec(tsl::ordered_map<T, U, O, V> vec) {
   std::stringstream out;
