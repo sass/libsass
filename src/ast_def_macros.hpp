@@ -113,7 +113,7 @@ private:
 
   #define IMPLEMENT_AST_OPERATORS(klass) \
     klass* klass::copy(sass::string file, size_t line) const { \
-      klass* cpy = new klass(this); \
+      klass* cpy = SASS_MEMORY_NEW(klass, this); \
       cpy->trace(file, line); \
       return cpy; \
     } \
@@ -127,7 +127,7 @@ private:
 
   #define IMPLEMENT_AST_OPERATORS(klass) \
     klass* klass::copy() const { \
-      return new klass(this); \
+      return SASS_MEMORY_NEW(klass, this); \
     } \
     klass* klass::clone() const { \
       klass* cpy = copy(); \

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <typeinfo>
 
-#include "SharedPtr.hpp"
+#include "shared_ptr.hpp"
 #include "../ast_fwd_decl.hpp"
 
 #ifdef DEBUG_SHARED_PTR

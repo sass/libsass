@@ -100,7 +100,11 @@ namespace Sass {
         sass::string ins = i->value();
         double index = ARGVAL("$index");
         if (index != (int)index) {
-          error("$index: " + std::to_string(index) + " is not an int", pstate, traces);
+          sass::ostream strm;
+          strm << "$index: ";
+          strm << std::to_string(index);
+          strm << " is not an int";
+          error(strm.str(), pstate, traces);
         }
         size_t len = UTF_8::code_point_count(str, 0, str.size());
 
@@ -168,7 +172,11 @@ namespace Sass {
         double end_at = ARGVAL("$end-at");
 
         if (start_at != (int)start_at) {
-          error("$start-at: " + std::to_string(start_at) + " is not an int", pstate, traces);
+          sass::ostream strm;
+          strm << "$start-at: ";
+          strm << std::to_string(start_at);
+          strm << " is not an int";
+          error(strm.str(), pstate, traces);
         }
 
         String_Quoted* ss = Cast<String_Quoted>(s);
@@ -182,7 +190,11 @@ namespace Sass {
         }
 
         if (end_at != (int)end_at) {
-          error("$end-at: " + std::to_string(end_at) + " is not an int", pstate, traces);
+          sass::ostream strm;
+          strm << "$end-at: ";
+          strm << std::to_string(end_at);
+          strm << " is not an int";
+          error(strm.str(), pstate, traces);
         }
 
         if (end_at == 0 || (end_at + size) < 0) {

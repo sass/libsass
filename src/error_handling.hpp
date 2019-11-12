@@ -23,7 +23,7 @@ namespace Sass {
     const sass::string def_msg = "Invalid sass detected";
     const sass::string def_op_msg = "Undefined operation";
     const sass::string def_op_null_msg = "Invalid null operation";
-    const sass::string def_nesting_limit = "Code too deeply neested";
+    const sass::string def_nesting_limit = "Code too deeply nested";
 
     class Base : public std::runtime_error {
       protected:
@@ -152,7 +152,7 @@ namespace Sass {
         sass::string msg;
       public:
         OperationError(sass::string msg = def_op_msg)
-        : std::runtime_error(msg), msg(msg)
+        : std::runtime_error(msg.c_str()), msg(msg)
         {};
       public:
         virtual const char* errtype() const { return "Error"; }

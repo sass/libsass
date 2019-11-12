@@ -7,8 +7,8 @@
 
 namespace {
 
-std::string escape_string(const std::string& str) {
-  std::string out;
+Sass::sass::string escape_string(const Sass::sass::string& str) {
+  Sass::sass::string out;
   out.reserve(str.size());
   for (char c : str) {
     switch (c) {
@@ -50,57 +50,57 @@ std::string escape_string(const std::string& str) {
   } \
 
 bool TestNormalizeNewlinesNoNewline() {
-  std::string input = "a";
-  std::string normalized = Sass::Util::normalize_newlines(input);
+  Sass::sass::string input = "a";
+  Sass::sass::string normalized = Sass::Util::normalize_newlines(input);
   ASSERT_STR_EQ(input, normalized);
   return true;
 }
 
 bool TestNormalizeNewlinesLF() {
-  std::string input = "a\nb";
-  std::string normalized = Sass::Util::normalize_newlines(input);
+  Sass::sass::string input = "a\nb";
+  Sass::sass::string normalized = Sass::Util::normalize_newlines(input);
   ASSERT_STR_EQ(input, normalized);
   return true;
 }
 
 bool TestNormalizeNewlinesCR() {
-  std::string normalized = Sass::Util::normalize_newlines("a\rb");
+  Sass::sass::string normalized = Sass::Util::normalize_newlines("a\rb");
   ASSERT_STR_EQ("a\nb", normalized);
   return true;
 }
 
 bool TestNormalizeNewlinesCRLF() {
-  std::string normalized = Sass::Util::normalize_newlines("a\r\nb\r\n");
+  Sass::sass::string normalized = Sass::Util::normalize_newlines("a\r\nb\r\n");
   ASSERT_STR_EQ("a\nb\n", normalized);
   return true;
 }
 
 bool TestNormalizeNewlinesFF() {
-  std::string normalized = Sass::Util::normalize_newlines("a\fb\f");
+  Sass::sass::string normalized = Sass::Util::normalize_newlines("a\fb\f");
   ASSERT_STR_EQ("a\nb\n", normalized);
   return true;
 }
 
 bool TestNormalizeNewlinesMixed() {
-  std::string normalized = Sass::Util::normalize_newlines("a\fb\nc\rd\r\ne\ff");
+  Sass::sass::string normalized = Sass::Util::normalize_newlines("a\fb\nc\rd\r\ne\ff");
   ASSERT_STR_EQ("a\nb\nc\nd\ne\nf", normalized);
   return true;
 }
 
 bool TestNormalizeUnderscores() {
-  std::string normalized = Sass::Util::normalize_underscores("a_b_c");
+  Sass::sass::string normalized = Sass::Util::normalize_underscores("a_b_c");
   ASSERT_STR_EQ("a-b-c", normalized);
   return true;
 }
 
 bool TestNormalizeDecimalsLeadingZero() {
-  std::string normalized = Sass::Util::normalize_decimals("0.5");
+  Sass::sass::string normalized = Sass::Util::normalize_decimals("0.5");
   ASSERT_STR_EQ("0.5", normalized);
   return true;
 }
 
 bool TestNormalizeDecimalsNoLeadingZero() {
-  std::string normalized = Sass::Util::normalize_decimals(".5");
+  Sass::sass::string normalized = Sass::Util::normalize_decimals(".5");
   ASSERT_STR_EQ("0.5", normalized);
   return true;
 }
@@ -143,14 +143,14 @@ bool TestUnvendor() {
 }
 
 bool Test_ascii_str_to_lower() {
-  std::string str = "A B";
+  Sass::sass::string str = "A B";
   Sass::Util::ascii_str_tolower(&str);
   ASSERT_STR_EQ("a b", str);
   return true;
 }
 
 bool Test_ascii_str_to_upper() {
-  std::string str = "a b";
+  Sass::sass::string str = "a b";
   Sass::Util::ascii_str_toupper(&str);
   ASSERT_STR_EQ("A B", str);
   return true;

@@ -952,7 +952,7 @@ namespace Sass {
   {
     if (traces.size() > Constants::MaxCallStack) {
         // XXX: this is never hit via spec tests
-        std::ostringstream stm;
+        sass::ostream stm;
         stm << "Stack depth exceeded max of " << Constants::MaxCallStack;
         error(stm.str(), c->pstate(), traces);
     }

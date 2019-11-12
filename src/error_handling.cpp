@@ -14,7 +14,7 @@ namespace Sass {
   namespace Exception {
 
     Base::Base(SourceSpan pstate, sass::string msg, Backtraces traces)
-    : std::runtime_error(msg), msg(msg),
+    : std::runtime_error(msg.c_str()), msg(msg),
       prefix("Error"), pstate(pstate), traces(traces)
     { }
 

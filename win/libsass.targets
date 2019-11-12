@@ -14,8 +14,14 @@
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast_values.hpp" />
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast_selectors.hpp" />
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast_supports.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\memory.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\settings.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\MurmurHash2.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\memory\config.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\memory\allocator.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\memory\shared_ptr.hpp" />
+    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\memory\memory_pool.hpp" />
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast_def_macros.hpp" />
-    <ClInclude Include="$(LIBSASS_HEADERS_DIR)\memory\SharedPtr.hpp" />
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\ast_fwd_decl.hpp" />
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\backtrace.hpp" />
     <ClInclude Include="$(LIBSASS_HEADERS_DIR)\base64vlq.hpp" />
@@ -85,7 +91,8 @@
     <ClCompile Include="$(LIBSASS_SRC_DIR)\ast_sel_unify.cpp" />
     <ClCompile Include="$(LIBSASS_SRC_DIR)\ast_sel_weave.cpp" />
     <ClCompile Include="$(LIBSASS_SRC_DIR)\ast_selectors.cpp" />
-    <ClCompile Include="$(LIBSASS_SRC_DIR)\memory\SharedPtr.cpp" />
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\memory\allocator.cpp" />
+    <ClCompile Include="$(LIBSASS_SRC_DIR)\memory\shared_ptr.cpp" />
     <ClCompile Include="$(LIBSASS_SRC_DIR)\ast_fwd_decl.cpp" />
     <ClCompile Include="$(LIBSASS_SRC_DIR)\base64vlq.cpp" />
     <ClCompile Include="$(LIBSASS_SRC_DIR)\bind.cpp" />

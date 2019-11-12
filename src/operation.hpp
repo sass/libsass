@@ -213,7 +213,7 @@ namespace Sass {
     template <typename U> inline T fallback(U x)
     {
       throw std::runtime_error(
-        sass::string(typeid(*this).name()) + ": CRTP not implemented for " + typeid(x).name());
+        std::string(typeid(*this).name()) + ": CRTP not implemented for " + typeid(x).name());
     }
 
   };

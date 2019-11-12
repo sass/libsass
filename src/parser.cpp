@@ -646,7 +646,7 @@ namespace Sass {
     // normalize underscores to hyphens
     sass::string name(Util::normalize_underscores(lexed));
     // create the initial mixin call object
-    Mixin_Call_Obj call = SASS_MEMORY_NEW(Mixin_Call, pstate, name, {}, {}, {});
+    Mixin_Call_Obj call = SASS_MEMORY_NEW(Mixin_Call, pstate, name, Arguments_Obj{});
     // parse mandatory arguments
     call->arguments(parse_arguments());
     // parse using and optional block parameters
@@ -827,11 +827,11 @@ namespace Sass {
     if (!lex_css< attribute_name >()) error("invalid attribute name in attribute selector");
     sass::string name(lexed);
     if (lex_css< re_attr_sensitive_close >()) {
-      return SASS_MEMORY_NEW(AttributeSelector, p, name, "", {}, {});
+      return SASS_MEMORY_NEW(AttributeSelector, p, name, "", String_Obj{});
     }
     else if (lex_css< re_attr_insensitive_close >()) {
       char modifier = lexed.begin[0];
-      return SASS_MEMORY_NEW(AttributeSelector, p, name, "", {}, modifier);
+      return SASS_MEMORY_NEW(AttributeSelector, p, name, "", String_Obj{}, modifier);
     }
     if (!lex_css< alternatives< exact_match, class_match, dash_match,
                                 prefix_match, suffix_match, substring_match > >()) {
@@ -2110,7 +2110,7 @@ namespace Sass {
     stack.push_back(Scope::Control);
     bool root = block_stack.back()->is_root();
     // create the initial while call object
-    WhileRuleObj call = SASS_MEMORY_NEW(WhileRule, pstate, {}, {});
+    WhileRuleObj call = SASS_MEMORY_NEW(WhileRule, pstate, ExpressionObj{}, Block_Obj{});
     // parse mandatory predicate
     ExpressionObj predicate = parse_list();
     List_Obj l = Cast<List>(predicate);
@@ -2272,7 +2272,7 @@ namespace Sass {
   {
     if (lex < identifier_schema >()) {
       String_Obj ss = parse_identifier_schema();
-      return SASS_MEMORY_NEW(Media_Query_Expression, pstate, ss, {}, true);
+      return SASS_MEMORY_NEW(Media_Query_Expression, pstate, ss, ExpressionObj{}, true);
     }
     if (!lex_css< exactly<'('> >()) {
       error("media query expression must begin with '('");

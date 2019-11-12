@@ -557,7 +557,9 @@ namespace Sass {
     }
 
     // abort early if no content could be loaded (various reasons)
-    if (!contents) throw std::runtime_error("File to read not found or unreadable: " + input_path);
+    if (!contents) throw std::runtime_error(
+      "File to read not found or unreadable: "
+      + std::string(input_path.c_str()));
 
     // store entry path
     entry_path = abs_path;
@@ -673,8 +675,8 @@ namespace Sass {
   sass::string Context::format_embedded_source_map()
   {
     sass::string map = emitter.render_srcmap(*this);
-    std::istringstream is( map );
-    std::ostringstream buffer;
+    sass::istream is( map.c_str() );
+    sass::sstream buffer;
     base64::encoder E;
     E.encode(is, buffer);
     sass::string url = "data:application/json;base64," + buffer.str();
@@ -729,11 +731,11 @@ namespace Sass {
   void register_overload_stub(Context& ctx, sass::string name, Env* env)
   {
     Definition* stub = SASS_MEMORY_NEW(Definition,
-                                       SourceSpan("[built-in function]"),
-                                       0,
+                                       SourceSpan{ "[built-in function]" },
+                                       nullptr,
                                        name,
-                                       {},
-                                       0,
+                                       Parameters_Obj{},
+                                       nullptr,
                                        true);
     (*env)[name + "[f]"] = stub;
   }
