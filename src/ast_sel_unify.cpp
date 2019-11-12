@@ -13,14 +13,14 @@ namespace Sass {
   // ##########################################################################
   // ToDo: fine-tune API to avoid unnecessary wrapper allocations
   // ##########################################################################
-  std::vector<std::vector<SelectorComponentObj>> unifyComplex(
-    const std::vector<std::vector<SelectorComponentObj>>& complexes)
+  sass::vector<sass::vector<SelectorComponentObj>> unifyComplex(
+    const sass::vector<sass::vector<SelectorComponentObj>>& complexes)
   {
 
     SASS_ASSERT(!complexes.empty(), "Can't unify empty list");
     if (complexes.size() == 1) return complexes;
 
-    CompoundSelectorObj unifiedBase = SASS_MEMORY_NEW(CompoundSelector, ParserState("[phony]"));
+    CompoundSelectorObj unifiedBase = SASS_MEMORY_NEW(CompoundSelector, SourceSpan("[phony]"));
     for (auto complex : complexes) {
       SelectorComponentObj base = complex.back();
       if (CompoundSelector * comp = base->getCompound()) {
@@ -39,9 +39,9 @@ namespace Sass {
       }
     }
 
-    std::vector<std::vector<SelectorComponentObj>> complexesWithoutBases;
+    sass::vector<sass::vector<SelectorComponentObj>> complexesWithoutBases;
     for (size_t i = 0; i < complexes.size(); i += 1) {
-      std::vector<SelectorComponentObj> sel = complexes[i];
+      sass::vector<SelectorComponentObj> sel = complexes[i];
       sel.pop_back(); // remove last item (base) from the list
       complexesWithoutBases.push_back(std::move(sel));
     }
@@ -120,13 +120,13 @@ namespace Sass {
   // ##########################################################################
   // This is implemented in `selector/type.dart` as `PseudoSelector::unify`
   // ##########################################################################
-  CompoundSelector* Type_Selector::unifyWith(CompoundSelector* rhs)
+  CompoundSelector* TypeSelector::unifyWith(CompoundSelector* rhs)
   {
     if (rhs->empty()) {
       rhs->append(this);
       return rhs;
     }
-    Type_Selector* type = Cast<Type_Selector>(rhs->at(0));
+    TypeSelector* type = Cast<TypeSelector>(rhs->at(0));
     if (type != nullptr) {
       SimpleSelector* unified = unifyWith(type);
       if (unified == nullptr) {
@@ -143,10 +143,10 @@ namespace Sass {
   // ##########################################################################
   // This is implemented in `selector/id.dart` as `PseudoSelector::unify`
   // ##########################################################################
-  CompoundSelector* Id_Selector::unifyWith(CompoundSelector* rhs)
+  CompoundSelector* IDSelector::unifyWith(CompoundSelector* rhs)
   {
     for (const SimpleSelector* sel : rhs->elements()) {
-      if (const Id_Selector* id_sel = Cast<Id_Selector>(sel)) {
+      if (const IDSelector* id_sel = Cast<IDSelector>(sel)) {
         if (id_sel->name() != name()) return nullptr;
       }
     }
@@ -156,7 +156,7 @@ namespace Sass {
   // ##########################################################################
   // This is implemented in `selector/pseudo.dart` as `PseudoSelector::unify`
   // ##########################################################################
-  CompoundSelector* Pseudo_Selector::unifyWith(CompoundSelector* compound)
+  CompoundSelector* PseudoSelector::unifyWith(CompoundSelector* compound)
   {
 
     if (compound->length() == 1 && compound->first()->is_universal()) {
@@ -174,7 +174,7 @@ namespace Sass {
     bool addedThis = false;
     for (auto simple : compound->elements()) {
       // Make sure pseudo selectors always come last.
-      if (Pseudo_Selector_Obj pseudo = simple->getPseudoSelector()) {
+      if (PseudoSelectorObj pseudo = simple->getPseudoSelector()) {
         if (pseudo->isElement()) {
           // A given compound selector may only contain one pseudo element. If
           // [compound] has a different one than [this], unification fails.
@@ -197,7 +197,7 @@ namespace Sass {
     return result.detach();
 
   }
-  // EO Pseudo_Selector::unifyWith(CompoundSelector*
+  // EO PseudoSelector::unifyWith(CompoundSelector*
 
   // ##########################################################################
   // This is implemented in `extend/functions.dart` as `unifyUniversalAndElement`
@@ -206,7 +206,7 @@ namespace Sass {
   // or [TypeSelector]s. If no such selector can be produced, returns `null`.
   // Note: libsass handles universal selector directly within the type selector
   // ##########################################################################
-  SimpleSelector* Type_Selector::unifyWith(const SimpleSelector* rhs)
+  SimpleSelector* TypeSelector::unifyWith(const SimpleSelector* rhs)
   {
     bool rhs_ns = false;
     if (!(is_ns_eq(*rhs) || rhs->is_universal_ns())) {
@@ -229,7 +229,7 @@ namespace Sass {
     if (rhs_name) name(rhs->name());
     return this;
   }
-  // EO Type_Selector::unifyWith(const SimpleSelector*)
+  // EO TypeSelector::unifyWith(const SimpleSelector*)
 
   // ##########################################################################
   // Unify two complex selectors. Internally calls `unifyComplex`
@@ -238,9 +238,9 @@ namespace Sass {
   SelectorList* ComplexSelector::unifyWith(ComplexSelector* rhs)
   {
     SelectorListObj list = SASS_MEMORY_NEW(SelectorList, pstate());
-    std::vector<std::vector<SelectorComponentObj>> rv =
+    sass::vector<sass::vector<SelectorComponentObj>> rv =
        unifyComplex({ elements(), rhs->elements() });
-    for (std::vector<SelectorComponentObj> items : rv) {
+    for (sass::vector<SelectorComponentObj> items : rv) {
       ComplexSelectorObj sel = SASS_MEMORY_NEW(ComplexSelector, pstate());
       sel->elements() = std::move(items);
       list->append(sel);

@@ -21,17 +21,17 @@ namespace Sass {
     protected:
       OutputBuffer wbuf;
     public:
-      const std::string& buffer(void) { return wbuf.buffer; }
+      const sass::string& buffer(void) { return wbuf.buffer; }
       const SourceMap smap(void) { return wbuf.smap; }
       const OutputBuffer output(void) { return wbuf; }
       // proxy methods for source maps
       void add_source_index(size_t idx);
-      void set_filename(const std::string& str);
+      void set_filename(const sass::string& str);
       void add_open_mapping(const AST_Node* node);
       void add_close_mapping(const AST_Node* node);
       void schedule_mapping(const AST_Node* node);
-      std::string render_srcmap(Context &ctx);
-      ParserState remap(const ParserState& pstate);
+      sass::string render_srcmap(Context &ctx);
+      SourceSpan remap(const SourceSpan& pstate);
 
     public:
       struct Sass_Output_Options& opt;
@@ -58,8 +58,8 @@ namespace Sass {
       bool in_comma_array;
 
     public:
-      // return buffer as std::string
-      std::string get_buffer(void);
+      // return buffer as sass::string
+      sass::string get_buffer(void);
       // flush scheduled space/linefeed
       Sass_Output_Style output_style(void) const;
       // add outstanding linefeed
@@ -67,17 +67,17 @@ namespace Sass {
       // flush scheduled space/linefeed
       void flush_schedules(void);
       // prepend some text or token to the buffer
-      void prepend_string(const std::string& text);
+      void prepend_string(const sass::string& text);
       void prepend_output(const OutputBuffer& out);
       // append some text or token to the buffer
-      void append_string(const std::string& text);
+      void append_string(const sass::string& text);
       // append a single character to buffer
       void append_char(const char chr);
       // append some white-space only text
-      void append_wspace(const std::string& text);
+      void append_wspace(const sass::string& text);
       // append some text or token to the buffer
       // this adds source-mappings for node start and end
-      void append_token(const std::string& text, const AST_Node* node);
+      void append_token(const sass::string& text, const AST_Node* node);
       // query last appended character
       char last_char();
 

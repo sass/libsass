@@ -53,9 +53,17 @@
 
 // For C++ helper
 #include <string>
+#include <vector>
 
-// output behaviours
+// output behaviour
 namespace Sass {
+
+  namespace sass {
+    // Create some aliases
+    using string = std::string;
+    using sstream = std::stringstream;
+    template <typename T> using vector = std::vector<T>;
+  }
 
   // create some C++ aliases for the most used options
   const static Sass_Output_Style NESTED = SASS_STYLE_NESTED;
@@ -69,7 +77,7 @@ namespace Sass {
 
   // helper to aid dreaded MSVC debug mode
   // see implementation for more details
-  char* sass_copy_string(std::string str);
+  char* sass_copy_string(sass::string str);
 
 }
 

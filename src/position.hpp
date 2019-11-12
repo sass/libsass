@@ -13,7 +13,7 @@ namespace Sass {
     public: // c-tor
       Offset(const char chr);
       Offset(const char* string);
-      Offset(const std::string& text);
+      Offset(const sass::string& text);
       Offset(const size_t line, const size_t column);
 
       // return new position, incremented by the given string
@@ -85,31 +85,31 @@ namespace Sass {
     : prefix(p), begin(b), end(e) { }
 
     size_t length()    const { return end - begin; }
-    std::string ws_before() const { return std::string(prefix, begin); }
-    std::string to_string() const { return std::string(begin, end); }
-    std::string time_wspace() const {
-      std::string str(to_string());
-      std::string whitespaces(" \t\f\v\n\r");
+    sass::string ws_before() const { return sass::string(prefix, begin); }
+    sass::string to_string() const { return sass::string(begin, end); }
+    sass::string time_wspace() const {
+      sass::string str(to_string());
+      sass::string whitespaces(" \t\f\v\n\r");
       return str.erase(str.find_last_not_of(whitespaces)+1);
     }
 
     operator bool()        { return begin && end && begin >= end; }
-    operator std::string() { return to_string(); }
+    operator sass::string() { return to_string(); }
 
     bool operator==(Token t)  { return to_string() == t.to_string(); }
   };
 
-  class ParserState : public Position {
+  class SourceSpan : public Position {
 
     public: // c-tor
-      ParserState(const char* path, const char* src = 0, const size_t file = std::string::npos);
-      ParserState(const char* path, const char* src, const Position& position, Offset offset = Offset(0, 0));
-      ParserState(const char* path, const char* src, const Token& token, const Position& position, Offset offset = Offset(0, 0));
+      SourceSpan(const char* path, const char* src = 0, const size_t file = sass::string::npos);
+      SourceSpan(const char* path, const char* src, const Position& position, Offset offset = Offset(0, 0));
+      SourceSpan(const char* path, const char* src, const Token& token, const Position& position, Offset offset = Offset(0, 0));
 
     public: // down casts
       Offset off() { return *this; }
       Position pos() { return *this; }
-      ParserState pstate() { return *this; }
+      SourceSpan pstate() { return *this; }
 
     public:
       const char* path;

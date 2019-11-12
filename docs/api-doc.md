@@ -182,7 +182,7 @@ with the short description:
 * 1: normal errors like parsing or `eval` errors
 * 2: bad allocation error (memory error)
 * 3: "untranslated" C++ exception (`throw std::exception`)
-* 4: legacy string exceptions ( `throw const char*` or `std::string` )
+* 4: legacy string exceptions ( `throw const char*` or `sass::string` )
 * 5: Some other unknown exception
 
 Although for the API consumer, error codes do not offer much value except

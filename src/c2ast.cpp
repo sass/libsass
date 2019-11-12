@@ -8,7 +8,7 @@
 
 namespace Sass {
 
-  Value* c2ast(union Sass_Value* v, Backtraces traces, ParserState pstate)
+  Value* c2ast(union Sass_Value* v, Backtraces traces, SourceSpan pstate)
   {
     using std::strlen;
     using std::strcpy;
@@ -51,10 +51,10 @@ namespace Sass {
         e = SASS_MEMORY_NEW(Null, pstate);
       } break;
       case SASS_ERROR: {
-        error("Error in C function: " + std::string(sass_error_get_message(v)), pstate, traces);
+        error("Error in C function: " + sass::string(sass_error_get_message(v)), pstate, traces);
       } break;
       case SASS_WARNING: {
-        error("Warning in C function: " + std::string(sass_warning_get_message(v)), pstate, traces);
+        error("Warning in C function: " + sass::string(sass_warning_get_message(v)), pstate, traces);
       } break;
       default: break;
     }

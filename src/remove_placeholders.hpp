@@ -21,10 +21,10 @@ namespace Sass {
     ~Remove_Placeholders() { }
 
     void operator()(Block*);
-    void operator()(Ruleset*);
+    void operator()(StyleRule*);
     void operator()(CssMediaRule*);
-    void operator()(Supports_Block*);
-    void operator()(Directive*);
+    void operator()(SupportsRule*);
+    void operator()(AtRule*);
 
     // ignore missed types
     template <typename U>

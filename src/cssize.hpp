@@ -14,32 +14,32 @@ namespace Sass {
 
     Backtraces&                 traces;
     BlockStack      block_stack;
-    std::vector<Statement*>  p_stack;
+    sass::vector<Statement*>  p_stack;
 
   public:
     Cssize(Context&);
     ~Cssize() { }
 
     Block* operator()(Block*);
-    Statement* operator()(Ruleset*);
+    Statement* operator()(StyleRule*);
     // Statement* operator()(Bubble*);
     Statement* operator()(CssMediaRule*);
-    Statement* operator()(Supports_Block*);
-    Statement* operator()(At_Root_Block*);
-    Statement* operator()(Directive*);
+    Statement* operator()(SupportsRule*);
+    Statement* operator()(AtRootRule*);
+    Statement* operator()(AtRule*);
     Statement* operator()(Keyframe_Rule*);
     Statement* operator()(Trace*);
     Statement* operator()(Declaration*);
     // Statement* operator()(Assignment*);
     // Statement* operator()(Import*);
     // Statement* operator()(Import_Stub*);
-    // Statement* operator()(Warning*);
+    // Statement* operator()(WarningRule*);
     // Statement* operator()(Error*);
     // Statement* operator()(Comment*);
     // Statement* operator()(If*);
-    // Statement* operator()(For*);
-    // Statement* operator()(Each*);
-    // Statement* operator()(While*);
+    // Statement* operator()(ForRule*);
+    // Statement* operator()(EachRule*);
+    // Statement* operator()(WhileRule*);
     // Statement* operator()(Return*);
     // Statement* operator()(ExtendRule*);
     // Statement* operator()(Definition*);
@@ -48,11 +48,11 @@ namespace Sass {
     Statement* operator()(Null*);
 
     Statement* parent();
-    std::vector<std::pair<bool, Block_Obj>> slice_by_bubble(Block*);
-    Statement* bubble(Directive*);
-    Statement* bubble(At_Root_Block*);
+    sass::vector<std::pair<bool, Block_Obj>> slice_by_bubble(Block*);
+    Statement* bubble(AtRule*);
+    Statement* bubble(AtRootRule*);
     Statement* bubble(CssMediaRule*);
-    Statement* bubble(Supports_Block*);
+    Statement* bubble(SupportsRule*);
 
     Block* debubble(Block* children, Statement* parent = 0);
     Block* flatten(const Block*);

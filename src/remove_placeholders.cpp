@@ -18,7 +18,7 @@ namespace Sass {
 
     void Remove_Placeholders::remove_placeholders(SimpleSelector* simple)
     {
-      if (Pseudo_Selector * pseudo = simple->getPseudoSelector()) {
+      if (PseudoSelector * pseudo = simple->getPseudoSelector()) {
         if (pseudo->selector()) remove_placeholders(pseudo->selector());
       }
     }
@@ -60,7 +60,7 @@ namespace Sass {
       if (rule->block()) operator()(rule->block());
     }
 
-    void Remove_Placeholders::operator()(Ruleset* r)
+    void Remove_Placeholders::operator()(StyleRule* r)
     {
       if (SelectorListObj sl = r->selector()) {
         // Set the new placeholder selector list
@@ -73,12 +73,12 @@ namespace Sass {
       }
     }
 
-    void Remove_Placeholders::operator()(Supports_Block* m)
+    void Remove_Placeholders::operator()(SupportsRule* m)
     {
       if (m->block()) operator()(m->block());
     }
 
-    void Remove_Placeholders::operator()(Directive* a)
+    void Remove_Placeholders::operator()(AtRule* a)
     {
       if (a->block()) a->block()->perform(this);
     }

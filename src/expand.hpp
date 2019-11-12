@@ -54,35 +54,35 @@ namespace Sass {
 
   private:
 
-    std::vector<CssMediaQuery_Obj> mergeMediaQueries(const std::vector<CssMediaQuery_Obj>& lhs, const std::vector<CssMediaQuery_Obj>& rhs);
+    sass::vector<CssMediaQuery_Obj> mergeMediaQueries(const sass::vector<CssMediaQuery_Obj>& lhs, const sass::vector<CssMediaQuery_Obj>& rhs);
 
   public:
     Expand(Context&, Env*, SelectorStack* stack = nullptr, SelectorStack* original = nullptr);
     ~Expand() { }
 
     Block* operator()(Block*);
-    Statement* operator()(Ruleset*);
+    Statement* operator()(StyleRule*);
 
     Statement* operator()(MediaRule*);
 
-    // Css Ruleset is already static
+    // Css StyleRule is already static
     // Statement* operator()(CssMediaRule*);
 
-    Statement* operator()(Supports_Block*);
-    Statement* operator()(At_Root_Block*);
-    Statement* operator()(Directive*);
+    Statement* operator()(SupportsRule*);
+    Statement* operator()(AtRootRule*);
+    Statement* operator()(AtRule*);
     Statement* operator()(Declaration*);
     Statement* operator()(Assignment*);
     Statement* operator()(Import*);
     Statement* operator()(Import_Stub*);
-    Statement* operator()(Warning*);
-    Statement* operator()(Error*);
-    Statement* operator()(Debug*);
+    Statement* operator()(WarningRule*);
+    Statement* operator()(ErrorRule*);
+    Statement* operator()(DebugRule*);
     Statement* operator()(Comment*);
     Statement* operator()(If*);
-    Statement* operator()(For*);
-    Statement* operator()(Each*);
-    Statement* operator()(While*);
+    Statement* operator()(ForRule*);
+    Statement* operator()(EachRule*);
+    Statement* operator()(WhileRule*);
     Statement* operator()(Return*);
     Statement* operator()(ExtendRule*);
     Statement* operator()(Definition*);

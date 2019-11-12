@@ -32,7 +32,7 @@ namespace Sass {
       const List* l = Cast<List>(val);
       union Sass_Value* list = sass_make_list(l->size(), l->separator(), l->is_bracketed());
       for (size_t i = 0, L = l->length(); i < L; ++i) {
-        Expression_Obj obj = l->at(i);
+        ExpressionObj obj = l->at(i);
         auto val = ast_node_to_sass_value(obj);
         sass_list_set_value(list, i, val);
       }
@@ -42,7 +42,7 @@ namespace Sass {
     {
       const Map* m = Cast<Map>(val);
       union Sass_Value* map = sass_make_map(m->length());
-      size_t i = 0; for (Expression_Obj key : m->keys()) {
+      size_t i = 0; for (ExpressionObj key : m->keys()) {
         sass_map_set_key(map, i, ast_node_to_sass_value(key));
         sass_map_set_value(map, i, ast_node_to_sass_value(m->at(key)));
         ++ i;
@@ -78,17 +78,17 @@ namespace Sass {
     switch (sass_value_get_tag(val)) {
       case SASS_NUMBER:
         return SASS_MEMORY_NEW(Number,
-                               ParserState("[C-VALUE]"),
+                               SourceSpan("[C-VALUE]"),
                                sass_number_get_value(val),
                                sass_number_get_unit(val));
       case SASS_BOOLEAN:
         return SASS_MEMORY_NEW(Boolean,
-                               ParserState("[C-VALUE]"),
+                               SourceSpan("[C-VALUE]"),
                                sass_boolean_get_value(val));
       case SASS_COLOR:
         // ToDo: allow to also use HSLA colors!!
         return SASS_MEMORY_NEW(Color_RGBA,
-                               ParserState("[C-VALUE]"),
+                               SourceSpan("[C-VALUE]"),
                                sass_color_get_r(val),
                                sass_color_get_g(val),
                                sass_color_get_b(val),
@@ -96,15 +96,15 @@ namespace Sass {
       case SASS_STRING:
         if (sass_string_is_quoted(val)) {
           return SASS_MEMORY_NEW(String_Quoted,
-                                 ParserState("[C-VALUE]"),
+                                 SourceSpan("[C-VALUE]"),
                                  sass_string_get_value(val));
         }
         return SASS_MEMORY_NEW(String_Constant,
-                                 ParserState("[C-VALUE]"),
+                                 SourceSpan("[C-VALUE]"),
                                  sass_string_get_value(val));
       case SASS_LIST: {
         List* l = SASS_MEMORY_NEW(List,
-                                  ParserState("[C-VALUE]"),
+                                  SourceSpan("[C-VALUE]"),
                                   sass_list_get_length(val),
                                   sass_list_get_separator(val));
         for (size_t i = 0, L = sass_list_get_length(val); i < L; ++i) {
@@ -114,7 +114,7 @@ namespace Sass {
         return l;
       }
       case SASS_MAP: {
-        Map* m = SASS_MEMORY_NEW(Map, ParserState("[C-VALUE]"));
+        Map* m = SASS_MEMORY_NEW(Map, SourceSpan("[C-VALUE]"));
         for (size_t i = 0, L = sass_map_get_length(val); i < L; ++i) {
           *m << std::make_pair(
             sass_value_to_ast_node(sass_map_get_key(val, i)),
@@ -123,14 +123,14 @@ namespace Sass {
         return m;
       }
       case SASS_NULL:
-        return SASS_MEMORY_NEW(Null, ParserState("[C-VALUE]"));
+        return SASS_MEMORY_NEW(Null, SourceSpan("[C-VALUE]"));
       case SASS_ERROR:
         return SASS_MEMORY_NEW(Custom_Error,
-                               ParserState("[C-VALUE]"),
+                               SourceSpan("[C-VALUE]"),
                                sass_error_get_message(val));
       case SASS_WARNING:
         return SASS_MEMORY_NEW(Custom_Warning,
-                               ParserState("[C-VALUE]"),
+                               SourceSpan("[C-VALUE]"),
                                sass_warning_get_message(val));
       default: break;
     }

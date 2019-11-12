@@ -7,12 +7,12 @@
 namespace Sass {
 
   CheckNesting::CheckNesting()
-  : parents(std::vector<Statement*>()),
-    traces(std::vector<Backtrace>()),
+  : parents(sass::vector<Statement*>()),
+    traces(sass::vector<Backtrace>()),
     parent(0), current_mixin_definition(0)
   { }
 
-  void error(AST_Node* node, Backtraces traces, std::string msg) {
+  void error(AST_Node* node, Backtraces traces, sass::string msg) {
     traces.push_back(Backtrace(node->pstate()));
     throw Exception::InvalidSass(node->pstate(), traces, msg);
   }
@@ -21,9 +21,9 @@ namespace Sass {
   {
     Statement* old_parent = this->parent;
 
-    if (At_Root_Block* root = Cast<At_Root_Block>(parent)) {
-      std::vector<Statement*> old_parents = this->parents;
-      std::vector<Statement*> new_parents;
+    if (AtRootRule* root = Cast<AtRootRule>(parent)) {
+      sass::vector<Statement*> old_parents = this->parents;
+      sass::vector<Statement*> new_parents;
 
       for (size_t i = 0, L = this->parents.size(); i < L; i++) {
         Statement* p = this->parents.at(i);
@@ -45,7 +45,7 @@ namespace Sass {
         }
       }
 
-      At_Root_Block* ar = Cast<At_Root_Block>(parent);
+      AtRootRule* ar = Cast<AtRootRule>(parent);
       Block* ret = ar->block();
 
       if (ret != NULL) {
@@ -75,7 +75,7 @@ namespace Sass {
     }
 
     if (!b) {
-      if (Has_Block* bb = Cast<Has_Block>(parent)) {
+      if (ParentStatement* bb = Cast<ParentStatement>(parent)) {
         b = bb->block();
       }
     }
@@ -192,7 +192,7 @@ namespace Sass {
   void CheckNesting::invalid_extend_parent(Statement* parent, AST_Node* node)
   {
     if (!(
-        Cast<Ruleset>(parent) ||
+        Cast<StyleRule>(parent) ||
         Cast<Mixin_Call>(parent) ||
         is_mixin(parent)
     )) {
@@ -204,10 +204,10 @@ namespace Sass {
   // {
   //   for (auto pp : this->parents) {
   //     if (
-  //         Cast<Each>(pp) ||
-  //         Cast<For>(pp) ||
+  //         Cast<EachRule>(pp) ||
+  //         Cast<ForRule>(pp) ||
   //         Cast<If>(pp) ||
-  //         Cast<While>(pp) ||
+  //         Cast<WhileRule>(pp) ||
   //         Cast<Trace>(pp) ||
   //         Cast<Mixin_Call>(pp) ||
   //         is_mixin(pp)
@@ -229,10 +229,10 @@ namespace Sass {
   {
     for (Statement* pp : this->parents) {
       if (
-          Cast<Each>(pp) ||
-          Cast<For>(pp) ||
+          Cast<EachRule>(pp) ||
+          Cast<ForRule>(pp) ||
           Cast<If>(pp) ||
-          Cast<While>(pp) ||
+          Cast<WhileRule>(pp) ||
           Cast<Trace>(pp) ||
           Cast<Mixin_Call>(pp) ||
           is_mixin(pp)
@@ -246,10 +246,10 @@ namespace Sass {
   {
     for (Statement* pp : this->parents) {
       if (
-          Cast<Each>(pp) ||
-          Cast<For>(pp) ||
+          Cast<EachRule>(pp) ||
+          Cast<ForRule>(pp) ||
           Cast<If>(pp) ||
-          Cast<While>(pp) ||
+          Cast<WhileRule>(pp) ||
           Cast<Trace>(pp) ||
           Cast<Mixin_Call>(pp) ||
           is_mixin(pp)
@@ -262,19 +262,19 @@ namespace Sass {
   void CheckNesting::invalid_function_child(Statement* child)
   {
     if (!(
-        Cast<Each>(child) ||
-        Cast<For>(child) ||
+        Cast<EachRule>(child) ||
+        Cast<ForRule>(child) ||
         Cast<If>(child) ||
-        Cast<While>(child) ||
+        Cast<WhileRule>(child) ||
         Cast<Trace>(child) ||
         Cast<Comment>(child) ||
-        Cast<Debug>(child) ||
+        Cast<DebugRule>(child) ||
         Cast<Return>(child) ||
         Cast<Variable>(child) ||
         // Ruby Sass doesn't distinguish variables and assignments
         Cast<Assignment>(child) ||
-        Cast<Warning>(child) ||
-        Cast<Error>(child)
+        Cast<WarningRule>(child) ||
+        Cast<ErrorRule>(child)
     )) {
       error(child, traces, "Functions can only contain variable declarations and control directives.");
     }
@@ -283,10 +283,10 @@ namespace Sass {
   void CheckNesting::invalid_prop_child(Statement* child)
   {
     if (!(
-        Cast<Each>(child) ||
-        Cast<For>(child) ||
+        Cast<EachRule>(child) ||
+        Cast<ForRule>(child) ||
         Cast<If>(child) ||
-        Cast<While>(child) ||
+        Cast<WhileRule>(child) ||
         Cast<Trace>(child) ||
         Cast<Comment>(child) ||
         Cast<Declaration>(child) ||
@@ -301,7 +301,7 @@ namespace Sass {
     if (!(
         is_mixin(parent) ||
         is_directive_node(parent) ||
-        Cast<Ruleset>(parent) ||
+        Cast<StyleRule>(parent) ||
         Cast<Keyframe_Rule>(parent) ||
         Cast<Declaration>(parent) ||
         Cast<Mixin_Call>(parent)
@@ -343,17 +343,17 @@ namespace Sass {
                              !is_at_root_node(grandparent);
 
     return Cast<Import>(parent) ||
-           Cast<Each>(parent) ||
-           Cast<For>(parent) ||
+           Cast<EachRule>(parent) ||
+           Cast<ForRule>(parent) ||
            Cast<If>(parent) ||
-           Cast<While>(parent) ||
+           Cast<WhileRule>(parent) ||
            Cast<Trace>(parent) ||
            valid_bubble_node;
   }
 
   bool CheckNesting::is_charset(Statement* n)
   {
-    Directive* d = Cast<Directive>(n);
+    AtRule* d = Cast<AtRule>(n);
     return d && d->keyword() == "charset";
   }
 
@@ -371,7 +371,7 @@ namespace Sass {
 
   bool CheckNesting::is_root_node(Statement* n)
   {
-    if (Cast<Ruleset>(n)) return false;
+    if (Cast<StyleRule>(n)) return false;
 
     Block* b = Cast<Block>(n);
     return b && b->is_root();
@@ -379,15 +379,15 @@ namespace Sass {
 
   bool CheckNesting::is_at_root_node(Statement* n)
   {
-    return Cast<At_Root_Block>(n) != NULL;
+    return Cast<AtRootRule>(n) != NULL;
   }
 
   bool CheckNesting::is_directive_node(Statement* n)
   {
-    return Cast<Directive>(n) ||
+    return Cast<AtRule>(n) ||
            Cast<Import>(n) ||
       Cast<MediaRule>(n) ||
       Cast<CssMediaRule>(n) ||
-      Cast<Supports_Block>(n);
+      Cast<SupportsRule>(n);
   }
 }

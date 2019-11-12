@@ -283,21 +283,21 @@ extern "C" {
 
   union Sass_Value* ADDCALL sass_value_stringify (const union Sass_Value* v, bool compressed, int precision)
   {
-    Value_Obj val = sass_value_to_ast_node(v);
+    ValueObj val = sass_value_to_ast_node(v);
     Sass_Inspect_Options options(compressed ? COMPRESSED : NESTED, precision);
-    std::string str(val->to_string(options));
+    sass::string str(val->to_string(options));
     return sass_make_qstring(str.c_str());
   }
 
   union Sass_Value* ADDCALL sass_value_op (enum Sass_OP op, const union Sass_Value* a, const union Sass_Value* b)
   {
 
-    Sass::Value_Obj rv;
+    Sass::ValueObj rv;
 
     try {
 
-      Value_Obj lhs = sass_value_to_ast_node(a);
-      Value_Obj rhs = sass_value_to_ast_node(b);
+      ValueObj lhs = sass_value_to_ast_node(a);
+      ValueObj rhs = sass_value_to_ast_node(b);
       struct Sass_Inspect_Options options(NESTED, 5);
 
       // see if it's a relational expression
@@ -356,7 +356,7 @@ extern "C" {
     catch (Exception::InvalidSass& e) { return sass_make_error(e.what()); }
     catch (std::bad_alloc&) { return sass_make_error("memory exhausted"); }
     catch (std::exception& e) { return sass_make_error(e.what()); }
-    catch (std::string& e) { return sass_make_error(e.c_str()); }
+    catch (sass::string& e) { return sass_make_error(e.c_str()); }
     catch (const char* e) { return sass_make_error(e); }
     catch (...) { return sass_make_error("unknown"); }
   }

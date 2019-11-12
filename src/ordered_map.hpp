@@ -5,7 +5,7 @@ namespace Sass {
 
   // ##########################################################################
   // Very simple and limited container for insert ordered hash map.
-  // Piggy-back implementation on std::unordered_map and std::vector
+  // Piggy-back implementation on std::unordered_map and sass::vector
   // ##########################################################################
   template<
     class Key,
@@ -26,8 +26,8 @@ namespace Sass {
     map_type _map;
 
     // Keep insertion order
-    std::vector<Key> _keys;
-    std::vector<T> _values;
+    sass::vector<Key> _keys;
+    sass::vector<T> _values;
 
     const KeyEqual _keyEqual;
 
@@ -81,8 +81,8 @@ namespace Sass {
       return false;
     }
 
-    const std::vector<Key>& keys() const { return _keys; }
-    const std::vector<T>& values() const { return _values; }
+    const sass::vector<Key>& keys() const { return _keys; }
+    const sass::vector<T>& values() const { return _values; }
 
     const T& get(const Key& key) {
       if (hasKey(key)) {
@@ -91,19 +91,19 @@ namespace Sass {
       throw std::runtime_error("Key does not exist");
     }
 
-    using iterator = typename std::vector<Key>::iterator;
-    using const_iterator = typename std::vector<Key>::const_iterator;
-    using reverse_iterator = typename std::vector<Key>::reverse_iterator;
-    using const_reverse_iterator = typename std::vector<Key>::const_reverse_iterator;
+    using iterator = typename sass::vector<Key>::iterator;
+    using const_iterator = typename sass::vector<Key>::const_iterator;
+    using reverse_iterator = typename sass::vector<Key>::reverse_iterator;
+    using const_reverse_iterator = typename sass::vector<Key>::const_reverse_iterator;
 
-    typename std::vector<Key>::iterator end() { return _keys.end(); }
-    typename std::vector<Key>::iterator begin() { return _keys.begin(); }
-    typename std::vector<Key>::reverse_iterator rend() { return _keys.rend(); }
-    typename std::vector<Key>::reverse_iterator rbegin() { return _keys.rbegin(); }
-    typename std::vector<Key>::const_iterator end() const { return _keys.end(); }
-    typename std::vector<Key>::const_iterator begin() const { return _keys.begin(); }
-    typename std::vector<Key>::const_reverse_iterator rend() const { return _keys.rend(); }
-    typename std::vector<Key>::const_reverse_iterator rbegin() const { return _keys.rbegin(); }
+    typename sass::vector<Key>::iterator end() { return _keys.end(); }
+    typename sass::vector<Key>::iterator begin() { return _keys.begin(); }
+    typename sass::vector<Key>::reverse_iterator rend() { return _keys.rend(); }
+    typename sass::vector<Key>::reverse_iterator rbegin() { return _keys.rbegin(); }
+    typename sass::vector<Key>::const_iterator end() const { return _keys.end(); }
+    typename sass::vector<Key>::const_iterator begin() const { return _keys.begin(); }
+    typename sass::vector<Key>::const_reverse_iterator rend() const { return _keys.rend(); }
+    typename sass::vector<Key>::const_reverse_iterator rbegin() const { return _keys.rbegin(); }
 
   };
 

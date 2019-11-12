@@ -34,20 +34,20 @@ struct Lookahead {
 
 namespace Sass {
 
-  class Parser : public ParserState {
+  class Parser : public SourceSpan {
   public:
 
     enum Scope { Root, Mixin, Function, Media, Control, Properties, Rules, AtRoot };
 
     Context& ctx;
-    std::vector<Block_Obj> block_stack;
-    std::vector<Scope> stack;
+    sass::vector<Block_Obj> block_stack;
+    sass::vector<Scope> stack;
     const char* source;
     const char* position;
     const char* end;
     Position before_token;
     Position after_token;
-    ParserState pstate;
+    SourceSpan pstate;
     Backtraces traces;
     size_t indentation;
     size_t nestings;
@@ -55,20 +55,20 @@ namespace Sass {
 
     Token lexed;
 
-    Parser(Context& ctx, const ParserState& pstate, Backtraces traces, bool allow_parent = true)
-    : ParserState(pstate), ctx(ctx), block_stack(), stack(0),
+    Parser(Context& ctx, const SourceSpan& pstate, Backtraces traces, bool allow_parent = true)
+    : SourceSpan(pstate), ctx(ctx), block_stack(), stack(0),
       source(0), position(0), end(0), before_token(pstate), after_token(pstate),
       pstate(pstate), traces(traces), indentation(0), nestings(0), allow_parent(allow_parent)
     {
       stack.push_back(Scope::Root);
     }
 
-    // static Parser from_string(const std::string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
-    static Parser from_c_str(const char* src, Context& ctx, Backtraces, ParserState pstate = ParserState("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
-    static Parser from_c_str(const char* beg, const char* end, Context& ctx, Backtraces, ParserState pstate = ParserState("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
-    static Parser from_token(Token t, Context& ctx, Backtraces, ParserState pstate = ParserState("[TOKEN]"), const char* source = nullptr);
+    // static Parser from_string(const sass::string& src, Context& ctx, SourceSpan pstate = SourceSpan("[STRING]"));
+    static Parser from_c_str(const char* src, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
+    static Parser from_c_str(const char* beg, const char* end, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
+    static Parser from_token(Token t, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[TOKEN]"), const char* source = nullptr);
     // special static parsers to convert strings into certain selectors
-    static SelectorListObj parse_selector(const char* src, Context& ctx, Backtraces, ParserState pstate = ParserState("[SELECTOR]"), const char* source = nullptr, bool allow_parent = true);
+    static SelectorListObj parse_selector(const char* src, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[SELECTOR]"), const char* source = nullptr, bool allow_parent = true);
 
 #ifdef __clang__
 
@@ -84,7 +84,7 @@ namespace Sass {
 
 
     // skip current token and next whitespace
-    // moves ParserState right before next token
+    // moves SourceSpan right before next token
     void advanceToNextToken();
 
     bool peek_newline(const char* start = 0);
@@ -189,7 +189,7 @@ namespace Sass {
       after_token.add(it_before_token, it_after_token);
 
       // ToDo: could probably do this incremental on original object (API wants offset?)
-      pstate = ParserState(path, source, lexed, before_token, after_token - before_token);
+      pstate = SourceSpan(path, source, lexed, before_token, after_token - before_token);
 
       // advance internal char iterator
       return position = it_after_token;
@@ -208,7 +208,7 @@ namespace Sass {
       const char* oldpos = position;
       Position bt = before_token;
       Position at = after_token;
-      ParserState op = pstate;
+      SourceSpan op = pstate;
       // throw away comments
       // update srcmap position
       lex < Prelexer::css_comments >();
@@ -240,13 +240,13 @@ namespace Sass {
 
 #endif
 
-    void error(std::string msg);
-    void error(std::string msg, Position pos);
+    void error(sass::string msg);
+    void error(sass::string msg, Position pos);
     // generate message with given and expected sample
     // text before and in the middle are configurable
-    void css_error(const std::string& msg,
-                   const std::string& prefix = " after ",
-                   const std::string& middle = ", was: ",
+    void css_error(const sass::string& msg,
+                   const sass::string& prefix = " after ",
+                   const sass::string& middle = ", was: ",
                    const bool trim = true);
     void read_bom();
 
@@ -259,34 +259,34 @@ namespace Sass {
     Arguments_Obj parse_arguments();
     Argument_Obj parse_argument();
     Assignment_Obj parse_assignment();
-    Ruleset_Obj parse_ruleset(Lookahead lookahead);
+    StyleRuleObj parse_ruleset(Lookahead lookahead);
     SelectorListObj parseSelectorList(bool chroot);
     ComplexSelectorObj parseComplexSelector(bool chroot);
     Selector_Schema_Obj parse_selector_schema(const char* end_of_selector, bool chroot);
     CompoundSelectorObj parseCompoundSelector();
     SimpleSelectorObj parse_simple_selector();
-    Pseudo_Selector_Obj parse_negated_selector2();
+    PseudoSelectorObj parse_negated_selector2();
     Expression* parse_binominal();
     SimpleSelectorObj parse_pseudo_selector();
-    Attribute_Selector_Obj parse_attribute_selector();
+    AttributeSelectorObj parse_attribute_selector();
     Block_Obj parse_block(bool is_root = false);
     Block_Obj parse_css_block(bool is_root = false);
     bool parse_block_nodes(bool is_root = false);
     bool parse_block_node(bool is_root = false);
 
     Declaration_Obj parse_declaration();
-    Expression_Obj parse_map();
-    Expression_Obj parse_bracket_list();
-    Expression_Obj parse_list(bool delayed = false);
-    Expression_Obj parse_comma_list(bool delayed = false);
-    Expression_Obj parse_space_list();
-    Expression_Obj parse_disjunction();
-    Expression_Obj parse_conjunction();
-    Expression_Obj parse_relation();
-    Expression_Obj parse_expression();
-    Expression_Obj parse_operators();
-    Expression_Obj parse_factor();
-    Expression_Obj parse_value();
+    ExpressionObj parse_map();
+    ExpressionObj parse_bracket_list();
+    ExpressionObj parse_list(bool delayed = false);
+    ExpressionObj parse_comma_list(bool delayed = false);
+    ExpressionObj parse_space_list();
+    ExpressionObj parse_disjunction();
+    ExpressionObj parse_conjunction();
+    ExpressionObj parse_relation();
+    ExpressionObj parse_expression();
+    ExpressionObj parse_operators();
+    ExpressionObj parse_factor();
+    ExpressionObj parse_value();
     Function_Call_Obj parse_calc_function();
     Function_Call_Obj parse_function_call();
     Function_Call_Obj parse_function_call_schema();
@@ -294,49 +294,49 @@ namespace Sass {
     String_Obj parse_url_function_argument();
     String_Obj parse_interpolated_chunk(Token, bool constant = false, bool css = true);
     String_Obj parse_string();
-    Value_Obj parse_static_value();
+    ValueObj parse_static_value();
     String_Schema_Obj parse_css_variable_value();
     String_Obj parse_ie_property();
     String_Obj parse_ie_keyword_arg();
     String_Schema_Obj parse_value_schema(const char* stop);
     String_Obj parse_identifier_schema();
     If_Obj parse_if_directive(bool else_if = false);
-    For_Obj parse_for_directive();
-    Each_Obj parse_each_directive();
-    While_Obj parse_while_directive();
+    ForRuleObj parse_for_directive();
+    EachRuleObj parse_each_directive();
+    WhileRuleObj parse_while_directive();
     MediaRule_Obj parseMediaRule();
-    std::vector<CssMediaQuery_Obj> parseCssMediaQueries();
-    std::string parseIdentifier();
+    sass::vector<CssMediaQuery_Obj> parseCssMediaQueries();
+    sass::string parseIdentifier();
     CssMediaQuery_Obj parseCssMediaQuery();
     Return_Obj parse_return_directive();
     Content_Obj parse_content_directive();
     void parse_charset_directive();
     List_Obj parse_media_queries();
     Media_Query_Obj parse_media_query();
-    Media_Query_Expression_Obj parse_media_expression();
-    Supports_Block_Obj parse_supports_directive();
-    Supports_Condition_Obj parse_supports_condition(bool top_level);
-    Supports_Condition_Obj parse_supports_negation();
-    Supports_Condition_Obj parse_supports_operator(bool top_level);
-    Supports_Condition_Obj parse_supports_interpolation();
-    Supports_Condition_Obj parse_supports_declaration();
-    Supports_Condition_Obj parse_supports_condition_in_parens(bool parens_required);
-    At_Root_Block_Obj parse_at_root_block();
+    Media_Query_ExpressionObj parse_media_expression();
+    SupportsRuleObj parse_supports_directive();
+    SupportsConditionObj parse_supports_condition(bool top_level);
+    SupportsConditionObj parse_supports_negation();
+    SupportsConditionObj parse_supports_operator(bool top_level);
+    SupportsConditionObj parse_supports_interpolation();
+    SupportsConditionObj parse_supports_declaration();
+    SupportsConditionObj parse_supports_condition_in_parens(bool parens_required);
+    AtRootRuleObj parse_at_root_block();
     At_Root_Query_Obj parse_at_root_query();
     String_Schema_Obj parse_almost_any_value();
-    Directive_Obj parse_directive();
-    Warning_Obj parse_warning();
-    Error_Obj parse_error();
-    Debug_Obj parse_debug();
+    AtRuleObj parse_directive();
+    WarningRuleObj parse_warning();
+    ErrorRuleObj parse_error();
+    DebugRuleObj parse_debug();
 
-    Value* color_or_string(const std::string& lexed) const;
+    Value* color_or_string(const sass::string& lexed) const;
 
     // be more like ruby sass
-    Expression_Obj lex_almost_any_value_token();
-    Expression_Obj lex_almost_any_value_chars();
-    Expression_Obj lex_interp_string();
-    Expression_Obj lex_interp_uri();
-    Expression_Obj lex_interpolation();
+    ExpressionObj lex_almost_any_value_token();
+    ExpressionObj lex_almost_any_value_chars();
+    ExpressionObj lex_interp_string();
+    ExpressionObj lex_interp_uri();
+    ExpressionObj lex_interpolation();
 
     // these will throw errors
     Token lex_variable();
@@ -348,28 +348,28 @@ namespace Sass {
     Lookahead lookahead_for_selector(const char* start = 0);
     Lookahead lookahead_for_include(const char* start = 0);
 
-    Expression_Obj fold_operands(Expression_Obj base, std::vector<Expression_Obj>& operands, Operand op);
-    Expression_Obj fold_operands(Expression_Obj base, std::vector<Expression_Obj>& operands, std::vector<Operand>& ops, size_t i = 0);
+    ExpressionObj fold_operands(ExpressionObj base, sass::vector<ExpressionObj>& operands, Operand op);
+    ExpressionObj fold_operands(ExpressionObj base, sass::vector<ExpressionObj>& operands, sass::vector<Operand>& ops, size_t i = 0);
 
-    void throw_syntax_error(std::string message, size_t ln = 0);
-    void throw_read_error(std::string message, size_t ln = 0);
+    void throw_syntax_error(sass::string message, size_t ln = 0);
+    void throw_read_error(sass::string message, size_t ln = 0);
 
 
     template <Prelexer::prelexer open, Prelexer::prelexer close>
-    Expression_Obj lex_interp()
+    ExpressionObj lex_interp()
     {
       if (lex < open >(false)) {
         String_Schema_Obj schema = SASS_MEMORY_NEW(String_Schema, pstate);
-        // std::cerr << "LEX [[" << std::string(lexed) << "]]\n";
+        // std::cerr << "LEX [[" << sass::string(lexed) << "]]\n";
         schema->append(SASS_MEMORY_NEW(String_Constant, pstate, lexed));
         if (position[0] == '#' && position[1] == '{') {
-          Expression_Obj itpl = lex_interpolation();
+          ExpressionObj itpl = lex_interpolation();
           if (!itpl.isNull()) schema->append(itpl);
           while (lex < close >(false)) {
-            // std::cerr << "LEX [[" << std::string(lexed) << "]]\n";
+            // std::cerr << "LEX [[" << sass::string(lexed) << "]]\n";
             schema->append(SASS_MEMORY_NEW(String_Constant, pstate, lexed));
             if (position[0] == '#' && position[1] == '{') {
-              Expression_Obj itpl = lex_interpolation();
+              ExpressionObj itpl = lex_interpolation();
               if (!itpl.isNull()) schema->append(itpl);
             } else {
               return schema;
@@ -383,15 +383,15 @@ namespace Sass {
     }
 
   public:
-    static Number* lexed_number(const ParserState& pstate, const std::string& parsed);
-    static Number* lexed_dimension(const ParserState& pstate, const std::string& parsed);
-    static Number* lexed_percentage(const ParserState& pstate, const std::string& parsed);
-    static Value* lexed_hex_color(const ParserState& pstate, const std::string& parsed);
+    static Number* lexed_number(const SourceSpan& pstate, const sass::string& parsed);
+    static Number* lexed_dimension(const SourceSpan& pstate, const sass::string& parsed);
+    static Number* lexed_percentage(const SourceSpan& pstate, const sass::string& parsed);
+    static Value* lexed_hex_color(const SourceSpan& pstate, const sass::string& parsed);
   private:
-    Number* lexed_number(const std::string& parsed) { return lexed_number(pstate, parsed); };
-    Number* lexed_dimension(const std::string& parsed) { return lexed_dimension(pstate, parsed); };
-    Number* lexed_percentage(const std::string& parsed) { return lexed_percentage(pstate, parsed); };
-    Value* lexed_hex_color(const std::string& parsed) { return lexed_hex_color(pstate, parsed); };
+    Number* lexed_number(const sass::string& parsed) { return lexed_number(pstate, parsed); };
+    Number* lexed_dimension(const sass::string& parsed) { return lexed_dimension(pstate, parsed); };
+    Number* lexed_percentage(const sass::string& parsed) { return lexed_percentage(pstate, parsed); };
+    Value* lexed_hex_color(const sass::string& parsed) { return lexed_hex_color(pstate, parsed); };
 
     static const char* re_attr_sensitive_close(const char* src);
     static const char* re_attr_insensitive_close(const char* src);

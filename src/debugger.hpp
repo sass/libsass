@@ -17,15 +17,15 @@
 
 using namespace Sass;
 
-inline void debug_ast(AST_Node* node, std::string ind = "", Env* env = 0);
+inline void debug_ast(AST_Node* node, sass::string ind = "", Env* env = 0);
 
-inline std::string debug_vec(const AST_Node* node) {
+inline sass::string debug_vec(const AST_Node* node) {
   if (node == NULL) return "null";
   else return node->to_string();
 }
 
-inline std::string debug_dude(std::vector<std::vector<int>> vec) {
-  std::stringstream out;
+inline sass::string debug_dude(sass::vector<sass::vector<int>> vec) {
+  sass::sstream out;
   out << "{";
   bool joinOut = false;
   for (auto ct : vec) {
@@ -44,12 +44,12 @@ inline std::string debug_dude(std::vector<std::vector<int>> vec) {
   return out.str();
 }
 
-inline std::string debug_vec(std::string& str) {
+inline sass::string debug_vec(sass::string& str) {
   return str;
 }
 
-inline std::string debug_vec(Extension& ext) {
-  std::stringstream out;
+inline sass::string debug_vec(Extension& ext) {
+  sass::sstream out;
   out << debug_vec(ext.extender);
   out << " {@extend ";
   out << debug_vec(ext.target);
@@ -61,8 +61,8 @@ inline std::string debug_vec(Extension& ext) {
 }
 
 template <class T>
-inline std::string debug_vec(std::vector<T> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(sass::vector<T> vec) {
+  sass::sstream out;
   out << "[";
   for (size_t i = 0; i < vec.size(); i += 1) {
     if (i > 0) out << ", ";
@@ -73,8 +73,8 @@ inline std::string debug_vec(std::vector<T> vec) {
 }
 
 template <class T>
-inline std::string debug_vec(std::queue<T> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(std::queue<T> vec) {
+  sass::sstream out;
   out << "{";
   for (size_t i = 0; i < vec.size(); i += 1) {
     if (i > 0) out << ", ";
@@ -85,8 +85,8 @@ inline std::string debug_vec(std::queue<T> vec) {
 }
 
 template <class T, class U, class O>
-inline std::string debug_vec(std::map<T, U, O> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(std::map<T, U, O> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -102,8 +102,8 @@ inline std::string debug_vec(std::map<T, U, O> vec) {
 }
 
 template <class T, class U, class O, class V>
-inline std::string debug_vec(const ordered_map<T, U, O, V>& vec) {
-  std::stringstream out;
+inline sass::string debug_vec(const ordered_map<T, U, O, V>& vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -118,8 +118,8 @@ inline std::string debug_vec(const ordered_map<T, U, O, V>& vec) {
 }
 
 template <class T, class U, class O, class V>
-inline std::string debug_vec(std::unordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(std::unordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -135,8 +135,8 @@ inline std::string debug_vec(std::unordered_map<T, U, O, V> vec) {
 }
 
 template <class T, class U, class O, class V>
-inline std::string debug_keys(std::unordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_keys(std::unordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -149,8 +149,8 @@ inline std::string debug_keys(std::unordered_map<T, U, O, V> vec) {
   return out.str();
 }
 
-inline std::string debug_vec(ExtListSelSet& vec) {
-  std::stringstream out;
+inline sass::string debug_vec(ExtListSelSet& vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -165,8 +165,8 @@ inline std::string debug_vec(ExtListSelSet& vec) {
 
 /*
 template <class T, class U, class O, class V>
-inline std::string debug_values(tsl::ordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_values(tsl::ordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -180,8 +180,8 @@ inline std::string debug_values(tsl::ordered_map<T, U, O, V> vec) {
 }
  
 template <class T, class U, class O, class V>
-inline std::string debug_vec(tsl::ordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(tsl::ordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -197,8 +197,8 @@ inline std::string debug_vec(tsl::ordered_map<T, U, O, V> vec) {
 }
 
 template <class T, class U, class O, class V>
-inline std::string debug_vals(tsl::ordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_vals(tsl::ordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -212,8 +212,8 @@ inline std::string debug_vals(tsl::ordered_map<T, U, O, V> vec) {
 }
 
 template <class T, class U, class O, class V>
-inline std::string debug_keys(tsl::ordered_map<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_keys(tsl::ordered_map<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto it = vec.begin(); it != vec.end(); it++)
@@ -228,8 +228,8 @@ inline std::string debug_keys(tsl::ordered_map<T, U, O, V> vec) {
 */
 
 template <class T, class U>
-inline std::string debug_vec(std::set<T, U> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(std::set<T, U> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto item : vec) {
@@ -243,8 +243,8 @@ inline std::string debug_vec(std::set<T, U> vec) {
 
 /*
 template <class T, class U, class O, class V>
-inline std::string debug_vec(tsl::ordered_set<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(tsl::ordered_set<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto item : vec) {
@@ -258,8 +258,8 @@ inline std::string debug_vec(tsl::ordered_set<T, U, O, V> vec) {
 */
 
 template <class T, class U, class O, class V>
-inline std::string debug_vec(std::unordered_set<T, U, O, V> vec) {
-  std::stringstream out;
+inline sass::string debug_vec(std::unordered_set<T, U, O, V> vec) {
+  sass::sstream out;
   out << "{";
   bool joinit = false;
   for (auto item : vec) {
@@ -271,22 +271,22 @@ inline std::string debug_vec(std::unordered_set<T, U, O, V> vec) {
   return out.str();
 }
 
-inline std::string debug_bool(bool val) {
+inline sass::string debug_bool(bool val) {
   return val ? "true" : "false";
 }
-inline std::string debug_vec(ExtSmplSelSet* node) {
+inline sass::string debug_vec(ExtSmplSelSet* node) {
   if (node == NULL) return "null";
   else return debug_vec(*node);
 }
 
-inline void debug_ast(const AST_Node* node, std::string ind = "", Env* env = 0) {
+inline void debug_ast(const AST_Node* node, sass::string ind = "", Env* env = 0) {
   debug_ast(const_cast<AST_Node*>(node), ind, env);
 }
 
-inline std::string str_replace(std::string str, const std::string& oldStr, const std::string& newStr)
+inline sass::string str_replace(sass::string str, const sass::string& oldStr, const sass::string& newStr)
 {
   size_t pos = 0;
-  while((pos = str.find(oldStr, pos)) != std::string::npos)
+  while((pos = str.find(oldStr, pos)) != sass::string::npos)
   {
      str.replace(pos, oldStr.length(), newStr);
      pos += newStr.length();
@@ -294,25 +294,25 @@ inline std::string str_replace(std::string str, const std::string& oldStr, const
   return str;
 }
 
-inline std::string prettyprint(const std::string& str) {
-  std::string clean = str_replace(str, "\n", "\\n");
+inline sass::string prettyprint(const sass::string& str) {
+  sass::string clean = str_replace(str, "\n", "\\n");
   clean = str_replace(clean, "	", "\\t");
   clean = str_replace(clean, "\r", "\\r");
   return clean;
 }
 
-inline std::string longToHex(long long t) {
-  std::stringstream is;
+inline sass::string longToHex(long long t) {
+  sass::sstream is;
   is << std::hex << t;
   return is.str();
 }
 
-inline std::string pstate_source_position(AST_Node* node)
+inline sass::string pstate_source_position(AST_Node* node)
 {
-  std::stringstream str;
+  sass::sstream str;
   Position start(node->pstate());
   Position end(start + node->pstate().offset);
-  str << (start.file == std::string::npos ? 99999999 : start.file)
+  str << (start.file == sass::string::npos ? 99999999 : start.file)
     << "@[" << start.line << ":" << start.column << "]"
     << "-[" << end.line << ":" << end.column << "]";
 #ifdef DEBUG_SHARED_PTR
@@ -323,7 +323,7 @@ inline std::string pstate_source_position(AST_Node* node)
   return str.str();
 }
 
-inline void debug_ast(AST_Node* node, std::string ind, Env* env)
+inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
 {
   if (node == 0) return;
   if (ind == "") std::cerr << "####################################################################\n";
@@ -341,9 +341,9 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     << " [name:" << trace->name() << ", type: " << trace->type() << "]"
     << std::endl;
     debug_ast(trace->block(), ind + " ", env);
-  } else if (Cast<At_Root_Block>(node)) {
-    At_Root_Block* root_block = Cast<At_Root_Block>(node);
-    std::cerr << ind << "At_Root_Block " << root_block;
+  } else if (Cast<AtRootRule>(node)) {
+    AtRootRule* root_block = Cast<AtRootRule>(node);
+    std::cerr << ind << "AtRootRule " << root_block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << root_block->tabs();
     std::cerr << std::endl;
@@ -392,7 +392,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
       << (selector->has_real_parent_ref() ? " [real parent]": " -")
       << " -- ";
 
-      std::string del;
+      sass::string del;
       switch (selector->combinator()) {
         case SelectorCombinator::CHILD:    del = ">"; break;
         case SelectorCombinator::GENERAL:  del = "~"; break;
@@ -421,9 +421,9 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">" << std::endl;
 
-  } else if (Cast<Pseudo_Selector>(node)) {
-    Pseudo_Selector* selector = Cast<Pseudo_Selector>(node);
-    std::cerr << ind << "Pseudo_Selector " << selector;
+  } else if (Cast<PseudoSelector>(node)) {
+    PseudoSelector* selector = Cast<PseudoSelector>(node);
+    std::cerr << ind << "PseudoSelector " << selector;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " <<" << selector->ns_name() << ">>";
@@ -432,40 +432,40 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << std::endl;
     debug_ast(selector->argument(), ind + " <= ", env);
     debug_ast(selector->selector(), ind + " || ", env);
-  } else if (Cast<Attribute_Selector>(node)) {
-    Attribute_Selector* selector = Cast<Attribute_Selector>(node);
-    std::cerr << ind << "Attribute_Selector " << selector;
+  } else if (Cast<AttributeSelector>(node)) {
+    AttributeSelector* selector = Cast<AttributeSelector>(node);
+    std::cerr << ind << "AttributeSelector " << selector;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " <<" << selector->ns_name() << ">>";
     std::cerr << std::endl;
     debug_ast(selector->value(), ind + "[" + selector->matcher() + "] ", env);
-  } else if (Cast<Class_Selector>(node)) {
-    Class_Selector* selector = Cast<Class_Selector>(node);
-    std::cerr << ind << "Class_Selector " << selector;
+  } else if (Cast<ClassSelector>(node)) {
+    ClassSelector* selector = Cast<ClassSelector>(node);
+    std::cerr << ind << "ClassSelector " << selector;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " <<" << selector->ns_name() << ">>";
     std::cerr << std::endl;
-  } else if (Cast<Id_Selector>(node)) {
-    Id_Selector* selector = Cast<Id_Selector>(node);
-    std::cerr << ind << "Id_Selector " << selector;
+  } else if (Cast<IDSelector>(node)) {
+    IDSelector* selector = Cast<IDSelector>(node);
+    std::cerr << ind << "IDSelector " << selector;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " <<" << selector->ns_name() << ">>";
     std::cerr << std::endl;
-  } else if (Cast<Type_Selector>(node)) {
-    Type_Selector* selector = Cast<Type_Selector>(node);
-    std::cerr << ind << "Type_Selector " << selector;
+  } else if (Cast<TypeSelector>(node)) {
+    TypeSelector* selector = Cast<TypeSelector>(node);
+    std::cerr << ind << "TypeSelector " << selector;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " <<" << selector->ns_name() << ">>";
     std::cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">";
     std::cerr << std::endl;
-  } else if (Cast<Placeholder_Selector>(node)) {
+  } else if (Cast<PlaceholderSelector>(node)) {
 
-    Placeholder_Selector* selector = Cast<Placeholder_Selector>(node);
-    std::cerr << ind << "Placeholder_Selector [" << selector->ns_name() << "] " << selector;
+    PlaceholderSelector* selector = Cast<PlaceholderSelector>(node);
+    std::cerr << ind << "PlaceholderSelector [" << selector->ns_name() << "] " << selector;
     std::cerr << " (" << pstate_source_position(selector) << ")"
       << " <" << selector->hash() << ">"
       << (selector->isInvisible() ? " [isInvisible]" : " -")
@@ -537,23 +537,23 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " [" << (query->type()) << "] ";
     std::cerr << " " << debug_vec(query->features());
     std::cerr << std::endl;
-  } else if (Cast<Supports_Block>(node)) {
-    Supports_Block* block = Cast<Supports_Block>(node);
-    std::cerr << ind << "Supports_Block " << block;
+  } else if (Cast<SupportsRule>(node)) {
+    SupportsRule* block = Cast<SupportsRule>(node);
+    std::cerr << ind << "SupportsRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
     debug_ast(block->condition(), ind + " =@ ");
     debug_ast(block->block(), ind + " <>");
-  } else if (Cast<Supports_Operator>(node)) {
-    Supports_Operator* block = Cast<Supports_Operator>(node);
-    std::cerr << ind << "Supports_Operator " << block;
+  } else if (Cast<SupportsOperation>(node)) {
+    SupportsOperation* block = Cast<SupportsOperation>(node);
+    std::cerr << ind << "SupportsOperation " << block;
     std::cerr << " (" << pstate_source_position(node) << ")"
     << std::endl;
     debug_ast(block->left(), ind + " left) ");
     debug_ast(block->right(), ind + " right) ");
-  } else if (Cast<Supports_Negation>(node)) {
-    Supports_Negation* block = Cast<Supports_Negation>(node);
-    std::cerr << ind << "Supports_Negation " << block;
+  } else if (Cast<SupportsNegation>(node)) {
+    SupportsNegation* block = Cast<SupportsNegation>(node);
+    std::cerr << ind << "SupportsNegation " << block;
     std::cerr << " (" << pstate_source_position(node) << ")"
     << std::endl;
     debug_ast(block->condition(), ind + " condition) ");
@@ -564,9 +564,9 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     << std::endl;
     debug_ast(block->feature(), ind + " feature) ");
     debug_ast(block->value(), ind + " value) ");
-  } else if (Cast<Supports_Declaration>(node)) {
-    Supports_Declaration* block = Cast<Supports_Declaration>(node);
-    std::cerr << ind << "Supports_Declaration " << block;
+  } else if (Cast<SupportsDeclaration>(node)) {
+    SupportsDeclaration* block = Cast<SupportsDeclaration>(node);
+    std::cerr << ind << "SupportsDeclaration " << block;
     std::cerr << " (" << pstate_source_position(node) << ")"
     << std::endl;
     debug_ast(block->feature(), ind + " feature) ");
@@ -579,20 +579,20 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     if (root_block->isInvisible()) std::cerr << " [isInvisible]";
     std::cerr << " " << root_block->tabs() << std::endl;
     for(const Statement_Obj& i : root_block->elements()) { debug_ast(i, ind + " ", env); }
-  } else if (Cast<Warning>(node)) {
-    Warning* block = Cast<Warning>(node);
-    std::cerr << ind << "Warning " << block;
+  } else if (Cast<WarningRule>(node)) {
+    WarningRule* block = Cast<WarningRule>(node);
+    std::cerr << ind << "WarningRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
     debug_ast(block->message(), ind + " : ");
-  } else if (Cast<Error>(node)) {
-    Error* block = Cast<Error>(node);
-    std::cerr << ind << "Error " << block;
+  } else if (Cast<ErrorRule>(node)) {
+    ErrorRule* block = Cast<ErrorRule>(node);
+    std::cerr << ind << "ErrorRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
-  } else if (Cast<Debug>(node)) {
-    Debug* block = Cast<Debug>(node);
-    std::cerr << ind << "Debug " << block;
+  } else if (Cast<DebugRule>(node)) {
+    DebugRule* block = Cast<DebugRule>(node);
+    std::cerr << ind << "DebugRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
     debug_ast(block->value(), ind + " ");
@@ -640,7 +640,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << ind << "Import " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
-    // std::vector<std::string>         files_;
+    // sass::vector<sass::string>         files_;
     for (auto imp : block->urls()) debug_ast(imp, ind + "@: ", env);
     debug_ast(block->import_queries(), ind + "@@ ");
   } else if (Cast<Assignment>(node)) {
@@ -659,35 +659,35 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     debug_ast(block->value(), ind + " value: ", env);
     debug_ast(block->block(), ind + " ", env);
   } else if (Cast<Keyframe_Rule>(node)) {
-    Keyframe_Rule* has_block = Cast<Keyframe_Rule>(node);
-    std::cerr << ind << "Keyframe_Rule " << has_block;
+    Keyframe_Rule* ParentStatement = Cast<Keyframe_Rule>(node);
+    std::cerr << ind << "Keyframe_Rule " << ParentStatement;
     std::cerr << " (" << pstate_source_position(node) << ")";
-    std::cerr << " " << has_block->tabs() << std::endl;
-    if (has_block->name()) debug_ast(has_block->name(), ind + "@");
-    if (has_block->block()) for(const Statement_Obj& i : has_block->block()->elements()) { debug_ast(i, ind + " ", env); }
-  } else if (Cast<Directive>(node)) {
-    Directive* block = Cast<Directive>(node);
-    std::cerr << ind << "Directive " << block;
+    std::cerr << " " << ParentStatement->tabs() << std::endl;
+    if (ParentStatement->name()) debug_ast(ParentStatement->name(), ind + "@");
+    if (ParentStatement->block()) for(const Statement_Obj& i : ParentStatement->block()->elements()) { debug_ast(i, ind + " ", env); }
+  } else if (Cast<AtRule>(node)) {
+    AtRule* block = Cast<AtRule>(node);
+    std::cerr << ind << "AtRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [" << block->keyword() << "] " << block->tabs() << std::endl;
     debug_ast(block->selector(), ind + "~", env);
     debug_ast(block->value(), ind + "+", env);
     if (block->block()) for(const Statement_Obj& i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
-  } else if (Cast<Each>(node)) {
-    Each* block = Cast<Each>(node);
-    std::cerr << ind << "Each " << block;
+  } else if (Cast<EachRule>(node)) {
+    EachRule* block = Cast<EachRule>(node);
+    std::cerr << ind << "EachRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
     if (block->block()) for(const Statement_Obj& i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
-  } else if (Cast<For>(node)) {
-    For* block = Cast<For>(node);
-    std::cerr << ind << "For " << block;
+  } else if (Cast<ForRule>(node)) {
+    ForRule* block = Cast<ForRule>(node);
+    std::cerr << ind << "ForRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
     if (block->block()) for(const Statement_Obj& i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
-  } else if (Cast<While>(node)) {
-    While* block = Cast<While>(node);
-    std::cerr << ind << "While " << block;
+  } else if (Cast<WhileRule>(node)) {
+    WhileRule* block = Cast<WhileRule>(node);
+    std::cerr << ind << "WhileRule " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " " << block->tabs() << std::endl;
     if (block->block()) for(const Statement_Obj& i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
@@ -712,8 +712,8 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     debug_ast(block->arguments(), ind + " args: ", env);
     debug_ast(block->block_parameters(), ind + " block_params: ", env);
     if (block->block()) debug_ast(block->block(), ind + " ", env);
-  } else if (Ruleset* ruleset = Cast<Ruleset>(node)) {
-    std::cerr << ind << "Ruleset " << ruleset;
+  } else if (StyleRule* ruleset = Cast<StyleRule>(node)) {
+    std::cerr << ind << "StyleRule " << ruleset;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [indent: " << ruleset->tabs() << "]";
     std::cerr << (ruleset->is_invisible() ? " [INVISIBLE]" : "");
@@ -734,7 +734,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
     std::cerr << " [interpolant: " << expression->is_interpolant() << "] ";
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " [" << expression->name() << "]" << std::endl;
-    std::string name(expression->name());
+    sass::string name(expression->name());
     if (env && env->has(name)) debug_ast(Cast<Expression>((*env)[name]), ind + " -> ", env);
   } else if (Cast<Function_Call>(node)) {
     Function_Call* expression = Cast<Function_Call>(node);
@@ -937,12 +937,12 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
       case Expression::Type::PARENT: std::cerr << " [PARENT]"; break;
     }
     std::cerr << std::endl;
-  } else if (Cast<Has_Block>(node)) {
-    Has_Block* has_block = Cast<Has_Block>(node);
-    std::cerr << ind << "Has_Block " << has_block;
+  } else if (Cast<ParentStatement>(node)) {
+    ParentStatement* parent = Cast<ParentStatement>(node);
+    std::cerr << ind << "ParentStatement " << parent;
     std::cerr << " (" << pstate_source_position(node) << ")";
-    std::cerr << " " << has_block->tabs() << std::endl;
-    if (has_block->block()) for(const Statement_Obj& i : has_block->block()->elements()) { debug_ast(i, ind + " ", env); }
+    std::cerr << " " << parent->tabs() << std::endl;
+    if (parent->block()) for(const Statement_Obj& i : parent->block()->elements()) { debug_ast(i, ind + " ", env); }
   } else if (Cast<Statement>(node)) {
     Statement* statement = Cast<Statement>(node);
     std::cerr << ind << "Statement " << statement;
@@ -955,7 +955,7 @@ inline void debug_ast(AST_Node* node, std::string ind, Env* env)
 
 
 /*
-inline void debug_ast(const AST_Node* node, std::string ind = "", Env* env = 0)
+inline void debug_ast(const AST_Node* node, sass::string ind = "", Env* env = 0)
 {
   debug_ast(const_cast<AST_Node*>(node), ind, env);
 }

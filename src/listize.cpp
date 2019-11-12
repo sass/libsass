@@ -36,7 +36,7 @@ namespace Sass {
 
   Expression* Listize::operator()(CompoundSelector* sel)
   {
-    std::string str;
+    sass::string str;
     for (size_t i = 0, L = sel->length(); i < L; ++i) {
       Expression* e = (*sel)[i]->perform(this);
       if (e) str += e->to_string();
@@ -54,7 +54,7 @@ namespace Sass {
     for (auto component : sel->elements()) {
       if (CompoundSelectorObj compound = Cast<CompoundSelector>(component)) {
         if (!compound->empty()) {
-          Expression_Obj hh = compound->perform(this);
+          ExpressionObj hh = compound->perform(this);
           if (hh) l->append(hh);
         }
       }

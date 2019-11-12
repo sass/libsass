@@ -20,17 +20,17 @@ namespace Sass {
     virtual ~Output();
 
   protected:
-    std::string charset;
-    std::vector<AST_Node*> top_nodes;
+    sass::string charset;
+    sass::vector<AST_Node*> top_nodes;
 
   public:
     OutputBuffer get_buffer(void);
 
     virtual void operator()(Map*);
-    virtual void operator()(Ruleset*);
-    virtual void operator()(Supports_Block*);
+    virtual void operator()(StyleRule*);
+    virtual void operator()(SupportsRule*);
     virtual void operator()(CssMediaRule*);
-    virtual void operator()(Directive*);
+    virtual void operator()(AtRule*);
     virtual void operator()(Keyframe_Rule*);
     virtual void operator()(Import*);
     virtual void operator()(Comment*);

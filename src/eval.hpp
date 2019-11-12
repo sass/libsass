@@ -34,7 +34,7 @@ namespace Sass {
 
     Env* environment();
     EnvStack& env_stack();
-    const std::string cwd();
+    const sass::string cwd();
     CalleeStack& callee_stack();
     struct Sass_Inspect_Options& options();
     struct Sass_Compiler* compiler();
@@ -43,13 +43,13 @@ namespace Sass {
     Expression* operator()(Block*);
     Expression* operator()(Assignment*);
     Expression* operator()(If*);
-    Expression* operator()(For*);
-    Expression* operator()(Each*);
-    Expression* operator()(While*);
+    Expression* operator()(ForRule*);
+    Expression* operator()(EachRule*);
+    Expression* operator()(WhileRule*);
     Expression* operator()(Return*);
-    Expression* operator()(Warning*);
-    Expression* operator()(Error*);
-    Expression* operator()(Debug*);
+    Expression* operator()(WarningRule*);
+    Expression* operator()(ErrorRule*);
+    Expression* operator()(DebugRule*);
 
     Expression* operator()(List*);
     Expression* operator()(Map*);
@@ -67,9 +67,9 @@ namespace Sass {
     Media_Query* operator()(Media_Query*);
     Expression* operator()(Media_Query_Expression*);
     Expression* operator()(At_Root_Query*);
-    Expression* operator()(Supports_Operator*);
-    Expression* operator()(Supports_Negation*);
-    Expression* operator()(Supports_Declaration*);
+    Expression* operator()(SupportsOperation*);
+    Expression* operator()(SupportsNegation*);
+    Expression* operator()(SupportsDeclaration*);
     Expression* operator()(Supports_Interpolation*);
     Expression* operator()(Null*);
     Expression* operator()(Argument*);
@@ -82,14 +82,14 @@ namespace Sass {
     CompoundSelector* operator()(CompoundSelector*);
     SelectorComponent* operator()(SelectorComponent*);
     SimpleSelector* operator()(SimpleSelector* s);
-    Pseudo_Selector* operator()(Pseudo_Selector* s);
+    PseudoSelector* operator()(PseudoSelector* s);
 
     // they don't have any specific implementation (yet)
-    Id_Selector* operator()(Id_Selector* s) { return s; };
-    Class_Selector* operator()(Class_Selector* s) { return s; };
-    Type_Selector* operator()(Type_Selector* s) { return s; };
-    Attribute_Selector* operator()(Attribute_Selector* s) { return s; };
-    Placeholder_Selector* operator()(Placeholder_Selector* s) { return s; };
+    IDSelector* operator()(IDSelector* s) { return s; };
+    ClassSelector* operator()(ClassSelector* s) { return s; };
+    TypeSelector* operator()(TypeSelector* s) { return s; };
+    AttributeSelector* operator()(AttributeSelector* s) { return s; };
+    PlaceholderSelector* operator()(PlaceholderSelector* s) { return s; };
 
     // actual evaluated selectors
     SelectorList* operator()(Selector_Schema*);
@@ -101,7 +101,7 @@ namespace Sass {
     { return Cast<Expression>(x); }
 
   private:
-    void interpolation(Context& ctx, std::string& res, Expression_Obj ex, bool into_quotes, bool was_itpl = false);
+    void interpolation(Context& ctx, sass::string& res, ExpressionObj ex, bool into_quotes, bool was_itpl = false);
 
   };
 

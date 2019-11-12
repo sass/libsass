@@ -15,7 +15,7 @@ namespace Sass {
 
   class AST_Node;
 
-  class Has_Block;
+  class ParentStatement;
 
   class SimpleSelector;
 
@@ -27,7 +27,7 @@ namespace Sass {
   class Statement;
   class Value;
   class Declaration;
-  class Ruleset;
+  class StyleRule;
   class Bubble;
   class Trace;
 
@@ -35,25 +35,25 @@ namespace Sass {
   class CssMediaRule;
   class CssMediaQuery;
 
-  class Supports_Block;
-  class Directive;
+  class SupportsRule;
+  class AtRule;
 
   class Keyframe_Rule;
-  class At_Root_Block;
+  class AtRootRule;
   class Assignment;
 
   class Import;
   class Import_Stub;
-  class Warning;
+  class WarningRule;
 
-  class Error;
-  class Debug;
+  class ErrorRule;
+  class DebugRule;
   class Comment;
 
   class If;
-  class For;
-  class Each;
-  class While;
+  class ForRule;
+  class EachRule;
+  class WhileRule;
   class Return;
   class Content;
   class ExtendRule;
@@ -85,10 +85,10 @@ namespace Sass {
 
   class Media_Query;
   class Media_Query_Expression;
-  class Supports_Condition;
-  class Supports_Operator;
-  class Supports_Negation;
-  class Supports_Declaration;
+  class SupportsCondition;
+  class SupportsOperation;
+  class SupportsNegation;
+  class SupportsDeclaration;
   class Supports_Interpolation;
   
   class At_Root_Query;
@@ -100,13 +100,13 @@ namespace Sass {
 
 
   class Selector_Schema;
-  class Placeholder_Selector;
-  class Type_Selector;
-  class Class_Selector;
-  class Id_Selector;
-  class Attribute_Selector;
+  class PlaceholderSelector;
+  class TypeSelector;
+  class ClassSelector;
+  class IDSelector;
+  class AttributeSelector;
 
-  class Pseudo_Selector;
+  class PseudoSelector;
   
   class SelectorComponent;
   class SelectorCombinator;
@@ -131,30 +131,30 @@ namespace Sass {
   IMPL_MEM_OBJ(AST_Node);
   IMPL_MEM_OBJ(Statement);
   IMPL_MEM_OBJ(Block);
-  IMPL_MEM_OBJ(Ruleset);
+  IMPL_MEM_OBJ(StyleRule);
   IMPL_MEM_OBJ(Bubble);
   IMPL_MEM_OBJ(Trace);
   IMPL_MEM_OBJ(MediaRule);
   IMPL_MEM_OBJ(CssMediaRule);
   IMPL_MEM_OBJ(CssMediaQuery);
-  IMPL_MEM_OBJ(Supports_Block);
-  IMPL_MEM_OBJ(Directive);
+  IMPL_MEM_OBJ(SupportsRule);
+  IMPL_MEM_OBJ(AtRule);
   IMPL_MEM_OBJ(Keyframe_Rule);
-  IMPL_MEM_OBJ(At_Root_Block);
+  IMPL_MEM_OBJ(AtRootRule);
   IMPL_MEM_OBJ(Declaration);
   IMPL_MEM_OBJ(Assignment);
   IMPL_MEM_OBJ(Import);
   IMPL_MEM_OBJ(Import_Stub);
-  IMPL_MEM_OBJ(Warning);
-  IMPL_MEM_OBJ(Error);
-  IMPL_MEM_OBJ(Debug);
+  IMPL_MEM_OBJ(WarningRule);
+  IMPL_MEM_OBJ(ErrorRule);
+  IMPL_MEM_OBJ(DebugRule);
   IMPL_MEM_OBJ(Comment);
   IMPL_MEM_OBJ(PreValue);
-  IMPL_MEM_OBJ(Has_Block);
+  IMPL_MEM_OBJ(ParentStatement);
   IMPL_MEM_OBJ(If);
-  IMPL_MEM_OBJ(For);
-  IMPL_MEM_OBJ(Each);
-  IMPL_MEM_OBJ(While);
+  IMPL_MEM_OBJ(ForRule);
+  IMPL_MEM_OBJ(EachRule);
+  IMPL_MEM_OBJ(WhileRule);
   IMPL_MEM_OBJ(Return);
   IMPL_MEM_OBJ(Content);
   IMPL_MEM_OBJ(ExtendRule);
@@ -182,10 +182,10 @@ namespace Sass {
   IMPL_MEM_OBJ(String_Quoted);
   IMPL_MEM_OBJ(Media_Query);
   IMPL_MEM_OBJ(Media_Query_Expression);
-  IMPL_MEM_OBJ(Supports_Condition);
-  IMPL_MEM_OBJ(Supports_Operator);
-  IMPL_MEM_OBJ(Supports_Negation);
-  IMPL_MEM_OBJ(Supports_Declaration);
+  IMPL_MEM_OBJ(SupportsCondition);
+  IMPL_MEM_OBJ(SupportsOperation);
+  IMPL_MEM_OBJ(SupportsNegation);
+  IMPL_MEM_OBJ(SupportsDeclaration);
   IMPL_MEM_OBJ(Supports_Interpolation);
   IMPL_MEM_OBJ(At_Root_Query);
   IMPL_MEM_OBJ(Null);
@@ -197,12 +197,12 @@ namespace Sass {
   IMPL_MEM_OBJ(Selector);
   IMPL_MEM_OBJ(Selector_Schema);
   IMPL_MEM_OBJ(SimpleSelector);
-  IMPL_MEM_OBJ(Placeholder_Selector);
-  IMPL_MEM_OBJ(Type_Selector);
-  IMPL_MEM_OBJ(Class_Selector);
-  IMPL_MEM_OBJ(Id_Selector);
-  IMPL_MEM_OBJ(Attribute_Selector);
-  IMPL_MEM_OBJ(Pseudo_Selector);
+  IMPL_MEM_OBJ(PlaceholderSelector);
+  IMPL_MEM_OBJ(TypeSelector);
+  IMPL_MEM_OBJ(ClassSelector);
+  IMPL_MEM_OBJ(IDSelector);
+  IMPL_MEM_OBJ(AttributeSelector);
+  IMPL_MEM_OBJ(PseudoSelector);
 
   IMPL_MEM_OBJ(SelectorComponent);
   IMPL_MEM_OBJ(SelectorCombinator);
@@ -214,12 +214,12 @@ namespace Sass {
   // some often used typedefs
   // ###########################################################################
 
-  typedef std::vector<Block*> BlockStack;
-  typedef std::vector<Sass_Callee> CalleeStack;
-  typedef std::vector<AST_Node_Obj> CallStack;
-  typedef std::vector<CssMediaRuleObj> MediaStack;
-  typedef std::vector<SelectorListObj> SelectorStack;
-  typedef std::vector<Sass_Import_Entry> ImporterStack;
+  typedef sass::vector<Block*> BlockStack;
+  typedef sass::vector<Sass_Callee> CalleeStack;
+  typedef sass::vector<AST_Node_Obj> CallStack;
+  typedef sass::vector<CssMediaRuleObj> MediaStack;
+  typedef sass::vector<SelectorListObj> SelectorStack;
+  typedef sass::vector<Sass_Import_Entry> ImporterStack;
 
   // only to switch implementations for testing
   #define environment_map std::map
@@ -248,14 +248,14 @@ namespace Sass {
   DECLARE_BASE_CAST(AST_Node)
   DECLARE_BASE_CAST(Expression)
   DECLARE_BASE_CAST(Statement)
-  DECLARE_BASE_CAST(Has_Block)
+  DECLARE_BASE_CAST(ParentStatement)
   DECLARE_BASE_CAST(PreValue)
   DECLARE_BASE_CAST(Value)
   DECLARE_BASE_CAST(List)
   DECLARE_BASE_CAST(Color)
   DECLARE_BASE_CAST(String)
   DECLARE_BASE_CAST(String_Constant)
-  DECLARE_BASE_CAST(Supports_Condition)
+  DECLARE_BASE_CAST(SupportsCondition)
   DECLARE_BASE_CAST(Selector)
   DECLARE_BASE_CAST(SimpleSelector)
   DECLARE_BASE_CAST(SelectorComponent)

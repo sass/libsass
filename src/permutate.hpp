@@ -18,8 +18,8 @@ namespace Sass {
   // 
   // Note: called `paths` in dart-sass
   template <class T>
-  std::vector<std::vector<T>> permutate(
-    const std::vector<std::vector<T>>& in)
+  sass::vector<sass::vector<T>> permutate(
+    const sass::vector<sass::vector<T>>& in)
   {
 
     size_t L = in.size(), n = 0;
@@ -31,14 +31,14 @@ namespace Sass {
     }
 
     size_t* state = new size_t[L + 1];
-    std::vector<std::vector<T>> out;
+    sass::vector<sass::vector<T>> out;
 
     // First initialize all states for every permutation group
     for (size_t i = 0; i < L; i += 1) {
       state[i] = in[i].size() - 1;
     }
     while (true) {
-      std::vector<T> perm;
+      sass::vector<T> perm;
       // Create one permutation for state
       for (size_t i = 0; i < L; i += 1) {
         perm.push_back(in.at(i).at(in[i].size() - state[i] - 1));
@@ -76,8 +76,8 @@ namespace Sass {
 
   // ToDo: this variant is used in resolve_parent_refs
   template <class T>
-  std::vector<std::vector<T>>
-    permutateAlt(const std::vector<std::vector<T>>& in) {
+  sass::vector<sass::vector<T>>
+    permutateAlt(const sass::vector<sass::vector<T>>& in) {
 
     size_t L = in.size();
     size_t n = in.size() - 1;
@@ -89,7 +89,7 @@ namespace Sass {
     }
 
     size_t* state = new size_t[L];
-    std::vector< std::vector<T>> out;
+    sass::vector< sass::vector<T>> out;
 
     // First initialize all states for every permutation group
     for (size_t i = 0; i < L; i += 1) {
@@ -103,7 +103,7 @@ namespace Sass {
       { // std::cerr << state[p] << " "; }
       // std::cerr << "\n";
       */
-      std::vector<T> perm;
+      sass::vector<T> perm;
       // Create one permutation for state
       for (size_t i = 0; i < L; i += 1) {
         perm.push_back(in.at(i).at(in[i].size() - state[i] - 1));

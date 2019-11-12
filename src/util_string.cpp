@@ -14,7 +14,7 @@ namespace Sass {
     // there is one edge case where this could give false positives
     // test could contain a (non-ascii) char exactly 32 below literal
     // ##########################################################################
-    bool equalsLiteral(const char* lit, const std::string& test) {
+    bool equalsLiteral(const char* lit, const sass::string& test) {
       // Work directly on characters
       const char* src = test.c_str();
       // There is a small chance that the search string
@@ -27,19 +27,19 @@ namespace Sass {
       return *lit == 0;
     }
 
-    void ascii_str_tolower(std::string* s) {
+    void ascii_str_tolower(sass::string* s) {
       for (auto& ch : *s) {
         ch = ascii_tolower(static_cast<unsigned char>(ch));
       }
     }
 
-    void ascii_str_toupper(std::string* s) {
+    void ascii_str_toupper(sass::string* s) {
       for (auto& ch : *s) {
         ch = ascii_toupper(static_cast<unsigned char>(ch));
       }
     }
 
-    std::string rtrim(std::string str) {
+    sass::string rtrim(sass::string str) {
       auto it = std::find_if_not(str.rbegin(), str.rend(), ascii_isspace);
       str.erase(str.rend() - it);
       return str;
@@ -49,7 +49,7 @@ namespace Sass {
     // Returns [name] without a vendor prefix.
     // If [name] has no vendor prefix, it's returned as-is.
     // ###########################################################################
-    std::string unvendor(const std::string& name)
+    sass::string unvendor(const sass::string& name)
     {
       if (name.size() < 2) return name;
       if (name[0] != '-') return name;
@@ -61,13 +61,13 @@ namespace Sass {
     }
     // EO unvendor
 
-    std::string normalize_newlines(const std::string& str) {
-      std::string result;
+    sass::string normalize_newlines(const sass::string& str) {
+      sass::string result;
       result.reserve(str.size());
       std::size_t pos = 0;
       while (true) {
         const std::size_t newline = str.find_first_of("\n\f\r", pos);
-        if (newline == std::string::npos) break;
+        if (newline == sass::string::npos) break;
         result.append(str, pos, newline - pos);
         result += '\n';
         if (str[newline] == '\r' && str[newline + 1] == '\n') {
@@ -77,18 +77,18 @@ namespace Sass {
           pos = newline + 1;
         }
       }
-      result.append(str, pos, std::string::npos);
+      result.append(str, pos, sass::string::npos);
       return result;
     }
 
-    std::string normalize_underscores(const std::string& str) {
-      std::string normalized = str;
+    sass::string normalize_underscores(const sass::string& str) {
+      sass::string normalized = str;
       std::replace(normalized.begin(), normalized.end(), '_', '-');
       return normalized;
     }
 
-    std::string normalize_decimals(const std::string& str) {
-      std::string normalized;
+    sass::string normalize_decimals(const sass::string& str) {
+      sass::string normalized;
       if (!str.empty() && str[0] == '.') {
         normalized.reserve(str.size() + 1);
         normalized += '0';

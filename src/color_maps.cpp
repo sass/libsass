@@ -162,7 +162,7 @@ namespace Sass {
   }
 
   namespace Colors {
-    const ParserState color_table("[COLOR TABLE]");
+    const SourceSpan color_table("[COLOR TABLE]");
     const Color_RGBA aliceblue(color_table, 240, 248, 255, 1);
     const Color_RGBA antiquewhite(color_table, 250, 235, 215, 1);
     const Color_RGBA cyan(color_table, 0, 255, 255, 1);
@@ -456,7 +456,7 @@ namespace Sass {
     { 102 * 0x10000 +  51 * 0x100 + 153, ColorNames::rebeccapurple }
   };
 
-  static const auto *const names_to_colors = new std::unordered_map<std::string, const Color_RGBA*>
+  static const auto *const names_to_colors = new std::unordered_map<sass::string, const Color_RGBA*>
   {
     { ColorNames::aliceblue, &Colors::aliceblue },
     { ColorNames::antiquewhite, &Colors::antiquewhite },
@@ -611,13 +611,13 @@ namespace Sass {
 
   const Color_RGBA* name_to_color(const char* key)
   {
-    return name_to_color(std::string(key));
+    return name_to_color(sass::string(key));
   }
 
-  const Color_RGBA* name_to_color(const std::string& key)
+  const Color_RGBA* name_to_color(const sass::string& key)
   {
     // case insensitive lookup.  See #2462
-    std::string lower = key;
+    sass::string lower = key;
     Util::ascii_str_tolower(&lower);
 
     auto p = names_to_colors->find(lower);

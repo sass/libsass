@@ -3,6 +3,7 @@
 
 #include "sass/base.h"
 
+#include "../sass.hpp"
 #include <cstddef>
 #include <iostream>
 #include <string>
@@ -76,12 +77,12 @@ namespace Sass {
 
     #ifdef DEBUG_SHARED_PTR
     static void dumpMemLeaks();
-    SharedObj* trace(std::string file, size_t line) {
+    SharedObj* trace(sass::string file, size_t line) {
       this->file = file;
       this->line = line;
       return this;
     }
-    std::string getDbgFile() { return file; }
+    sass::string getDbgFile() { return file; }
     size_t getDbgLine() { return line; }
     void setDbg(bool dbg) { this->dbg = dbg; }
     size_t getRefCount() const { return refcount; }
@@ -89,7 +90,7 @@ namespace Sass {
 
     static void setTaint(bool val) { taint = val; }
 
-    virtual std::string to_string() const = 0;
+    virtual sass::string to_string() const = 0;
    protected:
     friend class SharedPtr;
     friend class Memory_Manager;
@@ -97,10 +98,10 @@ namespace Sass {
     bool detached;
     static bool taint;
     #ifdef DEBUG_SHARED_PTR
-    std::string file;
+    sass::string file;
     size_t line;
     bool dbg = false;
-    static std::vector<SharedObj*> all;
+    static sass::vector<SharedObj*> all;
     #endif
   };
 
@@ -205,7 +206,7 @@ namespace Sass {
         SharedPtr::operator=(static_cast<const SharedImpl<T>&>(rhs)));
     }
 
-    operator std::string() const {
+    operator sass::string() const {
       if (node) return node->to_string();
       return "null";
     }

@@ -299,69 +299,69 @@ namespace Sass {
   /*#########################################################################*/
   /*#########################################################################*/
 
-  bool Id_Selector::operator== (const SimpleSelector& rhs) const
+  bool IDSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Id_Selector>(&rhs);
+    auto sel = Cast<IDSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
-  bool Type_Selector::operator== (const SimpleSelector& rhs) const
+  bool TypeSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Type_Selector>(&rhs);
+    auto sel = Cast<TypeSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
-  bool Class_Selector::operator== (const SimpleSelector& rhs) const
+  bool ClassSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Class_Selector>(&rhs);
+    auto sel = Cast<ClassSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
-  bool Pseudo_Selector::operator== (const SimpleSelector& rhs) const
+  bool PseudoSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Pseudo_Selector>(&rhs);
+    auto sel = Cast<PseudoSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
-  bool Attribute_Selector::operator== (const SimpleSelector& rhs) const
+  bool AttributeSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Attribute_Selector>(&rhs);
+    auto sel = Cast<AttributeSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
-  bool Placeholder_Selector::operator== (const SimpleSelector& rhs) const
+  bool PlaceholderSelector::operator== (const SimpleSelector& rhs) const
   {
-    auto sel = Cast<Placeholder_Selector>(&rhs);
+    auto sel = Cast<PlaceholderSelector>(&rhs);
     return sel ? *this == *sel : false;
   }
 
   /*#########################################################################*/
   /*#########################################################################*/
 
-  bool Id_Selector::operator== (const Id_Selector& rhs) const
+  bool IDSelector::operator== (const IDSelector& rhs) const
   {
     // ID has no namespacing
     return name() == rhs.name();
   }
 
-  bool Type_Selector::operator== (const Type_Selector& rhs) const
+  bool TypeSelector::operator== (const TypeSelector& rhs) const
   {
     return is_ns_eq(rhs) && name() == rhs.name();
   }
 
-  bool Class_Selector::operator== (const Class_Selector& rhs) const
+  bool ClassSelector::operator== (const ClassSelector& rhs) const
   {
     // Class has no namespacing
     return name() == rhs.name();
   }
 
-  bool Placeholder_Selector::operator== (const Placeholder_Selector& rhs) const
+  bool PlaceholderSelector::operator== (const PlaceholderSelector& rhs) const
   {
     // Placeholder has no namespacing
     return name() == rhs.name();
   }
 
-  bool Attribute_Selector::operator== (const Attribute_Selector& rhs) const
+  bool AttributeSelector::operator== (const AttributeSelector& rhs) const
   {
     // smaller return, equal go on, bigger abort
     if (is_ns_eq(rhs)) {
@@ -375,7 +375,7 @@ namespace Sass {
     else { return false; }
   }
 
-  bool Pseudo_Selector::operator== (const Pseudo_Selector& rhs) const
+  bool PseudoSelector::operator== (const PseudoSelector& rhs) const
   {
     if (is_ns_eq(rhs)) {
       if (name() != rhs.name()) return false;

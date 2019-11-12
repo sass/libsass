@@ -60,7 +60,7 @@ namespace Sass {
     BUILT_IN(percentage)
     {
       Number_Obj n = ARGN("$number");
-      if (!n->is_unitless()) error("argument $number of `" + std::string(sig) + "` must be unitless", pstate, traces);
+      if (!n->is_unitless()) error("argument $number of `" + sass::string(sig) + "` must be unitless", pstate, traces);
       return SASS_MEMORY_NEW(Number, pstate, n->value() * 100, "%");
     }
 
@@ -110,7 +110,7 @@ namespace Sass {
         error("At least one argument must be passed.", pstate, traces);
       }
       for (size_t i = 0; i < L; ++i) {
-        Expression_Obj val = arglist->value_at_index(i);
+        ExpressionObj val = arglist->value_at_index(i);
         Number_Obj xi = Cast<Number>(val);
         if (!xi) {
           error("\"" + val->to_string(ctx.c_options) + "\" is not a number for `min'", pstate, traces);
@@ -132,7 +132,7 @@ namespace Sass {
         error("At least one argument must be passed.", pstate, traces);
       }
       for (size_t i = 0; i < L; ++i) {
-        Expression_Obj val = arglist->value_at_index(i);
+        ExpressionObj val = arglist->value_at_index(i);
         Number_Obj xi = Cast<Number>(val);
         if (!xi) {
           error("\"" + val->to_string(ctx.c_options) + "\" is not a number for `max'", pstate, traces);
@@ -154,13 +154,13 @@ namespace Sass {
       if (l) {
         double lv = l->value();
         if (lv < 1) {
-          std::stringstream err;
+          sass::sstream err;
           err << "$limit " << lv << " must be greater than or equal to 1 for `random'";
           error(err.str(), pstate, traces);
         }
         bool eq_int = std::fabs(trunc(lv) - lv) < NUMBER_EPSILON;
         if (!eq_int) {
-          std::stringstream err;
+          sass::sstream err;
           err << "Expected $limit to be an integer but got " << lv << " for `random'";
           error(err.str(), pstate, traces);
         }
@@ -184,7 +184,7 @@ namespace Sass {
     Signature unique_id_sig = "unique-id()";
     BUILT_IN(unique_id)
     {
-      std::stringstream ss;
+      sass::sstream ss;
       std::uniform_real_distribution<> distributor(0, 4294967296); // 16^8
       uint_fast32_t distributed = static_cast<uint_fast32_t>(distributor(rand));
       ss << "u" << std::setfill('0') << std::setw(8) << std::hex << distributed;
@@ -195,7 +195,7 @@ namespace Sass {
     BUILT_IN(unit)
     {
       Number_Obj arg = ARGN("$number");
-      std::string str(quote(arg->unit(), '"'));
+      sass::string str(quote(arg->unit(), '"'));
       return SASS_MEMORY_NEW(String_Quoted, pstate, str);
     }
 

@@ -6,9 +6,9 @@
 
 namespace Sass {
 
-  std::string Base64VLQ::encode(const int number) const
+  sass::string Base64VLQ::encode(const int number) const
   {
-    std::string encoded = "";
+    sass::string encoded = "";
 
     int vlq = to_vlq_signed(number);
 

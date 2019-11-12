@@ -19,13 +19,13 @@ namespace Sass {
   #define ATTACH_ABSTRACT_CRTP_PERFORM_METHODS()\
     virtual void perform(Operation<void>* op) = 0; \
     virtual Value* perform(Operation<Value*>* op) = 0; \
-    virtual std::string perform(Operation<std::string>* op) = 0; \
+    virtual sass::string perform(Operation<sass::string>* op) = 0; \
     virtual AST_Node* perform(Operation<AST_Node*>* op) = 0; \
     virtual Selector* perform(Operation<Selector*>* op) = 0; \
     virtual Statement* perform(Operation<Statement*>* op) = 0; \
     virtual Expression* perform(Operation<Expression*>* op) = 0; \
     virtual union Sass_Value* perform(Operation<union Sass_Value*>* op) = 0; \
-    virtual Supports_Condition* perform(Operation<Supports_Condition*>* op) = 0; \
+    virtual SupportsCondition* perform(Operation<SupportsCondition*>* op) = 0; \
 
   // you must add operators to every class
   // ensures `this` of actual instance type
@@ -34,13 +34,13 @@ namespace Sass {
   #define ATTACH_CRTP_PERFORM_METHODS()\
     virtual void perform(Operation<void>* op) override { return (*op)(this); } \
     virtual Value* perform(Operation<Value*>* op) override { return (*op)(this); } \
-    virtual std::string perform(Operation<std::string>* op) override { return (*op)(this); } \
+    virtual sass::string perform(Operation<sass::string>* op) override { return (*op)(this); } \
     virtual AST_Node* perform(Operation<AST_Node*>* op) override { return (*op)(this); } \
     virtual Selector* perform(Operation<Selector*>* op) override { return (*op)(this); } \
     virtual Statement* perform(Operation<Statement*>* op) override { return (*op)(this); } \
     virtual Expression* perform(Operation<Expression*>* op) override { return (*op)(this); } \
     virtual union Sass_Value* perform(Operation<union Sass_Value*>* op) override { return (*op)(this); } \
-    virtual Supports_Condition* perform(Operation<Supports_Condition*>* op) override { return (*op)(this); } \
+    virtual SupportsCondition* perform(Operation<SupportsCondition*>* op) override { return (*op)(this); } \
 
   template<typename T>
   class Operation {
@@ -48,28 +48,28 @@ namespace Sass {
     virtual T operator()(AST_Node* x)               = 0;
     // statements
     virtual T operator()(Block* x)                  = 0;
-    virtual T operator()(Ruleset* x)                = 0;
+    virtual T operator()(StyleRule* x)                = 0;
     virtual T operator()(Bubble* x)                 = 0;
     virtual T operator()(Trace* x)                  = 0;
-    virtual T operator()(Supports_Block* x)         = 0;
+    virtual T operator()(SupportsRule* x)         = 0;
     virtual T operator()(MediaRule* x) = 0;
     virtual T operator()(CssMediaRule* x) = 0;
     virtual T operator()(CssMediaQuery* x) = 0;
-    virtual T operator()(At_Root_Block* x)          = 0;
-    virtual T operator()(Directive* x)              = 0;
+    virtual T operator()(AtRootRule* x)          = 0;
+    virtual T operator()(AtRule* x)              = 0;
     virtual T operator()(Keyframe_Rule* x)          = 0;
     virtual T operator()(Declaration* x)            = 0;
     virtual T operator()(Assignment* x)             = 0;
     virtual T operator()(Import* x)                 = 0;
     virtual T operator()(Import_Stub* x)            = 0;
-    virtual T operator()(Warning* x)                = 0;
-    virtual T operator()(Error* x)                  = 0;
-    virtual T operator()(Debug* x)                  = 0;
+    virtual T operator()(WarningRule* x)                = 0;
+    virtual T operator()(ErrorRule* x)                  = 0;
+    virtual T operator()(DebugRule* x)                  = 0;
     virtual T operator()(Comment* x)                = 0;
     virtual T operator()(If* x)                     = 0;
-    virtual T operator()(For* x)                    = 0;
-    virtual T operator()(Each* x)                   = 0;
-    virtual T operator()(While* x)                  = 0;
+    virtual T operator()(ForRule* x)                    = 0;
+    virtual T operator()(EachRule* x)                   = 0;
+    virtual T operator()(WhileRule* x)                  = 0;
     virtual T operator()(Return* x)                 = 0;
     virtual T operator()(Content* x)                = 0;
     virtual T operator()(ExtendRule* x)              = 0;
@@ -94,10 +94,10 @@ namespace Sass {
     virtual T operator()(String_Schema* x)          = 0;
     virtual T operator()(String_Quoted* x)          = 0;
     virtual T operator()(String_Constant* x)        = 0;
-    virtual T operator()(Supports_Condition* x)     = 0;
-    virtual T operator()(Supports_Operator* x)      = 0;
-    virtual T operator()(Supports_Negation* x)      = 0;
-    virtual T operator()(Supports_Declaration* x)   = 0;
+    virtual T operator()(SupportsCondition* x)     = 0;
+    virtual T operator()(SupportsOperation* x)      = 0;
+    virtual T operator()(SupportsNegation* x)      = 0;
+    virtual T operator()(SupportsDeclaration* x)   = 0;
     virtual T operator()(Supports_Interpolation* x) = 0;
     virtual T operator()(Media_Query* x) = 0;
     virtual T operator()(Media_Query_Expression* x) = 0;
@@ -110,12 +110,12 @@ namespace Sass {
     virtual T operator()(Arguments* x)              = 0;
     // selectors
     virtual T operator()(Selector_Schema* x)        = 0;
-    virtual T operator()(Placeholder_Selector* x)   = 0;
-    virtual T operator()(Type_Selector* x)       = 0;
-    virtual T operator()(Class_Selector* x)         = 0;
-    virtual T operator()(Id_Selector* x)            = 0;
-    virtual T operator()(Attribute_Selector* x)     = 0;
-    virtual T operator()(Pseudo_Selector* x)        = 0;
+    virtual T operator()(PlaceholderSelector* x)   = 0;
+    virtual T operator()(TypeSelector* x)       = 0;
+    virtual T operator()(ClassSelector* x)         = 0;
+    virtual T operator()(IDSelector* x)            = 0;
+    virtual T operator()(AttributeSelector* x)     = 0;
+    virtual T operator()(PseudoSelector* x)        = 0;
     virtual T operator()(SelectorComponent* x) = 0;
     virtual T operator()(SelectorCombinator* x) = 0;
     virtual T operator()(CompoundSelector* x) = 0;
@@ -134,28 +134,28 @@ namespace Sass {
     T operator()(AST_Node* x)               { return static_cast<D*>(this)->fallback(x); }
     // statements
     T operator()(Block* x)                  { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Ruleset* x)                { return static_cast<D*>(this)->fallback(x); }
+    T operator()(StyleRule* x)                { return static_cast<D*>(this)->fallback(x); }
     T operator()(Bubble* x)                 { return static_cast<D*>(this)->fallback(x); }
     T operator()(Trace* x)                  { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Supports_Block* x)         { return static_cast<D*>(this)->fallback(x); }
+    T operator()(SupportsRule* x)         { return static_cast<D*>(this)->fallback(x); }
     T operator()(MediaRule* x) { return static_cast<D*>(this)->fallback(x); }
     T operator()(CssMediaRule* x) { return static_cast<D*>(this)->fallback(x); }
     T operator()(CssMediaQuery* x) { return static_cast<D*>(this)->fallback(x); }
-    T operator()(At_Root_Block* x)          { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Directive* x)              { return static_cast<D*>(this)->fallback(x); }
+    T operator()(AtRootRule* x)          { return static_cast<D*>(this)->fallback(x); }
+    T operator()(AtRule* x)              { return static_cast<D*>(this)->fallback(x); }
     T operator()(Keyframe_Rule* x)          { return static_cast<D*>(this)->fallback(x); }
     T operator()(Declaration* x)            { return static_cast<D*>(this)->fallback(x); }
     T operator()(Assignment* x)             { return static_cast<D*>(this)->fallback(x); }
     T operator()(Import* x)                 { return static_cast<D*>(this)->fallback(x); }
     T operator()(Import_Stub* x)            { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Warning* x)                { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Error* x)                  { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Debug* x)                  { return static_cast<D*>(this)->fallback(x); }
+    T operator()(WarningRule* x)                { return static_cast<D*>(this)->fallback(x); }
+    T operator()(ErrorRule* x)                  { return static_cast<D*>(this)->fallback(x); }
+    T operator()(DebugRule* x)                  { return static_cast<D*>(this)->fallback(x); }
     T operator()(Comment* x)                { return static_cast<D*>(this)->fallback(x); }
     T operator()(If* x)                     { return static_cast<D*>(this)->fallback(x); }
-    T operator()(For* x)                    { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Each* x)                   { return static_cast<D*>(this)->fallback(x); }
-    T operator()(While* x)                  { return static_cast<D*>(this)->fallback(x); }
+    T operator()(ForRule* x)                    { return static_cast<D*>(this)->fallback(x); }
+    T operator()(EachRule* x)                   { return static_cast<D*>(this)->fallback(x); }
+    T operator()(WhileRule* x)                  { return static_cast<D*>(this)->fallback(x); }
     T operator()(Return* x)                 { return static_cast<D*>(this)->fallback(x); }
     T operator()(Content* x)                { return static_cast<D*>(this)->fallback(x); }
     T operator()(ExtendRule* x)              { return static_cast<D*>(this)->fallback(x); }
@@ -180,10 +180,10 @@ namespace Sass {
     T operator()(String_Schema* x)          { return static_cast<D*>(this)->fallback(x); }
     T operator()(String_Constant* x)        { return static_cast<D*>(this)->fallback(x); }
     T operator()(String_Quoted* x)          { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Supports_Condition* x)     { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Supports_Operator* x)      { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Supports_Negation* x)      { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Supports_Declaration* x)   { return static_cast<D*>(this)->fallback(x); }
+    T operator()(SupportsCondition* x)     { return static_cast<D*>(this)->fallback(x); }
+    T operator()(SupportsOperation* x)      { return static_cast<D*>(this)->fallback(x); }
+    T operator()(SupportsNegation* x)      { return static_cast<D*>(this)->fallback(x); }
+    T operator()(SupportsDeclaration* x)   { return static_cast<D*>(this)->fallback(x); }
     T operator()(Supports_Interpolation* x) { return static_cast<D*>(this)->fallback(x); }
     T operator()(Media_Query* x)            { return static_cast<D*>(this)->fallback(x); }
     T operator()(Media_Query_Expression* x) { return static_cast<D*>(this)->fallback(x); }
@@ -196,12 +196,12 @@ namespace Sass {
     T operator()(Arguments* x)              { return static_cast<D*>(this)->fallback(x); }
     // selectors
     T operator()(Selector_Schema* x)        { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Placeholder_Selector* x)   { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Type_Selector* x)       { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Class_Selector* x)         { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Id_Selector* x)            { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Attribute_Selector* x)     { return static_cast<D*>(this)->fallback(x); }
-    T operator()(Pseudo_Selector* x)        { return static_cast<D*>(this)->fallback(x); }
+    T operator()(PlaceholderSelector* x)   { return static_cast<D*>(this)->fallback(x); }
+    T operator()(TypeSelector* x)       { return static_cast<D*>(this)->fallback(x); }
+    T operator()(ClassSelector* x)         { return static_cast<D*>(this)->fallback(x); }
+    T operator()(IDSelector* x)            { return static_cast<D*>(this)->fallback(x); }
+    T operator()(AttributeSelector* x)     { return static_cast<D*>(this)->fallback(x); }
+    T operator()(PseudoSelector* x)        { return static_cast<D*>(this)->fallback(x); }
     T operator()(SelectorComponent* x) { return static_cast<D*>(this)->fallback(x); }
     T operator()(SelectorCombinator* x) { return static_cast<D*>(this)->fallback(x); }
     T operator()(CompoundSelector* x) { return static_cast<D*>(this)->fallback(x); }
@@ -213,7 +213,7 @@ namespace Sass {
     template <typename U> inline T fallback(U x)
     {
       throw std::runtime_error(
-        std::string(typeid(*this).name()) + ": CRTP not implemented for " + typeid(x).name());
+        sass::string(typeid(*this).name()) + ": CRTP not implemented for " + typeid(x).name());
     }
 
   };
