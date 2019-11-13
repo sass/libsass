@@ -92,13 +92,14 @@ namespace Sass {
 
     static void setTaint(bool val) { taint = val; }
 
+    #ifdef SASS_CUSTOM_ALLOCATOR
     inline void* operator new(size_t nbytes) {
       return allocateMem(nbytes);
     }
-
     inline void operator delete(void* ptr) {
       return deallocateMem(ptr);
     }
+    #endif
 
     virtual sass::string to_string() const = 0;
    protected:

@@ -6,7 +6,7 @@
 // When enabled we use our custom memory pool allocator
 // With intense workloads this can double the performance
 // Max memory usage mostly only grows by a slight amount
-#define SASS_CUSTOM_ALLOCATOR
+// #define SASS_CUSTOM_ALLOCATOR
 
 // How many buckets should we have for the free-list
 // Determines when allocations go directly to malloc/free
