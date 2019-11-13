@@ -99,15 +99,15 @@ namespace Sass {
     bool operator==(Token t)  { return to_string() == t.to_string(); }
   };
 
-  class SourceSpan : public Position {
+  class SourceSpan {
 
     public: // c-tor
       SourceSpan(const char* path, const char* src = 0, const size_t file = sass::string::npos);
       SourceSpan(const char* path, const char* src, const Position& position, Offset offset = Offset(0, 0));
 
     public: // down casts
-      Offset off() { return *this; }
-      Position pos() { return *this; }
+      Offset off() { return position; }
+      Position pos() { return position; }
       SourceSpan pstate() { return *this; }
 
       const char* getPath() const {
@@ -117,19 +117,20 @@ namespace Sass {
         return src;
       }
       size_t getLine() const {
-        return line + 1;
+        return position.line + 1;
       }
       size_t getColumn() const {
-        return column + 1;
+        return position.column + 1;
       }
       size_t getSrcId() const {
-        return file;
+        return position.file;
       }
 
     public:
+      Position position;
+      Offset offset;
       const char* path;
       const char* src;
-      Offset offset;
 
   };
 

@@ -40,7 +40,7 @@ namespace Sass {
    void Parser::advanceToNextToken() {
       lex < css_comments >(false);
       // advance to position
-      pstate += pstate.offset;
+      pstate.position += pstate.offset;
       pstate.offset.column = 0;
       pstate.offset.line = 0;
     }
@@ -70,7 +70,7 @@ namespace Sass {
 
     // report invalid utf8
     if (it != end) {
-      pstate += Offset::init(position, it);
+      pstate.position += Offset::init(position, it);
       traces.push_back(Backtrace(pstate));
       throw Exception::InvalidSass(pstate, traces, "Invalid UTF-8 sequence");
     }
@@ -545,7 +545,7 @@ namespace Sass {
         if (i < p) {
           sass::string parsed(i, p);
           String_Constant_Obj str = SASS_MEMORY_NEW(String_Constant, pstate, parsed);
-          pstate += Offset(parsed);
+          pstate.position += Offset(parsed);
           str->update_pstate(pstate);
           schema->append(str);
         }
@@ -567,7 +567,7 @@ namespace Sass {
         // add to the string schema
         schema->append(interpolant);
         // advance parser state
-        pstate.add(p+2, j);
+        pstate.position.add(p+2, j);
         // advance position
         i = j;
       }
@@ -578,7 +578,7 @@ namespace Sass {
         if (i < end_of_selector) {
           sass::string parsed(i, end_of_selector);
           String_Constant_Obj str = SASS_MEMORY_NEW(String_Constant, pstate, parsed);
-          pstate += Offset(parsed);
+          pstate.position += Offset(parsed);
           str->update_pstate(pstate);
           i = end_of_selector;
           schema->append(str);
@@ -595,7 +595,7 @@ namespace Sass {
     selector_schema->update_pstate(pstate);
     schema->update_pstate(pstate);
 
-    after_token = before_token = pstate;
+    after_token = before_token = pstate.position;
 
     // return parsed result
     return selector_schema.detach();
@@ -941,7 +941,7 @@ namespace Sass {
     }
 
     SourceSpan ps = map->pstate();
-    ps.offset = pstate - ps + pstate.offset;
+    ps.offset = pstate.position - ps.position + pstate.offset;
     map->pstate(ps);
 
     return map;
@@ -1081,7 +1081,7 @@ namespace Sass {
     if (operands.size() == 0) return conj;
     // fold all operands into one binary expression
     ExpressionObj ex = fold_operands(conj, operands, { Sass_OP::OR });
-    state.offset = pstate - state + pstate.offset;
+    state.offset = pstate.position - state.position + pstate.offset;
     ex->pstate(state);
     return ex;
   }
@@ -1104,7 +1104,7 @@ namespace Sass {
     if (operands.size() == 0) return rel;
     // fold all operands into one binary expression
     ExpressionObj ex = fold_operands(rel, operands, { Sass_OP::AND });
-    state.offset = pstate - state + pstate.offset;
+    state.offset = pstate.position - state.position + pstate.offset;
     ex->pstate(state);
     return ex;
   }
@@ -1153,7 +1153,7 @@ namespace Sass {
     // single nested items. So we cannot set delay on the
     // returned result here, as we have lost nestings ...
     ExpressionObj ex = fold_operands(lhs, operands, operators);
-    state.offset = pstate - state + pstate.offset;
+    state.offset = pstate.position - state.position + pstate.offset;
     ex->pstate(state);
     return ex;
   }
@@ -1202,7 +1202,7 @@ namespace Sass {
 
     if (operands.size() == 0) return lhs;
     ExpressionObj ex = fold_operands(lhs, operands, operators);
-    state.offset = pstate - state + pstate.offset;
+    state.offset = pstate.position - state.position + pstate.offset;
     ex->pstate(state);
     return ex;
   }
@@ -1232,7 +1232,7 @@ namespace Sass {
     }
     // operands and operators to binary expression
     ExpressionObj ex = fold_operands(factor, operands, operators);
-    state.offset = pstate - state + pstate.offset;
+    state.offset = pstate.position - state.position + pstate.offset;
     ex->pstate(state);
     return ex;
   }
@@ -2889,7 +2889,7 @@ namespace Sass {
 
   void Parser::error(sass::string msg)
   {
-    error(msg, pstate);
+    error(msg, pstate.position);
   }
 
   // print a css parsing error with actual context information from parsed source

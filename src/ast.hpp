@@ -84,8 +84,8 @@ namespace Sass {
     // ToDo: add specific implementions to all children
     virtual bool find ( bool (*f)(AST_Node_Obj) ) { return f(this); };
     void update_pstate(const SourceSpan& pstate);
-    Offset off() { return pstate(); }
-    Position pos() { return pstate(); }
+    Offset off() { return pstate().off(); }
+    Position pos() { return pstate().pos(); }
 
     // Some obects are not meant to be compared
     // ToDo: maybe fallback to pointer comparison?

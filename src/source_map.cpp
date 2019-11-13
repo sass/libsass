@@ -175,20 +175,20 @@ namespace Sass {
 
   void SourceMap::add_open_mapping(const AST_Node* node)
   {
-    mappings.push_back(Mapping(node->pstate(), current_position));
+    mappings.push_back(Mapping(node->pstate().position, current_position));
   }
 
   void SourceMap::add_close_mapping(const AST_Node* node)
   {
-    mappings.push_back(Mapping(node->pstate() + node->pstate().offset, current_position));
+    mappings.push_back(Mapping(node->pstate().position + node->pstate().offset, current_position));
   }
 
   SourceSpan SourceMap::remap(const SourceSpan& pstate) {
     for (size_t i = 0; i < mappings.size(); ++i) {
       if (
-        mappings[i].generated_position.file == pstate.file &&
-        mappings[i].generated_position.line == pstate.line &&
-        mappings[i].generated_position.column == pstate.column
+        mappings[i].generated_position.file == pstate.position.file &&
+        mappings[i].generated_position.line == pstate.position.line &&
+        mappings[i].generated_position.column == pstate.position.column
       ) return SourceSpan(pstate.path, pstate.src, mappings[i].original_position, pstate.offset);
     }
     return SourceSpan(pstate.path, pstate.src, Position(-1, -1, -1), Offset(0, 0));

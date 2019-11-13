@@ -57,7 +57,7 @@ namespace Sass {
 
     Parser(Context& ctx, const SourceSpan& pstate, Backtraces traces, bool allow_parent = true)
     : SourceSpan(pstate), ctx(ctx), block_stack(), stack(0),
-      source(0), position(0), end(0), before_token(pstate), after_token(pstate),
+      source(0), position(0), end(0), before_token(pstate.position), after_token(pstate.position),
       pstate(pstate), traces(traces), indentation(0), nestings(0), allow_parent(allow_parent)
     {
       stack.push_back(Scope::Root);
