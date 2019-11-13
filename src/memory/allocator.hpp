@@ -133,7 +133,6 @@ namespace std {
   };
 }
 
-
 #endif
 
 #endif

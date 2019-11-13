@@ -7,13 +7,17 @@ namespace Sass {
 
   // Returns a list of all possible paths through the given lists.
   //
-  // For example, given `[[1, 2], [3, 4], [5]]`, this returns:
+  // For example, given `[[1, 2], [3, 4], [5, 6]]`, this returns:
   //
   // ```
   // [[1, 3, 5],
   //  [2, 3, 5],
   //  [1, 4, 5],
-  //  [2, 4, 5]]
+  //  [2, 4, 5],
+  //  [1, 3, 6],
+  //  [2, 3, 6],
+  //  [1, 4, 6],
+  //  [2, 4, 6]]
   // ```
   // 
   // Note: called `paths` in dart-sass
@@ -74,7 +78,22 @@ namespace Sass {
   }
   // EO permutate
 
-  // ToDo: this variant is used in resolve_parent_refs
+  // ToDo: this variant is used in resolveParentSelectors
+  // Returns a list of all possible paths through the given lists.
+  //
+  // For example, given `[[1, 2], [3, 4], [5, 6]]`, this returns:
+  //
+  // ```
+  // [[1, 3, 5],
+  //  [1, 3, 6],
+  //  [1, 4, 5],
+  //  [1, 4, 6],
+  //  [2, 3, 5],
+  //  [2, 3, 6],
+  //  [2, 4, 5],
+  //  [2, 4, 6]]
+  // ```
+  // 
   template <class T>
   sass::vector<sass::vector<T>>
     permutateAlt(const sass::vector<sass::vector<T>>& in) {
@@ -89,7 +108,7 @@ namespace Sass {
     }
 
     size_t* state = new size_t[L];
-    sass::vector< sass::vector<T>> out;
+    sass::vector<sass::vector<T>> out;
 
     // First initialize all states for every permutation group
     for (size_t i = 0; i < L; i += 1) {

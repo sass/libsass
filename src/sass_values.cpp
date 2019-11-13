@@ -340,9 +340,7 @@ extern "C" {
         rv = Operators::op_colors(op, *l_c, *r_c, options, l_c->pstate());
       }
       else /* convert other stuff to string and apply operation */ {
-        Value* l_v = Cast<Value>(lhs);
-        Value* r_v = Cast<Value>(rhs);
-        rv = Operators::op_strings(op, *l_v, *r_v, options, l_v->pstate());
+        rv = Operators::op_strings(op, *lhs, *rhs, options, lhs->pstate());
       }
 
       // ToDo: maybe we should should return null value?
