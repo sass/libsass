@@ -1066,8 +1066,7 @@ namespace Sass {
     const SelectorComponent* prev = nullptr;
     for (auto& item : sel->elements()) {
       if (prev != nullptr) {
-        if (typeid(*item) == typeid(SelectorCombinator) ||
-            typeid(*prev) == typeid(SelectorCombinator)) {
+        if (item->getCombinator() || prev->getCombinator()) {
           append_optional_space();
         } else {
           append_mandatory_space();
