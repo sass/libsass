@@ -81,20 +81,18 @@ namespace Sass {
     virtual sass::string to_string() const;
     virtual void cloneChildren() {};
     // generic find function (not fully implemented yet)
-    // ToDo: add specific implementions to all children
+    // ToDo: add specific implementations to all children
     virtual bool find ( bool (*f)(AST_Node_Obj) ) { return f(this); };
     void update_pstate(const SourceSpan& pstate);
-    Offset off() { return pstate().off(); }
-    Position pos() { return pstate().pos(); }
 
-    // Some obects are not meant to be compared
-    // ToDo: maybe fallback to pointer comparison?
+    // Some objects are not meant to be compared
+    // ToDo: maybe fall-back to pointer comparison?
     virtual bool operator== (const AST_Node& rhs) const {
       throw std::runtime_error("operator== not implemented");
     }
 
     // We can give some reasonable implementations by using
-    // inverst operators on the specialized implementations
+    // invert operators on the specialized implementations
     virtual bool operator!= (const AST_Node& rhs) const {
       // Unequal if not equal
       return !(*this == rhs);

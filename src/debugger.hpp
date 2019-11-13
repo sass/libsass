@@ -310,9 +310,10 @@ inline sass::string longToHex(long long t) {
 inline sass::string pstate_source_position(AST_Node* node)
 {
   sass::sstream str;
-  Position start(node->pstate());
-  Position end(start + node->pstate().offset);
-  str << (start.file == sass::string::npos ? 99999999 : start.file)
+  Offset start(node->pstate().position);
+  Offset end(start + node->pstate().offset);
+  size_t file = node->pstate().getSrcId();
+  str << (file == sass::string::npos ? 99999999 : file)
     << "@[" << start.line << ":" << start.column << "]"
     << "-[" << end.line << ":" << end.column << "]";
 #ifdef DEBUG_SHARED_PTR
@@ -419,7 +420,7 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     std::cerr << ind << "Parent_Reference " << selector;
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
-    std::cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">" << std::endl;
+    std::cerr << std::endl;
 
   } else if (Cast<PseudoSelector>(node)) {
     PseudoSelector* selector = Cast<PseudoSelector>(node);
@@ -460,7 +461,6 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     std::cerr << " (" << pstate_source_position(node) << ")";
     std::cerr << " <" << selector->hash() << ">";
     std::cerr << " <<" << selector->ns_name() << ">>";
-    std::cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">";
     std::cerr << std::endl;
   } else if (Cast<PlaceholderSelector>(node)) {
 
@@ -600,8 +600,7 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     Comment* block = Cast<Comment>(node);
     std::cerr << ind << "Comment " << block;
     std::cerr << " (" << pstate_source_position(node) << ")";
-    std::cerr << " " << block->tabs() <<
-      " <" << prettyprint(block->pstate().token.ws_before()) << ">" << std::endl;
+    std::cerr << " " << block->tabs() << std::endl;
     debug_ast(block->text(), ind + "// ", env);
   } else if (Cast<If>(node)) {
     If* block = Cast<If>(node);
@@ -881,7 +880,7 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     if (expression->is_delayed()) std::cerr << " [delayed]";
     if (expression->is_interpolant()) std::cerr << " [interpolant]";
     if (expression->quote_mark()) std::cerr << " [quote_mark: " << expression->quote_mark() << "]";
-    std::cerr << " <" << prettyprint(expression->pstate().token.ws_before()) << ">" << std::endl;
+    std::cerr << std::endl;
   } else if (Cast<String_Constant>(node)) {
     String_Constant* expression = Cast<String_Constant>(node);
     std::cerr << ind << "String_Constant " << expression;
@@ -892,7 +891,7 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     std::cerr << " [" << prettyprint(expression->value()) << "]";
     if (expression->is_delayed()) std::cerr << " [delayed]";
     if (expression->is_interpolant()) std::cerr << " [interpolant]";
-    std::cerr << " <" << prettyprint(expression->pstate().token.ws_before()) << ">" << std::endl;
+    std::cerr << std::endl;
   } else if (Cast<String_Schema>(node)) {
     String_Schema* expression = Cast<String_Schema>(node);
     std::cerr << ind << "String_Schema " << expression;
@@ -905,7 +904,7 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     if (expression->has_interpolant()) std::cerr << " [has interpolant]";
     if (expression->is_left_interpolant()) std::cerr << " [left interpolant] ";
     if (expression->is_right_interpolant()) std::cerr << " [right interpolant] ";
-    std::cerr << " <" << prettyprint(expression->pstate().token.ws_before()) << ">" << std::endl;
+    std::cerr << std::endl;
     for(const auto& i : expression->elements()) { debug_ast(i, ind + " ", env); }
   } else if (Cast<String>(node)) {
     String* expression = Cast<String>(node);
@@ -913,7 +912,7 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     std::cerr << " " << expression->concrete_type();
     std::cerr << " (" << pstate_source_position(node) << ")";
     if (expression->is_interpolant()) std::cerr << " [interpolant]";
-    std::cerr << " <" << prettyprint(expression->pstate().token.ws_before()) << ">" << std::endl;
+    std::cerr << std::endl;
   } else if (Cast<Expression>(node)) {
     Expression* expression = Cast<Expression>(node);
     std::cerr << ind << "Expression " << expression;

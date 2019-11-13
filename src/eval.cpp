@@ -1503,9 +1503,9 @@ namespace Sass {
     ExpressionObj sel = s->contents()->perform(this);
     sass::string result_str(sel->to_string(options()));
     result_str = unquote(Util::rtrim(result_str));
-    char* temp_cstr = sass_copy_c_string(result_str.c_str());
-    ctx.strings.push_back(temp_cstr); // attach to context
-    Parser p = Parser::from_c_str(temp_cstr, ctx, traces, s->pstate());
+    ItplFile* source = SASS_MEMORY_NEW(ItplFile,
+      result_str.c_str(), s->pstate());
+    Parser p(source, ctx, traces);
 
     // If a schema contains a reference to parent it is already
     // connected to it, so don't connect implicitly anymore

@@ -10,12 +10,13 @@ namespace Sass {
 
   Definition* make_native_function(Signature sig, Native_Function func, Context& ctx)
   {
-    Parser sig_parser = Parser::from_c_str(sig, ctx, ctx.traces, SourceSpan("[built-in function]"));
+    SourceFile* source = SASS_MEMORY_NEW(SourceFile, "[built-in function]", sig, std::string::npos);
+    Parser sig_parser(source, ctx, ctx.traces);
     sig_parser.lex<Prelexer::identifier>();
     sass::string name(Util::normalize_underscores(sig_parser.lexed));
     Parameters_Obj params = sig_parser.parse_parameters();
     return SASS_MEMORY_NEW(Definition,
-                          SourceSpan("[built-in function]"),
+                          SourceSpan(source),
                           sig,
                           name,
                           params,
@@ -26,9 +27,9 @@ namespace Sass {
   Definition* make_c_function(Sass_Function_Entry c_func, Context& ctx)
   {
     using namespace Prelexer;
-
     const char* sig = sass_function_get_signature(c_func);
-    Parser sig_parser = Parser::from_c_str(sig, ctx, ctx.traces, SourceSpan("[c function]"));
+    SourceFile* source = SASS_MEMORY_NEW(SourceFile, "[c function]", sig, std::string::npos);
+    Parser sig_parser(source, ctx, ctx.traces);
     // allow to overload generic callback plus @warn, @error and @debug with custom functions
     sig_parser.lex < alternatives < identifier, exactly <'*'>,
                                     exactly < Constants::warn_kwd >,
@@ -38,7 +39,7 @@ namespace Sass {
     sass::string name(Util::normalize_underscores(sig_parser.lexed));
     Parameters_Obj params = sig_parser.parse_parameters();
     return SASS_MEMORY_NEW(Definition,
-                          SourceSpan("[c function]"),
+                          SourceSpan(source),
                           sig,
                           name,
                           params,
@@ -130,7 +131,8 @@ namespace Sass {
         str->quote_mark(0);
       }
       sass::string exp_src = exp->to_string(ctx.c_options);
-      return Parser::parse_selector(exp_src.c_str(), ctx, traces, exp->pstate(), pstate.src, /*allow_parent=*/false);
+      ItplFile* source = SASS_MEMORY_NEW(ItplFile, exp_src.c_str(), exp->pstate());
+      return Parser::parse_selector(source, ctx, traces, false);
     }
 
     CompoundSelectorObj get_arg_sel(const sass::string& argname, Env& env, Signature sig, SourceSpan pstate, Backtraces traces, Context& ctx) {
@@ -144,7 +146,8 @@ namespace Sass {
         str->quote_mark(0);
       }
       sass::string exp_src = exp->to_string(ctx.c_options);
-      SelectorListObj sel_list = Parser::parse_selector(exp_src.c_str(), ctx, traces, exp->pstate(), pstate.src, /*allow_parent=*/false);
+      ItplFile* source = SASS_MEMORY_NEW(ItplFile, exp_src.c_str(), exp->pstate());
+      SelectorListObj sel_list = Parser::parse_selector(source, ctx, traces, false);
       if (sel_list->length() == 0) return {};
       return sel_list->first()->first();
     }

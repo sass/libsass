@@ -148,7 +148,7 @@ namespace Sass {
         if (!seq->empty()) { sel = seq->last()->to_string({ NESTED, 5 }); }
         // ToDo: parser should throw parser exceptions
         error("Invalid CSS after \"" + sel + "\": expected \"{\", was \"" + found + "\"\n\n"
-          "\"" + found + "\" may only be used at the beginning of a compound selector.", state.position);
+          "\"" + found + "\" may only be used at the beginning of a compound selector.");
       }
       // parse functional
       else if (match < re_functional >())

@@ -175,23 +175,27 @@ namespace Sass {
 
   void SourceMap::add_open_mapping(const AST_Node* node)
   {
-    mappings.push_back(Mapping(node->pstate().position, current_position));
+    const SourceSpan& span(node->pstate());
+    Position from(span.getSrcId(), span.position);
+    mappings.push_back(Mapping(from, current_position));
   }
 
   void SourceMap::add_close_mapping(const AST_Node* node)
   {
-    mappings.push_back(Mapping(node->pstate().position + node->pstate().offset, current_position));
+    const SourceSpan& span(node->pstate());
+    Position to(span.getSrcId(), span.position + span.offset);
+    mappings.push_back(Mapping(to, current_position));
   }
 
   SourceSpan SourceMap::remap(const SourceSpan& pstate) {
     for (size_t i = 0; i < mappings.size(); ++i) {
       if (
-        mappings[i].generated_position.file == pstate.position.file &&
+        mappings[i].generated_position.file == pstate.getSrcId() &&
         mappings[i].generated_position.line == pstate.position.line &&
         mappings[i].generated_position.column == pstate.position.column
-      ) return SourceSpan(pstate.path, pstate.src, mappings[i].original_position, pstate.offset);
+      ) return SourceSpan(pstate.source, mappings[i].original_position, pstate.offset);
     }
-    return SourceSpan(pstate.path, pstate.src, Position(-1, -1, -1), Offset(0, 0));
+    return SourceSpan(pstate.source, Position(-1, -1, -1), Offset(0, 0));
 
   }
 

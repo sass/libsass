@@ -258,9 +258,9 @@ namespace Sass {
   {
     ExpressionObj mq = eval(m->schema());
     sass::string str_mq(mq->to_css(ctx.c_options));
-    char* str = sass_copy_c_string(str_mq.c_str());
-    ctx.strings.push_back(str);
-    Parser parser(Parser::from_c_str(str, ctx, traces, mq->pstate()));
+    ItplFile* source = SASS_MEMORY_NEW(ItplFile,
+      str_mq.c_str(), m->pstate());
+    Parser parser(source, ctx, traces);
     // Create a new CSS only representation of the media rule
     CssMediaRuleObj css = SASS_MEMORY_NEW(CssMediaRule, m->pstate(), m->block());
     sass::vector<CssMediaQuery_Obj> parsed = parser.parseCssMediaQueries();

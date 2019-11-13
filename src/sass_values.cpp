@@ -343,7 +343,7 @@ extern "C" {
         rv = Operators::op_strings(op, *lhs, *rhs, options, lhs->pstate());
       }
 
-      // ToDo: maybe we should should return null value?
+      // ToDo: maybe we should return null value?
       if (!rv) return sass_make_error("invalid return value");
 
       // convert result back to ast node

@@ -3,6 +3,7 @@
 #include "sass.hpp"
 
 #include "position.hpp"
+#include "source.hpp"
 
 namespace Sass {
 
@@ -56,7 +57,7 @@ namespace Sass {
         // skip over 10xxxxxx
         // is 1st bit not set
         if ((chr & 128) == 0) {
-          // regular ascii char
+          // regular ASCII char
           column += 1;
         }
         // is 2nd bit not set
@@ -117,11 +118,11 @@ namespace Sass {
   : Offset(line, column), file(file) { }
 
 
-  SourceSpan::SourceSpan(const char* path, const char* src, const size_t file)
-  : position(file, 0, 0), offset(0, 0), path(path), src(src) { }
+  SourceSpan::SourceSpan(const char* path)
+  : source(SASS_MEMORY_NEW(SynthFile, path)), position(0, 0), offset(0, 0) { }
 
-  SourceSpan::SourceSpan(const char* path, const char* src, const Position& position, Offset offset)
-  : position(position), offset(offset), path(path), src(src) { }
+  SourceSpan::SourceSpan(SourceDataObj source, const Offset& position, const Offset& offset)
+    : source(source), position(position), offset(offset) { }
 
   Position Position::add(const char* begin, const char* end)
   {
@@ -160,22 +161,5 @@ namespace Sass {
   {
     return Offset(line - off.line, off.line == line ? column - off.column : column);
   }
-
-  /* not used anymore - remove?
-  std::ostream& operator<<(std::ostream& strm, const Offset& off)
-  {
-    if (off.line == string::npos) strm << "-1:"; else strm << off.line << ":";
-    if (off.column == string::npos) strm << "-1"; else strm << off.column;
-    return strm;
-  } */
-
-  /* not used anymore - remove?
-  std::ostream& operator<<(std::ostream& strm, const Position& pos)
-  {
-    if (pos.file != string::npos) strm << pos.file << ":";
-    if (pos.line == string::npos) strm << "-1:"; else strm << pos.line << ":";
-    if (pos.column == string::npos) strm << "-1"; else strm << pos.column;
-    return strm;
-  } */
 
 }

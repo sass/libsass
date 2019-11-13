@@ -3,7 +3,8 @@
 
 #include <string>
 #include <cstring>
-// #include <iostream>
+#include "source_data.hpp"
+#include "ast_fwd_decl.hpp"
 
 namespace Sass {
 
@@ -101,36 +102,43 @@ namespace Sass {
 
   class SourceSpan {
 
-    public: // c-tor
-      SourceSpan(const char* path, const char* src = 0, const size_t file = sass::string::npos);
-      SourceSpan(const char* path, const char* src, const Position& position, Offset offset = Offset(0, 0));
+    public:
 
-    public: // down casts
-      Offset off() { return position; }
-      Position pos() { return position; }
-      SourceSpan pstate() { return *this; }
+      SourceSpan(const char* path);
+
+      SourceSpan(SourceDataObj source,
+        const Offset& position = Offset(0, 0),
+        const Offset& offset = Offset(0, 0));
 
       const char* getPath() const {
-        return path;
+        return source->getPath();
       }
+
       const char* getRawData() const {
-        return src;
+        return source->getRawData();
       }
+
+      Offset getPosition() const {
+        return position;
+      }
+
       size_t getLine() const {
         return position.line + 1;
       }
+
       size_t getColumn() const {
         return position.column + 1;
       }
+
       size_t getSrcId() const {
-        return position.file;
+        return source == nullptr
+          ? std::string::npos
+          : source->getSrcId();
       }
 
-    public:
-      Position position;
+      SourceDataObj source;
+      Offset position;
       Offset offset;
-      const char* path;
-      const char* src;
 
   };
 

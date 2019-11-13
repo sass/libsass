@@ -23,21 +23,29 @@ namespace Sass {
   using namespace Constants;
   using namespace Prelexer;
 
-  Parser Parser::from_c_str(const char* beg, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source, bool allow_parent)
+
+  Parser::Parser(SourceData* source, Context& ctx, Backtraces traces, bool allow_parent) :
+    SourceSpan(source),
+    ctx(ctx),
+    source(source),
+    begin(source->begin()),
+    position(source->begin()),
+    end(source->end()),
+    before_token(0, 0),
+    after_token(0, 0),
+    pstate(source->getSourceSpan()),
+    traces(traces),
+    indentation(0),
+    nestings(0),
+    allow_parent(allow_parent)
   {
-    pstate.offset.column = 0;
-    pstate.offset.line = 0;
-    Parser p(ctx, pstate, traces, allow_parent);
-    p.source   = source ? source : beg;
-    p.position = beg ? beg : p.source;
-    p.end      = p.position + strlen(p.position);
     Block_Obj root = SASS_MEMORY_NEW(Block, pstate);
-    p.block_stack.push_back(root);
+    stack.push_back(Scope::Root);
+    block_stack.push_back(root);
     root->is_root(true);
-    return p;
   }
 
-   void Parser::advanceToNextToken() {
+  void Parser::advanceToNextToken() {
       lex < css_comments >(false);
       // advance to position
       pstate.position += pstate.offset;
@@ -45,9 +53,9 @@ namespace Sass {
       pstate.offset.line = 0;
     }
 
-  SelectorListObj Parser::parse_selector(const char* beg, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source, bool allow_parent)
+  SelectorListObj Parser::parse_selector(SourceData* source, Context& ctx, Backtraces traces, bool allow_parent)
   {
-    Parser p = Parser::from_c_str(beg, ctx, traces, pstate, source, allow_parent);
+    Parser p(source, ctx, traces, allow_parent);
     // ToDo: remap the source-map entries somehow
     return p.parseSelectorList(false);
   }
@@ -2745,51 +2753,51 @@ namespace Sass {
     size_t skip = 0;
     sass::string encoding;
     bool utf_8 = false;
-    switch ((unsigned char) source[0]) {
+    switch ((unsigned char)position[0]) {
     case 0xEF:
-      skip = check_bom_chars(source, end, utf_8_bom, 3);
+      skip = check_bom_chars(position, end, utf_8_bom, 3);
       encoding = "UTF-8";
       utf_8 = true;
       break;
     case 0xFE:
-      skip = check_bom_chars(source, end, utf_16_bom_be, 2);
+      skip = check_bom_chars(position, end, utf_16_bom_be, 2);
       encoding = "UTF-16 (big endian)";
       break;
     case 0xFF:
-      skip = check_bom_chars(source, end, utf_16_bom_le, 2);
-      skip += (skip ? check_bom_chars(source, end, utf_32_bom_le, 4) : 0);
+      skip = check_bom_chars(position, end, utf_16_bom_le, 2);
+      skip += (skip ? check_bom_chars(position, end, utf_32_bom_le, 4) : 0);
       encoding = (skip == 2 ? "UTF-16 (little endian)" : "UTF-32 (little endian)");
       break;
     case 0x00:
-      skip = check_bom_chars(source, end, utf_32_bom_be, 4);
+      skip = check_bom_chars(position, end, utf_32_bom_be, 4);
       encoding = "UTF-32 (big endian)";
       break;
     case 0x2B:
-      skip = check_bom_chars(source, end, utf_7_bom_1, 4)
-           | check_bom_chars(source, end, utf_7_bom_2, 4)
-           | check_bom_chars(source, end, utf_7_bom_3, 4)
-           | check_bom_chars(source, end, utf_7_bom_4, 4)
-           | check_bom_chars(source, end, utf_7_bom_5, 5);
+      skip = check_bom_chars(position, end, utf_7_bom_1, 4)
+           | check_bom_chars(position, end, utf_7_bom_2, 4)
+           | check_bom_chars(position, end, utf_7_bom_3, 4)
+           | check_bom_chars(position, end, utf_7_bom_4, 4)
+           | check_bom_chars(position, end, utf_7_bom_5, 5);
       encoding = "UTF-7";
       break;
     case 0xF7:
-      skip = check_bom_chars(source, end, utf_1_bom, 3);
+      skip = check_bom_chars(position, end, utf_1_bom, 3);
       encoding = "UTF-1";
       break;
     case 0xDD:
-      skip = check_bom_chars(source, end, utf_ebcdic_bom, 4);
+      skip = check_bom_chars(position, end, utf_ebcdic_bom, 4);
       encoding = "UTF-EBCDIC";
       break;
     case 0x0E:
-      skip = check_bom_chars(source, end, scsu_bom, 3);
+      skip = check_bom_chars(position, end, scsu_bom, 3);
       encoding = "SCSU";
       break;
     case 0xFB:
-      skip = check_bom_chars(source, end, bocu_1_bom, 3);
+      skip = check_bom_chars(position, end, bocu_1_bom, 3);
       encoding = "BOCU-1";
       break;
     case 0x84:
-      skip = check_bom_chars(source, end, gb_18030_bom, 4);
+      skip = check_bom_chars(position, end, gb_18030_bom, 4);
       encoding = "GB-18030";
       break;
     default: break;
@@ -2872,24 +2880,10 @@ namespace Sass {
     return base;
   }
 
-  void Parser::error(sass::string msg, Position pos)
-  {
-    Position p(pos.line ? pos : before_token);
-    SourceSpan pstate(path, source, p, Offset(0, 0));
-    // `pstate.src` may not outlive stack unwind so we must copy it.
-    // This is needed since we often parse dynamically generated code,
-    // e.g. for interpolations, and we normally don't want to keep this
-    // memory around after we parsed the AST tree successfully. Only on
-    // errors we want to preserve them for better error reporting.
-    char *src_copy = sass_copy_c_string(pstate.src);
-    pstate.src = src_copy;
-    traces.push_back(Backtrace(pstate));
-    throw Exception::InvalidSass(pstate, traces, msg, src_copy);
-  }
-
   void Parser::error(sass::string msg)
   {
-    error(msg, pstate.position);
+    traces.push_back(Backtrace(pstate));
+    throw Exception::InvalidSass(pstate, traces, msg);
   }
 
   // print a css parsing error with actual context information from parsed source
@@ -2902,13 +2896,13 @@ namespace Sass {
     if (!pos) pos = position;
 
     const char* last_pos(pos);
-    if (last_pos > source) {
-      utf8::prior(last_pos, source);
+    if (last_pos > begin) {
+      utf8::prior(last_pos, begin);
     }
     // backup position to last significant char
-    while (trim && last_pos > source && last_pos < end) {
+    while (trim && last_pos > begin&& last_pos < end) {
       if (!Util::ascii_isspace(static_cast<unsigned char>(*last_pos))) break;
-      utf8::prior(last_pos, source);
+      utf8::prior(last_pos, begin);
     }
 
     bool ellipsis_left = false;
@@ -2917,9 +2911,9 @@ namespace Sass {
 
     if (*pos_left) utf8::next(pos_left, end);
     if (*end_left) utf8::next(end_left, end);
-    while (pos_left > source) {
+    while (pos_left > begin) {
       if (utf8::distance(pos_left, end_left) >= max_len) {
-        utf8::prior(pos_left, source);
+        utf8::prior(pos_left, begin);
         ellipsis_left = *(pos_left) != '\n' &&
                         *(pos_left) != '\r';
         utf8::next(pos_left, end);
@@ -2927,13 +2921,13 @@ namespace Sass {
       }
 
       const char* prev = pos_left;
-      utf8::prior(prev, source);
+      utf8::prior(prev, begin);
       if (*prev == '\r') break;
       if (*prev == '\n') break;
       pos_left = prev;
     }
-    if (pos_left < source) {
-      pos_left = source;
+    if (pos_left < begin) {
+      pos_left = begin;
     }
 
     bool ellipsis_right = false;
@@ -2957,8 +2951,6 @@ namespace Sass {
     size_t right_subpos = right.size() > 15 ? right.size() - 15 : 0;
     if (left_subpos && ellipsis_left) left = ellipsis + left.substr(left_subpos);
     if (right_subpos && ellipsis_right) right = right.substr(right_subpos) + ellipsis;
-    // Hotfix when source is null, probably due to interpolation parsing!?
-    if (source == NULL || *source == 0) source = pstate.src;
     // now pass new message to the more generic error function
     error(msg + prefix + quote(left) + middle + quote(right));
   }

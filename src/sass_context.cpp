@@ -77,12 +77,13 @@ namespace Sass {
       // now create the code trace (ToDo: maybe have util functions?)
       if (e.pstate.position.line != sass::string::npos &&
           e.pstate.position.column != sass::string::npos &&
-          e.pstate.src != nullptr) {
-        size_t lines = e.pstate.position.line;
+          e.pstate.source != nullptr) {
+        Offset offset(e.pstate.position);
+        size_t lines = offset.line;
         // scan through src until target line
         // move line_beg pointer to line start
         const char* line_beg;
-        for (line_beg = e.pstate.src; *line_beg != '\0'; ++line_beg) {
+        for (line_beg = e.pstate.getRawData(); *line_beg != '\0'; ++line_beg) {
           if (lines == 0) break;
           if (*line_beg == '\n') --lines;
         }
@@ -96,12 +97,12 @@ namespace Sass {
         size_t move_in = 0; size_t shorten = 0;
         size_t left_chars = 42; size_t max_chars = 76;
         // reported excerpt should not exceed `max_chars` chars
-        if (e.pstate.position.column > line_len) left_chars = e.pstate.position.column;
-        if (e.pstate.position.column > left_chars) move_in = e.pstate.position.column - left_chars;
+        if (offset.column > line_len) left_chars = offset.column;
+        if (offset.column > left_chars) move_in = offset.column - left_chars;
         if (line_len > max_chars + move_in) shorten = line_len - move_in - max_chars;
         utf8::advance(line_beg, move_in, line_end);
         utf8::retreat(line_end, shorten, line_beg);
-        sass::string sanitized; sass::string marker(e.pstate.position.column - move_in, '-');
+        sass::string sanitized; sass::string marker(offset.column - move_in, '-');
         utf8::replace_invalid(line_beg, line_end, std::back_inserter(sanitized));
         msg_stream << ">> " << sanitized << "\n";
         msg_stream << "   " << marker << "^\n";

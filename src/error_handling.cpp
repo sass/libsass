@@ -18,8 +18,8 @@ namespace Sass {
       prefix("Error"), pstate(pstate), traces(traces)
     { }
 
-    InvalidSass::InvalidSass(SourceSpan pstate, Backtraces traces, sass::string msg, char* owned_src)
-    : Base(pstate, msg, traces), owned_src(owned_src)
+    InvalidSass::InvalidSass(SourceSpan pstate, Backtraces traces, sass::string msg)
+    : Base(pstate, msg, traces)
     { }
 
 
