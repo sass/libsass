@@ -187,7 +187,7 @@ namespace Sass {
       after_token.add(it_before_token, it_after_token);
 
       // ToDo: could probably do this incremental on original object (API wants offset?)
-      pstate = SourceSpan(path, source, lexed, before_token, after_token - before_token);
+      pstate = SourceSpan(path, source, before_token, after_token - before_token);
 
       // advance internal char iterator
       return position = it_after_token;

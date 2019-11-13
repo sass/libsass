@@ -118,13 +118,10 @@ namespace Sass {
 
 
   SourceSpan::SourceSpan(const char* path, const char* src, const size_t file)
-  : Position(file, 0, 0), path(path), src(src), offset(0, 0), token() { }
+  : Position(file, 0, 0), path(path), src(src), offset(0, 0) { }
 
   SourceSpan::SourceSpan(const char* path, const char* src, const Position& position, Offset offset)
-  : Position(position), path(path), src(src), offset(offset), token() { }
-
-  SourceSpan::SourceSpan(const char* path, const char* src, const Token& token, const Position& position, Offset offset)
-  : Position(position), path(path), src(src), offset(offset), token(token) { }
+  : Position(position), path(path), src(src), offset(offset) { }
 
   Position Position::add(const char* begin, const char* end)
   {

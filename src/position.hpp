@@ -104,7 +104,6 @@ namespace Sass {
     public: // c-tor
       SourceSpan(const char* path, const char* src = 0, const size_t file = sass::string::npos);
       SourceSpan(const char* path, const char* src, const Position& position, Offset offset = Offset(0, 0));
-      SourceSpan(const char* path, const char* src, const Token& token, const Position& position, Offset offset = Offset(0, 0));
 
     public: // down casts
       Offset off() { return *this; }
@@ -115,7 +114,6 @@ namespace Sass {
       const char* path;
       const char* src;
       Offset offset;
-      Token token;
 
   };
 
