@@ -65,8 +65,6 @@ namespace Sass {
 
     // static Parser from_string(const sass::string& src, Context& ctx, SourceSpan pstate = SourceSpan("[STRING]"));
     static Parser from_c_str(const char* src, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
-    static Parser from_c_str(const char* beg, const char* end, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
-    static Parser from_token(Token t, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[TOKEN]"), const char* source = nullptr);
     // special static parsers to convert strings into certain selectors
     static SelectorListObj parse_selector(const char* src, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[SELECTOR]"), const char* source = nullptr, bool allow_parent = true);
 

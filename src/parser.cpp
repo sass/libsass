@@ -37,20 +37,6 @@ namespace Sass {
     return p;
   }
 
-  Parser Parser::from_c_str(const char* beg, const char* end, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source, bool allow_parent)
-  {
-    pstate.offset.column = 0;
-    pstate.offset.line = 0;
-    Parser p(ctx, pstate, traces, allow_parent);
-    p.source   = source ? source : beg;
-    p.position = beg ? beg : p.source;
-    p.end      = end ? end : p.position + strlen(p.position);
-    Block_Obj root = SASS_MEMORY_NEW(Block, pstate);
-    p.block_stack.push_back(root);
-    root->is_root(true);
-    return p;
-  }
-
    void Parser::advanceToNextToken() {
       lex < css_comments >(false);
       // advance to position
@@ -70,18 +56,6 @@ namespace Sass {
   {
     return peek_linefeed(start ? start : position)
            && ! peek_css<exactly<'{'>>(start);
-  }
-
-  Parser Parser::from_token(Token t, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source)
-  {
-    Parser p(ctx, pstate, traces);
-    p.source   = source ? source : t.begin;
-    p.position = t.begin ? t.begin : p.source;
-    p.end      = t.end ? t.end : p.position + strlen(p.position);
-    Block_Obj root = SASS_MEMORY_NEW(Block, pstate);
-    p.block_stack.push_back(root);
-    root->is_root(true);
-    return p;
   }
 
   /* main entry point to parse root block */
@@ -584,8 +558,9 @@ namespace Sass {
           css_error("Invalid CSS", " after ", ": expected expression (e.g. 1px, bold), was ");
         }
         // pass inner expression to the parser to resolve nested interpolations
-        pstate.add(p, p+2);
-        ExpressionObj interpolant = Parser::from_c_str(p+2, j, ctx, traces, pstate).parse_list();
+        LocalOption<const char*> partEnd(end, j);
+        LocalOption<const char*> partBeg(position, p + 2);
+        ExpressionObj interpolant = parse_list();
         // set status on the list expression
         interpolant->is_interpolant(true);
         // schema->has_interpolants(true);
@@ -1583,7 +1558,9 @@ namespace Sass {
         const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, chunk.end); // find the closing brace
         if (j) { --j;
           // parse the interpolant and accumulate it
-          ExpressionObj interp_node = Parser::from_token(Token(p+2, j), ctx, traces, pstate, source).parse_list();
+          LocalOption<const char*> partEnd(end, j);
+          LocalOption<const char*> partBeg(position, p + 2);
+          ExpressionObj interp_node = parse_list();
           interp_node->is_interpolant(true);
           schema->append(interp_node);
           i = j;
@@ -1706,7 +1683,9 @@ namespace Sass {
         const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p+2, str.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
-          ExpressionObj interp_node = Parser::from_token(Token(p+2, j), ctx, traces, pstate, source).parse_list();
+          LocalOption<const char*> partEnd(end, j);
+          LocalOption<const char*> partBeg(position, p + 2);
+          ExpressionObj interp_node = parse_list();
           interp_node->is_interpolant(true);
           schema->append(interp_node);
           i = j;
@@ -1884,7 +1863,9 @@ namespace Sass {
         const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p+2, id.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
-          ExpressionObj interp_node = Parser::from_token(Token(p+2, j), ctx, traces, pstate, source).parse_list(DELAYED);
+          LocalOption<const char*> partEnd(end, j);
+          LocalOption<const char*> partBeg(position, p + 2);
+          ExpressionObj interp_node = parse_list(DELAYED);
           interp_node->is_interpolant(true);
           schema->append(interp_node);
           // schema->has_interpolants(true);
@@ -2072,7 +2053,7 @@ namespace Sass {
       css_error("Invalid CSS", " after ", ": expected identifier, was ");
     }
     // return object
-    return token;
+    return lexed;
   }
   // helper to parse identifier
   Token Parser::lex_identifier()
@@ -2082,7 +2063,7 @@ namespace Sass {
       css_error("Invalid CSS", " after ", ": expected identifier, was ");
     }
     // return object
-    return token;
+    return lexed;
   }
 
   EachRuleObj Parser::parse_each_directive()
