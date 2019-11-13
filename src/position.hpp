@@ -110,6 +110,22 @@ namespace Sass {
       Position pos() { return *this; }
       SourceSpan pstate() { return *this; }
 
+      const char* getPath() const {
+        return path;
+      }
+      const char* getRawData() const {
+        return src;
+      }
+      size_t getLine() const {
+        return line + 1;
+      }
+      size_t getColumn() const {
+        return column + 1;
+      }
+      size_t getSrcId() const {
+        return file;
+      }
+
     public:
       const char* path;
       const char* src;

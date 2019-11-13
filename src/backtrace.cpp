@@ -15,7 +15,7 @@ namespace Sass {
       const Backtrace& trace = traces[i];
 
       // make path relative to the current directory
-      sass::string rel_path(File::abs2rel(trace.pstate.path, cwd, cwd));
+      sass::string rel_path(File::abs2rel(trace.pstate.getPath(), cwd, cwd));
 
       // skip functions on error cases (unsure why ruby sass does this)
       // if (trace.caller.substr(0, 6) == ", in f") continue;
@@ -23,9 +23,9 @@ namespace Sass {
       if (first) {
         ss << indent;
         ss << "on line ";
-        ss << trace.pstate.line + 1;
+        ss << trace.pstate.getLine();
         ss << ":";
-        ss << trace.pstate.column + 1;
+        ss << trace.pstate.getColumn();
         ss << " of " << rel_path;
         // ss << trace.caller;
         first = false;
@@ -34,9 +34,9 @@ namespace Sass {
         ss << std::endl;
         ss << indent;
         ss << "from line ";
-        ss << trace.pstate.line + 1;
+        ss << trace.pstate.getLine();
         ss << ":";
-        ss << trace.pstate.column + 1;
+        ss << trace.pstate.getColumn();
         ss << " of " << rel_path;
       }
 

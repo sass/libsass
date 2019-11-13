@@ -65,12 +65,12 @@ namespace Sass {
 
       if (e.traces.empty()) {
         // we normally should have some traces, still here as a fallback
-        sass::string rel_path(Sass::File::abs2rel(e.pstate.path, cwd, cwd));
+        sass::string rel_path(Sass::File::abs2rel(e.pstate.getPath(), cwd, cwd));
         msg_stream << sass::string(msg_prefix.size() + 2, ' ');
-        msg_stream << " on line " << e.pstate.line + 1 << " of " << rel_path << "\n";
+        msg_stream << " on line " << e.pstate.getLine() << " of " << rel_path << "\n";
       }
       else {
-        sass::string rel_path(Sass::File::abs2rel(e.pstate.path, cwd, cwd));
+        sass::string rel_path(Sass::File::abs2rel(e.pstate.getPath(), cwd, cwd));
         msg_stream << traces_to_string(e.traces, "        ");
       }
 
@@ -109,9 +109,9 @@ namespace Sass {
 
       JsonNode* json_err = json_mkobject();
       json_append_member(json_err, "status", json_mknumber(1));
-      json_append_member(json_err, "file", json_mkstring(e.pstate.path));
-      json_append_member(json_err, "line", json_mknumber((double)(e.pstate.line + 1)));
-      json_append_member(json_err, "column", json_mknumber((double)(e.pstate.column + 1)));
+      json_append_member(json_err, "file", json_mkstring(e.pstate.getPath()));
+      json_append_member(json_err, "line", json_mknumber((double)(e.pstate.getLine())));
+      json_append_member(json_err, "column", json_mknumber((double)(e.pstate.getColumn())));
       json_append_member(json_err, "message", json_mkstring(e.what()));
       json_append_member(json_err, "formatted", json_mkstream(msg_stream));
       try { c_ctx->error_json = json_stringify(json_err, "  "); }
@@ -119,10 +119,10 @@ namespace Sass {
       c_ctx->error_message = sass_copy_string(msg_stream.str());
       c_ctx->error_text = sass_copy_c_string(e.what());
       c_ctx->error_status = 1;
-      c_ctx->error_file = sass_copy_c_string(e.pstate.path);
-      c_ctx->error_line = e.pstate.line + 1;
-      c_ctx->error_column = e.pstate.column + 1;
-      c_ctx->error_src = sass_copy_c_string(e.pstate.src);
+      c_ctx->error_file = sass_copy_c_string(e.pstate.getPath());
+      c_ctx->error_line = e.pstate.getLine();
+      c_ctx->error_column = e.pstate.getColumn();
+      c_ctx->error_src = sass_copy_c_string(e.pstate.getRawData());
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
       json_delete(json_err);

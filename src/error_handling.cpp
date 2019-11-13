@@ -164,11 +164,11 @@ namespace Sass {
   void warning(sass::string msg, SourceSpan pstate)
   {
     sass::string cwd(Sass::File::get_cwd());
-    sass::string abs_path(Sass::File::rel2abs(pstate.path, cwd, cwd));
-    sass::string rel_path(Sass::File::abs2rel(pstate.path, cwd, cwd));
-    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.path));
+    sass::string abs_path(Sass::File::rel2abs(pstate.getPath(), cwd, cwd));
+    sass::string rel_path(Sass::File::abs2rel(pstate.getPath(), cwd, cwd));
+    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.getPath()));
 
-    std::cerr << "WARNING on line " << pstate.line+1 << ", column " << pstate.column+1 << " of " << output_path << ":" << std::endl;
+    std::cerr << "WARNING on line " << pstate.getLine() << ", column " << pstate.getColumn() << " of " << output_path << ":" << std::endl;
     std::cerr << msg << std::endl << std::endl;
   }
 
@@ -180,24 +180,24 @@ namespace Sass {
   void deprecated_function(sass::string msg, SourceSpan pstate)
   {
     sass::string cwd(Sass::File::get_cwd());
-    sass::string abs_path(Sass::File::rel2abs(pstate.path, cwd, cwd));
-    sass::string rel_path(Sass::File::abs2rel(pstate.path, cwd, cwd));
-    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.path));
+    sass::string abs_path(Sass::File::rel2abs(pstate.getPath(), cwd, cwd));
+    sass::string rel_path(Sass::File::abs2rel(pstate.getPath(), cwd, cwd));
+    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.getPath()));
 
     std::cerr << "DEPRECATION WARNING: " << msg << std::endl;
     std::cerr << "will be an error in future versions of Sass." << std::endl;
-    std::cerr << "        on line " << pstate.line+1 << " of " << output_path << std::endl;
+    std::cerr << "        on line " << pstate.getLine() << " of " << output_path << std::endl;
   }
 
   void deprecated(sass::string msg, sass::string msg2, bool with_column, SourceSpan pstate)
   {
     sass::string cwd(Sass::File::get_cwd());
-    sass::string abs_path(Sass::File::rel2abs(pstate.path, cwd, cwd));
-    sass::string rel_path(Sass::File::abs2rel(pstate.path, cwd, cwd));
-    sass::string output_path(Sass::File::path_for_console(rel_path, pstate.path, pstate.path));
+    sass::string abs_path(Sass::File::rel2abs(pstate.getPath(), cwd, cwd));
+    sass::string rel_path(Sass::File::abs2rel(pstate.getPath(), cwd, cwd));
+    sass::string output_path(Sass::File::path_for_console(rel_path, pstate.getPath(), pstate.getPath()));
 
-    std::cerr << "DEPRECATION WARNING on line " << pstate.line + 1;
-    if (with_column) std::cerr << ", column " << pstate.column + pstate.offset.column + 1;
+    std::cerr << "DEPRECATION WARNING on line " << pstate.getLine();
+    // if (with_column) std::cerr << ", column " << pstate.column + pstate.offset.column + 1;
     if (output_path.length()) std::cerr << " of " << output_path;
     std::cerr << ":" << std::endl;
     std::cerr << msg << std::endl;
@@ -208,12 +208,12 @@ namespace Sass {
   void deprecated_bind(sass::string msg, SourceSpan pstate)
   {
     sass::string cwd(Sass::File::get_cwd());
-    sass::string abs_path(Sass::File::rel2abs(pstate.path, cwd, cwd));
-    sass::string rel_path(Sass::File::abs2rel(pstate.path, cwd, cwd));
-    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.path));
+    sass::string abs_path(Sass::File::rel2abs(pstate.getPath(), cwd, cwd));
+    sass::string rel_path(Sass::File::abs2rel(pstate.getPath(), cwd, cwd));
+    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.getPath()));
 
     std::cerr << "WARNING: " << msg << std::endl;
-    std::cerr << "        on line " << pstate.line+1 << " of " << output_path << std::endl;
+    std::cerr << "        on line " << pstate.getLine() << " of " << output_path << std::endl;
     std::cerr << "This will be an error in future versions of Sass." << std::endl;
   }
 

@@ -81,7 +81,7 @@ namespace Sass {
     // check seems a bit esoteric but works
     if (ctx.resources.size() == 1) {
       // apply headers only on very first include
-      ctx.apply_custom_headers(root, path, pstate);
+      ctx.apply_custom_headers(root, getPath(), pstate);
     }
 
     // parse children nodes
@@ -346,9 +346,9 @@ namespace Sass {
         imp->urls().push_back(location.second);
       }
       // check if custom importers want to take over the handling
-      else if (!ctx.call_importers(unquote(location.first), path, pstate, imp)) {
+      else if (!ctx.call_importers(unquote(location.first), getPath(), pstate, imp)) {
         // nobody wants it, so we do our import
-        ctx.import_url(imp, location.first, path);
+        ctx.import_url(imp, location.first, getPath());
       }
     }
 

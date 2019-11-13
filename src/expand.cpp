@@ -786,9 +786,9 @@ namespace Sass {
     traces.push_back(Backtrace(c->pstate(), msg));
     ctx.callee_stack.push_back({
       c->name().c_str(),
-      c->pstate().path,
-      c->pstate().line + 1,
-      c->pstate().column + 1,
+      c->pstate().getPath(),
+      c->pstate().getLine(),
+      c->pstate().getColumn(),
       SASS_CALLEE_MIXIN,
       { env }
     });

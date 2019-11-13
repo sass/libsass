@@ -344,9 +344,9 @@ namespace Sass {
       // add call stack entry
       callee_stack().push_back({
         "@warn",
-        w->pstate().path,
-        w->pstate().line + 1,
-        w->pstate().column + 1,
+        w->pstate().getPath(),
+        w->pstate().getLine(),
+        w->pstate().getColumn(),
         SASS_CALLEE_FUNCTION,
         { env }
       });
@@ -392,9 +392,9 @@ namespace Sass {
       // add call stack entry
       callee_stack().push_back({
         "@error",
-        e->pstate().path,
-        e->pstate().line + 1,
-        e->pstate().column + 1,
+        e->pstate().getPath(),
+        e->pstate().getLine(),
+        e->pstate().getColumn(),
         SASS_CALLEE_FUNCTION,
         { env }
       });
@@ -436,9 +436,9 @@ namespace Sass {
       // add call stack entry
       callee_stack().push_back({
         "@debug",
-        d->pstate().path,
-        d->pstate().line + 1,
-        d->pstate().column + 1,
+        d->pstate().getPath(),
+        d->pstate().getLine(),
+        d->pstate().getColumn(),
         SASS_CALLEE_FUNCTION,
         { env }
       });
@@ -462,12 +462,12 @@ namespace Sass {
     }
 
     sass::string result(unquote(message->to_sass()));
-    sass::string abs_path(Sass::File::rel2abs(d->pstate().path, cwd(), cwd()));
-    sass::string rel_path(Sass::File::abs2rel(d->pstate().path, cwd(), cwd()));
-    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, d->pstate().path));
+    sass::string abs_path(Sass::File::rel2abs(d->pstate().getPath(), cwd(), cwd()));
+    sass::string rel_path(Sass::File::abs2rel(d->pstate().getPath(), cwd(), cwd()));
+    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, d->pstate().getPath()));
     options().output_style = outstyle;
 
-    std::cerr << output_path << ":" << d->pstate().line+1 << " DEBUG: " << result;
+    std::cerr << output_path << ":" << d->pstate().getLine() << " DEBUG: " << result;
     std::cerr << std::endl;
     return 0;
   }
@@ -1043,9 +1043,9 @@ namespace Sass {
       traces.push_back(Backtrace(c->pstate(), msg));
       callee_stack().push_back({
         c->name().c_str(),
-        c->pstate().path,
-        c->pstate().line + 1,
-        c->pstate().column + 1,
+        c->pstate().getPath(),
+        c->pstate().getLine(),
+        c->pstate().getColumn(),
         SASS_CALLEE_FUNCTION,
         { env }
       });
@@ -1083,9 +1083,9 @@ namespace Sass {
       traces.push_back(Backtrace(c->pstate(), msg));
       callee_stack().push_back({
         c->name().c_str(),
-        c->pstate().path,
-        c->pstate().line + 1,
-        c->pstate().column + 1,
+        c->pstate().getPath(),
+        c->pstate().getLine(),
+        c->pstate().getColumn(),
         SASS_CALLEE_C_FUNCTION,
         { env }
       });
@@ -1122,7 +1122,7 @@ namespace Sass {
 
     // link back to function definition
     // only do this for custom functions
-    if (result->pstate().file == sass::string::npos)
+    if (result->pstate().getSrcId() == sass::string::npos)
       result->pstate(c->pstate());
 
     result = result->perform(this);
