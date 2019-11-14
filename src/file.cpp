@@ -32,7 +32,7 @@
 
 # ifdef _MSC_VER
 # include <codecvt>
-inline static std::string wstring_to_string(const std::wstring& wstr)
+inline static Sass::sass::string wstring_to_string(const std::wstring& wstr)
 {
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> wchar_converter;
     return wchar_converter.to_bytes(wstr);
@@ -68,7 +68,7 @@ namespace Sass {
         wchar_t wd[wd_len];
         wchar_t* pwd = _wgetcwd(wd, wd_len);
         if (pwd == NULL) throw Exception::OperationError("cwd gone missing");
-        sass::string cwd = wstring_to_string(pwd).c_str();
+        sass::string cwd = wstring_to_string(pwd);
         //convert backslashes to forward slashes
         replace(cwd.begin(), cwd.end(), '\\', '/');
       #endif

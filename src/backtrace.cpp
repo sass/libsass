@@ -4,7 +4,7 @@ namespace Sass {
 
   const sass::string traces_to_string(Backtraces traces, sass::string indent) {
 
-    sass::sstream ss;
+    sass::ostream ss;
     sass::string cwd(File::get_cwd());
 
     bool first = true;

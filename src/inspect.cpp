@@ -570,7 +570,7 @@ namespace Sass {
     // reduce units
     n->reduce();
 
-    sass::sstream ss;
+    sass::ostream ss;
     ss.precision(opt.precision);
     ss << std::fixed << n->value();
 
@@ -627,7 +627,7 @@ namespace Sass {
   void Inspect::operator()(Color_RGBA* c)
   {
     // output the final token
-    sass::sstream ss;
+    sass::ostream ss;
 
     // original color name
     // maybe an unknown token
@@ -656,7 +656,7 @@ namespace Sass {
         res_name = color_to_name(numval);
     }
 
-    sass::sstream hexlet;
+    sass::ostream hexlet;
     // dart sass compressed all colors in regular css always
     // ruby sass and libsass does it only when not delayed
     // since color math is going to be removed, this can go too

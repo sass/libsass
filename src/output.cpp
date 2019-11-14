@@ -135,7 +135,7 @@ namespace Sass {
       indentation += r->tabs();
     }
     if (opt.source_comments) {
-      sass::sstream ss;
+      sass::ostream ss;
       append_indentation();
       sass::string path(File::abs2rel(r->pstate().path));
       ss << "/* line " << r->pstate().line + 1 << ", " << path << " */";

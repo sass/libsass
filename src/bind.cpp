@@ -52,7 +52,7 @@ namespace Sass {
             }
           }
         }
-        sass::sstream msg;
+        sass::ostream msg;
         msg << "wrong number of arguments (" << LA << " for " << LP << ")";
         msg << " for `" << name << "'";
         return error(msg.str(), as->pstate(), traces);
@@ -189,7 +189,7 @@ namespace Sass {
         } else {
           if (arglist->length() > LP - ip && !ps->has_rest_parameter()) {
             size_t arg_count = (arglist->length() + LA - 1);
-            sass::sstream msg;
+            sass::ostream msg;
             msg << callee << " takes " << LP;
             msg << (LP == 1 ? " argument" : " arguments");
             msg << " but " << arg_count;
@@ -229,7 +229,7 @@ namespace Sass {
           sass::string param = "$" + unquote(val->value());
 
           if (!param_map.count(param)) {
-            sass::sstream msg;
+            sass::ostream msg;
             msg << callee << " has no parameter named " << param;
             error(msg.str(), a->pstate(), traces);
           }
@@ -243,7 +243,7 @@ namespace Sass {
 
       if (a->name().empty()) {
         if (env->has_local(p->name())) {
-          sass::sstream msg;
+          sass::ostream msg;
           msg << "parameter " << p->name()
           << " provided more than once in call to " << callee;
           error(msg.str(), a->pstate(), traces);
@@ -258,21 +258,21 @@ namespace Sass {
           if (ps->has_rest_parameter()) {
             varargs->append(a);
           } else {
-            sass::sstream msg;
+            sass::ostream msg;
             msg << callee << " has no parameter named " << a->name();
             error(msg.str(), a->pstate(), traces);
           }
         }
         if (param_map[a->name()]) {
           if (param_map[a->name()]->is_rest_parameter()) {
-            sass::sstream msg;
+            sass::ostream msg;
             msg << "argument " << a->name() << " of " << callee
                 << "cannot be used as named argument";
             error(msg.str(), a->pstate(), traces);
           }
         }
         if (env->has_local(a->name())) {
-          sass::sstream msg;
+          sass::ostream msg;
           msg << "parameter " << p->name()
               << "provided more than once in call to " << callee;
           error(msg.str(), a->pstate(), traces);

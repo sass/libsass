@@ -104,7 +104,7 @@ namespace Sass {
       if (
         string_argument(env["$alpha"])
       ) {
-        sass::sstream strm;
+        sass::ostream strm;
         strm << "rgba("
                  << (int)c_arg->r() << ", "
                  << (int)c_arg->g() << ", "
@@ -579,7 +579,7 @@ namespace Sass {
       double b = clip(c->b(), 0.0, 255.0);
       double a = clip(c->a(), 0.0, 1.0) * 255.0;
 
-      sass::sstream ss;
+      sass::ostream ss;
       ss << '#' << std::setw(2) << std::setfill('0');
       ss << std::hex << std::setw(2) << static_cast<unsigned long>(Sass::round(a, ctx.c_options.precision));
       ss << std::hex << std::setw(2) << static_cast<unsigned long>(Sass::round(r, ctx.c_options.precision));

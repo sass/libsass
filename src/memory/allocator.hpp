@@ -16,8 +16,6 @@ namespace Sass {
 #ifndef SASS_CUSTOM_ALLOCATOR
 
   template <typename T> using Allocator = std::allocator<T>;
-  inline void* allocateMem(size_t size) { return malloc(size); }
-  inline void deallocateMem(void* ptr, size_t = 1) { free(ptr); }
 
 #else
 
