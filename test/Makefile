@@ -12,11 +12,11 @@ test_util_string: build/test_util_string
 build:
 	@mkdir build
 
-build/test_shared_ptr: test_shared_ptr.cpp ../src/memory/SharedPtr.cpp | build
-	$(CXX) $(CXXFLAGS) -o build/test_shared_ptr test_shared_ptr.cpp ../src/memory/SharedPtr.cpp
+build/test_shared_ptr: test_shared_ptr.cpp ../src/memory/shared_ptr.cpp | build
+	$(CXX) $(CXXFLAGS) ../src/memory/allocator.cpp ../src/memory/shared_ptr.cpp -o build/test_shared_ptr test_shared_ptr.cpp
 
 build/test_util_string: test_util_string.cpp ../src/util_string.cpp | build
-	$(CXX) $(CXXFLAGS) -o build/test_util_string test_util_string.cpp ../src/util_string.cpp
+	$(CXX) $(CXXFLAGS) ../src/memory/allocator.cpp ../src/util_string.cpp -o build/test_util_string test_util_string.cpp
 
 clean: | build
 	rm -rf build

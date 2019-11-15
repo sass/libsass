@@ -334,7 +334,7 @@ namespace Sass {
 
     // error nicely on ambiguous imp_path
     if (resolved.size() > 1) {
-      sass::sstream msg_stream;
+      sass::ostream msg_stream;
       msg_stream << "It's not clear which file to import for ";
       msg_stream << "'@import \"" << imp.imp_path << "\"'." << "\n";
       msg_stream << "Candidates:" << "\n";
@@ -423,7 +423,7 @@ namespace Sass {
           // create unique path to use as key
           sass::string uniq_path = load_path;
           if (!only_one && count) {
-            sass::sstream path_strm;
+            sass::ostream path_strm;
             path_strm << uniq_path << ":" << count;
             uniq_path = path_strm.str();
           }
@@ -557,7 +557,9 @@ namespace Sass {
     }
 
     // abort early if no content could be loaded (various reasons)
-    if (!contents) throw std::runtime_error("File to read not found or unreadable: " + input_path);
+    if (!contents) throw std::runtime_error(
+      "File to read not found or unreadable: "
+      + std::string(input_path.c_str()));
 
     // store entry path
     entry_path = abs_path;
@@ -673,8 +675,8 @@ namespace Sass {
   sass::string Context::format_embedded_source_map()
   {
     sass::string map = emitter.render_srcmap(*this);
-    std::istringstream is( map );
-    std::ostringstream buffer;
+    sass::istream is( map.c_str() );
+    sass::ostream buffer;
     base64::encoder E;
     E.encode(is, buffer);
     sass::string url = "data:application/json;base64," + buffer.str();
@@ -720,7 +722,7 @@ namespace Sass {
   void register_function(Context& ctx, Signature sig, Native_Function f, size_t arity, Env* env)
   {
     Definition* def = make_native_function(sig, f, ctx);
-    sass::sstream ss;
+    sass::ostream ss;
     ss << def->name() << "[f]" << arity;
     def->environment(env);
     (*env)[ss.str()] = def;
@@ -729,11 +731,11 @@ namespace Sass {
   void register_overload_stub(Context& ctx, sass::string name, Env* env)
   {
     Definition* stub = SASS_MEMORY_NEW(Definition,
-                                       SourceSpan("[built-in function]"),
-                                       0,
+                                       SourceSpan{ "[built-in function]" },
+                                       nullptr,
                                        name,
-                                       {},
-                                       0,
+                                       Parameters_Obj{},
+                                       nullptr,
                                        true);
     (*env)[name + "[f]"] = stub;
   }

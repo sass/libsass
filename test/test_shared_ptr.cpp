@@ -1,4 +1,5 @@
-#include "../src/memory/SharedPtr.hpp"
+#include "../src/memory/allocator.hpp"
+#include "../src/memory/shared_ptr.hpp"
 
 #include <iostream>
 #include <memory>
@@ -15,8 +16,8 @@ class TestObj : public Sass::SharedObj {
  public:
   TestObj(bool *destroyed) : destroyed_(destroyed) {}
   ~TestObj() { *destroyed_ = true; }
-  std::string to_string() const {
-    std::ostringstream result;
+  Sass::sass::string to_string() const {
+    Sass::sass::ostream result;
     result << "refcount=" << refcount << " destroyed=" << *destroyed_;
     return result.str();
   }
@@ -29,7 +30,7 @@ using SharedTestObj = Sass::SharedImpl<TestObj>;
 bool TestOneSharedPtr() {
   bool destroyed = false;
   {
-    SharedTestObj a = new TestObj(&destroyed);
+    SharedTestObj a = SASS_MEMORY_NEW(TestObj, &destroyed);
   }
   ASSERT(destroyed);
   return true;
@@ -38,7 +39,7 @@ bool TestOneSharedPtr() {
 bool TestTwoSharedPtrs() {
   bool destroyed = false;
   {
-    SharedTestObj a = new TestObj(&destroyed);
+    SharedTestObj a = SASS_MEMORY_NEW(TestObj, &destroyed);
     {
       SharedTestObj b = a;
     }
@@ -51,7 +52,7 @@ bool TestTwoSharedPtrs() {
 bool TestSelfAssignment() {
   bool destroyed = false;
   {
-    SharedTestObj a = new TestObj(&destroyed);
+    SharedTestObj a = SASS_MEMORY_NEW(TestObj, &destroyed);
     a = a;
     ASSERT(!destroyed);
   }
@@ -137,7 +138,7 @@ bool TestDetachNull() {
 
 class EmptyTestObj : public Sass::SharedObj {
   public:
-    std::string to_string() const { return ""; }
+    Sass::sass::string to_string() const { return ""; }
 };
 
 bool TestComparisonWithSharedPtr() {

@@ -4,9 +4,8 @@
 // sass.hpp must go before all system headers to get the
 // __EXTENSIONS__ fix on Solaris.
 #include "sass.hpp"
-
+#include "memory.hpp"
 #include "sass/functions.h"
-#include "memory/SharedPtr.hpp"
 
 /////////////////////////////////////////////
 // Forward declarations for the AST visitors.

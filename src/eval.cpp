@@ -184,7 +184,7 @@ namespace Sass {
     Number_Obj sass_end = Cast<Number>(high);
     // check if units are valid for sequence
     if (sass_start->unit() != sass_end->unit()) {
-      sass::sstream msg; msg << "Incompatible units: '"
+      sass::ostream msg; msg << "Incompatible units: '"
         << sass_end->unit() << "' and '"
         << sass_start->unit() << "'.";
       error(msg.str(), low->pstate(), traces);
@@ -952,7 +952,7 @@ namespace Sass {
   {
     if (traces.size() > Constants::MaxCallStack) {
         // XXX: this is never hit via spec tests
-        std::ostringstream stm;
+        sass::ostream stm;
         stm << "Stack depth exceeded max of " << Constants::MaxCallStack;
         error(stm.str(), c->pstate(), traces);
     }
@@ -1010,7 +1010,7 @@ namespace Sass {
     if (c->func()) def = c->func()->definition();
 
     if (def->is_overload_stub()) {
-      sass::sstream ss;
+      sass::ostream ss;
       size_t L = args->length();
       // account for rest arguments
       if (args->has_rest_argument() && args->length() > 0) {

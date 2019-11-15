@@ -154,13 +154,13 @@ namespace Sass {
       if (l) {
         double lv = l->value();
         if (lv < 1) {
-          sass::sstream err;
+          sass::ostream err;
           err << "$limit " << lv << " must be greater than or equal to 1 for `random'";
           error(err.str(), pstate, traces);
         }
         bool eq_int = std::fabs(trunc(lv) - lv) < NUMBER_EPSILON;
         if (!eq_int) {
-          sass::sstream err;
+          sass::ostream err;
           err << "Expected $limit to be an integer but got " << lv << " for `random'";
           error(err.str(), pstate, traces);
         }
@@ -184,7 +184,7 @@ namespace Sass {
     Signature unique_id_sig = "unique-id()";
     BUILT_IN(unique_id)
     {
-      sass::sstream ss;
+      sass::ostream ss;
       std::uniform_real_distribution<> distributor(0, 4294967296); // 16^8
       uint_fast32_t distributed = static_cast<uint_fast32_t>(distributor(rand));
       ss << "u" << std::setfill('0') << std::setw(8) << std::hex << distributed;

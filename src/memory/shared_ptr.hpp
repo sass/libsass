@@ -4,6 +4,7 @@
 #include "sass/base.h"
 
 #include "../sass.hpp"
+#include "allocator.hpp"
 #include <cstddef>
 #include <iostream>
 #include <string>
@@ -16,6 +17,7 @@
 
 namespace Sass {
 
+  // Forward declaration
   class SharedPtr;
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -89,6 +91,15 @@ namespace Sass {
     #endif
 
     static void setTaint(bool val) { taint = val; }
+
+    #ifdef SASS_CUSTOM_ALLOCATOR
+    inline void* operator new(size_t nbytes) {
+      return allocateMem(nbytes);
+    }
+    inline void operator delete(void* ptr) {
+      return deallocateMem(ptr);
+    }
+    #endif
 
     virtual sass::string to_string() const = 0;
    protected:

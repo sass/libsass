@@ -71,7 +71,7 @@ namespace Sass {
       tmpnr.reduce();
       double v = tmpnr.value();
       if (!(lo <= v && v <= hi)) {
-        sass::sstream msg;
+        sass::ostream msg;
         msg << "argument `" << argname << "` of `" << sig << "` must be between ";
         msg << lo << " and " << hi;
         error(msg.str(), pstate, traces);
@@ -121,7 +121,7 @@ namespace Sass {
     SelectorListObj get_arg_sels(const sass::string& argname, Env& env, Signature sig, SourceSpan pstate, Backtraces traces, Context& ctx) {
       ExpressionObj exp = ARG(argname, Expression);
       if (exp->concrete_type() == Expression::NULL_VAL) {
-        sass::sstream msg;
+        sass::ostream msg;
         msg << argname << ": null is not a valid selector: it must be a string,\n";
         msg << "a list of strings, or a list of lists of strings for `" << function_name(sig) << "'";
         error(msg.str(), exp->pstate(), traces);
@@ -136,7 +136,7 @@ namespace Sass {
     CompoundSelectorObj get_arg_sel(const sass::string& argname, Env& env, Signature sig, SourceSpan pstate, Backtraces traces, Context& ctx) {
       ExpressionObj exp = ARG(argname, Expression);
       if (exp->concrete_type() == Expression::NULL_VAL) {
-        sass::sstream msg;
+        sass::ostream msg;
         msg << argname << ": null is not a string for `" << function_name(sig) << "'";
         error(msg.str(), exp->pstate(), traces);
       }

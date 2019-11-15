@@ -11,7 +11,7 @@
 // C++ helper
 namespace Sass {
   // see sass_copy_c_string(sass::string str)
-  static inline JsonNode* json_mkstream(const sass::sstream& stream)
+  static inline JsonNode* json_mkstream(const sass::ostream& stream)
   {
     // hold on to string on stack!
     sass::string str(stream.str());
@@ -20,7 +20,7 @@ namespace Sass {
 
   static void handle_string_error(Sass_Context* c_ctx, const sass::string& msg, int severety)
   {
-    sass::sstream msg_stream;
+    sass::ostream msg_stream;
     JsonNode* json_err = json_mkobject();
     msg_stream << "Internal Error: " << msg << std::endl;
     json_append_member(json_err, "status", json_mknumber(severety));
@@ -41,7 +41,7 @@ namespace Sass {
       throw;
     }
     catch (Exception::Base& e) {
-      sass::sstream msg_stream;
+      sass::ostream msg_stream;
       sass::string cwd(Sass::File::get_cwd());
       sass::string msg_prefix(e.errtype());
       bool got_newline = false;
@@ -128,7 +128,7 @@ namespace Sass {
       json_delete(json_err);
     }
     catch (std::bad_alloc& ba) {
-      sass::sstream msg_stream;
+      sass::ostream msg_stream;
       msg_stream << "Unable to allocate memory: " << ba.what();
       handle_string_error(c_ctx, msg_stream.str(), 2);
     }

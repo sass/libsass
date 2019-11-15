@@ -114,10 +114,8 @@ namespace Sass {
 
   namespace File {
 
-    static sass::vector<sass::string> defaultExtensions = { ".scss", ".sass", ".css" };
-
     sass::vector<Include> resolve_includes(const sass::string& root, const sass::string& file,
-      const sass::vector<sass::string>& exts = defaultExtensions);
+      const sass::vector<sass::string>& exts = { ".scss", ".sass", ".css" });
 
   }
 
