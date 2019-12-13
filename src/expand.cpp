@@ -188,9 +188,9 @@ namespace Sass {
     if (r->schema()) {
       SelectorListObj sel = eval(r->schema());
       r->selector(sel);
-      bool chroot = sel->has_real_parent_ref();
       for (auto complex : sel->elements()) {
-        complex->chroots(chroot);
+        // ToDo: maybe we can get rid of chroots?
+        complex->chroots(complex->has_real_parent_ref());
       }
 
     }
