@@ -1033,6 +1033,7 @@ namespace Sass {
 
       if (!in_wrapped && i == 0) append_indentation();
       if ((*g)[i] == nullptr) continue;
+      if (g->at(i)->length() == 0) continue;
       schedule_mapping(g->at(i)->last());
       // add_open_mapping((*g)[i]->last());
       (*g)[i]->perform(this);
