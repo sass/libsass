@@ -3,7 +3,8 @@
 
 #include <string>
 #include <cstring>
-// #include <iostream>
+#include "source_data.hpp"
+#include "ast_fwd_decl.hpp"
 
 namespace Sass {
 
@@ -99,23 +100,45 @@ namespace Sass {
     bool operator==(Token t)  { return to_string() == t.to_string(); }
   };
 
-  class SourceSpan : public Position {
-
-    public: // c-tor
-      SourceSpan(const char* path, const char* src = 0, const size_t file = sass::string::npos);
-      SourceSpan(const char* path, const char* src, const Position& position, Offset offset = Offset(0, 0));
-      SourceSpan(const char* path, const char* src, const Token& token, const Position& position, Offset offset = Offset(0, 0));
-
-    public: // down casts
-      Offset off() { return *this; }
-      Position pos() { return *this; }
-      SourceSpan pstate() { return *this; }
+  class SourceSpan {
 
     public:
-      const char* path;
-      const char* src;
+
+      SourceSpan(const char* path);
+
+      SourceSpan(SourceDataObj source,
+        const Offset& position = Offset(0, 0),
+        const Offset& offset = Offset(0, 0));
+
+      const char* getPath() const {
+        return source->getPath();
+      }
+
+      const char* getRawData() const {
+        return source->getRawData();
+      }
+
+      Offset getPosition() const {
+        return position;
+      }
+
+      size_t getLine() const {
+        return position.line + 1;
+      }
+
+      size_t getColumn() const {
+        return position.column + 1;
+      }
+
+      size_t getSrcId() const {
+        return source == nullptr
+          ? std::string::npos
+          : source->getSrcId();
+      }
+
+      SourceDataObj source;
+      Offset position;
       Offset offset;
-      Token token;
 
   };
 

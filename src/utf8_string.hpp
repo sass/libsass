@@ -3,6 +3,7 @@
 
 #include <string>
 #include "utf8.h"
+#include "memory.hpp"
 
 namespace Sass {
   namespace UTF_8 {

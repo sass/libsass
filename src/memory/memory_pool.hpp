@@ -1,9 +1,11 @@
 #ifndef SASS_MEMORY_POOL_H
 #define SASS_MEMORY_POOL_H
 
-#include "../sass.hpp"
-#include "../memory.hpp"
+#include <stdlib.h>
+#include <iostream>
+#include <algorithm>
 #include <climits>
+#include <vector>
 
 namespace Sass {
 

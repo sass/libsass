@@ -9,6 +9,9 @@
 #include "position.hpp"
 #include "mapping.hpp"
 
+#include "backtrace.hpp"
+#include "memory.hpp"
+
 #define VECTOR_PUSH(vec, ins) vec.insert(vec.end(), ins.begin(), ins.end())
 #define VECTOR_UNSHIFT(vec, ins) vec.insert(vec.begin(), ins.begin(), ins.end())
 
@@ -49,7 +52,7 @@ private:
   class OutputBuffer {
     public:
       OutputBuffer(void)
-      : buffer(""),
+      : buffer(),
         smap()
       { }
     public:

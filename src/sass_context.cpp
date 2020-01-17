@@ -65,24 +65,25 @@ namespace Sass {
 
       if (e.traces.empty()) {
         // we normally should have some traces, still here as a fallback
-        sass::string rel_path(Sass::File::abs2rel(e.pstate.path, cwd, cwd));
+        sass::string rel_path(Sass::File::abs2rel(e.pstate.getPath(), cwd, cwd));
         msg_stream << sass::string(msg_prefix.size() + 2, ' ');
-        msg_stream << " on line " << e.pstate.line + 1 << " of " << rel_path << "\n";
+        msg_stream << " on line " << e.pstate.getLine() << " of " << rel_path << "\n";
       }
       else {
-        sass::string rel_path(Sass::File::abs2rel(e.pstate.path, cwd, cwd));
+        sass::string rel_path(Sass::File::abs2rel(e.pstate.getPath(), cwd, cwd));
         msg_stream << traces_to_string(e.traces, "        ");
       }
 
       // now create the code trace (ToDo: maybe have util functions?)
-      if (e.pstate.line != sass::string::npos &&
-          e.pstate.column != sass::string::npos &&
-          e.pstate.src != nullptr) {
-        size_t lines = e.pstate.line;
+      if (e.pstate.position.line != sass::string::npos &&
+          e.pstate.position.column != sass::string::npos &&
+          e.pstate.source != nullptr) {
+        Offset offset(e.pstate.position);
+        size_t lines = offset.line;
         // scan through src until target line
         // move line_beg pointer to line start
         const char* line_beg;
-        for (line_beg = e.pstate.src; *line_beg != '\0'; ++line_beg) {
+        for (line_beg = e.pstate.getRawData(); *line_beg != '\0'; ++line_beg) {
           if (lines == 0) break;
           if (*line_beg == '\n') --lines;
         }
@@ -96,12 +97,12 @@ namespace Sass {
         size_t move_in = 0; size_t shorten = 0;
         size_t left_chars = 42; size_t max_chars = 76;
         // reported excerpt should not exceed `max_chars` chars
-        if (e.pstate.column > line_len) left_chars = e.pstate.column;
-        if (e.pstate.column > left_chars) move_in = e.pstate.column - left_chars;
+        if (offset.column > line_len) left_chars = offset.column;
+        if (offset.column > left_chars) move_in = offset.column - left_chars;
         if (line_len > max_chars + move_in) shorten = line_len - move_in - max_chars;
         utf8::advance(line_beg, move_in, line_end);
         utf8::retreat(line_end, shorten, line_beg);
-        sass::string sanitized; sass::string marker(e.pstate.column - move_in, '-');
+        sass::string sanitized; sass::string marker(offset.column - move_in, '-');
         utf8::replace_invalid(line_beg, line_end, std::back_inserter(sanitized));
         msg_stream << ">> " << sanitized << "\n";
         msg_stream << "   " << marker << "^\n";
@@ -109,9 +110,9 @@ namespace Sass {
 
       JsonNode* json_err = json_mkobject();
       json_append_member(json_err, "status", json_mknumber(1));
-      json_append_member(json_err, "file", json_mkstring(e.pstate.path));
-      json_append_member(json_err, "line", json_mknumber((double)(e.pstate.line + 1)));
-      json_append_member(json_err, "column", json_mknumber((double)(e.pstate.column + 1)));
+      json_append_member(json_err, "file", json_mkstring(e.pstate.getPath()));
+      json_append_member(json_err, "line", json_mknumber((double)(e.pstate.getLine())));
+      json_append_member(json_err, "column", json_mknumber((double)(e.pstate.getColumn())));
       json_append_member(json_err, "message", json_mkstring(e.what()));
       json_append_member(json_err, "formatted", json_mkstream(msg_stream));
       try { c_ctx->error_json = json_stringify(json_err, "  "); }
@@ -119,10 +120,10 @@ namespace Sass {
       c_ctx->error_message = sass_copy_string(msg_stream.str());
       c_ctx->error_text = sass_copy_c_string(e.what());
       c_ctx->error_status = 1;
-      c_ctx->error_file = sass_copy_c_string(e.pstate.path);
-      c_ctx->error_line = e.pstate.line + 1;
-      c_ctx->error_column = e.pstate.column + 1;
-      c_ctx->error_src = sass_copy_c_string(e.pstate.src);
+      c_ctx->error_file = sass_copy_c_string(e.pstate.getPath());
+      c_ctx->error_line = e.pstate.getLine();
+      c_ctx->error_column = e.pstate.getColumn();
+      c_ctx->error_src = sass_copy_c_string(e.pstate.getRawData());
       c_ctx->output_string = 0;
       c_ctx->source_map_string = 0;
       json_delete(json_err);

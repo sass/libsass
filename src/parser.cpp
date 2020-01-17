@@ -23,45 +23,39 @@ namespace Sass {
   using namespace Constants;
   using namespace Prelexer;
 
-  Parser Parser::from_c_str(const char* beg, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source, bool allow_parent)
+
+  Parser::Parser(SourceData* source, Context& ctx, Backtraces traces, bool allow_parent) :
+    SourceSpan(source),
+    ctx(ctx),
+    source(source),
+    begin(source->begin()),
+    position(source->begin()),
+    end(source->end()),
+    before_token(0, 0),
+    after_token(0, 0),
+    pstate(source->getSourceSpan()),
+    traces(traces),
+    indentation(0),
+    nestings(0),
+    allow_parent(allow_parent)
   {
-    pstate.offset.column = 0;
-    pstate.offset.line = 0;
-    Parser p(ctx, pstate, traces, allow_parent);
-    p.source   = source ? source : beg;
-    p.position = beg ? beg : p.source;
-    p.end      = p.position + strlen(p.position);
     Block_Obj root = SASS_MEMORY_NEW(Block, pstate);
-    p.block_stack.push_back(root);
+    stack.push_back(Scope::Root);
+    block_stack.push_back(root);
     root->is_root(true);
-    return p;
   }
 
-  Parser Parser::from_c_str(const char* beg, const char* end, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source, bool allow_parent)
-  {
-    pstate.offset.column = 0;
-    pstate.offset.line = 0;
-    Parser p(ctx, pstate, traces, allow_parent);
-    p.source   = source ? source : beg;
-    p.position = beg ? beg : p.source;
-    p.end      = end ? end : p.position + strlen(p.position);
-    Block_Obj root = SASS_MEMORY_NEW(Block, pstate);
-    p.block_stack.push_back(root);
-    root->is_root(true);
-    return p;
-  }
-
-   void Parser::advanceToNextToken() {
+  void Parser::advanceToNextToken() {
       lex < css_comments >(false);
       // advance to position
-      pstate += pstate.offset;
+      pstate.position += pstate.offset;
       pstate.offset.column = 0;
       pstate.offset.line = 0;
     }
 
-  SelectorListObj Parser::parse_selector(const char* beg, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source, bool allow_parent)
+  SelectorListObj Parser::parse_selector(SourceData* source, Context& ctx, Backtraces traces, bool allow_parent)
   {
-    Parser p = Parser::from_c_str(beg, ctx, traces, pstate, source, allow_parent);
+    Parser p(source, ctx, traces, allow_parent);
     // ToDo: remap the source-map entries somehow
     return p.parseSelectorList(false);
   }
@@ -70,18 +64,6 @@ namespace Sass {
   {
     return peek_linefeed(start ? start : position)
            && ! peek_css<exactly<'{'>>(start);
-  }
-
-  Parser Parser::from_token(Token t, Context& ctx, Backtraces traces, SourceSpan pstate, const char* source)
-  {
-    Parser p(ctx, pstate, traces);
-    p.source   = source ? source : t.begin;
-    p.position = t.begin ? t.begin : p.source;
-    p.end      = t.end ? t.end : p.position + strlen(p.position);
-    Block_Obj root = SASS_MEMORY_NEW(Block, pstate);
-    p.block_stack.push_back(root);
-    root->is_root(true);
-    return p;
   }
 
   /* main entry point to parse root block */
@@ -96,7 +78,7 @@ namespace Sass {
 
     // report invalid utf8
     if (it != end) {
-      pstate += Offset::init(position, it);
+      pstate.position += Offset::init(position, it);
       traces.push_back(Backtrace(pstate));
       throw Exception::InvalidSass(pstate, traces, "Invalid UTF-8 sequence");
     }
@@ -107,7 +89,7 @@ namespace Sass {
     // check seems a bit esoteric but works
     if (ctx.resources.size() == 1) {
       // apply headers only on very first include
-      ctx.apply_custom_headers(root, path, pstate);
+      ctx.apply_custom_headers(root, getPath(), pstate);
     }
 
     // parse children nodes
@@ -372,9 +354,9 @@ namespace Sass {
         imp->urls().push_back(location.second);
       }
       // check if custom importers want to take over the handling
-      else if (!ctx.call_importers(unquote(location.first), path, pstate, imp)) {
+      else if (!ctx.call_importers(unquote(location.first), getPath(), pstate, imp)) {
         // nobody wants it, so we do our import
-        ctx.import_url(imp, location.first, path);
+        ctx.import_url(imp, location.first, getPath());
       }
     }
 
@@ -571,7 +553,7 @@ namespace Sass {
         if (i < p) {
           sass::string parsed(i, p);
           String_Constant_Obj str = SASS_MEMORY_NEW(String_Constant, pstate, parsed);
-          pstate += Offset(parsed);
+          pstate.position += Offset(parsed);
           str->update_pstate(pstate);
           schema->append(str);
         }
@@ -584,15 +566,16 @@ namespace Sass {
           css_error("Invalid CSS", " after ", ": expected expression (e.g. 1px, bold), was ");
         }
         // pass inner expression to the parser to resolve nested interpolations
-        pstate.add(p, p+2);
-        ExpressionObj interpolant = Parser::from_c_str(p+2, j, ctx, traces, pstate).parse_list();
+        LocalOption<const char*> partEnd(end, j);
+        LocalOption<const char*> partBeg(position, p + 2);
+        ExpressionObj interpolant = parse_list();
         // set status on the list expression
         interpolant->is_interpolant(true);
         // schema->has_interpolants(true);
         // add to the string schema
         schema->append(interpolant);
         // advance parser state
-        pstate.add(p+2, j);
+        pstate.position.add(p+2, j);
         // advance position
         i = j;
       }
@@ -603,7 +586,7 @@ namespace Sass {
         if (i < end_of_selector) {
           sass::string parsed(i, end_of_selector);
           String_Constant_Obj str = SASS_MEMORY_NEW(String_Constant, pstate, parsed);
-          pstate += Offset(parsed);
+          pstate.position += Offset(parsed);
           str->update_pstate(pstate);
           i = end_of_selector;
           schema->append(str);
@@ -620,7 +603,7 @@ namespace Sass {
     selector_schema->update_pstate(pstate);
     schema->update_pstate(pstate);
 
-    after_token = before_token = pstate;
+    after_token = before_token = pstate.position;
 
     // return parsed result
     return selector_schema.detach();
@@ -966,7 +949,7 @@ namespace Sass {
     }
 
     SourceSpan ps = map->pstate();
-    ps.offset = pstate - ps + pstate.offset;
+    ps.offset = pstate.position - ps.position + pstate.offset;
     map->pstate(ps);
 
     return map;
@@ -1106,7 +1089,7 @@ namespace Sass {
     if (operands.size() == 0) return conj;
     // fold all operands into one binary expression
     ExpressionObj ex = fold_operands(conj, operands, { Sass_OP::OR });
-    state.offset = pstate - state + pstate.offset;
+    state.offset = pstate.position - state.position + pstate.offset;
     ex->pstate(state);
     return ex;
   }
@@ -1129,7 +1112,7 @@ namespace Sass {
     if (operands.size() == 0) return rel;
     // fold all operands into one binary expression
     ExpressionObj ex = fold_operands(rel, operands, { Sass_OP::AND });
-    state.offset = pstate - state + pstate.offset;
+    state.offset = pstate.position - state.position + pstate.offset;
     ex->pstate(state);
     return ex;
   }
@@ -1178,7 +1161,7 @@ namespace Sass {
     // single nested items. So we cannot set delay on the
     // returned result here, as we have lost nestings ...
     ExpressionObj ex = fold_operands(lhs, operands, operators);
-    state.offset = pstate - state + pstate.offset;
+    state.offset = pstate.position - state.position + pstate.offset;
     ex->pstate(state);
     return ex;
   }
@@ -1227,7 +1210,7 @@ namespace Sass {
 
     if (operands.size() == 0) return lhs;
     ExpressionObj ex = fold_operands(lhs, operands, operators);
-    state.offset = pstate - state + pstate.offset;
+    state.offset = pstate.position - state.position + pstate.offset;
     ex->pstate(state);
     return ex;
   }
@@ -1257,7 +1240,7 @@ namespace Sass {
     }
     // operands and operators to binary expression
     ExpressionObj ex = fold_operands(factor, operands, operators);
-    state.offset = pstate - state + pstate.offset;
+    state.offset = pstate.position - state.position + pstate.offset;
     ex->pstate(state);
     return ex;
   }
@@ -1583,7 +1566,9 @@ namespace Sass {
         const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p + 2, chunk.end); // find the closing brace
         if (j) { --j;
           // parse the interpolant and accumulate it
-          ExpressionObj interp_node = Parser::from_token(Token(p+2, j), ctx, traces, pstate, source).parse_list();
+          LocalOption<const char*> partEnd(end, j);
+          LocalOption<const char*> partBeg(position, p + 2);
+          ExpressionObj interp_node = parse_list();
           interp_node->is_interpolant(true);
           schema->append(interp_node);
           i = j;
@@ -1706,7 +1691,9 @@ namespace Sass {
         const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p+2, str.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
-          ExpressionObj interp_node = Parser::from_token(Token(p+2, j), ctx, traces, pstate, source).parse_list();
+          LocalOption<const char*> partEnd(end, j);
+          LocalOption<const char*> partBeg(position, p + 2);
+          ExpressionObj interp_node = parse_list();
           interp_node->is_interpolant(true);
           schema->append(interp_node);
           i = j;
@@ -1884,7 +1871,9 @@ namespace Sass {
         const char* j = skip_over_scopes< exactly<hash_lbrace>, exactly<rbrace> >(p+2, id.end); // find the closing brace
         if (j) {
           // parse the interpolant and accumulate it
-          ExpressionObj interp_node = Parser::from_token(Token(p+2, j), ctx, traces, pstate, source).parse_list(DELAYED);
+          LocalOption<const char*> partEnd(end, j);
+          LocalOption<const char*> partBeg(position, p + 2);
+          ExpressionObj interp_node = parse_list(DELAYED);
           interp_node->is_interpolant(true);
           schema->append(interp_node);
           // schema->has_interpolants(true);
@@ -2072,7 +2061,7 @@ namespace Sass {
       css_error("Invalid CSS", " after ", ": expected identifier, was ");
     }
     // return object
-    return token;
+    return lexed;
   }
   // helper to parse identifier
   Token Parser::lex_identifier()
@@ -2082,7 +2071,7 @@ namespace Sass {
       css_error("Invalid CSS", " after ", ": expected identifier, was ");
     }
     // return object
-    return token;
+    return lexed;
   }
 
   EachRuleObj Parser::parse_each_directive()
@@ -2764,51 +2753,51 @@ namespace Sass {
     size_t skip = 0;
     sass::string encoding;
     bool utf_8 = false;
-    switch ((unsigned char) source[0]) {
+    switch ((unsigned char)position[0]) {
     case 0xEF:
-      skip = check_bom_chars(source, end, utf_8_bom, 3);
+      skip = check_bom_chars(position, end, utf_8_bom, 3);
       encoding = "UTF-8";
       utf_8 = true;
       break;
     case 0xFE:
-      skip = check_bom_chars(source, end, utf_16_bom_be, 2);
+      skip = check_bom_chars(position, end, utf_16_bom_be, 2);
       encoding = "UTF-16 (big endian)";
       break;
     case 0xFF:
-      skip = check_bom_chars(source, end, utf_16_bom_le, 2);
-      skip += (skip ? check_bom_chars(source, end, utf_32_bom_le, 4) : 0);
+      skip = check_bom_chars(position, end, utf_16_bom_le, 2);
+      skip += (skip ? check_bom_chars(position, end, utf_32_bom_le, 4) : 0);
       encoding = (skip == 2 ? "UTF-16 (little endian)" : "UTF-32 (little endian)");
       break;
     case 0x00:
-      skip = check_bom_chars(source, end, utf_32_bom_be, 4);
+      skip = check_bom_chars(position, end, utf_32_bom_be, 4);
       encoding = "UTF-32 (big endian)";
       break;
     case 0x2B:
-      skip = check_bom_chars(source, end, utf_7_bom_1, 4)
-           | check_bom_chars(source, end, utf_7_bom_2, 4)
-           | check_bom_chars(source, end, utf_7_bom_3, 4)
-           | check_bom_chars(source, end, utf_7_bom_4, 4)
-           | check_bom_chars(source, end, utf_7_bom_5, 5);
+      skip = check_bom_chars(position, end, utf_7_bom_1, 4)
+           | check_bom_chars(position, end, utf_7_bom_2, 4)
+           | check_bom_chars(position, end, utf_7_bom_3, 4)
+           | check_bom_chars(position, end, utf_7_bom_4, 4)
+           | check_bom_chars(position, end, utf_7_bom_5, 5);
       encoding = "UTF-7";
       break;
     case 0xF7:
-      skip = check_bom_chars(source, end, utf_1_bom, 3);
+      skip = check_bom_chars(position, end, utf_1_bom, 3);
       encoding = "UTF-1";
       break;
     case 0xDD:
-      skip = check_bom_chars(source, end, utf_ebcdic_bom, 4);
+      skip = check_bom_chars(position, end, utf_ebcdic_bom, 4);
       encoding = "UTF-EBCDIC";
       break;
     case 0x0E:
-      skip = check_bom_chars(source, end, scsu_bom, 3);
+      skip = check_bom_chars(position, end, scsu_bom, 3);
       encoding = "SCSU";
       break;
     case 0xFB:
-      skip = check_bom_chars(source, end, bocu_1_bom, 3);
+      skip = check_bom_chars(position, end, bocu_1_bom, 3);
       encoding = "BOCU-1";
       break;
     case 0x84:
-      skip = check_bom_chars(source, end, gb_18030_bom, 4);
+      skip = check_bom_chars(position, end, gb_18030_bom, 4);
       encoding = "GB-18030";
       break;
     default: break;
@@ -2891,24 +2880,10 @@ namespace Sass {
     return base;
   }
 
-  void Parser::error(sass::string msg, Position pos)
-  {
-    Position p(pos.line ? pos : before_token);
-    SourceSpan pstate(path, source, p, Offset(0, 0));
-    // `pstate.src` may not outlive stack unwind so we must copy it.
-    // This is needed since we often parse dynamically generated code,
-    // e.g. for interpolations, and we normally don't want to keep this
-    // memory around after we parsed the AST tree successfully. Only on
-    // errors we want to preserve them for better error reporting.
-    char *src_copy = sass_copy_c_string(pstate.src);
-    pstate.src = src_copy;
-    traces.push_back(Backtrace(pstate));
-    throw Exception::InvalidSass(pstate, traces, msg, src_copy);
-  }
-
   void Parser::error(sass::string msg)
   {
-    error(msg, pstate);
+    traces.push_back(Backtrace(pstate));
+    throw Exception::InvalidSass(pstate, traces, msg);
   }
 
   // print a css parsing error with actual context information from parsed source
@@ -2921,13 +2896,13 @@ namespace Sass {
     if (!pos) pos = position;
 
     const char* last_pos(pos);
-    if (last_pos > source) {
-      utf8::prior(last_pos, source);
+    if (last_pos > begin) {
+      utf8::prior(last_pos, begin);
     }
     // backup position to last significant char
-    while (trim && last_pos > source && last_pos < end) {
+    while (trim && last_pos > begin&& last_pos < end) {
       if (!Util::ascii_isspace(static_cast<unsigned char>(*last_pos))) break;
-      utf8::prior(last_pos, source);
+      utf8::prior(last_pos, begin);
     }
 
     bool ellipsis_left = false;
@@ -2936,9 +2911,9 @@ namespace Sass {
 
     if (*pos_left) utf8::next(pos_left, end);
     if (*end_left) utf8::next(end_left, end);
-    while (pos_left > source) {
+    while (pos_left > begin) {
       if (utf8::distance(pos_left, end_left) >= max_len) {
-        utf8::prior(pos_left, source);
+        utf8::prior(pos_left, begin);
         ellipsis_left = *(pos_left) != '\n' &&
                         *(pos_left) != '\r';
         utf8::next(pos_left, end);
@@ -2946,13 +2921,13 @@ namespace Sass {
       }
 
       const char* prev = pos_left;
-      utf8::prior(prev, source);
+      utf8::prior(prev, begin);
       if (*prev == '\r') break;
       if (*prev == '\n') break;
       pos_left = prev;
     }
-    if (pos_left < source) {
-      pos_left = source;
+    if (pos_left < begin) {
+      pos_left = begin;
     }
 
     bool ellipsis_right = false;
@@ -2976,8 +2951,6 @@ namespace Sass {
     size_t right_subpos = right.size() > 15 ? right.size() - 15 : 0;
     if (left_subpos && ellipsis_left) left = ellipsis + left.substr(left_subpos);
     if (right_subpos && ellipsis_right) right = right.substr(right_subpos) + ellipsis;
-    // Hotfix when source is null, probably due to interpolation parsing!?
-    if (source == NULL || *source == 0) source = pstate.src;
     // now pass new message to the more generic error function
     error(msg + prefix + quote(left) + middle + quote(right));
   }

@@ -1,5 +1,6 @@
 #include "../sass.hpp"
-#include "../memory.hpp"
+#include "allocator.hpp"
+#include "memory_pool.hpp"
 
 #if defined (_MSC_VER) // Visual studio
 #define thread_local __declspec( thread )

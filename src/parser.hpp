@@ -13,6 +13,7 @@
 #include "context.hpp"
 #include "position.hpp"
 #include "prelexer.hpp"
+#include "source.hpp"
 
 #ifndef MAX_NESTING
 // Note that this limit is not an exact science
@@ -42,33 +43,23 @@ namespace Sass {
     Context& ctx;
     sass::vector<Block_Obj> block_stack;
     sass::vector<Scope> stack;
-    const char* source;
+    SourceDataObj source;
+    const char* begin;
     const char* position;
     const char* end;
-    Position before_token;
-    Position after_token;
+    Offset before_token;
+    Offset after_token;
     SourceSpan pstate;
     Backtraces traces;
     size_t indentation;
     size_t nestings;
     bool allow_parent;
-
     Token lexed;
 
-    Parser(Context& ctx, const SourceSpan& pstate, Backtraces traces, bool allow_parent = true)
-    : SourceSpan(pstate), ctx(ctx), block_stack(), stack(0),
-      source(0), position(0), end(0), before_token(pstate), after_token(pstate),
-      pstate(pstate), traces(traces), indentation(0), nestings(0), allow_parent(allow_parent)
-    {
-      stack.push_back(Scope::Root);
-    }
+    Parser(SourceData* source, Context& ctx, Backtraces, bool allow_parent = true);
 
-    // static Parser from_string(const sass::string& src, Context& ctx, SourceSpan pstate = SourceSpan("[STRING]"));
-    static Parser from_c_str(const char* src, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
-    static Parser from_c_str(const char* beg, const char* end, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[CSTRING]"), const char* source = nullptr, bool allow_parent = true);
-    static Parser from_token(Token t, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[TOKEN]"), const char* source = nullptr);
     // special static parsers to convert strings into certain selectors
-    static SelectorListObj parse_selector(const char* src, Context& ctx, Backtraces, SourceSpan pstate = SourceSpan("[SELECTOR]"), const char* source = nullptr, bool allow_parent = true);
+    static SelectorListObj parse_selector(SourceData* source, Context& ctx, Backtraces, bool allow_parent = true);
 
 #ifdef __clang__
 
@@ -189,7 +180,7 @@ namespace Sass {
       after_token.add(it_before_token, it_after_token);
 
       // ToDo: could probably do this incremental on original object (API wants offset?)
-      pstate = SourceSpan(path, source, lexed, before_token, after_token - before_token);
+      pstate = SourceSpan(source, before_token, after_token - before_token);
 
       // advance internal char iterator
       return position = it_after_token;
@@ -206,8 +197,8 @@ namespace Sass {
       Token prev = lexed;
       // store previous pointer
       const char* oldpos = position;
-      Position bt = before_token;
-      Position at = after_token;
+      Offset bt = before_token;
+      Offset at = after_token;
       SourceSpan op = pstate;
       // throw away comments
       // update srcmap position
@@ -241,7 +232,6 @@ namespace Sass {
 #endif
 
     void error(sass::string msg);
-    void error(sass::string msg, Position pos);
     // generate message with given and expected sample
     // text before and in the middle are configurable
     void css_error(const sass::string& msg,

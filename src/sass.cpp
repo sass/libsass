@@ -46,6 +46,7 @@ extern "C" {
 
   char* ADDCALL sass_copy_c_string(const char* str)
   {
+    if (str == nullptr) return nullptr;
     size_t len = strlen(str) + 1;
     char* cpy = (char*) sass_alloc_memory(len);
     std::memcpy(cpy, str, len);

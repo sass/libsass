@@ -388,7 +388,7 @@ namespace Sass {
       CssMediaRuleObj mediaContext;
       if (mediaContexts.hasKey(rule)) mediaContext = mediaContexts.get(rule);
       SelectorListObj ext = extendList(rule, newExtensions, mediaContext);
-      // If no extends actually happenedit (for example becaues unification
+      // If no extends actually happened (for example because unification
       // failed), we don't need to re-register the selector.
       if (ObjEqualityFn(oldValue, ext)) continue;
       rule->elements(ext->elements());
@@ -1063,7 +1063,7 @@ namespace Sass {
     // TODO(nweiz): I think there may be a way to get perfect trimming 
     // without going quadratic by building some sort of trie-like
     // data structure that can be used to look up superselectors.
-    // TODO(mgreter): Check how this perfoms in C++ (up the limit)
+    // TODO(mgreter): Check how this performs in C++ (up the limit)
     if (selectors.size() > 100) return selectors;
 
     // This is n² on the sequences, but only comparing between separate sequences

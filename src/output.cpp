@@ -137,8 +137,8 @@ namespace Sass {
     if (opt.source_comments) {
       sass::ostream ss;
       append_indentation();
-      sass::string path(File::abs2rel(r->pstate().path));
-      ss << "/* line " << r->pstate().line + 1 << ", " << path << " */";
+      sass::string path(File::abs2rel(r->pstate().getPath()));
+      ss << "/* line " << r->pstate().getLine() << ", " << path << " */";
       append_string(ss.str());
       append_optional_linefeed();
     }

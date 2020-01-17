@@ -55,7 +55,7 @@ namespace Sass {
 
   void AST_Node::update_pstate(const SourceSpan& pstate)
   {
-    pstate_.offset += pstate - pstate_ + pstate.offset;
+    pstate_.offset += pstate.position - pstate_.position + pstate.offset;
   }
 
   sass::string AST_Node::to_string(Sass_Inspect_Options opt) const

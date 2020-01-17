@@ -17,6 +17,7 @@
 #include "expand.hpp"
 #include "parser.hpp"
 #include "cssize.hpp"
+#include "source.hpp"
 
 namespace Sass {
   using namespace Constants;
@@ -273,11 +274,11 @@ namespace Sass {
 
     // get pointer to the loaded content
     const char* contents = resources[idx].contents;
-    // keep a copy of the path around (for parserstates)
-    // ToDo: we clean it, but still not very elegant!?
-    strings.push_back(sass_copy_c_string(inc.abs_path.c_str()));
+    SourceFileObj source = SASS_MEMORY_NEW(SourceFile,
+      inc.abs_path.c_str(), contents, idx);
+
     // create the initial parser state from resource
-    SourceSpan pstate(strings.back(), contents, idx);
+    SourceSpan pstate(source);
 
     // check existing import stack for possible recursion
     for (size_t i = 0; i < import_stack.size() - 2; ++i) {
@@ -298,7 +299,7 @@ namespace Sass {
     }
 
     // create a parser instance from the given c_str buffer
-    Parser p(Parser::from_c_str(contents, *this, traces, pstate));
+    Parser p(source, *this, traces);
     // do not yet dispose these buffers
     sass_import_take_source(import);
     sass_import_take_srcmap(import);
@@ -441,7 +442,7 @@ namespace Sass {
           if (const char* err_message = sass_import_get_error_message(include_ent)) {
             if (source || srcmap) register_resource({ importer, uniq_path }, { source, srcmap }, pstate);
             if (line == sass::string::npos && column == sass::string::npos) error(err_message, pstate, traces);
-            else error(err_message, SourceSpan(ctx_path, source, Position(line, column)), traces);
+            else { error(err_message, { pstate.source, { line, column } }, traces); }
           }
           // content for import was set
           else if (source) {
