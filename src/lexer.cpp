@@ -93,7 +93,9 @@ namespace Sass {
     const char* re_linebreak(const char* src)
     {
       // end of file or unix linefeed return here
-      if (*src == 0 || *src == '\n' || *src == '\f') return src + 1;
+      if (*src == 0) return src;
+      // end of file or unix linefeed return here
+      if (*src == '\n' || *src == '\f') return src + 1;
       // a carriage return may optionally be followed by a linefeed
       if (*src == '\r') return *(src + 1) == '\n' ? src + 2 : src + 1;
       // no linefeed
