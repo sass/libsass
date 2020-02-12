@@ -2242,7 +2242,7 @@ namespace Sass {
 
     while (lex_css < kwd_and >()) media_query->append(parse_media_expression());
     if (lex < identifier_schema >()) {
-      String_Schema* schema = SASS_MEMORY_NEW(String_Schema, pstate);
+      String_Schema_Obj schema = SASS_MEMORY_NEW(String_Schema, pstate);
       if (media_query->media_type()) {
         schema->append(media_query->media_type());
         schema->append(SASS_MEMORY_NEW(String_Constant, pstate, " "));
