@@ -2849,6 +2849,13 @@ namespace Sass {
       }
     }
 
+    if (operands.size() > Constants::MaxCallStack) {
+        // XXX: this is never hit via spec tests
+        sass::ostream stm;
+        stm << "Stack depth exceeded max of " << Constants::MaxCallStack;
+        error(stm.str());
+    }
+
     for (size_t S = operands.size(); i < S; ++i) {
       if (String_Schema* schema = Cast<String_Schema>(operands[i])) {
         if (schema->has_interpolants()) {
