@@ -69,7 +69,7 @@ src_c = files(
 
 subdir('memory')
 
-sass_lib = library('sass', src_cpp, src_c, include_directories: sass_inc, dependencies: deps)
+sass_lib = library('sass', src_cpp, src_c, include_directories: sass_inc, dependencies: deps, install: true)
 
 sass_dep = declare_dependency(link_with: sass_lib, include_directories: sass_inc)
 
