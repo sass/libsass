@@ -5,9 +5,10 @@ if target_machine.system() == 'windows'
 endif
 
 deps = [
-  meson.get_compiler('cpp').find_library('dl', required:true)
+  meson.get_compiler('cpp').find_library('dl', required: false)
 ]
 
+subdir('res') # Must be before src as src_res is declared here and used there
 subdir('include')
 subdir('src')
 subdir('contrib')

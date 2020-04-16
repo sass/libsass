@@ -69,10 +69,11 @@ src_c = files(
 
 subdir('memory')
 
-sass_lib = library('sass', src_cpp, src_c, include_directories: sass_inc, dependencies: deps, install: true)
+sass_lib = library('sass', src_cpp, src_c, src_res, include_directories: sass_inc, dependencies: deps, install: true)
 
 sass_dep = declare_dependency(link_with: sass_lib, include_directories: sass_inc)
 
-import('pkgconfig').generate(sass_lib,
+import('pkgconfig').generate(
+  sass_lib,
   description: 'A C implementation of a Sass compiler'
 )
