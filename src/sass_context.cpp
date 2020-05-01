@@ -704,6 +704,23 @@ extern "C" {
   }
 
   // Push function for plugin paths (no manipulation support for now)
+  size_t ADDCALL sass_option_get_plugin_path_size(struct Sass_Options* options)
+  {
+    size_t len = 0;
+    struct string_list* cur = options->plugin_paths;
+    while (cur) { len++; cur = cur->next; }
+    return len;
+  }
+
+  // Push function for plugin paths (no manipulation support for now)
+  const char* ADDCALL sass_option_get_plugin_path(struct Sass_Options* options, size_t i)
+  {
+    struct string_list* cur = options->plugin_paths;
+    while (i) { i--; cur = cur->next; }
+    return cur->string;
+  }
+
+  // Push function for plugin paths (no manipulation support for now)
   void ADDCALL sass_option_push_plugin_path(struct Sass_Options* options, const char* path)
   {
 
