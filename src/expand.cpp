@@ -636,10 +636,9 @@ namespace Sass {
             env.set_local(variables[0], var);
           } else {
             for (size_t j = 0, K = variables.size(); j < K; ++j) {
-              ExpressionObj res = j >= scalars->length()
+              env.set_local(variables[j], j >= scalars->length()
                 ? SASS_MEMORY_NEW(Null, expr->pstate())
-                : (*scalars)[j]->perform(&eval);
-              env.set_local(variables[j], res);
+                : (*scalars)[j]->perform(&eval));
             }
           }
         } else {
