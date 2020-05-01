@@ -234,7 +234,7 @@ namespace Sass {
 
     sass::string path_for_console(const sass::string& rel_path, const sass::string& abs_path, const sass::string& orig_path)
     {
-      // magic algorith goes here!!
+      // magic algorithm goes here!!
 
       // if the file is outside this directory show the absolute path
       if (rel_path.substr(0, 3) == "../") {
@@ -247,7 +247,15 @@ namespace Sass {
     // create an absolute path by resolving relative paths with cwd
     sass::string rel2abs(const sass::string& path, const sass::string& base, const sass::string& cwd)
     {
-      return make_canonical_path(join_paths(join_paths(cwd + "/", base + "/"), path));
+      sass::string rv = make_canonical_path(join_paths(join_paths(cwd + "/", base + "/"), path));
+      #ifdef _WIN32
+      // On windows we may get an absolute path without directory
+      // In that case we should prepend the directory from the root
+      if (rv[0] == '/' && rv[1] != '/') {
+        rv.insert(0, cwd, 0, 2);
+      }
+      #endif
+      return rv;
     }
 
     // create a path that is relative to the given base directory
