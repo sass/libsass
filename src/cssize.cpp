@@ -86,7 +86,7 @@ namespace Sass {
 
     if (parent()->statement_type() == Statement::RULESET)
     {
-      return (r->is_keyframes()) ? SASS_MEMORY_NEW(Bubble, r->pstate(), r) : bubble(r);
+      return r->is_keyframes() ? SASS_MEMORY_NEW(Bubble, r->pstate(), r) : bubble(r);
     }
 
     p_stack.push_back(r);

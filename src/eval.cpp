@@ -288,12 +288,10 @@ namespace Sass {
             Expression* var = scalars;
             env.set_local(variables[0], var);
           } else {
-            // XXX: this is never hit via spec tests
+            // https://github.com/sass/libsass/issues/3078
             for (size_t j = 0, K = variables.size(); j < K; ++j) {
-              Expression* res = j >= scalars->length()
-                ? SASS_MEMORY_NEW(Null, expr->pstate())
-                : scalars->at(j);
-              env.set_local(variables[j], res);
+              env.set_local(variables[j], j >= scalars->length()
+                ? SASS_MEMORY_NEW(Null, expr->pstate()) : scalars->at(j));
             }
           }
         } else {
