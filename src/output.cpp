@@ -289,7 +289,7 @@ namespace Sass {
 
     for (size_t i = 0, L = b->length(); i < L; ++i) {
       Statement_Obj stm = b->get(i);
-      stm->perform(this);
+      if (stm) stm->perform(this);
       if (i < L - 1 && format) append_special_linefeed();
     }
 
