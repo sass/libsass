@@ -940,6 +940,16 @@ namespace Sass {
 
   }
 
+  bool cmpSimpleSelectors(SimpleSelector* a, SimpleSelector* b)
+  {
+    return (a->getSortOrder() < b->getSortOrder());
+  }
+
+  void CompoundSelector::sortChildren()
+  {
+    std::sort(begin(), end(), cmpSimpleSelectors);
+  }
+
   /* better return sass::vector? only - is empty container anyway? */
   SelectorList* ComplexSelector::resolve_parent_refs(SelectorStack pstack, Backtraces& traces, bool implicit_parent)
   {
