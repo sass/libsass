@@ -125,6 +125,9 @@ ADDAPI char** ADDCALL sass_context_get_included_files (struct Sass_Context* ctx)
 // Getters for options include path array
 ADDAPI size_t ADDCALL sass_option_get_include_path_size(struct Sass_Options* options);
 ADDAPI const char* ADDCALL sass_option_get_include_path(struct Sass_Options* options, size_t i);
+// Plugin paths to load dynamic libraries work the same
+ADDAPI size_t ADDCALL sass_option_get_plugin_path_size(struct Sass_Options* options);
+ADDAPI const char* ADDCALL sass_option_get_plugin_path(struct Sass_Options* options, size_t i);
 
 // Calculate the size of the stored null terminated array
 ADDAPI size_t ADDCALL sass_context_get_included_files_size (struct Sass_Context* ctx);
