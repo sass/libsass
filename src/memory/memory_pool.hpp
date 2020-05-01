@@ -55,7 +55,8 @@ namespace Sass {
     std::vector<void*> arenas;
 
     // One pointer for every bucket (zero init)
-    void* freeList[SassAllocatorBuckets] = {};
+    #pragma warning (suppress:4351)
+    void* freeList[SassAllocatorBuckets]{};
 
     // Increase the address until it sits on a
     // memory aligned address (maybe use `aligned`).
