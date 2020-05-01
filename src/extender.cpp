@@ -147,6 +147,7 @@ namespace Sass {
     for (auto target : extensions) {
       SimpleSelector* key = target.first;
       ExtSelExtMapEntry& val = target.second;
+      if (val.empty()) continue;
       if (originals.find(key) == originals.end()) {
         const Extension& extension = val.front().second;
         if (extension.isOptional) continue;
