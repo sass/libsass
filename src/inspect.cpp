@@ -1091,6 +1091,7 @@ namespace Sass {
     if (sel->hasRealParent()) {
       append_string("&");
     }
+    sel->sortChildren();
     for (auto& item : sel->elements()) {
       item->perform(this);
     }
