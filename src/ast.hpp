@@ -358,7 +358,7 @@ namespace Sass {
   class Hashed {
   private:
     std::unordered_map<
-      K, T, ObjHash, ObjEquality
+      K, T, ObjHash, ObjHashEquality
     > elements_;
 
     sass::vector<K> _keys;
@@ -396,7 +396,7 @@ namespace Sass {
     bool has_duplicate_key() const         { return duplicate_key_ != nullptr; }
     K get_duplicate_key() const  { return duplicate_key_; }
     const std::unordered_map<
-      K, T, ObjHash, ObjEquality
+      K, T, ObjHash, ObjHashEquality
     >& elements() { return elements_; }
     Hashed& operator<<(std::pair<K, T> p)
     {
@@ -432,7 +432,7 @@ namespace Sass {
       return *this;
     }
     const std::unordered_map<
-      K, T, ObjHash, ObjEquality
+      K, T, ObjHash, ObjHashEquality
     >& pairs() const { return elements_; }
 
     const sass::vector<K>& keys() const { return _keys; }
