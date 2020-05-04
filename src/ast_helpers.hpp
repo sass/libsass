@@ -150,6 +150,30 @@ namespace Sass {
   };
 
   // ###########################################################################
+  // Special compare function only for hashes.
+  // We need to make sure to not have objects equal that 
+  // have different hashes. This is currently an issue,
+  // since `1px` is equal to `1` but have different hashes.
+  // This goes away once we remove unitless equality.
+  // ###########################################################################
+
+  template <class T>
+  // Compare the objects and its hashes
+  bool ObjHashEqualityFn(const T& lhs, const T& rhs) {
+    if (lhs == nullptr) return rhs == nullptr;
+    else if (rhs == nullptr) return false;
+    else return lhs->hash() == rhs->hash();
+  }
+  struct ObjHashEquality {
+    template <class T>
+    // Compare the objects and its contents and hashes
+    bool operator() (const T& lhs, const T& rhs) const {
+      return ObjEqualityFn<T>(lhs, rhs) &&
+        ObjHashEqualityFn(lhs, rhs);
+    }
+  };
+
+  // ###########################################################################
   // Implement ordering operations for AST Nodes
   // ###########################################################################
 
