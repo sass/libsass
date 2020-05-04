@@ -54,15 +54,13 @@ namespace Sass {
         // https://stackoverflow.com/a/9356203/1550314
         // https://en.wikipedia.org/wiki/UTF-8#Description
         unsigned char chr = *begin;
-        // skip over 10xxxxxx
-        // is 1st bit not set
-        if ((chr & 128) == 0) {
+        // Ignore all `10xxxxxx` chars
+        // '0xxxxxxx' are ASCII chars
+        // '11xxxxxx' are utf8 starts
+        // 64 => initial utf8 byte
+        // 128 => regular ASCII char
+        if ((chr & 192) != 128) {
           // regular ASCII char
-          column += 1;
-        }
-        // is 2nd bit not set
-        else if ((chr & 64) == 0) {
-          // first utf8 byte
           column += 1;
         }
       }
