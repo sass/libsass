@@ -15,7 +15,11 @@ case $TOOLING in
     fi
   ;;
   meson)
-    pip3 install meson ninja
+    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+      pip3 install meson ninja
+    else
+      pip install meson ninja
+    fi
 esac
 
 exit 0
