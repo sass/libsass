@@ -15,7 +15,7 @@ case $TOOLING in
     fi
   ;;
   meson)
-    pip install meson ninja
+    pip3 install meson ninja
 esac
 
 exit 0
