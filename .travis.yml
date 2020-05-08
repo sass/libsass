@@ -5,27 +5,27 @@ language: cpp
 sudo: required
 
 # don't create redundant code coverage reports
-# - AUTOTOOLS=yes COVERAGE=yes BUILD=static
-# - AUTOTOOLS=no COVERAGE=yes BUILD=shared
-# - AUTOTOOLS=no COVERAGE=no BUILD=static
+# - TOOLING=autotools COVERAGE=yes BUILD=static
+# - TOOLING=make COVERAGE=yes BUILD=shared
+# - TOOLING=make COVERAGE=no BUILD=static
 
 # further speed up day by day travis-ci builds
 # re-enable this if you change the makefiles
 # this will still catch all coding errors!
-# - AUTOTOOLS=yes COVERAGE=no BUILD=static
+# - TOOLING=autotools COVERAGE=no BUILD=static
 
 # currently there are various issues when
 # built with coverage, clang and autotools
-# - AUTOTOOLS=yes COVERAGE=yes BUILD=shared
+# - TOOLING=autotools COVERAGE=yes BUILD=shared
 
 matrix:
-  include :
+  include:
     - os: linux
       compiler: gcc
-      env: AUTOTOOLS=no COVERAGE=yes BUILD=static
+      env: TOOLING=make COVERAGE=yes BUILD=static
     - os: linux
       compiler: g++-5
-      env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
+      env: TOOLING=autotools COVERAGE=no BUILD=shared
       addons:
         apt:
           sources:
@@ -34,7 +34,7 @@ matrix:
             - g++-5
     - os: linux
       compiler: g++-8
-      env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
+      env: TOOLING=autotools COVERAGE=no BUILD=shared
       addons:
         apt:
           sources:
@@ -45,19 +45,31 @@ matrix:
       compiler: clang
       # This build runs with ASan and we set `detect_odr_violation=0`
       # to work around https://bugs.llvm.org/show_bug.cgi?id=37545.
-      env: AUTOTOOLS=no COVERAGE=no BUILD=static ASAN_OPTIONS=detect_odr_violation=0
+      env: TOOLING=make COVERAGE=no BUILD=static ASAN_OPTIONS=detect_odr_violation=0
     - os: linux
       compiler: clang
-      env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
+      env: TOOLING=autotools COVERAGE=no BUILD=shared
+    - os: linux
+      compiler: gcc
+      env: TOOLING=meson COVERAGE=no BUILD=shared
+    - os: linux
+      compiler: clang
+      env: TOOLING=meson COVERAGE=yes BUILD=shared
+    - os: linux
+      compiler: gcc
+      env: TOOLING=meson COVERAGE=no BUILD=static
+    - os: linux
+      compiler: clang
+      env: TOOLING=meson COVERAGE=yes BUILD=static
     - os: osx
       compiler: clang
-      env: AUTOTOOLS=no COVERAGE=no BUILD=shared
+      env: TOOLING=make COVERAGE=no BUILD=shared
     - os: osx
       compiler: clang
-      env: AUTOTOOLS=no COVERAGE=no BUILD=static
+      env: TOOLING=make COVERAGE=no BUILD=static
     - os: osx
       compiler: clang
-      env: AUTOTOOLS=yes COVERAGE=no BUILD=shared
+      env: TOOLING=autotools COVERAGE=no BUILD=shared
 
 script:
   - ./script/ci-build-libsass
