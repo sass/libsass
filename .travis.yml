@@ -52,15 +52,31 @@ matrix:
     - os: linux
       compiler: gcc
       env: TOOLING=meson COVERAGE=no BUILD=shared
+      addons:
+        apt:
+          packages:
+            - python3-pip
     - os: linux
       compiler: clang
       env: TOOLING=meson COVERAGE=yes BUILD=shared
+      addons:
+        apt:
+          packages:
+            - python3-pip
     - os: linux
       compiler: gcc
       env: TOOLING=meson COVERAGE=no BUILD=static
+      addons:
+        apt:
+          packages:
+            - python3-pip
     - os: linux
       compiler: clang
       env: TOOLING=meson COVERAGE=yes BUILD=static
+      addons:
+        apt:
+          packages:
+            - python3-pip
     - os: osx
       compiler: clang
       env: TOOLING=make COVERAGE=no BUILD=shared
