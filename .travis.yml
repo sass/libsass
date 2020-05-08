@@ -56,6 +56,7 @@ matrix:
         apt:
           packages:
             - python3-pip
+            - python3-setuptools
     - os: linux
       compiler: clang
       env: TOOLING=meson COVERAGE=yes BUILD=shared
@@ -63,6 +64,7 @@ matrix:
         apt:
           packages:
             - python3-pip
+            - python3-setuptools
     - os: linux
       compiler: gcc
       env: TOOLING=meson COVERAGE=no BUILD=static
@@ -70,6 +72,7 @@ matrix:
         apt:
           packages:
             - python3-pip
+            - python3-setuptools
     - os: linux
       compiler: clang
       env: TOOLING=meson COVERAGE=yes BUILD=static
@@ -77,6 +80,7 @@ matrix:
         apt:
           packages:
             - python3-pip
+            - python3-setuptools
     - os: osx
       compiler: clang
       env: TOOLING=make COVERAGE=no BUILD=shared
@@ -86,6 +90,12 @@ matrix:
     - os: osx
       compiler: clang
       env: TOOLING=autotools COVERAGE=no BUILD=shared
+    - os: osx
+      compiler: clang
+      env: TOOLING=meson COVERAGE=no BUILD=shared
+    - os: osx
+      compiler: clang
+      env: TOOLING=meson COVERAGE=no BUILD=static
 
 script:
   - ./script/ci-build-libsass
