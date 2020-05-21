@@ -755,6 +755,20 @@ namespace Sass {
       sass::vector<Extension> exts = options[0];
       for (size_t n = 0; n < exts.size(); n += 1) {
         exts[n].assertCompatibleMediaContext(mediaQueryContext, traces);
+        // To fix invalid css we need to re-order some
+        // Therefore we need to make copies for them
+        if (exts[n].extender->isInvalidCss()) {
+          exts[n].extender = SASS_MEMORY_COPY(exts[n].extender);
+          for (SelectorComponentObj& component : exts[n].extender->elements()) {
+            if (CompoundSelector* compound = component->getCompound()) {
+              if (compound->isInvalidCss()) {
+                CompoundSelector* copy = SASS_MEMORY_COPY(compound);
+                copy->sortChildren();
+                component = copy;
+              }
+            }
+          }
+        }
         result.push_back(exts[n].extender);
       }
       return result;
@@ -844,10 +858,23 @@ namespace Sass {
       }
 
       for (sass::vector<SelectorComponentObj>& components : complexes) {
-        auto sel = SASS_MEMORY_NEW(ComplexSelector, "[ext]");
+        auto sel = SASS_MEMORY_NEW(ComplexSelector, "[unified]");
         sel->hasPreLineFeed(lineBreak);
         sel->elements(components);
+
+        /* This seems to do too much in regard of previous behavior
+        for (SelectorComponentObj& component : sel->elements()) {
+          if (CompoundSelector* compound = component->getCompound()) {
+            if (compound->isInvalidCss()) {
+              CompoundSelector* copy = SASS_MEMORY_COPY(compound);
+              copy->sortChildren();
+              component = copy;
+            }
+          }
+        }*/
+
         unifiedPaths.push_back(sel);
+
       }
 
     }
