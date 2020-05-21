@@ -70,6 +70,12 @@ namespace Sass {
       // skip parents here (called via resolve_parent_refs)
       s->at(i) = Cast<SimpleSelector>(ss->perform(this));
     }
+    // Warn on invalid selectors
+    if (s->isInvalidCss()) {
+      warning("LibSass detected an invalid selector order: \"" + s->to_string() + "\"\n"
+        "This may happen due to invalid use of the `&` parent selector.\n"
+        "It will make any group of selectors containing it invalid!", s->pstate());
+    }
     return s;
   }
 }

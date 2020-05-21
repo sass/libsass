@@ -182,6 +182,12 @@ namespace Sass {
     // We may have set hasRealParent
     if (seq && seq->empty() && !seq->hasRealParent()) return {};
 
+    // Warn on invalid selectors
+    if (seq->isInvalidCss()) {
+      warning("LibSass detected an invalid selector order: \"" + seq->to_string() + "\"\n"
+        "This will make any group of selectors containing it invalid!", seq->pstate());
+    }
+
     return seq;
   }
 
