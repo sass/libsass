@@ -433,6 +433,16 @@ namespace Sass {
     return false;
   }
 
+  bool ComplexSelector::isInvalidCss() const
+  {
+    for (size_t i = 0; i < length(); i += 1) {
+      if (CompoundSelectorObj compound = get(i)->getCompound()) {
+        if (compound->isInvalidCss()) return true;
+      }
+    }
+    return false;
+  }
+
   SelectorListObj ComplexSelector::wrapInList()
   {
     SelectorListObj selector =
@@ -525,15 +535,13 @@ namespace Sass {
   CompoundSelector::CompoundSelector(SourceSpan pstate, bool postLineBreak)
     : SelectorComponent(pstate, postLineBreak),
       Vectorized<SimpleSelectorObj>(),
-      hasRealParent_(false),
-      extended_(false)
+      hasRealParent_(false)
   {
   }
   CompoundSelector::CompoundSelector(const CompoundSelector* ptr)
     : SelectorComponent(ptr),
       Vectorized<SimpleSelectorObj>(*ptr),
-      hasRealParent_(ptr->hasRealParent()),
-      extended_(ptr->extended())
+      hasRealParent_(ptr->hasRealParent())
   { }
 
   size_t CompoundSelector::hash() const
@@ -948,6 +956,23 @@ namespace Sass {
   void CompoundSelector::sortChildren()
   {
     std::sort(begin(), end(), cmpSimpleSelectors);
+  }
+
+  bool CompoundSelector::isInvalidCss() const
+  {
+    size_t current = 0, next = 0;
+    for (const SimpleSelector* sel : elements()) {
+      next = sel->getSortOrder();
+      // Must only have one type selector
+      if (current == 1 && next == 1) {
+        return true;
+      }
+      if (next < current) {
+        return true;
+      }
+      current = next;
+    }
+    return false;
   }
 
   /* better return sass::vector? only - is empty container anyway? */
