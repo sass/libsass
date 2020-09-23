@@ -481,9 +481,9 @@ namespace Sass {
   {
     if (hash_ == 0) {
       hash_ = std::hash<double>()(value_);
-      for (const auto numerator : numerators)
+      for (const auto& numerator : numerators)
         hash_combine(hash_, std::hash<sass::string>()(numerator));
-      for (const auto denominator : denominators)
+      for (const auto& denominator : denominators)
         hash_combine(hash_, std::hash<sass::string>()(denominator));
     }
     return hash_;
