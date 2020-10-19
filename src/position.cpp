@@ -33,7 +33,7 @@ namespace Sass {
   {
     Offset offset(0, 0);
     if (end == 0) {
-      end += strlen(beg);
+      end = beg + strlen(beg);
     }
     offset.add(beg, end);
     return offset;
