@@ -12,6 +12,11 @@ Originally created by Aaron Leung ([@akhleung]) and Hampton Catlin ([@hcatlin])
 [![Bountysource](https://www.bountysource.com/badge/tracker?tracker_id=283068)](https://www.bountysource.com/trackers/283068-libsass?utm_source=283068&utm_medium=shield&utm_campaign=TRACKER_BADGE "Bountysource")
 [![Join us](https://libsass-slack.herokuapp.com/badge.svg)](https://libsass-slack.herokuapp.com/ "Slack communication channels")
 
+**Warning:** [LibSass is deprecated](https://sass-lang.com/blog/libsass-is-deprecated).
+While it will continue to receive maintenance releases indefinitely, there are no
+plans to add additional features or compatibility with any new CSS or Sass features.
+Projects that still use it should move onto
+[Dart Sass](https://sass-lang.com/dart-sass).
 
 [LibSass](https://github.com/sass/libsass "LibSass GitHub Project") is just a library!
 If you want to use LibSass to compile Sass, you need an implementer. Some
