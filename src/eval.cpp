@@ -1788,9 +1788,6 @@ namespace Sass {
     return queries;
   }
 
-
-
-
   Value* Eval::visitDeclaration(Declaration* node)
   {
 

@@ -1,19 +1,22 @@
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
 #include "fn_numbers.hpp"
 
 #include "compiler.hpp"
 #include "exceptions.hpp"
 #include "ast_values.hpp"
 
-#ifdef __MINGW32__
-#include "windows.h"
-#include "wincrypt.h"
-#endif
-
 namespace Sass {
 
   namespace Functions {
 
+    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+
     namespace Math {
+
+      /*******************************************************************/
 
       BUILT_IN_FN(round)
       {
@@ -23,6 +26,8 @@ namespace Sass {
           number->unit());
       }
 
+      /*******************************************************************/
+
       BUILT_IN_FN(ceil)
       {
         Number* number = arguments[0]->assertNumber(compiler, "number");
@@ -30,6 +35,8 @@ namespace Sass {
           std::ceil(number->value()),
           number->unit());
       }
+
+      /*******************************************************************/
 
       BUILT_IN_FN(floor)
       {
@@ -39,6 +46,8 @@ namespace Sass {
           number->unit());
       }
 
+      /*******************************************************************/
+
       BUILT_IN_FN(abs)
       {
         Number* number = arguments[0]->assertNumber(compiler, "number");
@@ -46,6 +55,8 @@ namespace Sass {
           std::abs(number->value()),
           number->unit());
       }
+
+      /*******************************************************************/
 
       BUILT_IN_FN(max)
       {
@@ -63,6 +74,8 @@ namespace Sass {
           compiler, pstate);
       }
 
+      /*******************************************************************/
+
       BUILT_IN_FN(min)
       {
         Number* min = nullptr;
@@ -78,6 +91,8 @@ namespace Sass {
           "At least one argument must be passed.",
           compiler, pstate);
       }
+
+      /*******************************************************************/
 
       BUILT_IN_FN(random)
       {
@@ -97,6 +112,8 @@ namespace Sass {
         throw Exception::SassScriptException(strm.str(), compiler, pstate);
       }
 
+      /*******************************************************************/
+
       BUILT_IN_FN(unit)
       {
         Number* number = arguments[0]->assertNumber(compiler, "number");
@@ -104,11 +121,15 @@ namespace Sass {
         return SASS_MEMORY_NEW(String, pstate, std::move(copy), true);
       }
 
+      /*******************************************************************/
+
       BUILT_IN_FN(isUnitless)
       {
         Number* number = arguments[0]->assertNumber(compiler, "number");
         return SASS_MEMORY_NEW(Boolean, pstate, !number->hasUnits());
       }
+
+      /*******************************************************************/
 
       BUILT_IN_FN(percentage)
       {
@@ -117,6 +138,8 @@ namespace Sass {
         return SASS_MEMORY_NEW(Number, pstate,
           number->value() * 100, "%");
       }
+
+      /*******************************************************************/
 
       BUILT_IN_FN(compatible)
       {
@@ -132,9 +155,10 @@ namespace Sass {
         return SASS_MEMORY_NEW(Boolean, pstate, is_comparable);
       }
 
-	    void registerFunctions(Compiler& ctx)
-	    {
+      /*******************************************************************/
 
+      void registerFunctions(Compiler& ctx)
+	    {
 		    ctx.registerBuiltInFunction("round", "$number", round);
 		    ctx.registerBuiltInFunction("ceil", "$number", ceil);
 		    ctx.registerBuiltInFunction("floor", "$number", floor);
@@ -146,10 +170,14 @@ namespace Sass {
 		    ctx.registerBuiltInFunction("percentage", "$number", percentage);
 		    ctx.registerBuiltInFunction("unitless", "$number", isUnitless);
 		    ctx.registerBuiltInFunction("comparable", "$number1, $number2", compatible);
-
 	    }
 
+      /*******************************************************************/
+
     }
+
+    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
 
   }
 
