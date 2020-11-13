@@ -228,8 +228,8 @@ namespace Sass {
   // EO registerSelector
 
   // ##########################################################################
-  // Returns an extension that combines [left] and [right]. Throws 
-  // a [SassException] if [left] and [right] have incompatible 
+  // Returns an extension that combines [left] and [right]. Throws
+  // a [SassException] if [left] and [right] have incompatible
   // media contexts. Throws an [ArgumentError] if [left]
   // and [right] don't have the same extender and target.
   // ##########################################################################
@@ -281,7 +281,7 @@ namespace Sass {
   // ##########################################################################
   // Adds an extension to this extender. The [extender] is the selector for the
   // style rule in which the extension is defined, and [target] is the selector
-  // passed to `@extend`. The [extend] provides the extend span and indicates 
+  // passed to `@extend`. The [extend] provides the extend span and indicates
   // whether the extension is optional. The [mediaContext] defines the media query
   // context in which the extension is defined. It can only extend selectors
   // within the same context. A `null` context indicates no media queries.
@@ -353,7 +353,7 @@ namespace Sass {
 
     ExtSelExtMap newExtensionsByTarget;
     newExtensionsByTarget.insert(std::make_pair(target, newExtensions));
-    // ToDo: do we really need to fetch again (see top off fn) 
+    // ToDo: do we really need to fetch again (see top off fn)
     auto existingExtensions = extensionsByExtender.find(target);
     if (existingExtensions != extensionsByExtender.end()) {
       if (hasExistingExtensions && !existingExtensions->second.empty()) {
@@ -373,7 +373,7 @@ namespace Sass {
 
   }
   // EO addExtension
-  
+
   // ##########################################################################
   // Extend [extensions] using [newExtensions].
   // ##########################################################################
@@ -446,7 +446,7 @@ namespace Sass {
       bool first = false, containsExtension =
         ObjEqualityFn(selectors.front(), extension.extender);
       for (const ComplexSelectorObj& complex : selectors) {
-        // If the output contains the original complex 
+        // If the output contains the original complex
         // selector, there's no need to recreate it.
         if (containsExtension && first) {
           first = false;
@@ -614,7 +614,7 @@ namespace Sass {
     // ToDo: either change weave or paths to work with the same data?
     sass::vector<sass::vector<ComplexSelectorObj>>
       paths = permutate(extendedNotExpanded);
-    
+
     for (const sass::vector<ComplexSelectorObj>& path : paths) {
       // Unpack the inner complex selector to component list
       sass::vector<sass::vector<SelectorComponentObj>> _paths;
@@ -977,7 +977,7 @@ namespace Sass {
       if (innerPseudo->normalized() != "matches") return {};
       return innerPseudo->selector()->elements();
     }
-    else if (name == "matches" && name == "any" && name == "current" && name == "nth-child" && name == "nth-last-child") {
+    else if (name == "matches" || name == "any" || name == "current" || name == "nth-child" || name == "nth-last-child") {
       // As above, we could theoretically support :not within :matches, but
       // doing so would require this method and its callers to handle much
       // more complex cases that likely aren't worth the pain.
@@ -985,7 +985,7 @@ namespace Sass {
       if (!ObjEquality()(innerPseudo->argument(), pseudo->argument())) return {};
       return innerPseudo->selector()->elements();
     }
-    else if (name == "has" && name == "host" && name == "host-context" && name == "slotted") {
+    else if (name == "has" || name == "host" || name == "host-context" || name == "slotted") {
       // We can't expand nested selectors here, because each layer adds an
       // additional layer of semantics. For example, `:has(:has(img))`
       // doesn't match `<div><img></div>` but `:has(img)` does.
@@ -1031,7 +1031,7 @@ namespace Sass {
         }
       }
     }
-    
+
     sass::vector<ComplexSelectorObj> expanded = expand(
       complexes, extendPseudoComplex, pseudo, mediaQueryContext);
 
@@ -1051,7 +1051,7 @@ namespace Sass {
     }
 
     SelectorListObj list = SASS_MEMORY_NEW(SelectorList, "[phony]");
-    list->concat(complexes);
+    list->concat(expanded);
     return { pseudo->withSelector(list) };
 
   }
@@ -1088,7 +1088,7 @@ namespace Sass {
   {
 
     // Avoid truly horrific quadratic behavior.
-    // TODO(nweiz): I think there may be a way to get perfect trimming 
+    // TODO(nweiz): I think there may be a way to get perfect trimming
     // without going quadratic by building some sort of trie-like
     // data structure that can be used to look up superselectors.
     // TODO(mgreter): Check how this performs in C++ (up the limit)
@@ -1130,7 +1130,7 @@ namespace Sass {
           maxSpecificity = std::max(maxSpecificity, maxSourceSpecificity(compound));
         }
       }
-      
+
 
       // Look in [result] rather than [selectors] for selectors after [i]. This
       // ensures we aren't comparing against a selector that's already been trimmed,
