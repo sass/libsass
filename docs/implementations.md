@@ -8,6 +8,7 @@ There are several implementations of `libsass` for a variety of languages. Here 
 
 ### Elixir
 * [sass.ex](https://github.com/scottdavis/sass.ex)
+* [sass_compiler](https://github.com/Youimmi/sass_compiler)
 
 ### Go
 * [go-libsass](https://github.com/wellington/go-libsass)

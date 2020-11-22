@@ -36,6 +36,7 @@ CLI tool built by the same people as LibSass.
 - https://github.com/medialize/sass.js (JS)
 - https://github.com/bit3/jsass (Java)
 - https://github.com/scottdavis/sass.ex (Elixir)
+- https://github.com/Youimmi/sass_compiler (Elixir)
 
 This list does not say anything about the quality of either the listed or not listed [implementations](docs/implementations.md)!
 The authors of the listed projects above are just known to work regularly together with LibSass developers.
