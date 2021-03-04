@@ -39,7 +39,7 @@ namespace Sass {
     {
       unsigned int cmp = unsigned(chr);
       return (cmp > 41 && cmp < 127) ||
-             cmp == ':' || cmp == '/';
+             cmp == ':' || cmp == '/' || cmp == '|';
     }
 
     // check if char is within a reduced ascii range
