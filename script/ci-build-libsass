@@ -71,32 +71,61 @@ echo SASS_SASSC_PATH: $SASS_SASSC_PATH
 echo SASS_SPEC_PATH: $SASS_SPEC_PATH
 echo INSTALL_LOCATION: $PREFIX
 
-if [ "x$AUTOTOOLS" == "xyes" ]; then
+# if [ "x$AUTOTOOLS" == "xyes" ]; then
 
-  echo -en 'travis_fold:start:configure\r'
-  autoreconf --force --install
-  ./configure --enable-tests $COVERAGE_OPT \
-    --disable-silent-rules \
-    --with-sassc-dir=$SASS_SASSC_PATH \
-    --with-sass-spec-dir=$SASS_SPEC_PATH \
-    --prefix=$PREFIX \
-    ${SHARED_OPT}
-  echo -en 'travis_fold:end:configure\r'
+#   echo -en 'travis_fold:start:configure\r'
+#   autoreconf --force --install
+#   ./configure --enable-tests $COVERAGE_OPT \
+#     --disable-silent-rules \
+#     --with-sassc-dir=$SASS_SASSC_PATH \
+#     --with-sass-spec-dir=$SASS_SPEC_PATH \
+#     --prefix=$PREFIX \
+#     ${SHARED_OPT}
+#   echo -en 'travis_fold:end:configure\r'
 
-  make $MAKE_OPTS clean
+#   make $MAKE_OPTS clean
 
-else
+# else
 
-  make $MAKE_OPTS clean
+#   make $MAKE_OPTS clean
 
-  # Run C++ unit tests
-  make -C test clean
-  make -C test test
+#   # Run C++ unit tests
+#   make -C test clean
+#   make -C test test
 
-fi
+# fi
 
-# install to prefix directory
-PREFIX="$PREFIX" make $MAKE_OPTS install
+case $TOOLING in
+  autotools)
+    echo -en 'travis_fold:start:configure\r'
+    autoreconf --force --install
+    ./configure --enable-tests $COVERAGE_OPT \
+      --disable-silent-rules \
+      --with-sassc-dir=$SASS_SASSC_PATH \
+      --with-sass-spec-dir=$SASS_SPEC_PATH \
+      --prefix=$PREFIX \
+      ${SHARED_OPT}
+    echo -en 'travis_fold:end:configure\r'
+
+    make $MAKE_OPTS clean
+
+    # install to prefix directory
+    PREFIX="$PREFIX" make $MAKE_OPTS install
+  ;;
+  meson)
+    meson $MESON_OPTS --prefix=$PREFIX --default-library=$BUILD _build
+    ninja -C _build test
+    ninja -C _build install
+  ;;
+  *)
+    make $MAKE_OPTS clean
+    make -C test clean
+    make -C test test
+
+    # install to prefix directory
+    PREFIX="$PREFIX" make $MAKE_OPTS install
+  ;;
+esac
 
 ls -la $PREFIX/*
 

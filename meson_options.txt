@@ -1,0 +1,1 @@
+option('SASS_CUSTOM_ALLOCATOR', type: 'boolean', value: false, description: 'Activate a custom allocator for performance improvements')
