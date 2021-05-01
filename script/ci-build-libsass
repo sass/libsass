@@ -4,6 +4,8 @@ set -e
 
 script/bootstrap
 
+echo Building LibSass $MAKE_OPTS
+
 # export this path right here (was in script/spec before)
 export SASS_LIBSASS_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../ && pwd )"
 
@@ -90,8 +92,8 @@ else
   make $MAKE_OPTS clean
 
   # Run C++ unit tests
-  make -C test clean
-  make -C test test
+  make $MAKE_OPTS -C test clean
+  make $MAKE_OPTS -C test test
 
 fi
 

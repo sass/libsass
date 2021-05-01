@@ -57,8 +57,9 @@ ifdef LIBSASS_VERSION
 	CXXFLAGS += -DLIBSASS_VERSION="\"$(LIBSASS_VERSION)\""
 endif
 
-CXXFLAGS += -std=c++11
-LDFLAGS  += -std=c++11
+LIBSASS_CPPSTD ?= c++11
+CXXFLAGS += -std=$(LIBSASS_CPPSTD)
+LDFLAGS  += -std=$(LIBSASS_CPPSTD)
 
 ifeq (Windows,$(UNAME))
 	ifneq ($(BUILD),shared)

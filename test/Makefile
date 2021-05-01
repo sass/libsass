@@ -1,5 +1,10 @@
 CXX ?= c++
-CXXFLAGS := -I ../include/ -std=c++11 -fsanitize=address -g -O1 -fno-omit-frame-pointer
+
+CXXFLAGS := -I ../include/ -g -O1 -fno-omit-frame-pointer
+
+LIBSASS_CPPSTD ?= c++11
+CXXFLAGS += -std=$(LIBSASS_CPPSTD)
+LDFLAGS  += -std=$(LIBSASS_CPPSTD)
 
 test: test_shared_ptr test_util_string
 
