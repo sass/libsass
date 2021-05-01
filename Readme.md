@@ -4,9 +4,9 @@ LibSass - Sass compiler written in C++
 Currently maintained by Marcel Greter ([@mgreter]) and Michael Mifsud ([@xzyfer])
 Originally created by Aaron Leung ([@akhleung]) and Hampton Catlin ([@hcatlin])
 
-[![Unix CI](https://travis-ci.org/sass/libsass.svg?branch=master)](https://travis-ci.org/sass/libsass "Travis CI")
+[![GitHub CI](https://github.com/sass/libsass/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/sass/libsass/actions/workflows/build-and-test.yml "GitHub CI")
 [![Windows CI](https://ci.appveyor.com/api/projects/status/github/sass/libsass?svg=true)](https://ci.appveyor.com/project/sass/libsass/branch/master "Appveyor CI")
-[![Coverage Status](https://img.shields.io/coveralls/sass/libsass.svg)](https://coveralls.io/r/sass/libsass?branch=feature%2Ftest-travis-ci-3 "Code coverage of spec tests")
+[![Coverage Status](https://img.shields.io/coveralls/sass/libsass.svg)](https://coveralls.io/r/sass/libsass?branch=master "Code coverage of spec tests")
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/sass/libsass.svg)](http://isitmaintained.com/project/sass/libsass "Percentage of issues still open")
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/sass/libsass.svg)](http://isitmaintained.com/project/sass/libsass "Average time to resolve an issue")
 [![Bountysource](https://www.bountysource.com/badge/tracker?tracker_id=283068)](https://www.bountysource.com/trackers/283068-libsass?utm_source=283068&utm_medium=shield&utm_campaign=TRACKER_BADGE "Bountysource")

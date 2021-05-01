@@ -1,0 +1,218 @@
+name: GitHub CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+
+  linux-and-mac:
+    # if: ${{ false }}
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} BUILD=${{ matrix.config.build }} CC=${{ matrix.config.cc }} CXX=${{ matrix.config.cxx }} AUTOTOOLS=${{ matrix.config.autotools }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          #- {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.4', cxx: 'g++-4.4', autotools: 'no', cppstd: 'gnu++0x'}
+          #- {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.6', cxx: 'g++-4.6', autotools: 'no', cppstd: 'gnu++0x'}
+          - {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.7', cxx: 'g++-4.7', autotools: 'no', cppstd: 'gnu++11'}
+          - {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.8', cxx: 'g++-4.8', autotools: 'no', cppstd: 'c++11'}
+          - {os: ubuntu-16.04, build: 'static', cc: 'gcc-5', cxx: 'g++-5', autotools: 'no', cppstd: 'c++11'}
+          - {os: ubuntu-16.04, build: 'static', cc: 'gcc-6', cxx: 'g++-6', autotools: 'no', cppstd: 'c++11'}
+          - {os: ubuntu-latest, build: 'static', cc: 'gcc-7', cxx: 'g++-7', autotools: 'no', cppstd: 'c++11'}
+          - {os: ubuntu-latest, build: 'shared', cc: 'gcc', cxx: 'g++', autotools: 'yes', cppstd: 'c++11'}
+          - {os: ubuntu-latest, build: 'static', cc: 'gcc', cxx: 'g++', autotools: 'yes', cppstd: 'c++11'}
+          - {os: ubuntu-latest, build: 'shared', cc: 'gcc', cxx: 'g++', autotools: 'no', cppstd: 'c++11'}
+          - {os: ubuntu-latest, build: 'static', cc: 'gcc', cxx: 'g++', autotools: 'no', cppstd: 'c++11'}
+          - {os: ubuntu-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11'}
+          - {os: ubuntu-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11'}
+          - {os: ubuntu-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11'}
+          - {os: ubuntu-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11'}
+          - {os: macOS-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11'}
+          - {os: macOS-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11'}
+          - {os: macOS-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11'}
+          - {os: macOS-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11'}
+
+    env:
+      ASAN_OPTIONS: detect_odr_violation=0
+      AUTOTOOLS: ${{ matrix.config.autotools }}
+      COVERAGE: no
+      BUILD: ${{ matrix.config.build }}
+      CXX: ${{ matrix.config.cxx }}
+      CC: ${{ matrix.config.cc }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ruby/setup-ruby@v1
+      if: matrix.config.os == 'ubuntu-16.04'
+      with:
+        ruby-version: 2.6
+    - name: Install ruby hrx module
+      if: matrix.config.os == 'ubuntu-16.04'
+      run: sudo /opt/hostedtoolcache/Ruby/2.6.7/x64/bin/gem install hrx
+    - name: Install ruby minitest module
+      if: matrix.config.os == 'ubuntu-16.04'
+      run: sudo /opt/hostedtoolcache/Ruby/2.6.7/x64/bin/gem install minitest
+    - name: Install automake if needed (MacOS)
+      if: runner.os == 'macOS'
+      run: brew install automake
+    - name: Install gcc 7 if needed
+      if: matrix.config.cc == 'gcc-7'
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt update
+        sudo apt install g++-7 -y
+    - name: Install gcc 6 if needed
+      if: matrix.config.cc == 'gcc-6'
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt update
+        sudo apt install g++-6 -y
+    - name: Install gcc 5 if needed
+      if: matrix.config.cc == 'gcc-5'
+      run: |
+        sudo add-apt-repository universe
+        sudo add-apt-repository multiverse
+        sudo apt update
+        sudo apt install g++-5 -y
+    - name: Install gcc 4.8 if needed
+      if: matrix.config.cc == 'gcc-4.8'
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt update
+        sudo apt install g++-4.8 -y
+    - name: Install gcc 4.7 if needed
+      if: matrix.config.cc == 'gcc-4.7'
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt update
+        sudo apt install g++-4.7 -y
+    - name: Install gcc 4.6 if needed
+      if: matrix.config.cc == 'gcc-4.6'
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt update
+        sudo apt install g++-4.6 -y
+    - name: Install gcc 4.5 if needed
+      if: matrix.config.cc == 'gcc-4.5'
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt update
+        sudo apt install g++-4.5 -y
+    - name: Install gcc 4.4 if needed
+      if: matrix.config.cc == 'gcc-4.4'
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt update
+        sudo apt install g++-4.4 -y
+    - name: ./script/ci-install-deps
+      env:
+        MAKE_OPTS: LIBSASS_CPPSTD=${{ matrix.config.cppstd }}
+      run: ./script/ci-install-deps
+    - name: ./script/ci-install-compiler
+      env:
+        MAKE_OPTS: LIBSASS_CPPSTD=${{ matrix.config.cppstd }}
+      run: ./script/ci-install-compiler
+    - name: ./script/ci-build-libsass
+      env:
+        MAKE_OPTS: LIBSASS_CPPSTD=${{ matrix.config.cppstd }}
+      run: ./script/ci-build-libsass
+
+
+  windows-msvc:
+    runs-on: windows-latest
+    name: Windows MSVC build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {build: Release, platform: Win64}
+          - {build: Debug, platform: Win64}
+          - {build: Release, platform: Win32}
+          - {build: Debug, platform: Win32}
+
+    steps:
+    - name: Change git config to preserve line-endings
+      run: |
+        git config --system core.autocrlf false
+        git config --system core.eol lf
+    - uses: actions/checkout@v2
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 2.6
+        bundler-cache: true
+    - name: Install ruby hrx module
+      run: gem install hrx
+    - name: Install ruby minitest module
+      run: gem install minitest
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Clone and checkout sassc repository
+      run: git clone https://github.com/sass/sassc.git
+    - name: Clone and checkout sass-spec repository
+      run: git clone https://github.com/sass/sass-spec.git
+    - name: Compile libsass ${{ matrix.config.build }} build for ${{ matrix.config.platform }}
+      run: msbuild /m:4 /p:"Configuration=${{ matrix.config.build }};Platform=${{ matrix.config.platform }}" sassc\win\sassc.sln
+    - name: Execute spec test runner
+      run: ruby sass-spec/sass-spec.rb --probe-todo --impl libsass -c sassc/bin/sassc.exe -s sass-spec/spec
+
+  windows-mingw:
+    runs-on: windows-latest
+    name: Windows MinGW build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {build: shared, platform: x64}
+          - {build: static, platform: x64}
+          - {build: shared, platform: x86}
+          - {build: static, platform: x86}
+
+    steps:
+    - name: Change git config to preserve line-endings
+      run: |
+        git config --system core.autocrlf false
+        git config --system core.eol lf
+    - uses: actions/checkout@v2
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 2.6
+        bundler-cache: true
+    - name: Set up MinGW
+      uses: egor-tensin/setup-mingw@v2
+      with:
+        platform: ${{ matrix.config.platform }}
+    - name: Install ruby hrx module
+      run: gem install hrx
+    - name: Install ruby minitest module
+      run: gem install minitest
+    - name: Clone and checkout sassc repository
+      run: git clone https://github.com/sass/sassc.git
+    - name: Clone and checkout sass-spec repository
+      run: git clone https://github.com/sass/sass-spec.git
+    - name: Add libsass library path to be found
+      if: matrix.config.build == 'shared'
+      run: echo "/d/a/libsass/libsass/lib" >> $GITHUB_PATH
+    - name: Compile libsass ${{ matrix.config.build }} build for ${{ matrix.config.platform }}
+      run: make ${{ matrix.config.build }} BUILD=${{ matrix.config.build }}
+    - name: Copy library over to pass call test
+      if: matrix.config.build == 'shared'
+      run: copy /a/libsass/libsass/lib/libsass.dll sassc/bin/
+    - name: Compile sassc ${{ matrix.config.build }} build for ${{ matrix.config.platform }}
+      run: make sassc BUILD=${{ matrix.config.build }}
+    - name: Execute spec test runner
+      run: ruby sass-spec/sass-spec.rb --probe-todo --impl libsass -c sassc/bin/sassc.exe -s sass-spec/spec
+
+
+#- name: Install LLVM and Clang
+#  uses: KyleMayes/install-llvm-action@v1.2.2
