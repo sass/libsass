@@ -5,10 +5,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cmath>
+#include <ctime>
 #include <random>
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
+#include <thread>
 
 #include "ast.hpp"
 #include "units.hpp"
@@ -41,8 +43,25 @@ namespace Sass {
     #else
       uint64_t GetSeed()
       {
-        std::random_device rd;
-        return rd();
+        // Init universe entropy
+        uint64_t rnd = 42;
+        // Try to get random number from system
+        try {
+          std::random_device rd;
+          rnd = rd();
+        }
+        // On certain system this can throw since either
+        // underlying hardware or software can be buggy.
+        // https://github.com/sass/libsass/issues/3151
+        catch (std::exception&) {
+        }
+        // Don't trust anyone to be random, so we
+        // add a little entropy of our own.
+        rnd ^= std::time(NULL) ^ std::clock() ^
+          std::hash<std::thread::id>()
+          (std::this_thread::get_id());
+        // Return entropy
+        return rnd;
       }
     #endif
 
