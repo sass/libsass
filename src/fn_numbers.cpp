@@ -41,8 +41,7 @@ namespace Sass {
     #else
       uint64_t GetSeed()
       {
-        std::random_device rd;
-        return rd();
+        return rand();
       }
     #endif
 
