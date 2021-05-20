@@ -626,7 +626,7 @@ namespace Sass {
 
       for (sass::vector<SelectorComponentObj>& components : weaved) {
 
-        ComplexSelectorObj cplx = SASS_MEMORY_NEW(ComplexSelector, "[phony]");
+        ComplexSelectorObj cplx = SASS_MEMORY_NEW(ComplexSelector, complex->pstate());
         cplx->hasPreLineFeed(complex->hasPreLineFeed());
         for (auto& pp : path) {
           if (pp->hasPreLineFeed()) {
@@ -643,7 +643,18 @@ namespace Sass {
         }
         first = false;
 
-        result.push_back(cplx);
+        auto it = result.begin();
+        while (it != result.end()) {
+          if (ObjEqualityFn(*it, cplx)) break;
+          it += 1;
+        }
+        if (it == result.end()) {
+          result.push_back(cplx);
+        }
+
+        if (result.size() > 500) {
+          throw Exception::EndlessExtendError(traces, complex);
+        }
 
       }
 
@@ -838,7 +849,7 @@ namespace Sass {
         }
         if (!originals.empty()) {
           CompoundSelectorObj merged =
-            SASS_MEMORY_NEW(CompoundSelector, "[phony]");
+            SASS_MEMORY_NEW(CompoundSelector, "[compound]");
           merged->concat(originals);
           toUnify.insert(toUnify.begin(), { merged });
         }
@@ -1050,7 +1061,7 @@ namespace Sass {
       }
     }
 
-    SelectorListObj list = SASS_MEMORY_NEW(SelectorList, "[phony]");
+    SelectorListObj list = SASS_MEMORY_NEW(SelectorList, "[pseudo]");
     list->concat(expanded);
     return { pseudo->withSelector(list) };
 

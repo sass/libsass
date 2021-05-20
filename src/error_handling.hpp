@@ -134,6 +134,15 @@ namespace Sass {
         virtual ~StackError() throw() {};
     };
 
+    class EndlessExtendError : public Base {
+    protected:
+      const AST_Node& node;
+    public:
+      EndlessExtendError(Backtraces traces, const AST_Node& node);
+      virtual const char* errtype() const { return "EndlessExtendError"; }
+      virtual ~EndlessExtendError() throw() {};
+    };
+
     /* common virtual base class (has no pstate or trace) */
     class OperationError : public std::runtime_error {
       protected:

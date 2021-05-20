@@ -20,7 +20,7 @@ namespace Sass {
     SASS_ASSERT(!complexes.empty(), "Can't unify empty list");
     if (complexes.size() == 1) return complexes;
 
-    CompoundSelectorObj unifiedBase = SASS_MEMORY_NEW(CompoundSelector, SourceSpan("[phony]"));
+    CompoundSelectorObj unifiedBase = SASS_MEMORY_NEW(CompoundSelector, SourceSpan("[unify]"));
     for (auto complex : complexes) {
       SelectorComponentObj base = complex.back();
       if (CompoundSelector * comp = base->getCompound()) {

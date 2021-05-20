@@ -61,7 +61,7 @@ namespace Sass {
   // Implement compare and hashing operations for AST Nodes
   // ###########################################################################
 
-  // TODO: get rid of funtions and use ObjEquality<T>
+  // TODO: get rid of functions and use ObjEquality<T>
 
   template <class T>
   // Hash the raw pointer instead of object
