@@ -84,6 +84,12 @@ namespace Sass {
       msg = "stack level too deep";
     }
 
+    EndlessExtendError::EndlessExtendError(Backtraces traces, const AST_Node& node)
+      : Base(node.pstate(), def_msg, traces), node(node)
+    {
+      msg = "Extend is creating an absurdly big selector, aborting!";
+    }
+
     IncompatibleUnits::IncompatibleUnits(const Units& lhs, const Units& rhs)
     {
       msg = "Incompatible units: '" + rhs.unit() + "' and '" + lhs.unit() + "'.";

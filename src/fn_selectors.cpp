@@ -96,7 +96,7 @@ namespace Sass {
 
         for (auto& complex : sel->elements()) {
           if (complex->empty()) {
-            complex->append(SASS_MEMORY_NEW(CompoundSelector, "[phony]"));
+            complex->append(SASS_MEMORY_NEW(CompoundSelector, "[append]"));
           }
           if (CompoundSelector* comp = Cast<CompoundSelector>(complex->first())) {
             comp->hasRealParent(true);

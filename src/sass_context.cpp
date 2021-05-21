@@ -77,6 +77,7 @@ namespace Sass {
       // now create the code trace (ToDo: maybe have util functions?)
       if (e.pstate.position.line != sass::string::npos &&
           e.pstate.position.column != sass::string::npos &&
+          e.pstate.getRawData() != nullptr &&
           e.pstate.source != nullptr) {
         Offset offset(e.pstate.position);
         size_t lines = offset.line;
