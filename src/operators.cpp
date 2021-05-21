@@ -247,7 +247,7 @@ namespace Sass {
     {
       double rval = rhs.value();
 
-      if ((op == Sass_OP::DIV || op == Sass_OP::DIV) && rval == 0) {
+      if ((op == Sass_OP::DIV || op == Sass_OP::MOD) && rval == 0) {
         // comparison of Fixnum with Float failed?
         throw Exception::ZeroDivisionError(lhs, rhs);
       }
