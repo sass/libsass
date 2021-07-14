@@ -10,7 +10,6 @@ Originally created by Aaron Leung ([@akhleung]) and Hampton Catlin ([@hcatlin])
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/sass/libsass.svg)](http://isitmaintained.com/project/sass/libsass "Percentage of issues still open")
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/sass/libsass.svg)](http://isitmaintained.com/project/sass/libsass "Average time to resolve an issue")
 [![Bountysource](https://www.bountysource.com/badge/tracker?tracker_id=283068)](https://www.bountysource.com/trackers/283068-libsass?utm_source=283068&utm_medium=shield&utm_campaign=TRACKER_BADGE "Bountysource")
-[![Join us](https://libsass-slack.herokuapp.com/badge.svg)](https://libsass-slack.herokuapp.com/ "Slack communication channels")
 
 **Warning:** [LibSass is deprecated](https://sass-lang.com/blog/libsass-is-deprecated).
 While it will continue to receive maintenance releases indefinitely, there are no
