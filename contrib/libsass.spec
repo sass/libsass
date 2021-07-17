@@ -4,7 +4,7 @@ Release:        1%{?dist}
 Summary:        A C/C++ implementation of a Sass compiler
 
 License:        MIT
-URL:            http://libsass.org
+URL:            https://sass-lang.com/
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  gcc-c++ >= 4.7
