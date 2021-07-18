@@ -22,7 +22,7 @@ BEGIN
       VALUE "FileDescription", "A C/C++ implementation of a Sass compiler"
       VALUE "FileVersion", "1.0.0.0"
       VALUE "InternalName", "libsass"
-      VALUE "LegalCopyright", "\251 2017 libsass.org"
+      VALUE "LegalCopyright", "\251 2017 sass-lang.org"
       VALUE "OriginalFilename", "libsass.dll"
       VALUE "ProductName", "LibSass Library"
       VALUE "ProductVersion", "1.0.0.0"

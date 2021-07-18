@@ -7,7 +7,7 @@ EAPI=4
 inherit eutils git-2 autotools
 
 DESCRIPTION="A C/C++ implementation of a Sass compiler."
-HOMEPAGE="http://libsass.org/"
+HOMEPAGE="https://sass-lang.com/"
 EGIT_PROJECT='libsass'
 EGIT_REPO_URI="https://github.com/sass/libsass.git"
 LICENSE="MIT"
@@ -38,7 +38,7 @@ EAPI=4
 inherit eutils git-2 autotools
 
 DESCRIPTION="Command Line Tool for LibSass."
-HOMEPAGE="http://libsass.org/"
+HOMEPAGE="https://sass-lang.com/"
 EGIT_PROJECT='sassc'
 EGIT_REPO_URI="https://github.com/sass/sassc.git"
 LICENSE="MIT"
