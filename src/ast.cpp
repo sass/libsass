@@ -23,6 +23,7 @@ namespace Sass {
       case MUL: return "times";
       case DIV: return "div";
       case MOD: return "mod";
+      case POW: return "pow";
       // this is only used internally!
       case NUM_OPS: return "[OPS]";
       default: return "invalid";
@@ -44,6 +45,7 @@ namespace Sass {
       case MUL: return "*";
       case DIV: return "/";
       case MOD: return "%";
+      case POW: return "^";
       // this is only used internally!
       case NUM_OPS: return "[OPS]";
       default: return "invalid";
