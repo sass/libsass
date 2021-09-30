@@ -44,8 +44,8 @@ About
 -----
 
 LibSass is a C++ port of the original Ruby Sass CSS compiler with a [C API](docs/api-doc.md).
-We coded LibSass with portability and efficiency in mind. You can expect LibSass to be a lot
-faster than Ruby Sass and on par or faster than the best alternative CSS compilers around.
+We coded LibSass with portability and efficiency. You can expect LibSass to be a lot
+faster than Ruby Sass and on far or faster than the best alternative CSS compilers around.
 
 Developing
 ----------
@@ -54,7 +54,7 @@ As noted above, the LibSass repository does not contain any binaries or other wa
 LibSass. Therefore, you need an implementer to develop LibSass. Easiest is to start with
 the official [SassC](http://github.com/sass/sassc) CLI wrapper. It is *guaranteed* to compile
 with the latest code in LibSass master, since it is also used in the CI process. There is no
-limitation here, as you may use any other LibSass implementer to test your LibSass branch!
+limitations, as you may use any other LibSass implementer to test your LibSass branch!
 
 Testing
 -------
