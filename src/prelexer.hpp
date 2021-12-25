@@ -189,7 +189,7 @@ namespace Sass {
     // Match zero plus white-space or line_comments
     const char* optional_css_whitespace(const char* src);
     const char* css_whitespace(const char* src);
-    // Match optional_css_whitepace plus block_comments
+    // Match optional_css_whitespace plus block_comments
     const char* optional_css_comments(const char* src);
     const char* css_comments(const char* src);
 

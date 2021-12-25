@@ -306,7 +306,7 @@ namespace Sass {
           // if (cp == '\n') cp = 32;
 
           // use a very simple approach to convert via utf8 lib
-          // maybe there is a more elegant way; maybe we shoud
+          // maybe there is a more elegant way; maybe we should
           // convert the whole output from string to a stream!?
           // allocate memory for utf8 char and convert to utf8
           unsigned char u[5] = {0,0,0,0,0}; utf8::append(cp, u);
@@ -395,7 +395,7 @@ namespace Sass {
           // if (cp == '\n') cp = 32;
 
           // use a very simple approach to convert via utf8 lib
-          // maybe there is a more elegant way; maybe we shoud
+          // maybe there is a more elegant way; maybe we should
           // convert the whole output from string to a stream!?
           // allocate memory for utf8 char and convert to utf8
           unsigned char u[5] = {0,0,0,0,0}; utf8::append(cp, u);

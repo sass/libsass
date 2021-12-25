@@ -200,7 +200,7 @@ define DEBUG_SHARED_PTR
 ```
 
 This will print lost memory on exit to stderr. You can also use
-`setDbg(true)` on sepecific variables to emit reference counter
+`setDbg(true)` on specific variables to emit reference counter
 increase, decrease and other events.
 
 

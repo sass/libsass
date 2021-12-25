@@ -305,7 +305,7 @@ namespace Sass {
     const char* css_whitespace(const char* src) {
       return one_plus< alternatives<spaces, line_comment> >(src);
     }
-    // Match optional_css_whitepace plus block_comments
+    // Match optional_css_whitespace plus block_comments
     const char* optional_css_comments(const char* src) {
       return zero_plus< alternatives<spaces, line_comment, block_comment> >(src);
     }

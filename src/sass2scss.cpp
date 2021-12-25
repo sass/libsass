@@ -179,10 +179,10 @@ namespace Sass
 		while (true)
 		{
 
-			// try to find some meaningfull char
+			// try to find some meaningful char
 			col_pos = sass.find_first_not_of(" \t\n\v\f\r", col_pos);
 
-			// there was no meaningfull char found
+			// there was no meaningful char found
 			if (col_pos == std::string::npos) return false;
 
 			// found a multiline comment opener
@@ -467,7 +467,7 @@ namespace Sass
 		// right trim input
 		sass = rtrim(sass);
 
-		// get position of first meaningfull character in string
+		// get position of first meaningful character in string
 		size_t pos_left = sass.find_first_not_of(SASS2SCSS_FIND_WHITESPACE);
 
 		// special case for final run
@@ -479,7 +479,7 @@ namespace Sass
 			// just add complete whitespace
 			converter.whitespace += sass + "\n";
 		}
-		// have meaningfull first char
+		// have meaningful first char
 		else
 		{
 
@@ -683,7 +683,7 @@ namespace Sass
 				// not in comment mode
 				if (IS_PARSING(converter))
 				{
-					// has meaningfull chars
+					// has meaningful chars
 					if (hasCharData(sass))
 					{
 						// is probably a property
@@ -698,7 +698,7 @@ namespace Sass
 				// not in comment mode
 				if (IS_PARSING(converter))
 				{
-					// had meaningfull chars
+					// had meaningful chars
 					if (converter.property)
 					{
 						// print block opener
@@ -758,14 +758,14 @@ namespace Sass
 				scss += flush(sass, converter);
 			}
 
-			// get position of last meaningfull char
+			// get position of last meaningful char
 			size_t pos_right = sass.find_last_not_of(SASS2SCSS_FIND_WHITESPACE);
 
 			// check for invalid result
 			if (pos_right != std::string::npos)
 			{
 
-				// get the last meaningfull char
+				// get the last meaningful char
 				std::string close = sass.substr(pos_right, 1);
 
 				// check if next line should be concatenated (list mode)
@@ -773,7 +773,7 @@ namespace Sass
 				converter.semicolon = IS_PARSING(converter) && close == ";";
 
 				// check if we have more than
-				// one meaningfull char
+				// one meaningful char
 				if (pos_right > 0)
 				{
 
@@ -785,10 +785,10 @@ namespace Sass
 				}
 
 			}
-			// EO have meaningfull chars from end
+			// EO have meaningful chars from end
 
 		}
-		// EO have meaningfull chars from start
+		// EO have meaningful chars from start
 
 		// return scss
 		return scss;
