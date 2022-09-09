@@ -33,6 +33,20 @@ Since `libsass` is a library, it makes sense to install it as a shared library o
 
 - [Building shared system library][4]
 
+### Building from vcpkg
+
+The libsass port in [vcpkg][12] is kept up to date by Microsoft team members and community contributors. You can download and install libsass using the vcpkg dependency manager:
+
+```bash
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.sh  # ./bootstrap-vcpkg.bat for Windows
+./vcpkg integrate install
+./vcpkg install libsass
+```
+
+If the version is out of date, please [create an issue or pull request][12] on the vcpkg repository.
+
 Compiling with clang instead of gcc
 --
 
@@ -95,3 +109,4 @@ Miscellaneous
 [9]: implementations.md
 [10]: build-on-darwin.md
 [11]: build-with-visual-studio.md
+[12]: https://github.com/Microsoft/vcpkg
