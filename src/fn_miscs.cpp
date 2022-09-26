@@ -231,7 +231,7 @@ namespace Sass {
       }
 
 
-      if (!d_env.has_global(full_name)) {
+      if (!d_env.has(full_name)) {
         error("Function not found: " + name, pstate, traces);
       }
 
