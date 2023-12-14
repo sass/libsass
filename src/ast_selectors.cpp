@@ -868,7 +868,7 @@ namespace Sass {
     for (SimpleSelectorObj simple : elements()) {
       if (PseudoSelector * pseudo = Cast<PseudoSelector>(simple)) {
         if (SelectorList* sel = Cast<SelectorList>(pseudo->selector())) {
-          if (parent) {
+          if (parent && !parent->has_real_parent_ref()) {
             pseudo->selector(sel->resolve_parent_refs(
               pstack, traces, implicit_parent));
           }
@@ -976,20 +976,22 @@ namespace Sass {
   }
 
   /* better return sass::vector? only - is empty container anyway? */
-  SelectorList* ComplexSelector::resolve_parent_refs(SelectorStack pstack, Backtraces& traces, bool implicit_parent)
+  SelectorList* ComplexSelector::resolve_parent_refs(
+    SelectorStack pstack, Backtraces& traces, bool implicit_parent)
   {
 
     sass::vector<sass::vector<ComplexSelectorObj>> vars;
 
     auto parent = pstack.back();
+    auto hasRealParent = has_real_parent_ref();
 
-    if (has_real_parent_ref() && !parent) {
+    if (hasRealParent && !parent) {
       throw Exception::TopLevelParent(traces, pstate());
     }
 
     if (!chroots() && parent) {
 
-      if (!has_real_parent_ref() && !implicit_parent) {
+      if (!hasRealParent && !implicit_parent) {
         SelectorList* retval = SASS_MEMORY_NEW(SelectorList, pstate(), 1);
         retval->append(this);
         return retval;
@@ -1020,10 +1022,10 @@ namespace Sass {
     for (auto items : res) {
       if (items.size() > 0) {
         ComplexSelectorObj first = SASS_MEMORY_COPY(items[0]);
-        first->hasPreLineFeed(first->hasPreLineFeed() || (!has_real_parent_ref() && hasPreLineFeed()));
+        first->hasPreLineFeed(first->hasPreLineFeed() || (!hasRealParent && hasPreLineFeed()));
         // ToDo: remove once we know how to handle line feeds
         // ToDo: currently a mashup between ruby and dart sass
-        // if (has_real_parent_ref()) first->has_line_feed(false);
+        // if (hasRealParent) first->has_line_feed(false);
         // first->has_line_break(first->has_line_break() || has_line_break());
         first->chroots(true); // has been resolved by now
         for (size_t i = 1; i < items.size(); i += 1) {
