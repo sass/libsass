@@ -13,7 +13,6 @@ on:
 jobs:
 
   linux-and-mac:
-    # if: ${{ false }}
     runs-on: ${{ matrix.config.os }}
     name: ${{ matrix.config.os }} BUILD=${{ matrix.config.build }} CC=${{ matrix.config.cc }} CXX=${{ matrix.config.cxx }} AUTOTOOLS=${{ matrix.config.autotools }}
 
@@ -21,12 +20,6 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          #- {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.4', cxx: 'g++-4.4', autotools: 'no', cppstd: 'gnu++0x'}
-          #- {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.6', cxx: 'g++-4.6', autotools: 'no', cppstd: 'gnu++0x'}
-          - {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.7', cxx: 'g++-4.7', autotools: 'no', cppstd: 'gnu++11'}
-          - {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.8', cxx: 'g++-4.8', autotools: 'no', cppstd: 'c++11'}
-          - {os: ubuntu-16.04, build: 'static', cc: 'gcc-5', cxx: 'g++-5', autotools: 'no', cppstd: 'c++11'}
-          - {os: ubuntu-16.04, build: 'static', cc: 'gcc-6', cxx: 'g++-6', autotools: 'no', cppstd: 'c++11'}
           - {os: ubuntu-latest, build: 'static', cc: 'gcc-7', cxx: 'g++-7', autotools: 'no', cppstd: 'c++11'}
           - {os: ubuntu-latest, build: 'shared', cc: 'gcc', cxx: 'g++', autotools: 'yes', cppstd: 'c++11'}
           - {os: ubuntu-latest, build: 'static', cc: 'gcc', cxx: 'g++', autotools: 'yes', cppstd: 'c++11'}
@@ -51,16 +44,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: ruby/setup-ruby@v1
-      if: matrix.config.os == 'ubuntu-16.04'
-      with:
-        ruby-version: 2.6
-    - name: Install ruby hrx module
-      if: matrix.config.os == 'ubuntu-16.04'
-      run: sudo /opt/hostedtoolcache/Ruby/2.6.7/x64/bin/gem install hrx
-    - name: Install ruby minitest module
-      if: matrix.config.os == 'ubuntu-16.04'
-      run: sudo /opt/hostedtoolcache/Ruby/2.6.7/x64/bin/gem install minitest
     - name: Install automake if needed (MacOS)
       if: runner.os == 'macOS'
       run: brew install automake
@@ -212,7 +195,3 @@ jobs:
       run: make sassc BUILD=${{ matrix.config.build }}
     - name: Execute spec test runner
       run: ruby sass-spec/sass-spec.rb --probe-todo --impl libsass -c sassc/bin/sassc.exe -s sass-spec/spec
-
-
-#- name: Install LLVM and Clang
-#  uses: KyleMayes/install-llvm-action@v1.2.2
