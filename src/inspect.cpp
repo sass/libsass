@@ -463,6 +463,7 @@ namespace Sass {
       { sep[0] = i % 2 ? ':' : ','; }
       ExpressionObj list_item = list->at(i);
       if (output_style() != TO_SASS) {
+        if (list_item == nullptr) continue;
         if (list_item->is_invisible()) {
           // this fixes an issue with "" in a list
           if (!Cast<String_Constant>(list_item)) {
@@ -1088,7 +1089,7 @@ namespace Sass {
 
   void Inspect::operator()(CompoundSelector* sel)
   {
-    if (sel->hasRealParent()) {
+    if (sel->hasRealParent() /* || sel->has_real_parent_ref() */) {
       append_string("&");
     }
     for (auto& item : sel->elements()) {

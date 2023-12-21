@@ -430,6 +430,7 @@ inline void debug_ast(AST_Node* node, sass::string ind, Env* env)
     std::cerr << " <<" << selector->ns_name() << ">>";
     std::cerr << (selector->isClass() ? " [isClass]": " -");
     std::cerr << (selector->isSyntacticClass() ? " [isSyntacticClass]": " -");
+    std::cerr << (selector->has_real_parent_ref(nullptr) ? " [real parent]" : " -");
     std::cerr << std::endl;
     debug_ast(selector->argument(), ind + " <= ", env);
     debug_ast(selector->selector(), ind + " || ", env);

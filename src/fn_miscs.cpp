@@ -160,10 +160,14 @@ namespace Sass {
       ExpressionObj cond = ARG("$condition", Expression)->perform(&expand.eval);
       bool is_true = !cond->is_false();
       ExpressionObj res = ARG(is_true ? "$if-true" : "$if-false", Expression);
-      ValueObj qwe = Cast<Value>(res->perform(&expand.eval));
-      // res = res->perform(&expand.eval.val_eval);
-      qwe->set_delayed(false); // clone?
-      return qwe.detach();
+      ExpressionObj rv = res->perform(&expand.eval);
+      ValueObj value = Cast<Value>(rv);
+      if (value != nullptr) {
+        value->set_delayed(false);
+        return value.detach();
+      }
+      rv->set_delayed(false);
+      return nullptr;
     }
 
     //////////////////////////
