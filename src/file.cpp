@@ -12,6 +12,7 @@
 # define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
 #else
 # include <unistd.h>
+# include <fcntl.h>
 #endif
 #include <cstdio>
 #include <vector>
@@ -469,6 +470,20 @@ namespace Sass {
         CloseHandle(hFile);
         // just convert from unsigned char*
         char* contents = (char*) pBuffer;
+      #elif __APPLE__
+        // On OSX `fopen` can fail with "too many open files" but succeeds using `open`.
+        struct stat st;
+        if (stat(path.c_str(), &st) == -1 || S_ISDIR(st.st_mode)) return 0;
+        int file = open(path.c_str(), O_RDONLY);
+        char* contents = 0;
+        if (file != -1) {
+          size_t size = st.st_size;
+          contents = (char*) malloc((size+2)*sizeof(char));
+          read(file, contents, size);
+          contents[size+0] = '\0';
+          contents[size+1] = '\0';
+          close(file);
+        }
       #else
         // Read the file using `<cstdio>` instead of `<fstream>` for better portability.
         // The `<fstream>` header initializes `<locale>` and this buggy in GCC4/5 with static linking.
