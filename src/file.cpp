@@ -80,7 +80,7 @@ namespace Sass {
     bool file_exists(const sass::string& path)
     {
       #ifdef _WIN32
-        wchar_t resolved[32768];
+        std::vector<wchar_t> resolved(32768);
         // windows unicode filepaths are encoded in utf16
         sass::string abspath(join_paths(get_cwd(), path));
         if (!(abspath[0] == '/' && abspath[1] == '/')) {
@@ -88,10 +88,10 @@ namespace Sass {
         }
         std::wstring wpath(UTF_8::convert_to_utf16(abspath));
         std::replace(wpath.begin(), wpath.end(), '/', '\\');
-        DWORD rv = GetFullPathNameW(wpath.c_str(), 32767, resolved, NULL);
+        DWORD rv = GetFullPathNameW(wpath.c_str(), 32767, &resolved[0], NULL);
         if (rv > 32767) throw Exception::OperationError("Path is too long");
         if (rv == 0) throw Exception::OperationError("Path could not be resolved");
-        DWORD dwAttrib = GetFileAttributesW(resolved);
+        DWORD dwAttrib = GetFileAttributesW(&resolved[0]);
         return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
                (!(dwAttrib & FILE_ATTRIBUTE_DIRECTORY)));
       #else
@@ -445,7 +445,7 @@ namespace Sass {
       #ifdef _WIN32
         BYTE* pBuffer;
         DWORD dwBytes;
-        wchar_t resolved[32768];
+        std::vector<wchar_t> resolved(32768);
         // windows unicode filepaths are encoded in utf16
         sass::string abspath(join_paths(get_cwd(), path));
         if (!(abspath[0] == '/' && abspath[1] == '/')) {
@@ -453,10 +453,10 @@ namespace Sass {
         }
         std::wstring wpath(UTF_8::convert_to_utf16(abspath));
         std::replace(wpath.begin(), wpath.end(), '/', '\\');
-        DWORD rv = GetFullPathNameW(wpath.c_str(), 32767, resolved, NULL);
+        DWORD rv = GetFullPathNameW(wpath.c_str(), 32767, &resolved[0], NULL);
         if (rv > 32767) throw Exception::OperationError("Path is too long");
         if (rv == 0) throw Exception::OperationError("Path could not be resolved");
-        HANDLE hFile = CreateFileW(resolved, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+        HANDLE hFile = CreateFileW(&resolved[0], GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
         if (hFile == INVALID_HANDLE_VALUE) return 0;
         DWORD dwFileLength = GetFileSize(hFile, NULL);
         if (dwFileLength == INVALID_FILE_SIZE) return 0;
