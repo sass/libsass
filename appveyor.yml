@@ -77,6 +77,16 @@ test_script:
           git -C sass-spec checkout -q --force ci-spec-pr-$SPEC_PR
         }
       }
+      if ($env:Compiler -eq "mingw") {
+        Write-Host "Running libsass unit tests via mingw32-make..."
+        mingw32-make -C test test
+      } else {
+        Write-Host "Running libsass unit tests via msbuild..."
+        $tests = @("test_shared_ptr", "test_util_string")
+        foreach ($test in $tests) {
+          msbuild -verbosity:m /m:4 /p:"Configuration=$env:Config;Platform=$env:Platform" "test\$test.vcxproj"
+        }
+      }
       $env:TargetPath = Join-Path $pwd.Path $env:TargetPath
       If (Test-Path "$env:TargetPath") {
         ruby sass-spec/sass-spec.rb --probe-todo --impl libsass -c $env:TargetPath -s sass-spec/spec
