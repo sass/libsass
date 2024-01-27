@@ -1,260 +1,421 @@
-// sass.hpp must go before all system headers to get the
-// __EXTENSIONS__ fix on Solaris.
-#include "sass.hpp"
-#include "ast.hpp"
-
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
 #include "extender.hpp"
+
 #include "permutate.hpp"
+#include "callstack.hpp"
+#include "exceptions.hpp"
 #include "dart_helpers.hpp"
+#include "ast_selectors.hpp"
+#include "ast_helpers.hpp"
+#include "ast_css.hpp"
+
+#include "debugger.hpp"
 
 namespace Sass {
 
-  // ##########################################################################
-  // Constructor without default [mode].
-  // [traces] are needed to throw errors.
-  // ##########################################################################
-  Extender::Extender(Backtraces& traces) :
-    mode(NORMAL),
-    traces(traces),
-    selectors(),
-    extensions(),
-    extensionsByExtender(),
-    mediaContexts(),
-    sourceSpecificity(),
-    originals()
-  {}
+  template <typename T>
+  sass::string VecToString(sass::vector<T> exts) {
+    sass::string msg = "[";
+    bool joiner = false;
+    for (auto& entry : exts) {
+      if (joiner) msg += ", ";
+      msg += entry.selector->inspect();
+      joiner = true;
+    }
+    return msg + "]";
 
-  // ##########################################################################
+  }
+
+
+  template <typename T>
+  sass::string VecVecToString(sass::vector<T> exts) {
+    sass::string msg = "[";
+    bool joiner = false;
+    for (auto& entry : exts) {
+      if (joiner) msg += ", ";
+      msg += VecToString(entry);
+      joiner = true;
+    }
+    return msg + "]";
+
+  }
+
+  template <typename T>
+  sass::string VecToString2(sass::vector<T> exts) {
+    sass::string msg = "[";
+    bool joiner = false;
+    for (auto& entry : exts) {
+      if (joiner) msg += ", ";
+      msg += entry->inspect();
+      joiner = true;
+    }
+    return msg + "]";
+
+  }
+
+  template <typename T>
+  sass::string VecVecToString2(sass::vector<T> exts) {
+    sass::string msg = "[";
+    bool joiner = false;
+    for (auto& entry : exts) {
+      if (joiner) msg += ", ";
+      msg += VecToString2(entry);
+      joiner = true;
+    }
+    return msg + "]";
+
+  }
+
+
+  sass::string ExtSelToStr(const ExtSelExtMap& map) {
+    sass::string msg;
+    for (auto& entry : map) {
+      msg += entry.first->inspect();
+      msg += ": { ";
+      for (auto& pair : entry.second) {
+        ComplexSelector* sel = pair.first;
+        Extension* extension = pair.second;
+        msg += sel->inspect();
+        msg += ": ";
+        msg += extension->toString();
+      }
+      msg += " }";
+      msg += ", ";
+    }
+    return msg;
+  }
+
+  sass::string ExtensionStore::toString() {
+    sass::string msg;
+    for (auto& entry : extensionsBySimpleSelector) {
+      msg += entry.first->inspect();
+      msg += ": { ";
+      for (auto& pair : entry.second) {
+        ComplexSelector* sel = pair.first;
+        Extension* extension = pair.second;
+        msg += sel->inspect();
+        msg += ": ";
+        msg += extension->toString();
+      }
+      msg += " }";
+      msg += ", ";
+    }
+    return msg;
+  }
+
+  sass::string Extension::toString() const {
+    sass::string msg;
+    msg += extender.selector->inspect();
+    msg += "{@extend ";
+    msg += target->inspect();
+    if (isOptional) {
+      msg += " !optional";
+    }
+    msg += "}";
+    return msg;
+  }
+
+  /////////////////////////////////////////////////////////////////////////
   // Constructor with specific [mode].
   // [traces] are needed to throw errors.
-  // ##########################################################################
-  Extender::Extender(ExtendMode mode, Backtraces& traces) :
+  /////////////////////////////////////////////////////////////////////////
+  ExtensionStore::ExtensionStore(ExtendMode mode, BackTraces& traces) :
     mode(mode),
-    traces(traces),
-    selectors(),
-    extensions(),
+    traces(&traces),
+    selectors54(),
+//    extensionsBySimpleSelector(),
     extensionsByExtender(),
     mediaContexts(),
     sourceSpecificity(),
     originals()
-  {}
+  {
+    // std::cerr << "!! Create extension store\n";
+  }
 
-  // ##########################################################################
+  ExtensionStore::ExtensionStore() :
+    mode(NORMAL),
+    traces(nullptr),
+    selectors54(),
+    //    extensionsBySimpleSelector(),
+    extensionsByExtender(),
+    mediaContexts(),
+    sourceSpecificity(),
+    originals()
+  {
+    // std::cerr << "!! Create empty extension store\n";
+  }
+
+  // extensionsWhereTarget((target) = > !originalSelectors.contains(target))
+  void ExtensionStore::addNonOriginalSelectors(
+    ExtSmplSelSet originalSelectors,
+    ExtSet& unsatisfiedExtensions)
+  {
+    for (auto& entry : extensionsBySimpleSelector) {
+      if (originalSelectors.count(entry.first)) continue;
+      for (auto& extension : entry.second) {
+        // ToDo: check why we have this here!?
+        if (extension.second->isOptional) continue;
+        if (extension.second->target.isNull()) {
+          //std::cerr << "has no target, skip\n";
+          continue;
+        }
+        unsatisfiedExtensions.insert(extension.second);
+      }
+    }
+  }
+
+  // extensionsWhereTarget((target) = > !originalSelectors.contains(target))
+  void ExtensionStore::delNonOriginalSelectors(
+    ExtSmplSelSet originalSelectors,
+    ExtSet& unsatisfiedExtensions)
+  {
+    for (auto& entry : extensionsBySimpleSelector) {
+//      std::cerr << "! Check " << entry.first->inspect() << "\n";
+      if (!originalSelectors.count(entry.first)) continue;
+      for (auto& extension : entry.second) {
+//        std::cerr << "! Check ext " << extension.first->inspect() << "\n";
+        if (extension.second.isNull()) continue;
+        if (extension.second->isOptional) continue;
+        // if (extension.second->target.isNull()) continue;
+//        std::cerr << ">> Yield " << extension.second->toString() << "\n";
+        unsatisfiedExtensions.erase(extension.second);
+      }
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////////
   // Extends [selector] with [source] extender and [targets] extendees.
   // This works as though `source {@extend target}` were written in the
   // stylesheet, with the exception that [target] can contain compound
   // selectors which must be extended as a unit.
-  // ##########################################################################
-  SelectorListObj Extender::extend(
-    SelectorListObj& selector,
+  /////////////////////////////////////////////////////////////////////////
+  SelectorListObj ExtensionStore::extend(
+    const SelectorListObj& selector,
     const SelectorListObj& source,
     const SelectorListObj& targets,
-    Backtraces& traces)
+    Logger& logger)
   {
-    return extendOrReplace(selector, source, targets, ExtendMode::TARGETS, traces);
+    return extendOrReplace(selector, source, targets, ExtendMode::TARGETS, logger);
   }
-  // EO Extender::extend
+  // EO ExtensionStore::extend
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Returns a copy of [selector] with [targets] replaced by [source].
-  // ##########################################################################
-  SelectorListObj Extender::replace(
-    SelectorListObj& selector,
+  /////////////////////////////////////////////////////////////////////////
+  SelectorListObj ExtensionStore::replace(
+    const SelectorListObj& selector,
     const SelectorListObj& source,
     const SelectorListObj& targets,
-    Backtraces& traces)
+    Logger& logger)
   {
-    return extendOrReplace(selector, source, targets, ExtendMode::REPLACE, traces);
+    return extendOrReplace(selector, source, targets, ExtendMode::REPLACE, logger);
   }
-  // EO Extender::replace
+  // EO ExtensionStore::replace
 
-  // ##########################################################################
+
+  sass::string SetToString(ExtCplxSelSet& set) {
+    sass::string msg;
+    for (auto& item : set) {
+      msg += item->inspect();
+      msg += ", ";
+    }
+    return msg;
+  }
+
+  /////////////////////////////////////////////////////////////////////////
   // A helper function for [extend] and [replace].
-  // ##########################################################################
-  SelectorListObj Extender::extendOrReplace(
-    SelectorListObj& selector,
+  /////////////////////////////////////////////////////////////////////////
+  SelectorListObj ExtensionStore::extendOrReplace(
+    const SelectorListObj& selector,
     const SelectorListObj& source,
     const SelectorListObj& targets,
     const ExtendMode mode,
-    Backtraces& traces)
+    Logger& logger)
   {
-    ExtSelExtMapEntry extenders;
 
-    for (auto complex : source->elements()) {
-      // Extension.oneOff(complex as ComplexSelector)
-      extenders.insert(complex, Extension(complex));
+    // sass::vector<ComplexSelectorObj> results;
+
+    ExtensionStoreObj extender = SASS_MEMORY_NEW(ExtensionStore, mode, logger);
+
+    if (selector->isInvisible() == false) {
+      for (auto& original : selector->elements())
+        extender->originals.insert(original);
     }
 
-    for (auto complex : targets->elements()) {
+    SelectorListObj results = selector; // SASS_MEMORY_COPY(selector);
 
-      // This seems superfluous, check is done before!?
-      // if (complex->length() != 1) {
-      //   error("complex selectors may not be extended.", complex->pstate(), traces);
-      // }
+    //std::cerr << "selector " << selector->inspect() << "\n";
+    //std::cerr << "source " << source->inspect() << "\n";
+    //std::cerr << "targets " << targets->inspect() << "\n";
 
-      if (const CompoundSelector* compound = complex->first()->getCompound()) {
+    for (auto& complex : targets->elements()) {
+
+      if (auto* compound = complex->getSingleCompound()) {
 
         ExtSelExtMap extensions;
 
-        for (const SimpleSelectorObj& simple : compound->elements()) {
-          extensions.insert(std::make_pair(simple, extenders));
-        }
-
-        Extender extender(mode, traces);
-
-        if (!selector->is_invisible()) {
-          for (auto sel : selector->elements()) {
-            extender.originals.insert(sel);
+        for (auto& simple : compound->elements()) {
+          for (auto& src : source->elements()) {
+            // std::cerr << "Add ext key " << simple->inspect() << "\n";
+            extensions[simple][src] = SASS_MEMORY_NEW(Extension,
+              complex->pstate(), src, simple, {}, false, true);
           }
         }
 
-        selector = extender.extendList(selector, extensions, {});
+        // std::cerr << "1) extend " << ExtSelToStr(extensions) << "\n";
+        extender->extendList(results, extensions, {}, results->elements());
 
       }
-
+      else {
+        throw Exception::RuntimeException(logger,
+          "Can't extend complex selector " +
+          complex->inspect() + ".");
+      }
     }
 
-    return selector;
+    return results;
+    /*
+    sass::vector< CompoundSelectorObj> compoundTargets;
 
+    for (auto& complex : targets->elements()) {
+      if (complex->empty()) continue;
+      if (complex->size() > 1) {
+        throw Exception::RuntimeException(logger,
+          "Can't extend complex selector " +
+          complex->inspect() + ".");
+      }
+      if (CompoundSelector* compound = complex->first()->selector()) {
+        compoundTargets.emplace_back(compound);
+      }
+    }
+
+    ExtSelExtMap extensions;
+
+    for (auto& compound : compoundTargets) {
+      for (auto& simple : compound->elements()) {
+        for (auto& complex : source->elements()) {
+          extensions[simple][complex] =
+            SASS_MEMORY_NEW(Extension,
+              complex->pstate(),
+              complex, simple, {}, false, true);
+          // extensions[simple][complex]->specificity = complex->minSpecificity();
+        }
+      }
+    }
+
+    ExtensionStoreObj extender = SASS_MEMORY_NEW(ExtensionStore, mode, logger);
+
+    if (!selector->isInvisible()) {
+      for (auto& complex : selector->elements()) {
+        extender->originals.insert(complex);
+      }
+    }
+
+    // std::cerr << "Sel: " << selector->inspect() << "\n";
+    // std::cerr << "Ext: " << ExtSelToStr(extensions) << "\n";
+    // std::cerr << "Org: " << SetToString(extender->originals) << "\n";
+
+    extender->extendList(selector, extensions,
+      {}, selector->elements());
+
+    return selector;
+    */
   }
   // EO extendOrReplace
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // The set of all simple selectors in style rules handled
   // by this extender. This includes simple selectors that
   // were added because of downstream extensions.
-  // ##########################################################################
-  ExtSmplSelSet Extender::getSimpleSelectors() const
+  /////////////////////////////////////////////////////////////////////////
+  ExtSmplSelSet ExtensionStore::getSimpleSelectors() const
   {
     ExtSmplSelSet set;
-    for (auto& entry : selectors) {
+    for (auto& entry : selectors54) {
       set.insert(entry.first);
     }
     return set;
   }
   // EO getSimpleSelectors
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Check for extends that have not been satisfied.
   // Returns true if any non-optional extension did not
   // extend any selector. Updates the passed reference
   // to point to that Extension for further analysis.
-  // ##########################################################################
-  bool Extender::checkForUnsatisfiedExtends(Extension& unsatisfied) const
+  /////////////////////////////////////////////////////////////////////////
+  bool ExtensionStore::checkForUnsatisfiedExtends2(Extension& unsatisfied) const
   {
-    if (selectors.empty()) return false;
+    //ExtSmplSelSet originals;
+    //for (auto& entry : selectors) {
+    //  originals.insert(entry.first);
+    //}
+    //for (auto& mod : upstreams)
+    //
+
+    // if (selectors.empty()) return false; // Remove?
     ExtSmplSelSet originals = getSimpleSelectors();
-    for (auto target : extensions) {
-      SimpleSelector* key = target.first;
-      ExtSelExtMapEntry& val = target.second;
-      if (val.empty()) continue;
-      if (originals.find(key) == originals.end()) {
-        const Extension& extension = val.front().second;
-        if (extension.isOptional) continue;
-        unsatisfied = extension;
-        return true;
-      }
-    }
+
+
+//    for (auto target : extensionsBySimpleSelector) {
+//      SimpleSelector* key = target.first;
+//      const ExtSelExtMapEntry& val = target.second;
+//      for (auto qwe : val) {
+//        auto asd = qwe.second;
+//        if (asd->isOriginal) {
+//          if (!asd->isConsumed) {
+//            if (!asd->isOptional) {
+//              unsatisfied = asd;
+//              return true;
+//            }
+//          }
+//        }
+//      }
+//      // if (originals.find(key) == originals.end()) {
+      //   const Extension& extension = val.begin()->second;
+      //   if (extension.isOptional) continue;
+      //   unsatisfied = extension;
+      //   return true;
+      // }
+//    }
+    // for (auto asd : upstream)
     return false;
   }
   // EO checkUnsatisfiedExtends
 
-  // ##########################################################################
-  // Adds [selector] to this extender, with [selectorSpan] as the span covering
-  // the selector and [ruleSpan] as the span covering the entire style rule.
-  // Extends [selector] using any registered extensions, then returns an empty
-  // [ModifiableCssStyleRule] with the resulting selector. If any more relevant
-  // extensions are added, the returned rule is automatically updated.
-  // The [mediaContext] is the media query context in which the selector was
-  // defined, or `null` if it was defined at the top level of the document.
-  // ##########################################################################
-  void Extender::addSelector(
-    const SelectorListObj& selector,
-    const CssMediaRuleObj& mediaContext)
-  {
-
-    // Note: dart-sass makes a copy here AFAICT
-    // Note: probably why we have originalStack
-    // SelectorListObj original = selector;
-
-    if (!selector->isInvisible()) {
-      for (auto complex : selector->elements()) {
-        originals.insert(complex);
-      }
-    }
-
-    if (!extensions.empty()) {
-
-      SelectorListObj res = extendList(selector, extensions, mediaContext);
-
-      selector->elements(res->elements());
-
-    }
-
-    if (!mediaContext.isNull()) {
-      mediaContexts.insert(selector, mediaContext);
-    }
-
-    registerSelector(selector, selector);
-
-  }
-  // EO addSelector
-
-  // ##########################################################################
-  // Registers the [SimpleSelector]s in [list]
-  // to point to [rule] in [selectors].
-  // ##########################################################################
-  void Extender::registerSelector(
-    const SelectorListObj& list,
-    const SelectorListObj& rule)
-  {
-    if (list.isNull() || list->empty()) return;
-    for (auto complex : list->elements()) {
-      for (auto component : complex->elements()) {
-        if (auto compound = component->getCompound()) {
-          for (SimpleSelector* simple : compound->elements()) {
-            selectors[simple].insert(rule);
-            if (auto pseudo = simple->getPseudoSelector()) {
-              if (pseudo->selector()) {
-                auto sel = pseudo->selector();
-                registerSelector(sel, rule);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  // EO registerSelector
-
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Returns an extension that combines [left] and [right]. Throws
   // a [SassException] if [left] and [right] have incompatible
   // media contexts. Throws an [ArgumentError] if [left]
   // and [right] don't have the same extender and target.
-  // ##########################################################################
-  Extension Extender::mergeExtension(
-    const Extension& lhs,
-    const Extension& rhs)
+  /////////////////////////////////////////////////////////////////////////
+  Extension* ExtensionStore::mergeExtension(
+    Extension* lhs, Extension* rhs)
   {
+
+    if (rhs == nullptr) return lhs;
+    if (lhs == nullptr) return rhs;
+
     // If one extension is optional and doesn't add a
     // special media context, it doesn't need to be merged.
-    if (rhs.isOptional && rhs.mediaContext.isNull()) return lhs;
-    if (lhs.isOptional && lhs.mediaContext.isNull()) return rhs;
+    if (rhs->isOptional && rhs->mediaContext.isNull()) return lhs;
+    if (lhs->isOptional && lhs->mediaContext.isNull()) return rhs;
 
-    Extension rv(lhs);
+    Extension* rv = SASS_MEMORY_NEW(Extension, *lhs);
     // ToDo: is this right?
-    rv.isOptional = true;
-    rv.isOriginal = false;
+    rv->isOptional = true;
+    rv->isOriginal = false;
     return rv;
   }
   // EO mergeExtension
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Helper function to copy extension between maps
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Seems only relevant for sass 4.0 modules
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   /* void mapCopyExts(
     ExtSelExtMap& dest,
     const ExtSelExtMap& source)
@@ -278,62 +439,143 @@ namespace Sass {
   } */
   // EO mapCopyExts
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
+  // Adds [selector] to this extender, with [selectorSpan] as the span covering
+  // the selector and [ruleSpan] as the span covering the entire style rule.
+  // Extends [selector] using any registered extensions, then returns an empty
+  // [ModifiableCssStyleRule] with the resulting selector. If any more relevant
+  // extensions are added, the returned rule is automatically updated.
+  // The [mediaContext] is the media query context in which the selector was
+  // defined, or `null` if it was defined at the top level of the document.
+  /////////////////////////////////////////////////////////////////////////
+  void ExtensionStore::addSelector(
+    const SelectorListObj& selector,
+    const CssMediaRuleObj& mediaContext)
+  {
+
+    // std::cerr << "add selector " << selector->inspect() << "\n";
+
+    if (!selector->isInvisible()) {
+      for (auto complex : selector->elements()) {
+        originals.insert(complex);
+      }
+    }
+
+    if (!extensionsBySimpleSelector.empty()) {
+      extendList(selector, extensionsBySimpleSelector,
+        mediaContext, selector->elements());
+      // Dart-Sass upgrades error here
+    }
+
+    if (!mediaContext.isNull()) {
+      mediaContexts[selector] = mediaContext;
+    }
+
+    _registerSelector(selector, selector);
+
+    // Dart-Sass returns wrapped in modifiable
+  }
+  // EO addSelector (checked)
+
+  /////////////////////////////////////////////////////////////////////////
+  // Registers the [SimpleSelector]s in [list]
+  // to point to [rule] in [selectors].
+  /////////////////////////////////////////////////////////////////////////
+  void ExtensionStore::_registerSelector(
+    const SelectorListObj& list,
+    const SelectorListObj& rule,
+    bool onlyPublic)
+  {
+    if (list.isNull() || list->empty()) return;
+    // std::cerr << "Reg selector " << rule.ptr() << " - " << rule->inspect() << " => " << list->inspect() << "\n";
+    for (auto complex : list->elements()) {
+      for (auto component : complex->elements()) {
+        if (auto compound = component->selector()) {
+          for (const SimpleSelectorObj& simple : compound->elements()) {
+            // Creating this structure can take up to 5%
+            if (auto ph = simple->isaPlaceholderSelector()) {
+              if (!onlyPublic || !ph->isPrivate93()) {
+                selectors54[simple].insert(rule);
+              }
+            }
+            else {
+              selectors54[simple].insert(rule);
+            }
+            if (auto pseudo = simple->isaPseudoSelector()) {
+              if (pseudo->selector()) {
+                auto selectorInPseudo = pseudo->selector();
+                //std::cerr << "Register inner pseudo\n";
+                _registerSelector(selectorInPseudo, rule);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  // EO _registerSelector (checked)
+
+  /////////////////////////////////////////////////////////////////////////
   // Adds an extension to this extender. The [extender] is the selector for the
   // style rule in which the extension is defined, and [target] is the selector
   // passed to `@extend`. The [extend] provides the extend span and indicates
   // whether the extension is optional. The [mediaContext] defines the media query
   // context in which the extension is defined. It can only extend selectors
   // within the same context. A `null` context indicates no media queries.
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // ToDo: rename extender to parent, since it is not involved in extending stuff
   // ToDo: check why dart sass passes the ExtendRule around (is this the main selector?)
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Note: this function could need some logic cleanup
-  // ##########################################################################
-  void Extender::addExtension(
+  /////////////////////////////////////////////////////////////////////////
+  void ExtensionStore::addExtension(
     const SelectorListObj& extender,
     const SimpleSelectorObj& target,
-    const CssMediaRuleObj& mediaQueryContext,
+    const CssMediaRuleObj& mediaContext,
+    const ExtendRuleObj& extend,
     bool is_optional)
   {
 
-    auto rules = selectors.find(target);
-    bool hasRule = rules != selectors.end();
+    auto rules = selectors54.find(target);
+    bool hasRule = rules != selectors54.end();
 
     ExtSelExtMapEntry newExtensions;
 
     // ToDo: we check this here first and fetch the same? item again after the loop!?
     bool hasExistingExtensions = extensionsByExtender.find(target) != extensionsByExtender.end();
 
-    ExtSelExtMapEntry& sources = extensions[target];
+    // Get existing extensions for the given target (SimpleSelector)
+    ExtSelExtMapEntry& sources = extensionsBySimpleSelector[target];
 
     for (auto& complex : extender->elements()) {
-
-      Extension state(complex);
-      // ToDo: fine-tune public API
-      state.target = target;
-      state.isOptional = is_optional;
-      state.mediaContext = mediaQueryContext;
-
-      if (sources.hasKey(complex)) {
+      if (complex->isUseless()) continue;
+      // std::cerr << "+++ " << complex->inspect() << "\n";
+      ExtensionObj extension = SASS_MEMORY_NEW(Extension,
+        extend->pstate(),
+        complex, target, mediaContext, false, is_optional);
+      auto existingExtension = sources.find(complex);
+      if (existingExtension != sources.end()) {
         // If there's already an extend from [extender] to [target],
         // we don't need to re-run the extension. We may need to
         // mark the extension as mandatory, though.
-        // sources.insert(complex, mergeExtension(existingState->second, state);
+        sources[complex] = mergeExtension(
+          existingExtension.value(), extension);
         // ToDo: implement behavior once use case is found!?
+        // ToDo: mergeExtension needs error checks etc.
         continue;
       }
 
-      sources.insert(complex, state);
+      // std::cerr << "==== " << complex->inspect() << " adding " << extension->toString() << "\n";
+      sources[complex] = extension;
 
       for (auto& component : complex->elements()) {
-        if (auto compound = component->getCompound()) {
+        if (auto compound = component->selector()) {
           for (auto& simple : compound->elements()) {
-            extensionsByExtender[simple].push_back(state);
+            extensionsByExtender[simple].emplace_back(extension);
             if (sourceSpecificity.find(simple) == sourceSpecificity.end()) {
               // Only source specificity for the original selector is relevant.
               // Selectors generated by `@extend` don't get new specificity.
+              // ToDo: two map structures with the same key is inefficient
               sourceSpecificity[simple] = complex->maxSpecificity();
             }
           }
@@ -341,7 +583,7 @@ namespace Sass {
       }
 
       if (hasRule || hasExistingExtensions) {
-        newExtensions.insert(complex, state);
+        newExtensions[complex] = extension;
       }
 
     }
@@ -358,48 +600,25 @@ namespace Sass {
     if (existingExtensions != extensionsByExtender.end()) {
       if (hasExistingExtensions && !existingExtensions->second.empty()) {
         // Seems only relevant for sass 4.0 modules
-        // auto additionalExtensions =
-          extendExistingExtensions(existingExtensions->second, newExtensionsByTarget);
+        ExtSelExtMap additionalExtensions = _extendExistingExtensions(
+          existingExtensions->second, newExtensionsByTarget);
         // Seems only relevant for sass 4.0 modules
-        /* if (!additionalExtensions.empty()) {
-          mapCopyExts(newExtensionsByTarget, additionalExtensions);
-        } */
+        if (!additionalExtensions.empty()) {
+          //std::cerr << "--- Check if we are doing it right?\n";
+          mapAddAll2(newExtensionsByTarget, additionalExtensions);
+        }
       }
     }
 
     if (hasRule) {
-      extendExistingStyleRules(selectors[target], newExtensionsByTarget);
+      _extendExistingSelectors(selectors54[target], newExtensionsByTarget);
     }
 
   }
-  // EO addExtension
+  // EO addExtension (checked)
 
-  // ##########################################################################
-  // Extend [extensions] using [newExtensions].
-  // ##########################################################################
-  // Note: dart-sass throws an error in here
-  // ##########################################################################
-  void Extender::extendExistingStyleRules(
-    const ExtListSelSet& rules,
-    const ExtSelExtMap& newExtensions)
-  {
-    // Is a modifyableCssStyleRUle in dart sass
-    for (const SelectorListObj& rule : rules) {
-      const SelectorListObj& oldValue = SASS_MEMORY_COPY(rule);
-      CssMediaRuleObj mediaContext;
-      if (mediaContexts.hasKey(rule)) mediaContext = mediaContexts.get(rule);
-      SelectorListObj ext = extendList(rule, newExtensions, mediaContext);
-      // If no extends actually happened (for example because unification
-      // failed), we don't need to re-register the selector.
-      if (ObjEqualityFn(oldValue, ext)) continue;
-      rule->elements(ext->elements());
-      registerSelector(rule, rule);
 
-    }
-  }
-  // EO extendExistingStyleRules
-
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Extend [extensions] using [newExtensions]. Note that this does duplicate
   // some work done by [_extendExistingStyleRules],  but it's necessary to
   // expand each extension's extender separately without reference to the full
@@ -413,13 +632,12 @@ namespace Sass {
   //     .z.b {@extend .c}
   //
   // Returns `null` (Note: empty map) if there are no extensions to add.
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Note: maybe refactor to return `bool` (and pass reference)
   // Note: dart-sass throws an error in here
-  // ##########################################################################
-  ExtSelExtMap Extender::extendExistingExtensions(
-    // Taking in a reference here makes MSVC debug stuck!?
-    const sass::vector<Extension>& oldExtensions,
+  /////////////////////////////////////////////////////////////////////////
+  ExtSelExtMap ExtensionStore::_extendExistingExtensions(
+    const sass::vector<ExtensionObj>& oldExtensions,
     const ExtSelExtMap& newExtensions)
   {
 
@@ -429,23 +647,30 @@ namespace Sass {
     // Callers normally pass this from `extensionsByExtender` and
     // that points back to the `sources` vector from `extensions`.
     for (size_t i = 0, iL = oldExtensions.size(); i < iL; i += 1) {
-      const Extension& extension = oldExtensions[i];
-      ExtSelExtMapEntry& sources = extensions[extension.target];
+
+      Extension* extension = oldExtensions[i];
+      Extender& extender = extension->extender;
+      SimpleSelector* target = extension->target;
+      CssMediaRule* mediaContext = extension->mediaContext;
+
+      // Get all registered extensions for this (SimpleSelector) target
+      ExtSelExtMapEntry& sources = extensionsBySimpleSelector[target];
+
+      // Do the actual extending of the selector on extender
       sass::vector<ComplexSelectorObj> selectors(extendComplex(
-        extension.extender,
-        newExtensions,
-        extension.mediaContext
-      ));
+        extender.selector, newExtensions, mediaContext));
+      // Dart-sass upgrades error?
 
       if (selectors.empty()) {
+        // Should not happen?
         continue;
       }
 
-      // ToDo: "catch" error from extend
-
       bool first = false, containsExtension =
-        ObjEqualityFn(selectors.front(), extension.extender);
-      for (const ComplexSelectorObj& complex : selectors) {
+        ObjEqualityFn(selectors.front(), extender.selector);
+
+      for (ComplexSelectorObj& complex : selectors) {
+
         // If the output contains the original complex
         // selector, there's no need to recreate it.
         if (containsExtension && first) {
@@ -453,103 +678,238 @@ namespace Sass {
           continue;
         }
 
-        const Extension withExtender =
-          extension.withExtender(complex);
-        if (sources.hasKey(complex)) {
-          sources.insert(complex, mergeExtension(
-            sources.get(complex), withExtender));
+        Extension* withExtender =
+          extension->withExtender(complex);
+        auto it = sources.find(complex);
+        if (it != sources.end()) {
+          sources[complex] = mergeExtension(
+            it->second, withExtender);
         }
         else {
-          sources.insert(complex, withExtender);
-          /*
+          sources[complex] = withExtender;
           // Seems only relevant for sass 4.0 modules
           for (auto& component : complex->elements()) {
-            if (auto compound = component->getCompound()) {
+            if (auto compound = component->selector()) {
               for (auto& simple : compound->elements()) {
-                extensionsByExtender[simple].push_back(withExtender);
+                extensionsByExtender[simple].emplace_back(withExtender);
               }
             }
           }
-          if (newExtensions.find(extension.target) != newExtensions.end()) {
-            additionalExtensions[extension.target].insert(complex, withExtender);
+          if (newExtensions.find(target) != newExtensions.end()) {
+            ExtSelExtMapEntry& entry = additionalExtensions[target];
+            entry.emplace(std::make_pair(complex, withExtender));
           }
-          */
         }
       }
 
       // If [selectors] doesn't contain [extension.extender],
       // for example if it was replaced due to :not() expansion,
       // we must get rid of the old version.
-      /*
       // Seems only relevant for sass 4.0 modules
       if (!containsExtension) {
-        sources.erase(extension.extender);
+        // sources.erase(extension.extender);
       }
-      */
 
     }
 
     return additionalExtensions;
 
   }
-  // EO extendExistingExtensions
+  // EO _extendExistingExtensions (checked/complex)
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
+  // Extend [extensions] using [newExtensions].
+  /////////////////////////////////////////////////////////////////////////
+  // Note: dart-sass throws an error in here
+  /////////////////////////////////////////////////////////////////////////
+  void ExtensionStore::_extendExistingSelectors(
+    const ExtListSelSet& selectors,
+    const ExtSelExtMap& newExtensions)
+  {
+    // Is a modifyableCssStyleRUle in dart sass
+    for (const SelectorListObj& selector : selectors) {
+      CssMediaRule* mediaContext = nullptr;
+      auto it = mediaContexts.find(selector);
+      if (it != mediaContexts.end()) {
+        mediaContext = it->second;
+      }
+
+      // std::cerr << "Extend existing selector " << selector->toString() << "\n";
+
+      // If no extends happened (for example because unification
+      // failed), we don't need to re-register the selector again.
+      // LibSass Note: we pass the result instead of assigning
+      // Instead it passes back if the extend succeeded therefore
+      // we do not need the `identical` check that Dart-Sass has
+      // std::cerr << "extend selector [" << selector->inspect() << "]\n";
+      if (extendList(selector, newExtensions, mediaContext, selector->elements())) {
+        //std::cerr << "Register existing selector " << selector->toString() << "\n";
+        _registerSelector(selector, selector);
+      }
+
+    }
+  }
+  // EO _extendExistingSelectors (checked)
+
+  /////////////////////////////////////////////////////////////////////////
+  /// Extends [this] with all the extensions in [extensions].
+  /// These extensions will extend all selectors already in [this],
+  /// but they will *not* extend other extensions from [extenders].
+  /////////////////////////////////////////////////////////////////////////
+
+  void ExtensionStore::addExtensions(
+    sass::vector<ExtensionStoreObj>& extensionStores) {
+
+    // Extensions already in [this] whose extenders are extended by
+    // [extensions], and thus which need to be updated.
+    sass::vector<ExtensionObj> extensionsToExtend;
+
+    // Selectors that contain simple selectors that are extended by
+    // [extensions], and thus which need to be extended themselves.
+    ExtListSelSet selectorsToExtend;
+
+    // An extension map with the same structure as [_extensions] that only
+    // includes extensions from [extensionStores].
+    // Map<SimpleSelector, Map<ComplexSelector, Extension>> ? newExtensions;
+    ExtSelExtMap newExtensions;
+
+    bool hasSelectors = false;
+    bool hasExtensions = false;
+
+    for (ExtensionStore* extensionStore : extensionStores) {
+      if (extensionStore->isEmpty()) continue;
+      mapAddAll(sourceSpecificity, extensionStore->sourceSpecificity);
+
+      auto& extensions = extensionStore->extensionsBySimpleSelector;
+      for (auto extension : extensions) {
+        auto& target = extension.first;
+        auto& newSources = extension.second;
+
+        // Private selectors can't be extended across module boundaries.
+        if (auto* placeholder = target->isaPlaceholderSelector()) {
+          if (placeholder->isPrivate93()) return; // continue?
+        }
+
+        // Find existing extensions to extend.
+        auto extensionsForTargetIt = extensionsByExtender.find(target);
+        if ((hasExtensions = (extensionsForTargetIt != extensionsByExtender.end()))) {
+          auto& extensionsForTarget = extensionsForTargetIt->second;
+          extensionsToExtend.insert(extensionsToExtend.end(),
+            extensionsForTarget.begin(), extensionsForTarget.end());
+        }
+
+        // Find existing selectors to extend.
+        auto selectorsForTargetIt = selectors54.find(target);
+        if ((hasSelectors = (selectorsForTargetIt != selectors54.end()))) {
+          ExtListSelSet& selectorsForTarget = selectorsForTargetIt->second;
+          selectorsToExtend.insert(selectorsForTarget.begin(), selectorsForTarget.end());
+        }
+
+        // Add [newSources] to [_extensions].
+        auto existingSourcesIt = extensionsBySimpleSelector.find(target);
+        if (existingSourcesIt == extensionsBySimpleSelector.end()) {
+          //std::cerr << "==== Set newSources for target " << target->inspect() << " ON " << this << "\n";
+          extensionsBySimpleSelector[target] = newSources;
+          if (hasExtensions || hasSelectors) {
+            //std::cerr << "= Set newSources for newExt\n";
+            newExtensions[target] = newSources;
+          }
+        }
+        else {
+          auto& existingSources = existingSourcesIt->second;
+          for (auto& source : newSources) {
+            auto& extender = source.first;
+            auto& extension = source.second;
+            // If [extender] already extends [target] in [_extensions], we don't
+            // need to re-run the extension.
+            if (existingSources.count(extender) == 0) {
+              existingSources[extender] = extension;
+            }
+
+            if (!hasExtensions || !hasSelectors) {
+              newExtensions[target][extender] = extension;
+            }
+          }
+        }
+      }
+    }
+
+    // We can ignore the return value here because it's only useful for extend
+    // loops, which can't exist across module boundaries.
+    _extendExistingExtensions(extensionsToExtend, newExtensions);
+    _extendExistingSelectors(selectorsToExtend, newExtensions);
+
+  }
+  // EO addExtensions (checked/new)
+
+  /////////////////////////////////////////////////////////////////////////
   // Extends [list] using [extensions].
-  // ##########################################################################
-  SelectorListObj Extender::extendList(
+  /////////////////////////////////////////////////////////////////////////
+  bool ExtensionStore::extendList(
     const SelectorListObj& list,
     const ExtSelExtMap& extensions,
-    const CssMediaRuleObj& mediaQueryContext)
+    const CssMediaRuleObj& mediaQueryContext,
+    sass::vector<ComplexSelectorObj>& result)
   {
-
+    // std::cerr << "extend list\n";
     // This could be written more simply using [List.map], but we want to
     // avoid any allocations in the common case where no extends apply.
     sass::vector<ComplexSelectorObj> extended;
-    for (size_t i = 0; i < list->length(); i++) {
+    for (size_t i = 0; i < list->size(); i++) {
       const ComplexSelectorObj& complex = list->get(i);
+      // std::cerr << "extend [" << ExtSelToStr(extensions) << "]\n";
       sass::vector<ComplexSelectorObj> result =
         extendComplex(complex, extensions, mediaQueryContext);
+      // std::cerr << "extended [" << VecToString2(result) << "]\n";
       if (result.empty()) {
         if (!extended.empty()) {
-          extended.push_back(complex);
+          extended.emplace_back(complex);
         }
       }
       else {
         if (extended.empty()) {
           for (size_t n = 0; n < i; n += 1) {
-            extended.push_back(list->get(n));
+            extended.emplace_back(list->get(n));
           }
         }
-        for (auto sel : result) {
-          extended.push_back(sel);
+        for (auto& sel : result) {
+          extended.emplace_back(std::move(sel));
         }
       }
     }
 
     if (extended.empty()) {
-      return list;
+      return false;
     }
 
-    SelectorListObj rv = SASS_MEMORY_NEW(SelectorList, list->pstate());
-    rv->concat(trim(extended, originals));
-    return rv;
+    // std::cerr << "RESULT ";
+    // for (auto& qwe : extended) {
+    //   std::cerr << qwe->inspect() << ", ";
+    // }
+    // std::cerr << "\n";
 
+    result = std::move(extended);
+    trim(result, originals);
+
+    
+    return true;
   }
-  // EO extendList
+  // EO extendList (review)
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Extends [complex] using [extensions], and
   // returns the contents of a [SelectorList].
-  // ##########################################################################
-  sass::vector<ComplexSelectorObj> Extender::extendComplex(
+  /////////////////////////////////////////////////////////////////////////
+  sass::vector<ComplexSelectorObj> ExtensionStore::extendComplex(
     // Taking in a reference here makes MSVC debug stuck!?
     const ComplexSelectorObj& complex,
     const ExtSelExtMap& extensions,
     const CssMediaRuleObj& mediaQueryContext)
   {
 
-    // The complex selectors that each compound selector in [complex.components]
+    if (complex->leadingCombinators().size() > 1) return {};
+
+      // The complex selectors that each compound selector in [complex.components]
     // can expand to.
     //
     // For example, given
@@ -567,46 +927,135 @@ namespace Sass {
     // This could be written more simply using [List.map], but we want to avoid
     // any allocations in the common case where no extends apply.
 
+    //if (complex->inspect() == "%x %y") {
+      // std::cerr << "nope\n";
+    //}
+
+    //std::cerr << "extend complex [" << complex->inspect() << "]\n";
+
+    //std::cerr << "_extendComplex\n";
+    bool addedToExtendedNotExpanded = false;
     sass::vector<ComplexSelectorObj> result;
     sass::vector<sass::vector<ComplexSelectorObj>> extendedNotExpanded;
     bool isOriginal = originals.find(complex) != originals.end();
-    for (size_t i = 0; i < complex->length(); i += 1) {
-      const SelectorComponentObj& component = complex->get(i);
-      if (CompoundSelector* compound = Cast<CompoundSelector>(component)) {
+    for (size_t i = 0; i < complex->size(); i += 1) {
+      const CplxSelComponentObj& component = complex->get(i);
+      if (CompoundSelector* compound = component->selector()) {
+        // std::cerr << "extend compound [" << compound->inspect() << "]\n";
+        //std::cerr << "extend compound [" << component->toString() << "]\n";
         sass::vector<ComplexSelectorObj> extended = extendCompound(
-          compound, extensions, mediaQueryContext, isOriginal);
+          component, extensions, mediaQueryContext,
+          complex->leadingCombinators(), isOriginal);
+
+        //std::cerr << "- extended result " << VecToString2(extended) << "\n";
+        //std::cerr << "- extendedNotExpanded " << VecVecToString2(extendedNotExpanded) << "\n";
+
+
+        for (auto res : extended) {
+          //std::cerr << "extended compound [" << res->inspect() << "]\n";
+        }
         if (extended.empty()) {
           if (!extendedNotExpanded.empty()) {
+            auto s = SASS_MEMORY_NEW(ComplexSelector, complex->pstate(),
+              {}, { component }, complex->hasLineBreak());
+            //std::cerr << "ADD 1 [" << s->inspect() << "]\n";
             extendedNotExpanded.push_back({
-              compound->wrapInComplex()
+
+              s
+
+              // compound->wrapInComplex(
+              //   complex->leadingCombinators(),
+              //   component->combinators())
             });
+            //std::cerr << "- ADDED 1 " << VecVecToString2(extendedNotExpanded) << "\n";
           }
         }
         else {
+
           // Note: dart-sass checks for null!?
-          if (extendedNotExpanded.empty()) {
-            for (size_t n = 0; n < i; n++) {
-                extendedNotExpanded.push_back({
-                  complex->at(n)->wrapInComplex()
-                });
-            }
+          if (!extendedNotExpanded.empty()) {
+            //std::cerr << "ADD 2\n";
+            addedToExtendedNotExpanded = true;
+            extendedNotExpanded.push_back(extended);
+            // for (size_t n = 0; n < i; n++) {
+            //     extendedNotExpanded.push_back({
+            //       // complex->at(n)->wrapInComplex2()
+            //       complex->at(n)->wrapInComplex(
+            //         complex->leadingCombinators())
+            //     });
+            // }
           }
-          extendedNotExpanded.push_back(extended);
+          else if (i != 0) {
+            sass::vector<CplxSelComponentObj> components;
+            for (size_t n = 0; n < i; n++) {
+              components.push_back(complex->get(n));
+            }
+            auto s = SASS_MEMORY_NEW(ComplexSelector, complex->pstate(),
+              complex->leadingCombinators(), components,
+              complex->hasLineBreak());
+            //std::cerr << "ADD 3 [" << s->inspect() << "]\n";
+            addedToExtendedNotExpanded = true;
+            extendedNotExpanded = { {
+              s
+            }, extended };
+          }
+          else if (complex->leadingCombinators().empty()) {
+            //std::cerr << "ADD 4 " << VecToString2(extended) << "\n";
+            addedToExtendedNotExpanded = true;
+            extendedNotExpanded = { extended }; //.emplace_back(extended);
+          }
+          else {
+            //std::cerr << "ADD 5\n";
+            addedToExtendedNotExpanded = true;
+            sass::vector<ComplexSelectorObj> add;
+            for (auto newComplex : extended) {
+              if (newComplex->leadingCombinators().empty() ||
+                ListEquality(complex->leadingCombinators(), newComplex->leadingCombinators(), PtrObjEqualityFn<SelectorCombinator>)) {
+                if (complex->hasPreLineFeed() || newComplex->hasPreLineFeed()) {
+                  std::cerr << "has pre line feed\n";
+                }
+                add.push_back(SASS_MEMORY_NEW(ComplexSelector, complex->pstate(),
+                  complex->leadingCombinators(), newComplex->elements(),
+                  complex->hasLineBreak() || newComplex->hasLineBreak() ||
+                  complex->hasPreLineFeed() || newComplex->hasPreLineFeed()));
+              }
+              else {
+                //add.push_back(newComplex);
+              }
+            }
+            extendedNotExpanded.emplace_back(add);
+          }
         }
       }
       else {
+        std::cerr << "WHAT THE FUCK IS THIS?\n";
         // Note: dart-sass checks for null!?
         if (!extendedNotExpanded.empty()) {
           extendedNotExpanded.push_back({
-            component->wrapInComplex()
+            // component->wrapInComplex2()
+            component->wrapInComplex(
+              complex->leadingCombinators())
           });
         }
       }
     }
 
+    //std::cerr << "=> extendedNotExpanded" << VecVecToString2(extendedNotExpanded) << "\n";
+
     // Note: dart-sass checks for null!?
     if (extendedNotExpanded.empty()) {
       return {};
+    }
+
+
+    for (auto a : extendedNotExpanded) {
+      for (auto b : a) {
+        //std::cerr << "not expanded [" << b->inspect() << "]\n";
+      }
+    }
+
+    for (auto b : result) {
+      // std::cerr << "res [" << b->inspect() << "]\n";
     }
 
     bool first = true;
@@ -615,131 +1064,141 @@ namespace Sass {
     sass::vector<sass::vector<ComplexSelectorObj>>
       paths = permutate(extendedNotExpanded);
 
+    for (auto a : paths) {
+      for (auto b : a) {
+        //std::cerr << "path [" << b->inspect() << "]\n";
+      }
+    }
+
     for (const sass::vector<ComplexSelectorObj>& path : paths) {
       // Unpack the inner complex selector to component list
-      sass::vector<sass::vector<SelectorComponentObj>> _paths;
+      sass::vector<ComplexSelectorObj> _paths;
       for (const ComplexSelectorObj& sel : path) {
-        _paths.insert(_paths.end(), sel->elements());
+        _paths.insert(_paths.end(), sel);
       }
 
-      sass::vector<sass::vector<SelectorComponentObj>> weaved = weave(_paths);
+      for (auto a : _paths) {
+        //std::cerr << "_path [" << a->inspect() << "]\n";
+      }
 
-      for (sass::vector<SelectorComponentObj>& components : weaved) {
 
-        ComplexSelectorObj cplx = SASS_MEMORY_NEW(ComplexSelector, complex->pstate());
+      sass::vector<ComplexSelectorObj> weaved = weave(_paths);
+
+      for (auto b : weaved) {
+        //std::cerr << "woven [" << b->inspect() << "]\n";
+      }
+
+      for (ComplexSelectorObj& components : weaved) {
+        auto others(components->elements());
+        ComplexSelectorObj cplx = SASS_MEMORY_NEW(ComplexSelector,
+          complex->pstate(), components->leadingCombinators(), std::move(others));
+        // std::cerr << "woven [" << cplx->inspect() << "]\n";
+
         cplx->hasPreLineFeed(complex->hasPreLineFeed());
         for (auto& pp : path) {
           if (pp->hasPreLineFeed()) {
             cplx->hasPreLineFeed(true);
           }
         }
-        cplx->elements(components);
 
         // Make sure that copies of [complex] retain their status
         // as "original" selectors. This includes selectors that
         // are modified because a :not() was extended into.
-        if (first && originals.find(complex) != originals.end()) {
-          originals.insert(cplx);
+        if (first) {
+          auto it = originals.begin();
+          while (it != originals.end()) {
+            if (ObjEqualityFn(*it, complex)) break;
+            it++;
+          }
+          if (it != originals.end()) {
+            // std::cerr << "insert org [" << cplx->inspect() << "]\n";
+            originals.insert(cplx);
+          }
+          first = false;
         }
-        first = false;
 
+        // Make sure we don't append any copies
         auto it = result.begin();
         while (it != result.end()) {
           if (ObjEqualityFn(*it, cplx)) break;
-          it += 1;
+          it++;
         }
         if (it == result.end()) {
+          // std::cerr << "insert res [" << cplx->inspect() << "]\n";
           result.push_back(cplx);
         }
 
         if (result.size() > 500) {
-          throw Exception::EndlessExtendError(traces, complex);
+          traces->push_back(complex->pstate());
+          throw Exception::EndlessExtendError(*traces);
         }
 
       }
 
     }
 
+    // Here we must have two
+
+    // std::cerr << "Complex: " << VecToString2(result) << "\n";
+
     return result;
   }
-  // EO extendComplex
+  // EO extendComplex (review)
 
-  // ##########################################################################
-  // Returns a one-off [Extension] whose
-  // extender is composed solely of [simple].
-  // ##########################################################################
-  Extension Extender::extensionForSimple(
-    const SimpleSelectorObj& simple) const
-  {
-    Extension extension(simple->wrapInComplex());
-    extension.specificity = maxSourceSpecificity(simple);
-    extension.isOriginal = true;
-    return extension;
-  }
-  // Extender::extensionForSimple
-
-  // ##########################################################################
-  // Returns a one-off [Extension] whose extender is composed
-  // solely of a compound selector containing [simples].
-  // ##########################################################################
-  Extension Extender::extensionForCompound(
-    // Taking in a reference here makes MSVC debug stuck!?
-    const sass::vector<SimpleSelectorObj>& simples) const
-  {
-    CompoundSelectorObj compound = SASS_MEMORY_NEW(CompoundSelector, SourceSpan("[ext]"));
-    compound->concat(simples);
-    Extension extension(compound->wrapInComplex());
-    // extension.specificity = sourceSpecificity[simple];
-    extension.isOriginal = true;
-    return extension;
-  }
-  // EO extensionForCompound
-
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Extends [compound] using [extensions], and returns the
   // contents of a [SelectorList]. The [inOriginal] parameter
   // indicates whether this is in an original complex selector,
   // meaning that [compound] should not be trimmed out.
-  // ##########################################################################
-  sass::vector<ComplexSelectorObj> Extender::extendCompound(
-    const CompoundSelectorObj& compound,
+  /////////////////////////////////////////////////////////////////////////
+  sass::vector<ComplexSelectorObj> ExtensionStore::extendCompound(
+    const CplxSelComponentObj& component,
     const ExtSelExtMap& extensions,
     const CssMediaRuleObj& mediaQueryContext,
+    const SelectorCombinatorVector& prefixes,
     bool inOriginal)
   {
 
+    auto compound = component->selector();
+
     // If there's more than one target and they all need to
     // match, we track which targets are actually extended.
-    ExtSmplSelSet targetsUsed2;
-
-    ExtSmplSelSet* targetsUsed = nullptr;
-
+    std::unique_ptr<ExtSmplSelSet> targetsUsed;
     if (mode != ExtendMode::NORMAL && extensions.size() > 1) {
-      targetsUsed = &targetsUsed2;
+      targetsUsed.reset(new ExtSmplSelSet());
     }
 
     sass::vector<ComplexSelectorObj> result;
     // The complex selectors produced from each component of [compound].
-    sass::vector<sass::vector<Extension>> options;
-
-    for (size_t i = 0; i < compound->length(); i++) {
+    sass::vector<sass::vector<Extender>> options;
+    for (size_t i = 0; i < compound->size(); i++) {
       const SimpleSelectorObj& simple = compound->get(i);
-      auto extended = extendSimple(simple, extensions, mediaQueryContext, targetsUsed);
+      auto extended = extendSimple(simple, extensions,
+        mediaQueryContext, targetsUsed.get());
+
       if (extended.empty()) {
         if (!options.empty()) {
-          options.push_back({ extensionForSimple(simple) });
-        }
+          auto foo = extenderForSimple(simple);
+          //std::cerr << "Extended is nullptr "<< simple->toString() <<"\n";
+          options.push_back({ foo });
+          }
       }
       else {
         if (options.empty()) {
           if (i != 0) {
-            sass::vector<SimpleSelectorObj> in;
-            for (size_t n = 0; n < i; n += 1) {
-              in.push_back(compound->get(n));
-            }
-            options.push_back({ extensionForCompound(in) });
+            sass::vector<SimpleSelectorObj> children;
+            children.insert(children.begin(),
+              compound->begin(), compound->begin() + i);
+            // std::cerr << "Options Add 2\n";
+            Extender sel = extenderForCompound(SASS_MEMORY_NEW(
+              CompoundSelector, compound->pstate(), std::move(children)),
+              {}, component->combinators());
+            //std::cerr << "extender for compound [" << sel.selector->inspect() << "]\n";
+            options.push_back({ sel });
           }
         }
+        //std::cerr << "PUT all extended\n";
+        // std::cerr << "Options Add 3\n";
         options.insert(options.end(),
           extended.begin(), extended.end());
       }
@@ -748,6 +1207,8 @@ namespace Sass {
     if (options.empty()) {
       return {};
     }
+
+    // std::cerr << "OPTIONS " << options.size() << "\n";
 
     // If [_mode] isn't [ExtendMode.normal] and we didn't use all
     // the targets in [extensions], extension fails for [compound].
@@ -763,25 +1224,24 @@ namespace Sass {
     // Optimize for the simple case of a single simple
     // selector that doesn't need any unification.
     if (options.size() == 1) {
-      sass::vector<Extension> exts = options[0];
+      sass::vector<Extender>& exts = options[0];
       for (size_t n = 0; n < exts.size(); n += 1) {
-        exts[n].assertCompatibleMediaContext(mediaQueryContext, traces);
-        // To fix invalid css we need to re-order some
-        // Therefore we need to make copies for them
-        if (exts[n].extender->isInvalidCss()) {
-          exts[n].extender = SASS_MEMORY_COPY(exts[n].extender);
-          for (SelectorComponentObj& component : exts[n].extender->elements()) {
-            if (CompoundSelector* compound = component->getCompound()) {
-              if (compound->isInvalidCss()) {
-                CompoundSelector* copy = SASS_MEMORY_COPY(compound);
-                copy->sortChildren();
-                component = copy;
-              }
-            }
-          }
+        auto extender = exts[n];
+        if (!extender.mediaContext.isNull()) {
+          SourceSpan span(extender.pstate);
+          callStackFrame outer(*traces, BackTrace(span, Strings::extendRule));
+          callStackFrame inner(*traces, BackTrace(compound->pstate()));
+          extender.assertCompatibleMediaContext(mediaQueryContext, *traces);
         }
-        result.push_back(exts[n].extender);
+        ComplexSelectorObj complex = extender.selector->
+          withAdditionalCombinators(component->combinators());
+        //std::cerr << "new complex " << complex->inspect() << "\n";
+        if (complex->isUseless()) continue;
+        result.emplace_back(complex);
       }
+
+      //std::cerr << "Compound1: " << VecToString2(result) << "\n";
+
       return result;
     }
 
@@ -812,167 +1272,222 @@ namespace Sass {
 
     bool first = mode != ExtendMode::REPLACE;
     sass::vector<ComplexSelectorObj> unifiedPaths;
-    sass::vector<sass::vector<Extension>> prePaths = permutate(options);
+
+    for (auto qwe2 : options) {
+      //std::cerr << "options [" << InspectSelector(qwe2) << "]\n";
+    }
+    sass::vector<sass::vector<Extender>> prePaths = permutate(options);
+    for (auto qwe2 : prePaths) {
+      //std::cerr << "prePaths [" << InspectSelector(qwe2) << "]\n";
+    }
 
     for (size_t i = 0; i < prePaths.size(); i += 1) {
-      sass::vector<sass::vector<SelectorComponentObj>> complexes;
-      const sass::vector<Extension>& path = prePaths[i];
+      sass::vector<ComplexSelectorObj> complexes;
+      auto& path = prePaths[i];
       if (first) {
         // The first path is always the original selector. We can't just
         // return [compound] directly because pseudo selectors may be
         // modified, but we don't have to do any unification.
         first = false;
         CompoundSelectorObj mergedSelector =
-          SASS_MEMORY_NEW(CompoundSelector, "[ext]");
+          SASS_MEMORY_NEW(CompoundSelector,
+            compound->pstate());
         for (size_t n = 0; n < path.size(); n += 1) {
-          const ComplexSelectorObj& sel = path[n].extender;
-          if (CompoundSelectorObj compound = Cast<CompoundSelector>(sel->last())) {
+          const ComplexSelectorObj& sel = path[n].selector;
+          if (CompoundSelector* compound = sel->last()->selector()) {
             mergedSelector->concat(compound->elements());
           }
         }
-        complexes.push_back({ mergedSelector });
+        //std::cerr << "Add initial [" << mergedSelector->inspect() << "]\n";
+        complexes.push_back(mergedSelector->wrapInComplex(
+          {}, component->combinators()));
       }
       else {
         sass::vector<SimpleSelectorObj> originals;
-        sass::vector<sass::vector<SelectorComponentObj>> toUnify;
+        sass::vector<ComplexSelectorObj> toUnify;
 
-        for (auto& state : path) {
-          if (state.isOriginal) {
-            const ComplexSelectorObj& sel = state.extender;
-            if (const CompoundSelector* compound = Cast<CompoundSelector>(sel->last())) {
+        for (auto& extender : path) {
+          if (extender.isOriginal) {
+            const ComplexSelectorObj& sel = extender.selector;
+            if (CompoundSelector* compound = sel->last()->selector()) {
               originals.insert(originals.end(), compound->last());
             }
           }
+          else if (extender.selector->isUseless()) {
+            return {};
+          }
           else {
-            toUnify.push_back(state.extender->elements());
+            //std::cerr << "++ add extender [" << extender.selector->inspect() << "]\n";
+            toUnify.emplace_back(extender.selector);
           }
         }
         if (!originals.empty()) {
           CompoundSelectorObj merged =
-            SASS_MEMORY_NEW(CompoundSelector, "[compound]");
+            SASS_MEMORY_NEW(CompoundSelector,
+              compound->pstate());
           merged->concat(originals);
-          toUnify.insert(toUnify.begin(), { merged });
+          //std::cerr << "++ add first " << VecToString2(originals) << "\n";
+          toUnify.insert(toUnify.begin(), { merged->wrapInComplex3() });
         }
-        complexes = unifyComplex(toUnify);
+        //std::cerr << "unifyComplexes: " << VecToString2(toUnify) << "\n";
+        auto complexes2 = _unifyComplex(toUnify, compound->pstate());
+        for (auto& cplx : complexes2) {
+          ComplexSelectorObj r = cplx->withAdditionalCombinators(component->combinators());
+          if (r->isUseless()) continue;
+          complexes.push_back(r);
+        }
+
+        //std::cerr << "== resulted: " << VecToString2(complexes) << "\n";
         if (complexes.empty()) {
-          return {};
+          continue;
         }
 
       }
+
+      //std::cerr << "=> result: " << VecToString2(complexes) << "\n";
+
 
       bool lineBreak = false;
       // var specificity = _sourceSpecificityFor(compound);
-      for (const Extension& state : path) {
-        state.assertCompatibleMediaContext(mediaQueryContext, traces);
-        lineBreak = lineBreak || state.extender->hasPreLineFeed();
+      for (auto& state : path) {
+        if (!state.mediaContext.isNull()) {
+          SourceSpan span(state.pstate);
+          callStackFrame outer(*traces, BackTrace(span, Strings::extendRule));
+          callStackFrame inner(*traces, BackTrace(compound->pstate()));
+          state.assertCompatibleMediaContext(mediaQueryContext, *traces);
+        }
+        lineBreak = lineBreak || state.selector->hasPreLineFeed();
         // specificity = math.max(specificity, state.specificity);
       }
 
-      for (sass::vector<SelectorComponentObj>& components : complexes) {
-        auto sel = SASS_MEMORY_NEW(ComplexSelector, "[unified]");
+      for (ComplexSelectorObj& sel2 : complexes) {
+        auto sel = SASS_MEMORY_NEW(ComplexSelector,
+          compound->pstate(),
+            sel2->leadingCombinators(),
+          std::move(sel2->elements()));
         sel->hasPreLineFeed(lineBreak);
-        sel->elements(components);
-
-        /* This seems to do too much in regard of previous behavior
-        for (SelectorComponentObj& component : sel->elements()) {
-          if (CompoundSelector* compound = component->getCompound()) {
-            if (compound->isInvalidCss()) {
-              CompoundSelector* copy = SASS_MEMORY_COPY(compound);
-              copy->sortChildren();
-              component = copy;
-            }
-          }
-        }*/
-
-        unifiedPaths.push_back(sel);
-
+        unifiedPaths.emplace_back(sel);
       }
 
     }
 
+    //std::cerr << "unifiedPaths: " << VecToString2(unifiedPaths) << "\n";
+
     return unifiedPaths;
   }
-  // EO extendCompound
+  // EO extendCompound (review)
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Extends [simple] without extending the
   // contents of any selector pseudos it contains.
-  // ##########################################################################
-  sass::vector<Extension> Extender::extendWithoutPseudo(
+  /////////////////////////////////////////////////////////////////////////
+  sass::vector<Extender> ExtensionStore::extendWithoutPseudo(
     const SimpleSelectorObj& simple,
     const ExtSelExtMap& extensions,
     ExtSmplSelSet* targetsUsed) const
   {
+    auto extensionIt = extensions.find(simple);
+    if (extensionIt == extensions.end()) return {};
+    auto& extensionsForSimple = extensionIt->second;
 
-    auto extension = extensions.find(simple);
-    if (extension == extensions.end()) return {};
-    const ExtSelExtMapEntry& extenders = extension->second;
-
-    if (targetsUsed != nullptr) {
+      if (targetsUsed != nullptr) {
       targetsUsed->insert(simple);
     }
-    if (mode == ExtendMode::REPLACE) {
-      return extenders.values();
+
+    sass::vector<Extender> result;
+    if (mode != ExtendMode::REPLACE) {
+      result.emplace_back(extenderForSimple(simple));
     }
 
-    const sass::vector<Extension>&
-      values = extenders.values();
-    sass::vector<Extension> result;
-    result.reserve(values.size() + 1);
-    result.push_back(extensionForSimple(simple));
-    result.insert(result.end(), values.begin(), values.end());
-    return result;
+    for (auto& ext : extensionsForSimple) {
+      result.push_back(ext.second->extender);
+    }
+
+    return std::move(result);
   }
   // EO extendWithoutPseudo
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Extends [simple] and also extending the
   // contents of any selector pseudos it contains.
-  // ##########################################################################
-  sass::vector<sass::vector<Extension>> Extender::extendSimple(
+  /////////////////////////////////////////////////////////////////////////
+  sass::vector<sass::vector<Extender>> ExtensionStore::extendSimple(
     const SimpleSelectorObj& simple,
     const ExtSelExtMap& extensions,
     const CssMediaRuleObj& mediaQueryContext,
     ExtSmplSelSet* targetsUsed)
   {
-    if (PseudoSelector* pseudo = Cast<PseudoSelector>(simple)) {
+    if (PseudoSelector* pseudo = simple->isaPseudoSelector()) {
       if (pseudo->selector()) {
-        sass::vector<sass::vector<Extension>> merged;
+        sass::vector<sass::vector<Extender>> merged;
         sass::vector<PseudoSelectorObj> extended =
           extendPseudo(pseudo, extensions, mediaQueryContext);
         for (PseudoSelectorObj& extend : extended) {
-          SimpleSelectorObj simple = extend;
-          sass::vector<Extension> result =
+          SimpleSelectorObj simple = extend.ptr();
+          sass::vector<Extender> result =
             extendWithoutPseudo(simple, extensions, targetsUsed);
-          if (result.empty()) result = { extensionForSimple(extend) };
-          merged.push_back(result);
+          if (result.empty()) result = { extenderForSimple(extend.ptr()) };
+          merged.emplace_back(result);
         }
         if (!extended.empty()) {
           return merged;
         }
       }
     }
-    sass::vector<Extension> result =
+    sass::vector<Extender> result =
       extendWithoutPseudo(simple, extensions, targetsUsed);
+    // std::cerr << "Simple " << simple->inspect() << "\n";
+    // std::cerr << "Without " << VecToString(result) << "\n";
+    // std::cerr << "Exts " << ExtSelToStr(extensions) << "\n";
     if (result.empty()) return {};
     return { result };
   }
   // extendSimple
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
+  // Returns a one-off [Extension] whose extender is composed
+  // solely of a compound selector containing [simples].
+  /////////////////////////////////////////////////////////////////////////
+  Extender ExtensionStore::extenderForCompound(
+    const CompoundSelectorObj& compound,
+    const SelectorCombinatorVector& prefixes,
+    const SelectorCombinatorVector& postfixes) const
+  {
+    ComplexSelector* complex = compound->wrapInComplex(prefixes, {});
+    return Extender{
+      complex->pstate(),
+      complex, maxSourceSpecificity(compound), true };
+  }
+  // EO extenderForCompound
+
+  /////////////////////////////////////////////////////////////////////////
+  // Returns a one-off [Extension] whose
+  // extender is composed solely of [simple].
+  /////////////////////////////////////////////////////////////////////////
+  Extender ExtensionStore::extenderForSimple(
+    const SimpleSelectorObj& simple) const
+  {
+    ComplexSelector* complex = simple->wrapInComplex({});
+    return Extender{
+      complex->pstate(),
+      complex, maxSourceSpecificity(simple), true };
+  }
+  // ExtensionStore::extenderForSimple
+
+  /////////////////////////////////////////////////////////////////////////
   // Inner loop helper for [extendPseudo] function
-  // ##########################################################################
-  sass::vector<ComplexSelectorObj> Extender::extendPseudoComplex(
+  /////////////////////////////////////////////////////////////////////////
+  sass::vector<ComplexSelectorObj> ExtensionStore::extendPseudoComplex(
     const ComplexSelectorObj& complex,
     const PseudoSelectorObj& pseudo,
     const CssMediaRuleObj& mediaQueryContext)
   {
 
-    if (complex->length() != 1) { return { complex }; }
-    auto compound = Cast<CompoundSelector>(complex->get(0));
+    if (complex->size() != 1) { return { complex }; }
+    auto compound = complex->get(0)->selector();
     if (compound == nullptr) { return { complex }; }
-    if (compound->length() != 1) { return { complex }; }
-    auto innerPseudo = Cast<PseudoSelector>(compound->get(0));
+    if (compound->size() != 1) { return { complex }; }
+    auto innerPseudo = compound->get(0)->isaPseudoSelector();
     if (innerPseudo == nullptr) { return { complex }; }
     if (!innerPseudo->selector()) { return { complex }; }
 
@@ -985,15 +1500,17 @@ namespace Sass {
       // become `.foo:not(.bar)`. However, this is a narrow edge case and
       // supporting it properly would make this code and the code calling it
       // a lot more complicated, so it's not supported for now.
-      if (innerPseudo->normalized() != "matches") return {};
+      if (innerPseudo->normalized() != "matches" &&
+        innerPseudo->normalized() != "where" &&
+        innerPseudo->normalized() != "is") return {};
       return innerPseudo->selector()->elements();
     }
-    else if (name == "matches" || name == "any" || name == "current" || name == "nth-child" || name == "nth-last-child") {
+    else if (isSubselectorPseudo(name) || name == "current") {
       // As above, we could theoretically support :not within :matches, but
       // doing so would require this method and its callers to handle much
       // more complex cases that likely aren't worth the pain.
       if (innerPseudo->name() != pseudo->name()) return {};
-      if (!ObjEquality()(innerPseudo->argument(), pseudo->argument())) return {};
+      if (innerPseudo->argument() != pseudo->argument()) return {};
       return innerPseudo->selector()->elements();
     }
     else if (name == "has" || name == "host" || name == "host-context" || name == "slotted") {
@@ -1008,35 +1525,38 @@ namespace Sass {
   }
   // EO extendPseudoComplex
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Extends [pseudo] using [extensions], and returns
   // a list of resulting pseudo selectors.
-  // ##########################################################################
-  sass::vector<PseudoSelectorObj> Extender::extendPseudo(
+  /////////////////////////////////////////////////////////////////////////
+  sass::vector<PseudoSelectorObj> ExtensionStore::extendPseudo(
     const PseudoSelectorObj& pseudo,
     const ExtSelExtMap& extensions,
     const CssMediaRuleObj& mediaQueryContext)
   {
-    auto selector = pseudo->selector();
-    SelectorListObj extended = extendList(
-      selector, extensions, mediaQueryContext);
-    if (!extended || !pseudo || !pseudo->selector()) { return {}; }
-    if (ObjEqualityFn(pseudo->selector(), extended)) { return {}; }
+    sass::vector<ComplexSelectorObj> extended;
+    // Call extend and abort if nothing was extended
+    if (!pseudo || !pseudo->selector() ||
+      !extendList(pseudo->selector(), extensions,
+        mediaQueryContext, extended)) {
+      // Abort pseudo extend
+      return {};
+    }
 
     // For `:not()`, we usually want to get rid of any complex selectors because
     // that will cause the selector to fail to parse on all browsers at time of
     // writing. We can keep them if either the original selector had a complex
     // selector, or the result of extending has only complex selectors, because
     // either way we aren't breaking anything that isn't already broken.
-    sass::vector<ComplexSelectorObj> complexes = extended->elements();
+    sass::vector<ComplexSelectorObj> complexes = extended;
 
     if (pseudo->normalized() == "not") {
       if (!hasAny(pseudo->selector()->elements(), hasMoreThanOne)) {
-        if (hasAny(extended->elements(), hasExactlyOne)) {
+        if (hasAny(extended, hasExactlyOne)) {
           complexes.clear();
-          for (auto& complex : extended->elements()) {
-            if (complex->length() <= 1) {
-              complexes.push_back(complex);
+          for (auto& complex : extended) {
+            if (complex->size() <= 1) {
+              complexes.emplace_back(complex);
             }
           }
         }
@@ -1044,16 +1564,17 @@ namespace Sass {
     }
 
     sass::vector<ComplexSelectorObj> expanded = expand(
-      complexes, extendPseudoComplex, pseudo, mediaQueryContext);
+      std::move(complexes), extendPseudoComplex,
+      pseudo, mediaQueryContext);
 
     // Older browsers support `:not`, but only with a single complex selector.
     // In order to support those browsers, we break up the contents of a `:not`
     // unless it originally contained a selector list.
     if (pseudo->normalized() == "not") {
-      if (pseudo->selector()->length() == 1) {
+      if (pseudo->selector()->size() == 1) {
         sass::vector<PseudoSelectorObj> pseudos;
         for (size_t i = 0; i < expanded.size(); i += 1) {
-          pseudos.push_back(pseudo->withSelector(
+          pseudos.emplace_back(pseudo->withSelector(
             expanded[i]->wrapInList()
           ));
         }
@@ -1061,40 +1582,23 @@ namespace Sass {
       }
     }
 
-    SelectorListObj list = SASS_MEMORY_NEW(SelectorList, "[pseudo]");
-    list->concat(expanded);
+    SelectorListObj list = SASS_MEMORY_NEW(SelectorList,
+      pseudo->pstate(), std::move(expanded));
     return { pseudo->withSelector(list) };
 
   }
   // EO extendPseudo
 
-  // ##########################################################################
-  // Rotates the element in list from [start] (inclusive) to [end] (exclusive)
-  // one index higher, looping the final element back to [start].
-  // ##########################################################################
-  void Extender::rotateSlice(
-    sass::vector<ComplexSelectorObj>& list,
-    size_t start, size_t end)
-  {
-    auto element = list[end - 1];
-    for (size_t i = start; i < end; i++) {
-      auto next = list[i];
-      list[i] = element;
-      element = next;
-    }
-  }
-  // EO rotateSlice
-
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Removes elements from [selectors] if they're subselectors of other
   // elements. The [isOriginal] callback indicates which selectors are
   // original to the document, and thus should never be trimmed.
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Note: for adaption I pass in the set directly, there is some
   // code path in selector-trim that might need this special callback
-  // ##########################################################################
-  sass::vector<ComplexSelectorObj> Extender::trim(
-    const sass::vector<ComplexSelectorObj>& selectors,
+  /////////////////////////////////////////////////////////////////////////
+  void ExtensionStore::trim(
+    sass::vector<ComplexSelectorObj>& selectors,
     const ExtCplxSelSet& existing) const
   {
 
@@ -1103,7 +1607,7 @@ namespace Sass {
     // without going quadratic by building some sort of trie-like
     // data structure that can be used to look up superselectors.
     // TODO(mgreter): Check how this performs in C++ (up the limit)
-    if (selectors.size() > 100) return selectors;
+    if (selectors.size() > 100) return;
 
     // This is n² on the sequences, but only comparing between separate sequences
     // should limit the quadratic behavior. We iterate from last to first and reverse
@@ -1112,7 +1616,7 @@ namespace Sass {
 
     size_t i = selectors.size();
   outer: // Use label to continue loop
-    while (--i != sass::string::npos) {
+    while (--i != std::string::npos) {
 
       const ComplexSelectorObj& complex1 = selectors[i];
       // Check if selector in known in existing "originals"
@@ -1136,8 +1640,8 @@ namespace Sass {
       // must be another selector that's a superselector of it *and*
       // that has specificity greater or equal to this.
       size_t maxSpecificity = 0;
-      for (const SelectorComponentObj& component : complex1->elements()) {
-        if (const CompoundSelectorObj compound = Cast<CompoundSelector>(component)) {
+      for (const CplxSelComponentObj& component : complex1->elements()) {
+        if (const CompoundSelectorObj compound = component->selector()) {
           maxSpecificity = std::max(maxSpecificity, maxSourceSpecificity(compound));
         }
       }
@@ -1162,15 +1666,15 @@ namespace Sass {
 
     }
 
-    return result;
+    selectors = std::move(result);
 
   }
   // EO trim
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Returns the maximum specificity of the given [simple] source selector.
-  // ##########################################################################
-  size_t Extender::maxSourceSpecificity(const SimpleSelectorObj& simple) const
+  /////////////////////////////////////////////////////////////////////////
+  size_t ExtensionStore::maxSourceSpecificity(const SimpleSelectorObj& simple) const
   {
     auto it = sourceSpecificity.find(simple);
     if (it == sourceSpecificity.end()) return 0;
@@ -1178,10 +1682,10 @@ namespace Sass {
   }
   // EO maxSourceSpecificity(SimpleSelectorObj)
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Returns the maximum specificity for sources that went into producing [compound].
-  // ##########################################################################
-  size_t Extender::maxSourceSpecificity(const CompoundSelectorObj& compound) const
+  /////////////////////////////////////////////////////////////////////////
+  size_t ExtensionStore::maxSourceSpecificity(const CompoundSelectorObj& compound) const
   {
     size_t specificity = 0;
     for (auto simple : compound->elements()) {
@@ -1192,34 +1696,52 @@ namespace Sass {
   }
   // EO maxSourceSpecificity(CompoundSelectorObj)
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Helper function used as callbacks on lists
-  // ##########################################################################
-  bool Extender::dontTrimComplex(
+  /////////////////////////////////////////////////////////////////////////
+  bool ExtensionStore::dontTrimComplex(
     const ComplexSelector* complex2,
     const ComplexSelector* complex1,
     const size_t maxSpecificity)
   {
-    if (complex2->minSpecificity() < maxSpecificity) return false;
-    return complex2->isSuperselectorOf(complex1);
+    // std::cerr << "IS " << complex2->isSuperselectorOf(complex1) << "\n";
+    return complex2->minSpecificity() >= maxSpecificity &&
+      complex2->isSuperselectorOf(complex1);
   }
   // EO dontTrimComplex
 
-  // ##########################################################################
-  // Helper function used as callbacks on lists
-  // ##########################################################################
-  bool Extender::hasExactlyOne(const ComplexSelectorObj& vec)
+  /////////////////////////////////////////////////////////////////////////
+  // Rotates the element in list from [start] (inclusive) to [end] (exclusive)
+  // one index higher, looping the final element back to [start].
+  /////////////////////////////////////////////////////////////////////////
+  void ExtensionStore::rotateSlice(
+    sass::vector<ComplexSelectorObj>& list,
+    size_t start, size_t end)
   {
-    return vec->length() == 1;
+    auto element = list[end - 1];
+    for (size_t i = start; i < end; i++) {
+      auto next = list[i];
+      list[i] = element;
+      element = next;
+    }
+  }
+  // EO rotateSlice
+
+  /////////////////////////////////////////////////////////////////////////
+  // Helper function used as callbacks on lists
+  /////////////////////////////////////////////////////////////////////////
+  bool ExtensionStore::hasExactlyOne(const ComplexSelectorObj& vec)
+  {
+    return vec->size() == 1;
   }
   // EO hasExactlyOne
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Helper function used as callbacks on lists
-  // ##########################################################################
-  bool Extender::hasMoreThanOne(const ComplexSelectorObj& vec)
+  /////////////////////////////////////////////////////////////////////////
+  bool ExtensionStore::hasMoreThanOne(const ComplexSelectorObj& vec)
   {
-    return vec->length() > 1;
+    return vec->size() > 1;
   }
   // hasMoreThanOne
 

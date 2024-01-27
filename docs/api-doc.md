@@ -1,29 +1,41 @@
 ## Introduction
 
-LibSass wouldn't be much good without a way to interface with it. These
-interface documentations describe the various functions and data structures
-available to implementers. They are split up over three major components, which
-have all their own source files (plus some common functionality).
+LibSass C-API is designed as a functional API; every access on the C-API is a
+function call. This has a few drawbacks, but a lot of desirable characteristics.
+The most important one is that it reduces the API surface to simple function calls.
+Implementors do not need to know how internal structures look, so we are free
+to adjust them as we see fit, as long as the functional API stays the same.
 
-- [Sass Context](api-context.md) - Trigger and handle the main Sass compilation
-- [Sass Value](api-value.md) - Exchange values and its format with LibSass
-- [Sass Function](api-function.md) - Get invoked by LibSass for function statments
-- [Sass Importer](api-importer.md) - Get invoked by LibSass for @import statments
+Under the hood, LibSass uses advanced C++ code (c++11 being the current target), so
+you will need a modern compiler and also link against c++ runtime libraries. This poses
+some issues in regard of portability and deployment of precompiled binary distributions.
+
+The API has been split into a few categories which come with their own documentation:
+
+- [Sass Basics](api-basics.md) - Further details and information about the C-API
+- [Sass Compiler](api-compiler.md) - Trigger and handle the main Sass compilation
+- [Sass Imports](api-import.md) - Imports to be loaded and parsed by LibSass
+- [Sass Values](api-value.md) - Exchange Sass values between LibSass and implementors
+- [Sass Functions](api-function.md) - Get invoked by LibSass for function statements
+- [Sass Importers](api-importer.md) - Get invoked by LibSass for @import statements
+- [Sass Variables](api-variable.md) - Query or update existing scope variables
+- [Sass Traces](api-traces.md) - Access to traces for debug information
+- [Sass Error](api-error.md) - Access to errors for debug information
 
 ### Basic usage
 
 First you will need to include the header file!
-This will automatically load all other headers too!
+This will automatically load all LibSass headers!
 
 ```C
-#include "sass/context.h"
+#include <sass.h>
 ```
 
 ## Basic C Example
 
 ```C
 #include <stdio.h>
-#include "sass/context.h"
+#include <sass.h>
 
 int main() {
   puts(libsass_version());
@@ -31,147 +43,148 @@ int main() {
 }
 ```
 
+### Compile and link against LibSass
+
 ```bash
 gcc -Wall version.c -lsass -o version && ./version
 ```
 
-## More C Examples
+## More code examples
 
-- [Sample code for Sass Context](api-context-example.md)
-- [Sample code for Sass Value](api-value-example.md)
+- [Sample code for Sass Compiler](api-compiler-example.md)
 - [Sample code for Sass Function](api-function-example.md)
 - [Sample code for Sass Importer](api-importer-example.md)
+- [Sample code for Sass Value](api-value-example.md)
 
-## Compiling your code
+## Compiler entry points
 
-The most important is your sass file (or string of sass code). With this, you
-will want to start a LibSass compiler. Here is some pseudocode describing the
-process. The compiler has two different modes: direct input as a string with
-`Sass_Data_Context` or LibSass will do file reading for you by using
-`Sass_File_Context`. See the code for a list of options available
-[Sass_Options](https://github.com/sass/libsass/blob/36feef0/include/sass/interface.h#L18)
+LibSass parsing starts with an entry point, which can either be a
+file or some text you provide directly. Relative includes are
+resolved against the current (virtual) working directory. Entry
+points must be of type `struct SassImport*` and can be created
+via different constructor functions:
 
-The general rule is if the API takes `const char*` it will make a copy, 
-but where the API is `char*` it will take over memory ownership, so make sure to pass 
-in memory that is allocated via `sass_copy_c_string` or `sass_alloc_memory`.
+- `sass_make_file_import("styles.scss"); // loads the file`
+- `sass_make_stdin_import("styles.scss"); // reads from stdin`
+- `sass_make_content_import(text, "styles.scss"); // uses text`
+- `sass_make_import(imp_path, abs_path, source, srcmap, format);`
 
-**Building a file compiler**
+Remember that `SassImport` must be freed via `sass_delete_import`.
 
-    context = sass_make_file_context("file.scss")
-    options = sass_file_context_get_options(context)
-    sass_option_set_precision(options, 1)
-    sass_option_set_source_comments(options, true)
+**Building a compiler**
 
-    sass_file_context_set_options(context, options)
-
-    compiler = sass_make_file_compiler(sass_context)
-    sass_compiler_parse(compiler)
-    sass_compiler_execute(compiler)
-
-    output = sass_context_get_output_string(context)
-    // Retrieve errors during compilation
-    error_status = sass_context_get_error_status(context)
-    json_error = sass_context_get_error_json(context)
-    // Release memory dedicated to the C compiler
-    sass_delete_compiler(compiler)
-
-**Building a data compiler**
-
-    // LibSass takes over memory owenership, make sure to allocate
-    // a buffer via `sass_alloc_memory` or `sass_copy_c_string`.
-    buffer = sass_copy_c_string("div { a { color: blue; } }")
-
-    context = sass_make_data_context(buffer)
-    options = sass_data_context_get_options(context)
-    sass_option_set_precision(options, 1)
-    sass_option_set_source_comments(options, true)
-
-    sass_data_context_set_options(context, options)
-
-    compiler = sass_make_data_compiler(context)
-    sass_compiler_parse(compiler)
-    sass_compiler_execute(compiler)
-
-    output = sass_context_get_output_string(context)
-    // div a { color: blue; }
-    // Retrieve errors during compilation
-    error_status = sass_context_get_error_status(context)
-    json_error = sass_context_get_error_json(context)
-    // Release memory dedicated to the C compiler
-    sass_delete_compiler(compiler)
-
-## Sass Context Internals
-
-Everything is stored in structs:
-
-```C
-struct Sass_Options;
-struct Sass_Context : Sass_Options;
-struct Sass_File_context : Sass_Context;
-struct Sass_Data_context : Sass_Context;
-```
-
-This mirrors very well how `libsass` uses these structures.
-
-- `Sass_Options` holds everything you feed in before the compilation. It also hosts
-`input_path` and `output_path` options, because they are used to generate/calculate
-relative links in source-maps. The `input_path` is shared with `Sass_File_Context`.
-- `Sass_Context` holds all the data returned by the compilation step.
-- `Sass_File_Context` is a specific implementation that requires no additional fields
-- `Sass_Data_Context` is a specific implementation that adds the `input_source` field
-
-Structs can be down-casted to access `context` or `options`!
+  // Create the main compiler object
+  struct SassCompiler* compiler = sass_make_compiler();
+  // Check terminal capabilities (useful for CLI tools)
+  sass_compiler_autodetect_logger_capabilities(compiler);
+  // Create a file-import entry point (without input file-name)
+  struct SassImport* import = sass_make_content_import("foo{bar:baz}", 0);
+  // Set import syntax since input has no file extension
+  sass_import_set_syntax(import, SASS_IMPORT_SCSS);
+  // Tell compiler which entry point to load
+  sass_compiler_set_entry_point(compiler, import);
+  // We are done with this (ref-counted) import
+  sass_delete_import(import);
+  // Execute compiler and print/write results
+  sass_compiler_execute(compiler, false);
+  // Get result code after all compilation steps
+  int status = sass_compiler_get_status(compiler);
+  // Clean-up compiler, we're done
+  sass_delete_compiler(compiler);
+  // exit status
+  return status;
 
 ## Memory handling and life-cycles
 
-We keep memory around for as long as the main [context](api-context.md) object
-is not destroyed (`sass_delete_context`). LibSass will create copies of most
-inputs/options beside the main sass code. You need to allocate and fill that
-buffer before passing it to LibSass. You may also overtake memory management
-from libsass for certain return values (i.e. `sass_context_take_output_string`).
-Make sure to free it via `sass_free_memory`.
+The C-API mandates that you have one delete/free call for every make call. Internally
+LibSass sometimes utilizes reference counting, but you still need to call the appropriate
+`sass_delete` function for every object you own. APIs that return a `char*` also need
+the returned memory to be freed by `sass_free_c_string`. A few APIs also allow
+implementors to take over ownership of some data. Otherwise this data is attached
+to the life-time of the main Compiler object. Although reference counted objects
+will stay alive, even after you've called `sass_delete_compiler`.
 
 ```C
-// to allocate buffer to be filled
+// Allocate a memory block on the heap of (at least) [size].
+// Make sure to release to acquired memory at some later point via
+// `sass_free_memory`. You need to go through my utility function in
+// case your code and my main program don't use the same memory manager.
 void* sass_alloc_memory(size_t size);
-// to allocate a buffer from existing string
+
+// Allocate a memory block on the heap and copy [string] into it.
+// Make sure to release to acquired memory at some later point via
+// `sass_free_memory`. You need to go through my utility function in
+// case your code and my main program don't use the same memory manager.
 char* sass_copy_c_string(const char* str);
-// to free overtaken memory when done
+
+// Deallocate libsass heap memory
 void sass_free_memory(void* ptr);
+void sass_free_c_string(char* ptr);
 ```
 
 ## Miscellaneous API functions
 
 ```C
-// Some convenient string helper function
-char* sass_string_unquote (const char* str);
-char* sass_string_quote (const char* str, const char quote_mark);
+// Change the virtual current working directory
+void sass_chdir(const char* path);
 
-// Get compiled libsass version
+// Prints message to stderr with color for windows
+void sass_print_stdout(const char* message);
+void sass_print_stderr(const char* message);
+
+// Get compiled LibSass version
 const char* libsass_version(void);
 
 // Implemented sass language version
-// Hardcoded version 3.4 for time being
+// Hardcoded version 3.9 for time being
 const char* libsass_language_version(void);
 ```
 
+## Miscellaneous API enums
+
+```C
+// Different render styles
+enum SassOutputStyle {
+  SASS_STYLE_NESTED,
+  SASS_STYLE_EXPANDED,
+  SASS_STYLE_COMPACT,
+  SASS_STYLE_COMPRESSED,
+  // only used internally!
+  SASS_STYLE_TO_CSS
+};
+
+// Type of parser to use
+enum SassImportSyntax {
+  SASS_IMPORT_AUTO,
+  SASS_IMPORT_SCSS,
+  SASS_IMPORT_SASS,
+  SASS_IMPORT_CSS,
+};
+
+// Config how to produce source-map
+enum SassSrcMapMode {
+  // Don't render any source-mapping.
+  SASS_SRCMAP_NONE,
+  // Only render the `srcmap` string.
+  // The `footer` will be `NULL`.
+  SASS_SRCMAP_CREATE,
+  // Write srcmap link into `footer`
+  SASS_SRCMAP_EMBED_LINK,
+  // Embed srcmap into `footer`
+  SASS_SRCMAP_EMBED_JSON,
+};
+
+// State of the compiler object
+enum SassCompilerState {
+  SASS_COMPILER_CREATED,
+  SASS_COMPILER_PARSED,
+  SASS_COMPILER_COMPILED,
+  SASS_COMPILER_RENDERED,
+  SASS_COMPILER_DESTROYED
+};
+```
+
 ## Common Pitfalls
-
-**input_path**
-
-The `input_path` is part of `Sass_Options`, but it also is the main option for
-`Sass_File_Context`. It is also used to generate relative file links in source-
-maps. Therefore it is pretty useful to pass this information if you have a
-`Sass_Data_Context` and know the original path.
-
-**output_path**
-
-Be aware that `libsass` does not write the output file itself. This option
-merely exists to give `libsass` the proper information to generate links in
-source-maps. The file has to be written to the disk by the
-binding/implementation. If the `output_path` is omitted, `libsass` tries to
-extrapolate one from the `input_path` by replacing (or adding) the file ending
-with `.css`.
 
 ## Error Codes
 
@@ -199,26 +212,12 @@ have all features implemented!
 2. [Go Example](https://godoc.org/github.com/wellington/go-libsass#example-Compiler--Stdin)
 3. [Node Example](https://github.com/sass/node-sass/blob/master/src/binding.cpp)
 
-## ABI forward compatibility
-
-We use a functional API to make dynamic linking more robust and future
-compatible. The API is not yet 100% stable, so we do not yet guarantee
-[ABI](https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html) forward
-compatibility.
-
 ## Plugins (experimental)
 
-LibSass can load plugins from directories. Just define `plugin_path` on context
-options to load all plugins from the directories. To implement plugins, please
-consult the following example implementations.
+LibSass can [load plugins](dev-plugins.md) from directories. Just define `plugin_path`
+on context options to load all plugins from the directories. To implement plugins,
+please consult the following example implementations.
 
 - https://github.com/mgreter/libsass-glob
 - https://github.com/mgreter/libsass-math
 - https://github.com/mgreter/libsass-digest
-
-## Internal Structs
-
-- [Sass Context Internals](api-context-internal.md)
-- [Sass Value Internals](api-value-internal.md)
-- [Sass Function Internals](api-function-internal.md)
-- [Sass Importer Internals](api-importer-internal.md)

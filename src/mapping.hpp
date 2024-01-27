@@ -1,18 +1,32 @@
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
 #ifndef SASS_MAPPING_H
 #define SASS_MAPPING_H
 
-#include "position.hpp"
-#include "backtrace.hpp"
+#include <vector>
+#include "memory.hpp"
+#include "offset.hpp"
 
 namespace Sass {
 
-  struct Mapping {
-    Position original_position;
-    Position generated_position;
+  class Mapping {
 
-    Mapping(const Position& original_position, const Position& generated_position)
-    : original_position(original_position), generated_position(generated_position) { }
+  public:
+    // Source Index for the origin
+    size_t srcidx; // uint32_t
+    // Position of original occurrence
+    Offset origin;
+    // Position where it was rendered.
+    Offset target;
+
+    // Base copy constructor
+    Mapping(size_t srcidx, const Offset& origin, const Offset& target)
+    : srcidx(srcidx), origin(origin), target(target) { }
+
   };
+
+  typedef sass::vector<Mapping> Mappings;
 
 }
 

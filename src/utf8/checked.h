@@ -50,7 +50,8 @@ namespace utf8
         uint8_t u8;
     public:
         invalid_utf8 (uint8_t u) : u8(u) {}
-        virtual const char* what() const throw() { return "Invalid UTF-8"; }
+        virtual const char* what() const throw() {
+          return "Invalid UTF-8"; }
         uint8_t utf8_octet() const {return u8;}
     };
 

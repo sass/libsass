@@ -1,86 +1,81 @@
-// sass.hpp must go before all system headers to get the
-// __EXTENSIONS__ fix on Solaris.
-#include "sass.hpp"
-#include "ast.hpp"
-
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
 #include "remove_placeholders.hpp"
+
+#include "ast_selectors.hpp"
 
 namespace Sass {
 
-    Remove_Placeholders::Remove_Placeholders()
-    { }
-
-    void Remove_Placeholders::operator()(Block* b) {
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        if (b->get(i)) b->get(i)->perform(this);
-      }
+    bool isInvisibleCss(CssNode* stmt) {
+      return stmt->isInvisibleCss();
     }
 
-    void Remove_Placeholders::remove_placeholders(SimpleSelector* simple)
+    void RemovePlaceholders::remove_placeholders(SimpleSelector* simple)
     {
-      if (PseudoSelector * pseudo = simple->getPseudoSelector()) {
+      if (PseudoSelector * pseudo = simple->isaPseudoSelector()) {
         if (pseudo->selector()) remove_placeholders(pseudo->selector());
       }
     }
 
-    void Remove_Placeholders::remove_placeholders(CompoundSelector* compound)
+    void RemovePlaceholders::remove_placeholders(CompoundSelector* compound)
     {
-      for (size_t i = 0, L = compound->length(); i < L; ++i) {
+      for (size_t i = 0, L = compound->size(); i < L; ++i) {
         if (compound->get(i)) remove_placeholders(compound->get(i));
       }
-      listEraseItemIf(compound->elements(), listIsEmpty<SimpleSelector>);
+      // listEraseItemIf(compound->elements(), listIsInvisible<SimpleSelector>);
+      // listEraseItemIf(compound->elements(), listIsEmpty<SimpleSelector>);
     }
 
-    void Remove_Placeholders::remove_placeholders(ComplexSelector* complex)
+    void RemovePlaceholders::remove_placeholders(ComplexSelector* complex)
     {
-      if (complex->has_placeholder()) {
-        complex->clear(); // remove all
-      }
-      else {
-        for (size_t i = 0, L = complex->length(); i < L; ++i) {
-          if (CompoundSelector * compound = complex->get(i)->getCompound()) {
-            if (compound) remove_placeholders(compound);
-          }
+      for (const CplxSelComponentObj& component : complex->elements()) {
+        if (component->hasPlaceholder()) {
+          complex->clear(); // remove all
+          return;
         }
-        listEraseItemIf(complex->elements(), listIsEmpty<SelectorComponent>);
+        if (CompoundSelector* compound = component->selector()) {
+          if (compound) remove_placeholders(compound);
+        }
+      }
+      complex->eraseIf(listIsEmpty<CplxSelComponent>);
+      // ToDo: describe what this means
+      //if (complex->hasInvisible()) {
+      //  complex->clear(); // remove all
+      //}
+    }
+
+    void RemovePlaceholders::remove_placeholders(SelectorList* sl)
+    {
+      for(const ComplexSelectorObj& complex : sl->elements()) {
+        if (complex) remove_placeholders(complex);
+      }
+      sl->eraseIf(listIsEmpty<ComplexSelector>);
+    }
+
+    void RemovePlaceholders::visitCssRoot(CssRoot* b)
+    {
+      // Clean up all our children
+      acceptCssParentNode(b);
+      // Remove all invisible items
+      //b->eraseIf(isInvisibleCss);
+    }
+
+    void RemovePlaceholders::visitCssStyleRule(CssStyleRule* rule)
+    {
+      // Clean up all our children
+      acceptCssParentNode(rule);
+
+      if (SelectorList* sl = rule->selector()) {
+        remove_placeholders(sl);
       }
     }
 
-    SelectorList* Remove_Placeholders::remove_placeholders(SelectorList* sl)
+    void RemovePlaceholders::acceptCssParentNode(CssParentNode* m)
     {
-      for (size_t i = 0, L = sl->length(); i < L; ++i) {
-        if (sl->get(i)) remove_placeholders(sl->get(i));
+      for (const CssNodeObj& node : m->elements()) {
+        node->accept(this);
       }
-      listEraseItemIf(sl->elements(), listIsEmpty<ComplexSelector>);
-      return sl;
-    }
-
-    void Remove_Placeholders::operator()(CssMediaRule* rule)
-    {
-      if (rule->block()) operator()(rule->block());
-    }
-
-    void Remove_Placeholders::operator()(StyleRule* r)
-    {
-      if (SelectorListObj sl = r->selector()) {
-        // Set the new placeholder selector list
-        r->selector((remove_placeholders(sl)));
-      }
-      // Iterate into child blocks
-      Block_Obj b = r->block();
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        if (b->get(i)) { b->get(i)->perform(this); }
-      }
-    }
-
-    void Remove_Placeholders::operator()(SupportsRule* m)
-    {
-      if (m->block()) operator()(m->block());
-    }
-
-    void Remove_Placeholders::operator()(AtRule* a)
-    {
-      if (a->block()) a->block()->perform(this);
     }
 
 }

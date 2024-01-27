@@ -44,15 +44,15 @@ fi
 if [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
   MAKE_OPTS="$MAKE_OPTS -j1 V=1"
 else
-  MAKE_OPTS="$MAKE_OPTS -j5 V=1"
+  MAKE_OPTS="$MAKE_OPTS -j8 V=1"
 fi
 
 if [ "x$PREFIX" == "x" ]; then
-  if [ "x$TRAVIS_BUILD_DIR" == "x" ]; then
-    PREFIX=$SASS_LIBSASS_PATH/build
-  else
-    PREFIX=$TRAVIS_BUILD_DIR/build
-  fi
+  #if [ "x$TRAVIS_BUILD_DIR" == "x" ]; then
+    PREFIX=$SASS_LIBSASS_PATH/installed
+  #else
+  #  PREFIX=$TRAVIS_BUILD_DIR/build
+  #fi
 fi
 
 # enable address sanitation
@@ -60,9 +60,9 @@ fi
 if [ "x$CC" == "xclang" ]; then
   if [ "x$COVERAGE" != "xyes" ]; then
     if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      export EXTRA_CFLAGS="$EXTRA_CFLAGS -fsanitize=address"
-      export EXTRA_CXXFLAGS="$EXTRA_CXXFLAGS -fsanitize=address"
-      export EXTRA_LDFLAGS="$EXTRA_LDFLAGS -fsanitize=address"
+      export EXTRA_CFLAGS="$EXTRA_CFLAGS -g -fsanitize=address"
+      export EXTRA_CXXFLAGS="$EXTRA_CXXFLAGS -g -fsanitize=address"
+      export EXTRA_LDFLAGS="$EXTRA_LDFLAGS -g -fsanitize=address"
     fi
   fi
 fi
@@ -71,13 +71,19 @@ echo SASS_LIBSASS_PATH: $SASS_LIBSASS_PATH
 echo TRAVIS_BUILD_DIR: $TRAVIS_BUILD_DIR
 echo SASS_SASSC_PATH: $SASS_SASSC_PATH
 echo SASS_SPEC_PATH: $SASS_SPEC_PATH
+echo EXTRA_CFLAGS: $EXTRA_CFLAGS
+echo EXTRA_CXXFLAGS: $EXTRA_CXXFLAGS
+echo EXTRA_LDFLAGS: $EXTRA_LDFLAGS
+echo MAKE_OPTS: $MAKE_OPTS
 echo INSTALL_LOCATION: $PREFIX
 
 if [ "x$AUTOTOOLS" == "xyes" ]; then
 
   echo -en 'travis_fold:start:configure\r'
   autoreconf --force --install
-  ./configure --enable-tests $COVERAGE_OPT \
+  mkdir -p build
+  cd build
+  ../configure --enable-tests $COVERAGE_OPT \
     --disable-silent-rules \
     --with-sassc-dir=$SASS_SASSC_PATH \
     --with-sass-spec-dir=$SASS_SPEC_PATH \
@@ -85,20 +91,29 @@ if [ "x$AUTOTOOLS" == "xyes" ]; then
     ${SHARED_OPT}
   echo -en 'travis_fold:end:configure\r'
 
-  make $MAKE_OPTS clean
+  echo "MAKE CLEAN"
+
+  PREFIX="$PREFIX" make $MAKE_OPTS clean
+
+  echo "MAKE INSTALL"
+
+  # install to prefix directory
+  PREFIX="$PREFIX" make $MAKE_OPTS install
+
+  cd ..
 
 else
 
-  make $MAKE_OPTS clean
+  PREFIX="$PREFIX" make $MAKE_OPTS clean
 
   # Run C++ unit tests
-  make $MAKE_OPTS -C test clean
-  make $MAKE_OPTS -C test test
+  # make $MAKE_OPTS -C test clean
+  # make $MAKE_OPTS -C test test
+
+  # install to prefix directory
+  PREFIX="$PREFIX" make $MAKE_OPTS install
 
 fi
-
-# install to prefix directory
-PREFIX="$PREFIX" make $MAKE_OPTS install
 
 ls -la $PREFIX/*
 
@@ -109,28 +124,42 @@ if [ "$CONTINUOUS_INTEGRATION" == "true" ] && [ "$TRAVIS_PULL_REQUEST" != "false
    ([ "$TRAVIS_OS_NAME" == "linux" ] || [ "$TRAVIS_OS_NAME" == "osx" ] || [ "$TRAVIS_OS_NAME" == "cygwin" ]);
 then
 
-  echo "Fetching PR $TRAVIS_PULL_REQUEST"
+  if [ "x$TRAVIS_PULL_REQUEST" != "2918" ]; then
 
-  JSON=$(curl -L -sS https://api.github.com/repos/sass/libsass/pulls/$TRAVIS_PULL_REQUEST)
-
-  if [[ $JSON =~ "API rate limit exceeded" ]];
-  then
-    echo "Travis rate limit on github exceeded"
-    echo "Retrying via 'special purpose proxy'"
-    JSON=$(curl -L -sS https://github-api-reverse-proxy.herokuapp.com/repos/sass/libsass/pulls/$TRAVIS_PULL_REQUEST)
-  fi
-
-  RE_SPEC_PR="sass\/sass-spec(#|\/pull\/)([0-9]+)"
-
-  if [[ $JSON =~ $RE_SPEC_PR ]];
-  then
-    SPEC_PR="${BASH_REMATCH[2]}"
-    echo "Fetching Sass Spec PR $SPEC_PR"
-    git -C sass-spec fetch -u origin pull/$SPEC_PR/head:ci-spec-pr-$SPEC_PR
-    git -C sass-spec checkout --force ci-spec-pr-$SPEC_PR
+    echo "Checking out refactoring branch"
+    cd sass-spec
+    if ! git config remote.mgreter.url > /dev/null; then
+      git remote add mgreter https://github.com/mgreter/sass-spec.git -f
+      git checkout -b refactoring mgreter/refactor/libsass-4-alpha
+    fi
+    cd ..
     make $MAKE_OPTS test_probe
+
   else
-    make $MAKE_OPTS test_probe
+
+    echo "Fetching PR $TRAVIS_PULL_REQUEST"
+
+    JSON=$(curl -L -sS https://api.github.com/repos/sass/libsass/pulls/$TRAVIS_PULL_REQUEST)
+
+    if [[ $JSON =~ "API rate limit exceeded" ]];
+    then
+      echo "Travis rate limit on github exceeded"
+      echo "Retrying via 'special purpose proxy'"
+      JSON=$(curl -L -sS https://github-api-reverse-proxy.herokuapp.com/repos/sass/libsass/pulls/$TRAVIS_PULL_REQUEST)
+    fi
+
+    RE_SPEC_PR="sass\/sass-spec(#|\/pull\/)([0-9]+)"
+
+    if [[ $JSON =~ $RE_SPEC_PR ]];
+    then
+      SPEC_PR="${BASH_REMATCH[2]}"
+      echo "Fetching Sass Spec PR $SPEC_PR"
+      git -C sass-spec fetch -u origin pull/$SPEC_PR/head:ci-spec-pr-$SPEC_PR
+      git -C sass-spec checkout --force ci-spec-pr-$SPEC_PR
+      make $MAKE_OPTS test_probe
+    else
+      make $MAKE_OPTS test_probe
+    fi
   fi
 else
   make $MAKE_OPTS test_probe

@@ -1,3 +1,6 @@
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
 /*
   Copyright (C) 2011 Joseph A. Adams (joeyadams3.14159@gmail.com)
   All rights reserved.
@@ -21,11 +24,11 @@
   THE SOFTWARE.
 */
 
-#ifndef CCAN_JSON_H
-#define CCAN_JSON_H
+#ifndef CCAN_JSON_HPP
+#define CCAN_JSON_HPP
 
-#include <stdbool.h>
-#include <stddef.h>
+#include <cstdbool>
+#include <cstddef>
 
 typedef enum {
   JSON_NULL,

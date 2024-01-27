@@ -1,4 +1,4 @@
-os: Visual Studio 2013
+os: Visual Studio 2015
 
 environment:
   CTEST_OUTPUT_ON_FAILURE: 1
@@ -8,9 +8,9 @@ environment:
   - Compiler: msvc
     Config: Release
     Platform: Win32
-  - Compiler: msvc
-    Config: Debug
-    Platform: Win32
+#  - Compiler: msvc
+#    Config: Debug
+#    Platform: Win32
   - Compiler: msvc
     Config: Release
     Platform: Win64
@@ -32,8 +32,8 @@ cache:
 #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 install:
-  - git clone https://github.com/sass/sassc.git
-  - git clone https://github.com/sass/sass-spec.git
+  - git clone https://github.com/mgreter/sassc.git --branch refactor/libsass-4-alpha
+  - git clone https://github.com/mgreter/sass-spec.git --branch refactor/libsass-4-alpha
   - set PATH=C:\Ruby%ruby_version%\bin;%PATH%
   - ps: |
       if(!(gem which minitest 2>$nul)) { gem install minitest --no-ri --no-rdoc }
@@ -66,17 +66,6 @@ build_script:
 test_script:
   - ps: |
       $PRNR = $env:APPVEYOR_PULL_REQUEST_NUMBER
-      if ($PRNR) {
-        echo "Fetching info for PR $PRNR"
-        wget https://api.github.com/repos/sass/libsass/pulls/$PRNR -OutFile pr.json
-        $json = cat pr.json -Raw
-        $SPEC_PR = [regex]::match($json,'sass\/sass-spec(#|\/pull\/)([0-9]+)').Groups[2].Value
-        if ($SPEC_PR) {
-          echo "Checkout sass spec PR $SPEC_PR"
-          git -C sass-spec fetch -q -u origin pull/$SPEC_PR/head:ci-spec-pr-$SPEC_PR
-          git -C sass-spec checkout -q --force ci-spec-pr-$SPEC_PR
-        }
-      }
       $env:TargetPath = Join-Path $pwd.Path $env:TargetPath
       If (Test-Path "$env:TargetPath") {
         ruby sass-spec/sass-spec.rb --probe-todo --impl libsass -c $env:TargetPath -s sass-spec/spec

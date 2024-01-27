@@ -1,6 +1,14 @@
-#ifndef SASS_PATHS_H
-#define SASS_PATHS_H
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
+#ifndef SASS_PERMUTATE_HPP
+#define SASS_PERMUTATE_HPP
 
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
+
+#include <cstddef>
 #include <vector>
 
 namespace Sass {
@@ -45,7 +53,7 @@ namespace Sass {
       sass::vector<T> perm;
       // Create one permutation for state
       for (size_t i = 0; i < L; i += 1) {
-        perm.push_back(in.at(i).at(in[i].size() - state[i] - 1));
+        perm.emplace_back(in.at(i).at(in[i].size() - state[i] - 1));
       }
       // Current group finished
       if (state[n] == 0) {
@@ -53,7 +61,7 @@ namespace Sass {
         while (n < L && state[++n] == 0) {}
 
         if (n == L) {
-          out.push_back(perm);
+          out.emplace_back(perm);
           break;
         }
 
@@ -70,7 +78,7 @@ namespace Sass {
       else {
         state[n] -= 1;
       }
-      out.push_back(perm);
+      out.emplace_back(perm);
     }
 
     delete[] state;
@@ -95,8 +103,8 @@ namespace Sass {
   // ```
   // 
   template <class T>
-  sass::vector<sass::vector<T>>
-    permutateAlt(const sass::vector<sass::vector<T>>& in) {
+  sass::vector<sass::vector<T>> permutateAlt(
+    const sass::vector<sass::vector<T>>& in) {
 
     size_t L = in.size();
     size_t n = in.size() - 1;
@@ -125,7 +133,7 @@ namespace Sass {
       sass::vector<T> perm;
       // Create one permutation for state
       for (size_t i = 0; i < L; i += 1) {
-        perm.push_back(in.at(i).at(in[i].size() - state[i] - 1));
+        perm.emplace_back(in.at(i).at(in[i].size() - state[i] - 1));
       }
       // Current group finished
       if (state[n] == 0) {
@@ -144,14 +152,14 @@ namespace Sass {
           n = L - 1;
         }
         else {
-          out.push_back(perm);
+          out.emplace_back(perm);
           break;
         }
       }
       else {
         state[n] -= 1;
       }
-      out.push_back(perm);
+      out.emplace_back(perm);
     }
 
     delete[] state;

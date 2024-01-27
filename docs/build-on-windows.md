@@ -1,7 +1,7 @@
-We support builds via MingGW and via Visual Studio Community 2013.
+We support builds via MinGW and via Visual Studio Community 2013.
 Both should be considered experimental (MinGW was better tested)!
 
-## Building via MingGW (makefiles)
+## Building via MinGW (makefiles)
 
 First grab the latest [MinGW for windows][1] installer. Once it is installed, you can click on continue or open the Installation Manager via `bin\mingw-get.exe`.
 
@@ -24,7 +24,7 @@ As mentioned in the [MinGW Getting Started](http://www.mingw.org/wiki/Getting_St
 C:\MinGW   /mingw
 ```
 
-### Starting a "MingGW" console
+### Starting a "MinGW" console
 
 Create a batch file with this content:
 ```bat
@@ -50,7 +50,8 @@ git clone https://github.com/sass/sass-spec.git libsass/sass-spec
 
 ### Decide for static or shared library
 
-`libsass` can be built and linked as a `static` or as a `shared` library. The default is `static`. To change it you can set the `BUILD` environment variable:
+`libsass` can be built and linked as a `static` or as a `shared` library.
+The default is `static`. To change it you can set the `BUILD` environment variable:
 
 ```bat
 set BUILD="shared"
@@ -72,7 +73,7 @@ libsass.a  libsass.dll  libsass.so
 mingw32-make -C libsass test_build
 ```
 
-## Building via MingGW 64bit (makefiles)
+## Building via MinGW 64bit (makefiles)
 Building libass to dll on window 64bit.
 
 + downloads  [MinGW64 for windows7 64bit](http://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/4.9.2/threads-win32/seh/x86_64-4.9.2-release-win32-seh-rt_v3-rev0.7z/download) , and unzip to "C:\mingw64".
@@ -94,7 +95,7 @@ cmd
 ``` bash
 lib/libsass.dll: $(COBJECTS) $(OBJECTS) $(RCOBJECTS)
 	$(MKDIR) lib
-	$(CXX) -shared $(LDFLAGS) -o $@ $(COBJECTS) $(OBJECTS) $(RCOBJECTS) $(LDLIBS) -s -static -Wl,--subsystem,windows,--out-implib,lib/libsass.a
+	$(CXX) -shared $(LDFLAGS) -o $@ $(COBJECTS) $(OBJECTS) $(RCOBJECTS) $(LDLIBS) -s -static -Wl,--subsystem,windows,--out-implib,lib/libsass.dll.a
 ```
 
 + Compile the library

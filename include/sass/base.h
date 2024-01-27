@@ -1,8 +1,8 @@
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
 #ifndef SASS_BASE_H
 #define SASS_BASE_H
-
-// #define DEBUG
-// #define DEBUG_SHARED_PTR
 
 #ifdef _MSC_VER
   #pragma warning(disable : 4503)
@@ -23,8 +23,16 @@
 #define noexcept throw( )
 #endif
 
+// Load some POD types
 #include <stddef.h>
+#include <stdint.h>
 #include <stdbool.h>
+
+// Include forward declarations
+#include <sass/fwdecl.h>
+
+// Include enumerations
+#include <sass/enums.h>
 
 #ifdef __GNUC__
   #define DEPRECATED(func) func __attribute__ ((deprecated))
@@ -37,7 +45,7 @@
 
 #ifdef _WIN32
 
-  /* You should define ADD_EXPORTS *only* when building the DLL. */
+/* You should define ADD_EXPORTS *only* when building the DLL. */
   #ifdef ADD_EXPORTS
     #define ADDAPI __declspec(dllexport)
     #define ADDCALL __cdecl
@@ -54,41 +62,39 @@
 
 #endif
 
-/* Make sure functions are exported with C linkage under C++ compilers. */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+  // Change the virtual current working directory
+  ADDAPI void ADDCALL sass_chdir(const char* path);
 
-// Different render styles
-enum Sass_Output_Style {
-  SASS_STYLE_NESTED,
-  SASS_STYLE_EXPANDED,
-  SASS_STYLE_COMPACT,
-  SASS_STYLE_COMPRESSED,
-  // only used internaly
-  SASS_STYLE_INSPECT,
-  SASS_STYLE_TO_SASS,
-  SASS_STYLE_TO_CSS
-};
+  // Prints message to stderr with color for windows
+  ADDAPI void ADDCALL sass_print_stdout(const char* message);
+  ADDAPI void ADDCALL sass_print_stderr(const char* message);
 
-// to allocate buffer to be filled
-ADDAPI void* ADDCALL sass_alloc_memory(size_t size);
-// to allocate a buffer from existing string
-ADDAPI char* ADDCALL sass_copy_c_string(const char* str);
-// to free overtaken memory when done
-ADDAPI void ADDCALL sass_free_memory(void* ptr);
+  // Return implemented sass language version
+  ADDAPI const char* ADDCALL libsass_version(void);
 
-// Some convenient string helper function
-ADDAPI char* ADDCALL sass_string_quote (const char* str, const char quote_mark);
-ADDAPI char* ADDCALL sass_string_unquote (const char* str);
+  // Return the compiled libsass language (hard-coded)
+  // This is hard-coded with the library on compilation!
+  ADDAPI const char* ADDCALL libsass_language_version(void);
 
-// Implemented sass language version
-// Hardcoded version 3.4 for time being
-ADDAPI const char* ADDCALL libsass_version(void);
+  // Allocate a memory block on the heap of (at least) [size].
+  // Make sure to release to acquired memory at some later point via
+  // `sass_free_memory`. You need to go through my utility function in
+  // case your code and my main program don't use the same memory manager.
+  ADDAPI void* ADDCALL sass_alloc_memory(size_t size);
 
-// Get compiled libsass language
-ADDAPI const char* ADDCALL libsass_language_version(void);
+  // Allocate a memory block on the heap and copy [string] into it.
+  // Make sure to release to acquired memory at some later point via
+  // `sass_free_memory`. You need to go through my utility function in
+  // case your code and my main program don't use the same memory manager.
+  ADDAPI char* ADDCALL sass_copy_c_string(const char* str);
+
+  // Deallocate libsass heap memory
+  ADDAPI void ADDCALL sass_free_memory(void* ptr);
+  ADDAPI void ADDCALL sass_free_c_string(char* ptr);
 
 #ifdef __cplusplus
 } // __cplusplus defined.

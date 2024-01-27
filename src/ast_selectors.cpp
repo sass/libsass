@@ -1,1070 +1,1360 @@
-// sass.hpp must go before all system headers to get the
-// __EXTENSIONS__ fix on Solaris.
-#include "sass.hpp"
+#include "ast_selectors.hpp"
 
-#include "ast.hpp"
 #include "permutate.hpp"
-#include "util_string.hpp"
+#include "callstack.hpp"
+#include "dart_helpers.hpp"
+#include "ast_values.hpp"
+#include "exceptions.hpp"
+#include "sel_invisible.hpp"
+#include "sel_useless.hpp"
+#include "sel_bogus.hpp"
+#include "cssize.hpp"
+
+#include "debugger.hpp"
 
 namespace Sass {
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  Selector::Selector(SourceSpan pstate)
-  : Expression(pstate),
+  Selector::Selector(
+    const SourceSpan& pstate) :
+    AstNode(pstate),
     hash_(0)
-  { concrete_type(SELECTOR); }
+  {}
 
-  Selector::Selector(const Selector* ptr)
-  : Expression(ptr),
-    hash_(ptr->hash_)
-  { concrete_type(SELECTOR); }
-
-
-  bool Selector::has_real_parent_ref() const
-  {
-    return false;
-  }
-
-  /////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
-
-  Selector_Schema::Selector_Schema(SourceSpan pstate, String_Obj c)
-  : AST_Node(pstate),
-    contents_(c),
-    connect_parent_(true),
+  Selector::Selector(
+    const Selector* ptr) :
+    AstNode(ptr),
     hash_(0)
-  { }
-  Selector_Schema::Selector_Schema(const Selector_Schema* ptr)
-  : AST_Node(ptr),
-    contents_(ptr->contents_),
-    connect_parent_(ptr->connect_parent_),
-    hash_(ptr->hash_)
-  { }
+  {}
 
-  unsigned long Selector_Schema::specificity() const
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
+  bool Selector::isUseless() const
   {
-    return 0;
+    IsUselessVisitor visitor;
+    return const_cast<Selector*>(this)->accept(&visitor);
   }
 
-  size_t Selector_Schema::hash() const {
-    if (hash_ == 0) {
-      hash_combine(hash_, contents_->hash());
-    }
-    return hash_;
+  bool Selector::isInvisible() const
+  {
+    IsInvisibleVisitor visitor(true);
+    return const_cast<Selector*>(this)->accept(&visitor);
   }
 
-  bool Selector_Schema::has_real_parent_ref() const
+  bool Selector::isInvisibleOtherThanBogusCombinators() const
   {
-    // Note: disabled since it does not seem to do anything?
-    // if (String_Schema_Obj schema = Cast<String_Schema>(contents())) {
-    // if (schema->empty()) return false;
-    // const auto first = schema->first();
-    // return Cast<Parent_Reference>(first);
-    // }
-    return false;
+    IsInvisibleVisitor visitor(false);
+    return const_cast<Selector*>(this)->accept(&visitor);
+  }
+
+  bool Selector::isBogusOtherThanLeadingCombinator() const
+  {
+    IsBogusVisitor visitor(false);
+    return const_cast<Selector*>(this)->accept(&visitor);
+  }
+
+  bool Selector::isBogusStrict() const
+  {
+    IsBogusVisitor visitor(true);
+    return const_cast<Selector*>(this)->accept(&visitor);
+  }
+
+  bool Selector::isBogusLenient() const
+  {
+    IsBogusVisitor visitor(false);
+    return const_cast<Selector*>(this)->accept(&visitor);
+  }
+
+  SelectorList* SelectorList::assertNotBogus(const sass::string& name)
+  {
+    return this;
   }
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  SimpleSelector::SimpleSelector(SourceSpan pstate, sass::string n)
-  : Selector(pstate), ns_(""), name_(n), has_ns_(false)
-  {
-    size_t pos = n.find('|');
-    // found some namespace
-    if (pos != sass::string::npos) {
-      has_ns_ = true;
-      ns_ = n.substr(0, pos);
-      name_ = n.substr(pos + 1);
-    }
-  }
-  SimpleSelector::SimpleSelector(const SimpleSelector* ptr)
-  : Selector(ptr),
-    ns_(ptr->ns_),
-    name_(ptr->name_),
-    has_ns_(ptr->has_ns_)
-  { }
+  SimpleSelector::SimpleSelector(
+    const SourceSpan& pstate,
+    const sass::string& name) :
+    Selector(pstate),
+    name_(name)
+  {}
 
-  sass::string SimpleSelector::ns_name() const
-  {
-    if (!has_ns_) return name_;
-    else return ns_ + "|" + name_;
-  }
+  SimpleSelector::SimpleSelector(
+    const SourceSpan& pstate,
+    sass::string&& name) :
+    Selector(pstate),
+    name_(name)
+  {}
+
+  SimpleSelector::SimpleSelector(
+    const SimpleSelector* ptr) :
+    Selector(ptr),
+    name_(ptr->name_)
+  {}
 
   size_t SimpleSelector::hash() const
   {
     if (hash_ == 0) {
+      hash_start(hash_, typeid(this).hash_code());
       hash_combine(hash_, name());
-      hash_combine(hash_, (int)SELECTOR);
-      hash_combine(hash_, (int)simple_type());
-      if (has_ns_) hash_combine(hash_, ns());
     }
     return hash_;
   }
 
-  bool SimpleSelector::empty() const {
-    return ns().empty() && name().empty();
+  CompoundSelector* SimpleSelector::wrapInCompound()
+  {
+    return SASS_MEMORY_NEW(CompoundSelector, pstate(), { this }, false);
   }
 
-  // namespace compare functions
-  bool SimpleSelector::is_ns_eq(const SimpleSelector& r) const
+  ComplexSelector* SimpleSelector::wrapInComplex(SelectorCombinatorVector prefixes)
   {
-    return has_ns_ == r.has_ns_ && ns_ == r.ns_;
+    auto* qwe = wrapInCompound()->wrapInComponent({});
+    return SASS_MEMORY_NEW(ComplexSelector, pstate(), std::move(prefixes), { qwe });
   }
 
-  // namespace query functions
-  bool SimpleSelector::is_universal_ns() const
+  ComplexSelector* CplxSelComponent::wrapInComplex(SelectorCombinatorVector prefixes)
   {
-    return has_ns_ && ns_ == "*";
+    return SASS_MEMORY_NEW(ComplexSelector, pstate(), std::move(prefixes), { this });
   }
 
-  bool SimpleSelector::is_empty_ns() const
+  ComplexSelector* CplxSelComponent::wrapInComplex2()
   {
-    return !has_ns_ || ns_ == "";
+    return SASS_MEMORY_NEW(ComplexSelector, pstate(), {}, { this });
   }
 
-  bool SimpleSelector::has_empty_ns() const
+  ComplexSelector* CompoundSelector::wrapInComplex3()
   {
-    return has_ns_ && ns_ == "";
+    auto comp = SASS_MEMORY_NEW(CplxSelComponent, pstate(), {}, this);
+    return SASS_MEMORY_NEW(ComplexSelector, pstate(), { comp });
   }
 
-  bool SimpleSelector::has_qualified_ns() const
+  ComplexSelector* CompoundSelector::wrapInComplex(SelectorCombinatorVector prefixes, SelectorCombinatorVector tails)
   {
-    return has_ns_ && ns_ != "" && ns_ != "*";
+    auto comp = SASS_MEMORY_NEW(CplxSelComponent, pstate(), std::move(tails), this);
+    return SASS_MEMORY_NEW(ComplexSelector, pstate(), std::move(prefixes), { comp });
   }
 
-  // name query functions
-  bool SimpleSelector::is_universal() const
+  CplxSelComponent* CompoundSelector::wrapInComponent(SelectorCombinatorVector postfixes)
   {
-    return name_ == "*";
-  }
-
-  bool SimpleSelector::has_placeholder()
-  {
-    return false;
-  }
-
-  bool SimpleSelector::has_real_parent_ref() const
-  {
-    return false;
-  };
-
-  bool SimpleSelector::is_pseudo_element() const
-  {
-    return false;
-  }
-
-  CompoundSelectorObj SimpleSelector::wrapInCompound()
-  {
-    CompoundSelectorObj selector =
-      SASS_MEMORY_NEW(CompoundSelector, pstate());
-    selector->append(this);
-    return selector;
-  }
-  ComplexSelectorObj SimpleSelector::wrapInComplex()
-  {
-    ComplexSelectorObj selector =
-      SASS_MEMORY_NEW(ComplexSelector, pstate());
-    selector->append(wrapInCompound());
-    return selector;
+    return SASS_MEMORY_NEW(CplxSelComponent, pstate(), std::move(postfixes), this);
   }
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  PlaceholderSelector::PlaceholderSelector(SourceSpan pstate, sass::string n)
-  : SimpleSelector(pstate, n)
-  { simple_type(PLACEHOLDER_SEL); }
-  PlaceholderSelector::PlaceholderSelector(const PlaceholderSelector* ptr)
-  : SimpleSelector(ptr)
-  { simple_type(PLACEHOLDER_SEL); }
-  unsigned long PlaceholderSelector::specificity() const
-  {
-    return Constants::Specificity_Base;
-  }
-  bool PlaceholderSelector::has_placeholder() {
-    return true;
-  }
+  SelectorNS::SelectorNS(
+    const SourceSpan& pstate,
+    sass::string&& name,
+    sass::string&& ns,
+    bool hasNs) :
+    SimpleSelector(pstate,
+      std::move(name)),
+    hasNs_(hasNs),
+    ns_(std::move(ns))
+  {}
 
-  /////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
+  SelectorNS::SelectorNS(
+    const SelectorNS* ptr) :
+    SimpleSelector(ptr),
+    hasNs_(ptr->hasNs_),
+    ns_(ptr->ns_)
+  {}
 
-  TypeSelector::TypeSelector(SourceSpan pstate, sass::string n)
-  : SimpleSelector(pstate, n)
-  { simple_type(TYPE_SEL); }
-  TypeSelector::TypeSelector(const TypeSelector* ptr)
-  : SimpleSelector(ptr)
-  { simple_type(TYPE_SEL); }
-
-  unsigned long TypeSelector::specificity() const
-  {
-    if (name() == "*") return 0;
-    else return Constants::Specificity_Element;
-  }
-
-  /////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
-
-  ClassSelector::ClassSelector(SourceSpan pstate, sass::string n)
-  : SimpleSelector(pstate, n)
-  { simple_type(CLASS_SEL); }
-  ClassSelector::ClassSelector(const ClassSelector* ptr)
-  : SimpleSelector(ptr)
-  { simple_type(CLASS_SEL); }
-
-  unsigned long ClassSelector::specificity() const
-  {
-    return Constants::Specificity_Class;
-  }
-
-  /////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
-
-  IDSelector::IDSelector(SourceSpan pstate, sass::string n)
-  : SimpleSelector(pstate, n)
-  { simple_type(ID_SEL); }
-  IDSelector::IDSelector(const IDSelector* ptr)
-  : SimpleSelector(ptr)
-  { simple_type(ID_SEL); }
-
-  unsigned long IDSelector::specificity() const
-  {
-    return Constants::Specificity_ID;
-  }
-
-  /////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
-
-  AttributeSelector::AttributeSelector(SourceSpan pstate, sass::string n, sass::string m, String_Obj v, char o)
-  : SimpleSelector(pstate, n), matcher_(m), value_(v), modifier_(o)
-  { simple_type(ATTRIBUTE_SEL); }
-  AttributeSelector::AttributeSelector(const AttributeSelector* ptr)
-  : SimpleSelector(ptr),
-    matcher_(ptr->matcher_),
-    value_(ptr->value_),
-    modifier_(ptr->modifier_)
-  { simple_type(ATTRIBUTE_SEL); }
-
-  size_t AttributeSelector::hash() const
+  size_t SelectorNS::hash() const
   {
     if (hash_ == 0) {
+      hash_start(hash_, typeid(this).hash_code());
       hash_combine(hash_, SimpleSelector::hash());
-      hash_combine(hash_, std::hash<sass::string>()(matcher()));
-      if (value_) hash_combine(hash_, value_->hash());
+      if (hasNs_) hash_combine(hash_, ns());
     }
     return hash_;
   }
 
-  unsigned long AttributeSelector::specificity() const
+  /////////////////////////////////////////////////////////////////////////
+
+  // Up-casts the right hand side first to find specialization
+  bool SelectorNS::nsMatch(const SimpleSelector& rhs) const
   {
-    return Constants::Specificity_Attr;
+    // if (hasNs() == false || isUniversalNs()) {
+    //   return SimpleSelector::nsMatch(rhs);
+    // }
+    if (auto simple = rhs.isaSelectorNS()) {
+      return SelectorNS::nsMatch(*simple);
+    }
+    return !hasNs() || isUniversalNs();
   }
 
   /////////////////////////////////////////////////////////////////////////
+  // A placeholder selector. (e.g. `%foo`). This doesn't match any elements.
+  // It's intended to be extended using `@extend`. It's not a plain CSS
+  // selector — it should be removed before emitting a CSS document.
   /////////////////////////////////////////////////////////////////////////
 
-  PseudoSelector::PseudoSelector(SourceSpan pstate, sass::string name, bool element)
-  : SimpleSelector(pstate, name),
-    normalized_(Util::unvendor(name)),
-    argument_({}),
-    selector_({}),
+  PlaceholderSelector::PlaceholderSelector(
+    const SourceSpan& pstate,
+    const sass::string& name) :
+    SimpleSelector(pstate, name)
+  {}
+
+  PlaceholderSelector::PlaceholderSelector(
+    const PlaceholderSelector* ptr) :
+    SimpleSelector(ptr)
+  {}
+
+  /////////////////////////////////////////////////////////////////////////
+  // A type selector. (e.g., `div`, `span` or `*`).
+  // This selects elements whose name equals the given name.
+  /////////////////////////////////////////////////////////////////////////
+
+  TypeSelector::TypeSelector(
+    const SourceSpan& pstate,
+    sass::string&& name,
+    sass::string&& ns,
+    bool hasNs) :
+    SelectorNS(pstate,
+      std::move(name),
+      std::move(ns),
+      hasNs)
+  {}
+
+  TypeSelector::TypeSelector(
+    const TypeSelector* ptr) :
+    SelectorNS(ptr)
+  {}
+
+
+  /////////////////////////////////////////////////////////////////////////
+  // Class selectors  -- i.e., .foo.
+  /////////////////////////////////////////////////////////////////////////
+
+  ClassSelector::ClassSelector(
+    const SourceSpan& pstate,
+    const sass::string& name)
+    : SimpleSelector(pstate, name)
+  {}
+
+  ClassSelector::ClassSelector(
+    const ClassSelector* ptr) :
+    SimpleSelector(ptr)
+  {}
+
+  /////////////////////////////////////////////////////////////////////////
+  // An ID selector (i.e. `#foo`). This selects elements 
+  // whose `id` attribute exactly matches the given name.
+  /////////////////////////////////////////////////////////////////////////
+
+  IDSelector::IDSelector(
+    const SourceSpan& pstate,
+    const sass::string& name) :
+    SimpleSelector(pstate, name)
+  {}
+
+  IDSelector::IDSelector(
+    const IDSelector* ptr) :
+    SimpleSelector(ptr)
+  {}
+
+  /////////////////////////////////////////////////////////////////////////
+  // An attribute selector. This selects for elements
+  // with the given attribute, and optionally with a
+  // value matching certain conditions as well.
+  /////////////////////////////////////////////////////////////////////////
+
+  AttributeSelector::AttributeSelector(
+    const SourceSpan& pstate,
+    struct QualifiedName&& name,
+    sass::string&& op,
+    sass::string&& value,
+    bool isIdentifier,
+    char modifier) :
+    SelectorNS(pstate,
+      std::move(name.name),
+      std::move(name.ns),
+      name.hasNs),
+    op_(std::move(op)),
+    value_(std::move(value)),
+    modifier_(modifier),
+    isIdentifier_(isIdentifier)
+  {}
+
+  AttributeSelector::AttributeSelector(
+    const AttributeSelector* ptr) :
+    SelectorNS(ptr),
+    op_(ptr->op_),
+    value_(ptr->value_),
+    modifier_(ptr->modifier_),
+    isIdentifier_(ptr->isIdentifier_)
+  {}
+
+  /////////////////////////////////////////////////////////////////////////
+  // A pseudo-class or pseudo-element selector (e.g., `:content`
+  // or `:nth-child`). The semantics of a specific pseudo selector
+  // depends on its name. Some selectors take arguments, including
+  // other selectors. Sass manually encodes logic for each pseudo
+  // selector that takes a selector as an argument, to ensure that
+  // extension and other selector operations work properly.
+  /////////////////////////////////////////////////////////////////////////
+
+  PseudoSelector::PseudoSelector(
+    const SourceSpan& pstate,
+    const sass::string& name,
+    bool element) :
+    SimpleSelector(pstate, name),
+    normalized_(StringUtils::unvendor(name)),
+    argument_(),
+    selector_(),
     isSyntacticClass_(!element),
     isClass_(!element && !isFakePseudoElement(normalized_))
-  { simple_type(PSEUDO_SEL); }
-  PseudoSelector::PseudoSelector(const PseudoSelector* ptr)
-  : SimpleSelector(ptr),
+  {}
+
+  PseudoSelector::PseudoSelector(
+    const PseudoSelector* ptr) :
+    SimpleSelector(ptr),
     normalized_(ptr->normalized()),
     argument_(ptr->argument()),
     selector_(ptr->selector()),
     isSyntacticClass_(ptr->isSyntacticClass()),
     isClass_(ptr->isClass())
-  { simple_type(PSEUDO_SEL); }
+  { }
 
-  // A pseudo-element is made of two colons (::) followed by the name.
-  // The `::` notation is introduced by the current document in order to
-  // establish a discrimination between pseudo-classes and pseudo-elements.
-  // For compatibility with existing style sheets, user agents must also
-  // accept the previous one-colon notation for pseudo-elements introduced
-  // in CSS levels 1 and 2 (namely, :first-line, :first-letter, :before and
-  // :after). This compatibility is not allowed for the new pseudo-elements
-  // introduced in this specification.
-  bool PseudoSelector::is_pseudo_element() const
+
+  bool PseudoSelector::hasInvisible() const
   {
-    return isElement();
+    return selector() && selector()->empty() && name() != "not";
   }
 
   size_t PseudoSelector::hash() const
   {
     if (hash_ == 0) {
-      hash_combine(hash_, SimpleSelector::hash());
-      if (selector_) hash_combine(hash_, selector_->hash());
-      if (argument_) hash_combine(hash_, argument_->hash());
+      hash_start(hash_, typeid(this).hash_code());
+      hash_combine(hash_, argument_);
+      if (selector_) hash_combine(
+        hash_, selector_->hash());
     }
     return hash_;
   }
 
-  unsigned long PseudoSelector::specificity() const
-  {
-    if (is_pseudo_element())
-      return Constants::Specificity_Element;
-    return Constants::Specificity_Pseudo;
+  // Implement for cleanup phase
+  bool PseudoSelector::empty() const {
+    // Only considered empty if selector is
+    // available but has no items in it.
+    return argument_.empty() && name().empty() &&
+      (selector() && selector()->empty());
   }
 
-  PseudoSelectorObj PseudoSelector::withSelector(SelectorListObj selector)
+  bool PseudoSelector::isHostContext() const {
+    return isClass_ && name_ == "host-context" &&
+      selector_ != nullptr; // && !selector_->empty();
+  }
+
+  PseudoSelector* PseudoSelector::withSelector(SelectorList* selector)
   {
-    PseudoSelectorObj pseudo = SASS_MEMORY_COPY(this);
+    PseudoSelector* pseudo = SASS_MEMORY_COPY(this);
     pseudo->selector(selector);
     return pseudo;
   }
 
-  bool PseudoSelector::empty() const
-  {
-    // Only considered empty if selector is
-    // available but has no items in it.
-    return selector() && selector()->empty();
-  }
-
-  void PseudoSelector::cloneChildren()
-  {
-    if (selector().isNull()) selector({});
-    else selector(SASS_MEMORY_CLONE(selector()));
-  }
-
-  bool PseudoSelector::has_real_parent_ref() const {
-    if (!selector()) return false;
-    return selector()->has_real_parent_ref();
+  const Selector* PseudoSelector::hasAnyExplicitParent() const {
+    if (selector_ == nullptr) return nullptr;
+    return selector_->getExplicitParent();
   }
 
   /////////////////////////////////////////////////////////////////////////
+  // Complex Selectors are the most important class of selectors.
+  // A Selector List consists of Complex Selectors (separated by comma)
+  // Complex Selectors are itself a list of Compounds and Combinators
+  // Between each item there is an implicit ancestor of combinator
   /////////////////////////////////////////////////////////////////////////
 
-  SelectorList::SelectorList(SourceSpan pstate, size_t s)
-  : Selector(pstate),
-    Vectorized<ComplexSelectorObj>(s),
-    is_optional_(false)
-  { }
-  SelectorList::SelectorList(const SelectorList* ptr)
-    : Selector(ptr),
-    Vectorized<ComplexSelectorObj>(*ptr),
-    is_optional_(ptr->is_optional_)
-  { }
 
-  size_t SelectorList::hash() const
-  {
-    if (Selector::hash_ == 0) {
-      hash_combine(Selector::hash_, Vectorized::hash());
-    }
-    return Selector::hash_;
-  }
-
-  bool SelectorList::has_real_parent_ref() const
-  {
-    for (ComplexSelectorObj s : elements()) {
-      if (s && s->has_real_parent_ref()) return true;
-    }
-    return false;
-  }
-
-  void SelectorList::cloneChildren()
-  {
-    for (size_t i = 0, l = length(); i < l; i++) {
-      at(i) = SASS_MEMORY_CLONE(at(i));
-    }
-  }
-
-  unsigned long SelectorList::specificity() const
-  {
-    return 0;
-  }
-
-  bool SelectorList::isInvisible() const
-  {
-    if (length() == 0) return true;
-    for (size_t i = 0; i < length(); i += 1) {
-      if (get(i)->isInvisible()) return true;
-    }
-    return false;
-  }
-
-  /////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
-
-  ComplexSelector::ComplexSelector(SourceSpan pstate)
-  : Selector(pstate),
-    Vectorized<SelectorComponentObj>(),
+  ComplexSelector::ComplexSelector(
+    const SourceSpan& pstate,
+    CplxSelComponentVector&& components) :
+    Selector(pstate),
+    Vectorized(std::move(components)),
     chroots_(false),
-    hasPreLineFeed_(false)
-  {
-  }
-  ComplexSelector::ComplexSelector(const ComplexSelector* ptr)
-  : Selector(ptr),
-    Vectorized<SelectorComponentObj>(ptr->elements()),
-    chroots_(ptr->chroots()),
-    hasPreLineFeed_(ptr->hasPreLineFeed())
-  {
-  }
+    hasPreLineFeed_(false),
+    hasLineBreak_(false),
+    leadingCombinators_({})
+  {}
 
-  void ComplexSelector::cloneChildren()
-  {
-    for (size_t i = 0, l = length(); i < l; i++) {
-      at(i) = SASS_MEMORY_CLONE(at(i));
-    }
-  }
+  ComplexSelector::ComplexSelector(
+    const SourceSpan& pstate,
+    const SelectorCombinatorVector& leadingCombinators,
+    const CplxSelComponentVector& components,
+    bool hasLineBreak) :
+    Selector(pstate),
+    Vectorized(components),
+    chroots_(hasLineBreak),
+    hasPreLineFeed_(hasLineBreak),
+    hasLineBreak_(hasLineBreak),
+    leadingCombinators_(leadingCombinators)
+  {}
+
+  ComplexSelector::ComplexSelector(
+    const SourceSpan& pstate,
+    SelectorCombinatorVector&& leadingCombinators,
+    CplxSelComponentVector && components,
+    bool hasLineBreak) :
+    Selector(pstate),
+    Vectorized(std::move(components)),
+    chroots_(false),
+    hasPreLineFeed_(hasLineBreak),
+    hasLineBreak_(hasLineBreak),
+    leadingCombinators_(std::move(leadingCombinators))
+  {}
+
+  ComplexSelector::ComplexSelector(
+    const ComplexSelector* ptr,
+    bool childless) :
+    Selector(ptr),
+    Vectorized(ptr, childless),
+    chroots_(ptr->chroots_),
+    hasPreLineFeed_(ptr->hasPreLineFeed_),
+    hasLineBreak_(ptr->hasLineBreak_),
+    leadingCombinators_(ptr->leadingCombinators_)
+  {}
+
 
   unsigned long ComplexSelector::specificity() const
   {
-    int sum = 0;
-    for (auto component : elements()) {
-      sum += component->specificity();
+    if (specificity_ == 0xFFFFFFFF) {
+      specificity_ = 0;
+      for (const auto& component : elements()) {
+        specificity_ += component->selector()->specificity();
+      }
     }
-    return sum;
+    return specificity_;
   }
 
-  bool ComplexSelector::isInvisible() const
+  unsigned long ComplexSelector::maxSpecificity() const
   {
-    if (length() == 0) return true;
-    for (size_t i = 0; i < length(); i += 1) {
-      if (CompoundSelectorObj compound = get(i)->getCompound()) {
-        if (compound->isInvisible()) return true;
+    if (maxSpecificity_ == 0xFFFFFFFF) {
+      maxSpecificity_ = 0;
+      for (const auto& component : elements()) {
+        maxSpecificity_ += component->selector()->maxSpecificity();
+      }
+    }
+    return maxSpecificity_;
+  }
+
+  unsigned long ComplexSelector::minSpecificity() const
+  {
+    if (minSpecificity_ == 0xFFFFFFFF) {
+      minSpecificity_ = 0;
+      for (const auto& component : elements()) {
+        minSpecificity_ += component->selector()->minSpecificity();
+      }
+    }
+    return minSpecificity_;
+  }
+
+  ComplexSelector* ComplexSelector::produce() {
+      sass::vector<CplxSelComponentObj> copy;
+      for (CplxSelComponent* child : elements_) {
+        if (child->selector() == nullptr) continue;
+        CompoundSelectorObj asd = child->selector()->produce();
+        copy.push_back(asd->wrapInComponent(child->combinators())); // ToDo combi
+      }
+      return SASS_MEMORY_NEW(ComplexSelector,
+          pstate_, std::move(copy));
+  }
+
+  bool ComplexSelector::hasInvisible() const
+  {
+    if (empty()) return true;
+    if (isBogusStrict()) return true;
+    for (const auto& component : elements()) {
+      if (component->hasInvisible()) return true;
+    }
+    return false;
+  }
+
+  bool ComplexSelector::hasPlaceholder() const
+  {
+    for (const auto& child : elements()) {
+      if (child->hasPlaceholder()) {
+        return true;
       }
     }
     return false;
   }
 
-  bool ComplexSelector::isInvalidCss() const
-  {
-    for (size_t i = 0; i < length(); i += 1) {
-      if (CompoundSelectorObj compound = get(i)->getCompound()) {
-        if (compound->isInvalidCss()) return true;
-      }
-    }
-    return false;
+  //bool ComplexSelector::isUseless() const {
+  //  return leadingCombinators_.size() > 1;
+  //}
+
+  bool ComplexSelector::hasOneLeadingCombinators() const {
+    return leadingCombinators_.size() == 1;
   }
 
-  SelectorListObj ComplexSelector::wrapInList()
+  SelectorCombinator* ComplexSelector::getLeadingCombinator() const
   {
-    SelectorListObj selector =
-      SASS_MEMORY_NEW(SelectorList, pstate());
-    selector->append(this);
-    return selector;
+    if (!leadingCombinators_.empty())
+      return leadingCombinators_[0];
+    return nullptr;
+  }
+
+  CompoundSelector* ComplexSelector::getSingleCompound() const
+  {
+    if (elements_.size() != 1) return nullptr;
+    if (!leadingCombinators_.empty()) return nullptr;
+    auto& first = elements_.front();
+    if (!first->combinators().empty()) return nullptr;
+    return first->selector();
+  }
+
+  SelectorList* ComplexSelector::wrapInList()
+  {
+    return SASS_MEMORY_NEW(SelectorList, pstate(), { this });
   }
 
   size_t ComplexSelector::hash() const
   {
-    if (Selector::hash_ == 0) {
-      hash_combine(Selector::hash_, Vectorized::hash());
-      // ToDo: this breaks some extend lookup
-      // hash_combine(Selector::hash_, chroots_);
+    if (Vectorized<CplxSelComponent>::hash_ == 0) {
+      Selector::hash_ = Vectorized<CplxSelComponent>::hash();
     }
     return Selector::hash_;
   }
 
-  bool ComplexSelector::has_placeholder() const {
-    for (size_t i = 0, L = length(); i < L; ++i) {
-      if (get(i)->has_placeholder()) return true;
-    }
-    return false;
-  }
-
-  bool ComplexSelector::has_real_parent_ref() const
+  const Selector* ComplexSelector::getExplicitParent() const
   {
-    for (auto item : elements()) {
-      if (item->has_real_parent_ref()) return true;
+    const Selector* rv = nullptr;
+    for (const CplxSelComponentObj& component : elements()) {
+      rv = component->hasAnyExplicitParent();
+      if (rv != nullptr) return rv;
     }
-    return false;
+    return nullptr;
   }
 
   /////////////////////////////////////////////////////////////////////////
+  // Base class for complex selector components
   /////////////////////////////////////////////////////////////////////////
 
-  SelectorComponent::SelectorComponent(SourceSpan pstate, bool postLineBreak)
-  : Selector(pstate),
-    hasPostLineBreak_(postLineBreak)
-  {
-  }
+  //CplxSelComponent::CplxSelComponent(
+  //  const SourceSpan& pstate,
+  //  bool hasPostLineBreak) :
+  //  AstNode(pstate),
+  //  hasPostLineBreak_(hasPostLineBreak)
+  //{}
 
-  SelectorComponent::SelectorComponent(const SelectorComponent* ptr)
-  : Selector(ptr),
+  CplxSelComponent::CplxSelComponent(
+    const SourceSpan & pstate,
+    SelectorCombinatorVector&& combinators,
+    CompoundSelector* selector,
+    bool hasPostLineBreak) :
+    AstNode(pstate),
+    combinators_(std::move(combinators)),
+    selector_(selector),
+    hasPostLineBreak_(hasPostLineBreak)
+  {}
+
+  CplxSelComponent::CplxSelComponent(
+    const CplxSelComponent* ptr) :
+    AstNode(ptr),
+    combinators_(ptr->combinators_),
+    selector_(ptr->selector_),
     hasPostLineBreak_(ptr->hasPostLineBreak())
-  { }
+  {}
 
-  void SelectorComponent::cloneChildren()
+  size_t CplxSelComponent::hash() const
   {
-  }
-
-  unsigned long SelectorComponent::specificity() const
-  {
-    return 0;
-  }
-
-  // Wrap the compound selector with a complex selector
-  ComplexSelector* SelectorComponent::wrapInComplex()
-  {
-    auto complex = SASS_MEMORY_NEW(ComplexSelector, pstate());
-    complex->append(this);
-    return complex;
+    return 123123;
   }
 
   /////////////////////////////////////////////////////////////////////////
+  // A specific combinator between compound selectors
   /////////////////////////////////////////////////////////////////////////
 
-  SelectorCombinator::SelectorCombinator(SourceSpan pstate, SelectorCombinator::Combinator combinator, bool postLineBreak)
-    : SelectorComponent(pstate, postLineBreak),
-    combinator_(combinator)
-  {
-  }
-  SelectorCombinator::SelectorCombinator(const SelectorCombinator* ptr)
-    : SelectorComponent(ptr->pstate(), false),
-      combinator_(ptr->combinator())
-  { }
-
-  void SelectorCombinator::cloneChildren()
-  {
-  }
-
-  unsigned long SelectorCombinator::specificity() const
-  {
-    return 0;
-  }
+//  SelectorCombinator::SelectorCombinator(
+//    const SourceSpan& pstate,
+//    SelectorCombinator::Combinator combinator,
+//    bool hasPostLineBreak) :
+//    CplxSelComponent(pstate, hasPostLineBreak),
+//    combinator_(combinator)
+//  {}
+//
+//  SelectorCombinator::SelectorCombinator(
+//    const SelectorCombinator* ptr) :
+//    CplxSelComponent(ptr),
+//    combinator_(ptr->combinator_)
+//  {}
+//
+//  // Hash implementation is very simple
+//  size_t SelectorCombinator::hash() const
+//  {
+//    if (hash_ == 0) {
+//      hash_start(hash_, typeid(this).hash_code());
+//      hash_combine(hash_, (size_t)combinator());
+//    }
+//    return hash_;
+//  }
 
   /////////////////////////////////////////////////////////////////////////
+  // A compound selector consists of multiple simple selectors. It will be
+  // either implicitly or explicitly connected to its parent sass selector.
+  // According to the specs we could also unify the tag selector into this,
+  // as AFAICT only one tag selector is ever allowed. Further we could free
+  // up the pseudo selectors from being virtual, as they must be last always.
+  // https://github.com/sass/libsass/pull/3101
   /////////////////////////////////////////////////////////////////////////
 
-  CompoundSelector::CompoundSelector(SourceSpan pstate, bool postLineBreak)
-    : SelectorComponent(pstate, postLineBreak),
-      Vectorized<SimpleSelectorObj>(),
-      hasRealParent_(false)
-  {
-  }
-  CompoundSelector::CompoundSelector(const CompoundSelector* ptr)
-    : SelectorComponent(ptr),
-      Vectorized<SimpleSelectorObj>(*ptr),
-      hasRealParent_(ptr->hasRealParent())
-  { }
+  CompoundSelector::CompoundSelector(
+    const SourceSpan& pstate,
+    bool hasPostLineBreak) :
+    Selector(pstate),
+    withExplicitParent_(false),
+    hasPostLineBreak_(hasPostLineBreak)
+  {}
+
+  CompoundSelector::CompoundSelector(
+    const SourceSpan& pstate,
+    sass::vector<SimpleSelectorObj>&& selectors,
+    bool hasPostLineBreak) :
+    Selector(pstate),
+    Vectorized(std::move(selectors)),
+    withExplicitParent_(false),
+    hasPostLineBreak_(hasPostLineBreak)
+  {}
+
+  CompoundSelector::CompoundSelector(
+    const CompoundSelector* ptr,
+    bool childless) :
+    Selector(ptr),
+    Vectorized(ptr, childless),
+    withExplicitParent_(ptr->withExplicitParent()),
+    hasPostLineBreak_(ptr->hasPostLineBreak_)
+  {}
 
   size_t CompoundSelector::hash() const
   {
-    if (Selector::hash_ == 0) {
-      hash_combine(Selector::hash_, Vectorized::hash());
-      hash_combine(Selector::hash_, hasRealParent_);
+    if (Vectorized<SimpleSelector>::hash_ == 0) {
+      Selector::hash_ = Vectorized<SimpleSelector>::hash();
     }
     return Selector::hash_;
-  }
-
-  bool CompoundSelector::has_real_parent_ref() const
-  {
-    if (hasRealParent()) return true;
-    // ToDo: dart sass has another check?
-    // if (Cast<TypeSelector>(front)) {
-    //  if (front->ns() != "") return false;
-    // }
-    for (const SimpleSelector* s : elements()) {
-      if (s && s->has_real_parent_ref()) return true;
-    }
-    return false;
-  }
-
-  bool CompoundSelector::has_placeholder() const
-  {
-    if (length() == 0) return false;
-    for (SimpleSelectorObj ss : elements()) {
-      if (ss->has_placeholder()) return true;
-    }
-    return false;
-  }
-
-  void CompoundSelector::cloneChildren()
-  {
-    for (size_t i = 0, l = length(); i < l; i++) {
-      at(i) = SASS_MEMORY_CLONE(at(i));
-    }
   }
 
   unsigned long CompoundSelector::specificity() const
   {
-    int sum = 0;
-    for (size_t i = 0, L = length(); i < L; ++i)
-    { sum += get(i)->specificity(); }
-    return sum;
-  }
-
-  bool CompoundSelector::isInvisible() const
-  {
-    for (size_t i = 0; i < length(); i += 1) {
-      if (!get(i)->isInvisible()) return false;
-    }
-    return true;
-  }
-
-  bool CompoundSelector::isSuperselectorOf(const CompoundSelector* sub, sass::string wrapped) const
-  {
-    CompoundSelector* rhs2 = const_cast<CompoundSelector*>(sub);
-    CompoundSelector* lhs2 = const_cast<CompoundSelector*>(this);
-    return compoundIsSuperselector(lhs2, rhs2, {});
-  }
-
-  /////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
-
-  MediaRule::MediaRule(SourceSpan pstate, Block_Obj block) :
-    ParentStatement(pstate, block),
-    schema_({})
-  {
-    statement_type(MEDIA);
-  }
-
-  MediaRule::MediaRule(const MediaRule* ptr) :
-    ParentStatement(ptr),
-    schema_(ptr->schema_)
-  {
-    statement_type(MEDIA);
-  }
-
-  /////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
-
-  CssMediaRule::CssMediaRule(SourceSpan pstate, Block_Obj block) :
-    ParentStatement(pstate, block),
-    Vectorized()
-  {
-    statement_type(MEDIA);
-  }
-
-  CssMediaRule::CssMediaRule(const CssMediaRule* ptr) :
-    ParentStatement(ptr),
-    Vectorized(*ptr)
-  {
-    statement_type(MEDIA);
-  }
-
-  CssMediaQuery::CssMediaQuery(SourceSpan pstate) :
-    AST_Node(pstate),
-    modifier_(""),
-    type_(""),
-    features_()
-  {
-  }
-
-  /////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
-
-  bool CssMediaQuery::operator==(const CssMediaQuery& rhs) const
-  {
-    return type_ == rhs.type_
-      && modifier_ == rhs.modifier_
-      && features_ == rhs.features_;
-  }
-
-  // Implemented after dart-sass (maybe move to other class?)
-  CssMediaQuery_Obj CssMediaQuery::merge(CssMediaQuery_Obj& other)
-  {
-
-    sass::string ourType = this->type();
-    Util::ascii_str_tolower(&ourType);
-
-    sass::string theirType = other->type();
-    Util::ascii_str_tolower(&theirType);
-
-    sass::string ourModifier = this->modifier();
-    Util::ascii_str_tolower(&ourModifier);
-
-    sass::string theirModifier = other->modifier();
-    Util::ascii_str_tolower(&theirModifier);
-
-    sass::string type;
-    sass::string modifier;
-    sass::vector<sass::string> features;
-
-    if (ourType.empty() && theirType.empty()) {
-      CssMediaQuery_Obj query = SASS_MEMORY_NEW(CssMediaQuery, pstate());
-      sass::vector<sass::string> f1(this->features());
-      sass::vector<sass::string> f2(other->features());
-      features.insert(features.end(), f1.begin(), f1.end());
-      features.insert(features.end(), f2.begin(), f2.end());
-      query->features(features);
-      return query;
-    }
-
-    if ((ourModifier == "not") != (theirModifier == "not")) {
-      if (ourType == theirType) {
-        sass::vector<sass::string> negativeFeatures =
-          ourModifier == "not" ? this->features() : other->features();
-        sass::vector<sass::string> positiveFeatures =
-          ourModifier == "not" ? other->features() : this->features();
-
-        // If the negative features are a subset of the positive features, the
-        // query is empty. For example, `not screen and (color)` has no
-        // intersection with `screen and (color) and (grid)`.
-        // However, `not screen and (color)` *does* intersect with `screen and
-        // (grid)`, because it means `not (screen and (color))` and so it allows
-        // a screen with no color but with a grid.
-        if (listIsSubsetOrEqual(negativeFeatures, positiveFeatures)) {
-          return SASS_MEMORY_NEW(CssMediaQuery, pstate());
-        }
-        else {
-          return {};
-        }
-      }
-      else if (this->matchesAllTypes() || other->matchesAllTypes()) {
-        return {};
-      }
-
-      if (ourModifier == "not") {
-        modifier = theirModifier;
-        type = theirType;
-        features = other->features();
-      }
-      else {
-        modifier = ourModifier;
-        type = ourType;
-        features = this->features();
+    if (specificity_ == 0xFFFFFFFF) {
+      specificity_ = 0;
+      for (const auto& component : elements()) {
+        specificity_ += component->specificity();
       }
     }
-    else if (ourModifier == "not") {
-      SASS_ASSERT(theirModifier == "not", "modifiers not is sync");
+    return specificity_;
+  }
 
-      // CSS has no way of representing "neither screen nor print".
-      if (ourType != theirType) return {};
-
-      auto moreFeatures = this->features().size() > other->features().size()
-        ? this->features()
-        : other->features();
-      auto fewerFeatures = this->features().size() > other->features().size()
-        ? other->features()
-        : this->features();
-
-      // If one set of features is a superset of the other,
-      // use those features because they're strictly narrower.
-      if (listIsSubsetOrEqual(fewerFeatures, moreFeatures)) {
-        modifier = ourModifier; // "not"
-        type = ourType;
-        features = moreFeatures;
+  unsigned long CompoundSelector::maxSpecificity() const
+  {
+    if (maxSpecificity_ == 0xFFFFFFFF) {
+      maxSpecificity_ = 0;
+      for (const auto& simple : elements()) {
+        maxSpecificity_ += simple->maxSpecificity();
       }
-      else {
-        // Otherwise, there's no way to
-        // represent the intersection.
-        return {};
-      }
+    }
+    return maxSpecificity_;
+  }
 
+  unsigned long CompoundSelector::minSpecificity() const
+  {
+    if (minSpecificity_ == 0xFFFFFFFF) {
+      minSpecificity_ = 0;
+      for (const auto& simple : elements()) {
+        minSpecificity_ += simple->minSpecificity();
+      }
+    }
+    return minSpecificity_;
+  }
+
+  CompoundSelector* CompoundSelector::produce()
+  {
+    sass::vector<SimpleSelectorObj> copy;
+    for (SimpleSelector* child : elements_) {
+      copy.emplace_back(child);
+    }
+    return SASS_MEMORY_NEW(CompoundSelector,
+      pstate_, std::move(copy));
+  }
+
+  const Selector* CompoundSelector::hasAnyExplicitParent() const
+  {
+    if (withExplicitParent()) return this;
+    // ToDo: dart sass has another check?
+    // if (front->isaNameSpaceSelector()) {
+    //  if (front->ns() != "") return false;
+    // }
+    const Selector* rv = nullptr;
+    for (const SimpleSelectorObj& s : elements()) {
+      if (s) rv = s->hasAnyExplicitParent();
+      if (rv != nullptr) return rv;
+    }
+    return nullptr;
+  }
+
+  bool CompoundSelector::hasPlaceholder() const
+  {
+    if (size() == 0) return false;
+    for (const SimpleSelectorObj& ss : elements()) {
+      if (ss && ss->isaPlaceholderSelector()) return true;
+    }
+    return false;
+  }
+
+  bool CompoundSelector::hasInvisible() const
+  {
+    for (const SimpleSelectorObj& sel : elements()) {
+      if (sel && sel->hasInvisible()) return true;
+    }
+    return false;
+  }
+
+  // Determine if given `this` is a sub-selector of `sub`
+  bool CompoundSelector::isSuperselectorOf(const CompoundSelector* sub) const
+  {
+    return compoundIsSuperselector(this, sub);
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+  // Comma-separated selector groups.
+  /////////////////////////////////////////////////////////////////////////
+
+  SelectorList::SelectorList(
+    const SourceSpan& pstate,
+    sass::vector<ComplexSelectorObj>&& complexes) :
+    Selector(pstate),
+    Vectorized(std::move(complexes))
+  {}
+
+  SelectorList::SelectorList(
+    const SelectorList* ptr,
+    bool childless) :
+    Selector(ptr),
+    Vectorized(ptr, childless)
+  {}
+
+  size_t SelectorList::hash() const
+  {
+    if (Vectorized<ComplexSelector>::hash_ == 0) {
+      Selector::hash_ = Vectorized<ComplexSelector>::hash();
+    }
+    return Selector::hash_;
+  }
+
+  unsigned long SelectorList::maxSpecificity() const
+  {
+    if (maxSpecificity_ == 0xFFFFFFFF) {
+      maxSpecificity_ = 0;
+      for (const auto& complex : elements()) {
+        maxSpecificity_ = std::max(
+          complex->maxSpecificity(),
+          maxSpecificity_);
+      }
+    }
+    return maxSpecificity_;
+  }
+
+  unsigned long SelectorList::minSpecificity() const
+  {
+    if (minSpecificity_ == 0xFFFFFFFF) {
+      minSpecificity_ = 0;
+      for (const auto& complex : elements()) {
+        maxSpecificity_ = std::min(
+          complex->minSpecificity(),
+          maxSpecificity_);
+      }
+    }
+    return minSpecificity_;
+  }
+
+  const Selector* SelectorList::getExplicitParent() const
+  {
+    const Selector* rv = nullptr;
+    for (const auto& s : elements()) {
+      rv = s->getExplicitParent();
+      if (rv != nullptr) return rv;
+    }
+    return nullptr;
+  }
+
+  Value* SelectorList::toValue() const
+  {
+    ListObj list = SASS_MEMORY_NEW(List,
+      pstate(), {}, SASS_COMMA);
+    list->reserve(size());
+
+    for (ComplexSelector* complex : elements()) {
+      list->append(complex->toList());
+    }
+    if (list->size()) return list.detach();
+    return SASS_MEMORY_NEW(Null, pstate());
+  }
+
+  bool SelectorList::hasPlaceholder() const
+  {
+    for (const auto& child : elements()) {
+      if (child->hasPlaceholder()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool CplxSelComponent::operator==(const CplxSelComponent& rhs) const
+  {
+    if (combinators_ != rhs.combinators_) return false;
+    if (selector_ && rhs.selector_) return *selector_ == *rhs.selector_;
+    return selector_ == nullptr && rhs.selector_ == nullptr;
+  }
+
+  const Selector* CplxSelComponent::hasAnyExplicitParent() const
+  {
+    if (selector_ == nullptr) return nullptr;
+    return selector_->hasAnyExplicitParent();
+  }
+
+  bool CplxSelComponent::hasPlaceholder() const
+  {
+    if (selector() == nullptr) return false;
+    for (const auto& child : selector()->elements()) {
+      if (child->hasPlaceholder()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+  // Below are the resolveParentSelectors implementations
+  /////////////////////////////////////////////////////////////////////////
+
+
+  List* ComplexSelector::toList() const
+  {
+    ListObj list = SASS_MEMORY_NEW(List,
+      pstate(), {}, SASS_SPACE);
+    if (leadingCombinators_.size() > 0) {
+      for (size_t i = 0; i < leadingCombinators_.size(); i++) {
+        sass::string prefix(leadingCombinators_[i]->toString());
+        list->append(SASS_MEMORY_NEW(String,
+          pstate(), std::move(prefix)));
+      }
+    }
+    for (CplxSelComponent* component : elements()) {
+      if (component->selector()) {
+        sass::string prefix(component->selector()->inspect());
+        list->append(SASS_MEMORY_NEW(String,
+          pstate(), std::move(prefix)));
+      }
+      for (auto combi : component->combinators()) {
+        sass::string prefix(combi->toString());
+        list->append(SASS_MEMORY_NEW(String,
+          pstate(), std::move(prefix)));
+      }
+    }
+    return list.detach();
+  }
+
+
+  template <typename T>
+  sass::string VecToString(sass::vector<T> exts) {
+    sass::string msg = "[";
+    for (auto& entry : exts) {
+      msg += entry->inspect();
+    }
+    return msg + "]";
+  }
+
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
+  SelectorCombinator::SelectorCombinator(
+    const SourceSpan& pstate,
+    SelectorPrefix combinator,
+    bool hasPostLineBreak) :
+    AstNode(pstate),
+    combinator_(combinator),
+    hasPostLineBreak_(hasPostLineBreak)
+  {}
+
+  SelectorCombinator::SelectorCombinator(
+    const SelectorCombinator* ptr) :
+    AstNode(ptr),
+    combinator_(ptr->combinator_),
+    hasPostLineBreak_(ptr->hasPostLineBreak_)
+  {}
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
+  sass::string CplxSelComponent::inspect() const {
+    sass::string text;
+    text += selector_->inspect();
+    for (auto asd : combinators_) {
+      text += " " + asd->toString();
+    }
+    return text;
+  }
+
+  sass::string CplxSelComponent::inspecter() const {
+    sass::string text;
+    text += selector_->inspect();
+    for (auto asd : combinators_) {
+      text += " " + asd->toString();
+    }
+    return text;
+  }
+
+  void CplxSelComponent::appendCombinators(SelectorCombinatorVector trails)
+  {
+    combinators_.insert(combinators_.end(),
+      trails.begin(), trails.end());
+  }
+
+  // Fully converted 16.01.2024 (untested)
+  CplxSelComponent* CplxSelComponent::withAdditionalCombinators(
+    const SelectorCombinatorVector& others)
+  {
+    if (others.empty()) return this;
+    SelectorCombinatorVector merged(combinators_);
+    merged.insert(merged.end(),
+      others.begin(), others.end());
+    return SASS_MEMORY_NEW(CplxSelComponent,
+      pstate(), std::move(merged), selector());
+  }
+
+  // Fully converted 16.01.2024 (untested)
+  ComplexSelector* ComplexSelector::withAdditionalCombinators(
+    const SelectorCombinatorVector& combinators)
+  {
+    if (combinators.empty()) return this;
+    CplxSelComponentVector components(elements_);
+    if (empty()) {
+      // Just add to existing leading combinators
+      SelectorCombinatorVector merged(leadingCombinators_);
+      merged.insert(merged.end(), combinators.begin(), combinators.end());
+      return SASS_MEMORY_NEW(ComplexSelector, pstate_,
+        std::move(combinators), std::move(components));
     }
     else {
-      if (this->matchesAllTypes()) {
-        modifier = theirModifier;
-        // Omit the type if either input query did, since that indicates that they
-        // aren't targeting a browser that requires "all and".
-        type = (other->matchesAllTypes() && ourType.empty()) ? "" : theirType;
-        sass::vector<sass::string> f1(this->features());
-        sass::vector<sass::string> f2(other->features());
-        features.insert(features.end(), f1.begin(), f1.end());
-        features.insert(features.end(), f2.begin(), f2.end());
-      }
-      else if (other->matchesAllTypes()) {
-        modifier = ourModifier;
-        type = ourType;
-        sass::vector<sass::string> f1(this->features());
-        sass::vector<sass::string> f2(other->features());
-        features.insert(features.end(), f1.begin(), f1.end());
-        features.insert(features.end(), f2.begin(), f2.end());
-      }
-      else if (ourType != theirType) {
-        return SASS_MEMORY_NEW(CssMediaQuery, pstate());
+      // SelectorCombinatorVector merged(elements_.back()->combinators());
+      components.back() = components.back()->withAdditionalCombinators(combinators);
+      return SASS_MEMORY_NEW(ComplexSelector, pstate_,
+        leadingCombinators_, std::move(components));
+    }
+
+    // SelectorCombinatorVector merged(combinators_);
+    // merged.insert(merged.end(),
+    //   others.begin(), others.end());
+    // return SASS_MEMORY_NEW(CplxSelComponent,
+    //   pstate(), std::move(merged), selector());
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
+  // Fully converted 16.01.2024 (untested)
+  ComplexSelector* ComplexSelector::concatenate(
+    ComplexSelector* child,
+    const SourceSpan& span,
+    bool forceLineBreak)
+  {
+    // Create copies and move later
+    SelectorCombinatorVector leads;
+    CplxSelComponentVector merged;
+    // Case when child has no leading combinators
+    if (child->leadingCombinators().empty()) {
+      leads.insert(leads.end(),
+        this->leadingCombinators_.begin(),
+        this->leadingCombinators_.end());
+      merged.insert(merged.end(),
+        this->begin(), this->end());
+      merged.insert(merged.end(),
+        child->begin(), child->end());
+    }
+    // Case when lha has some components
+    else if (size() > 0) {
+      leads.insert(leads.end(),
+        leadingCombinators_.begin(),
+        leadingCombinators_.end());
+      // Append all but last items
+      merged.insert(merged.end(),
+        this->begin(), this->end() - 1);
+      // last with additional combinator
+      merged.push_back(last()
+        ->withAdditionalCombinators(
+          child->leadingCombinators()));
+      // merge in child componentes
+      merged.insert(merged.end(),
+        child->begin(), child->end());
+    }
+    // Case when lhs has no componentes
+    else {
+      leads.insert(leads.end(),
+        this->leadingCombinators_.begin(),
+        this->leadingCombinators_.end());
+      leads.insert(leads.end(),
+        child->leadingCombinators_.begin(),
+        child->leadingCombinators_.end());
+      merged.insert(merged.end(),
+        child->begin(), child->end());
+    }
+    // Return the concated complex selector
+    return SASS_MEMORY_NEW(ComplexSelector,
+      span, std::move(leads), std::move(merged), // avoid copy
+      hasLineBreak_ || child->hasLineBreak_ || forceLineBreak);
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+  sass::vector<ComplexSelectorObj> ComplexSelector::resolveParentSelectors(
+    SelectorList* parent, BackTraces& traces, bool implicit_parent)
+  {
+
+    const Selector* expl = getExplicitParent();
+    // debug_ast(this, "test: ");
+    if (!parent && expl != nullptr) {
+      throw Exception::TopLevelParent(traces, expl->pstate());
+    }
+
+    sass::vector<sass::vector<ComplexSelectorObj>> selectors;
+
+    // bool cr = chroots();
+    // bool he = hasExplicitParent();
+
+    // Check if selector should implicit get a parent
+    if (!chroots() && expl == nullptr) {
+      // Check if we should never connect to parent
+      if (!implicit_parent) { return { this }; }
+      // Otherwise add parent selectors at the beginning
+      if (parent) { selectors.emplace_back(parent->elements()); }
+    }
+
+    if (elements_.size() == 0) {
+      // Has no things to append
+      // Preserve component combinators
+      // std::cerr << "do me\n";
+    }
+
+    // bool first = true;
+    // Loop all items from the complex selector
+    // for (CplxSelComponent* component : this->elements()) {
+    for (size_t n = 0; n < this->size(); n++) {
+
+      CplxSelComponent* component = elements_[n];
+
+      // std::cerr << "============\n";
+
+      // if (parent) std::cerr << "parent [" << parent->inspect() << "]\n";
+      // std::cerr << "resolve [" << component->inspecter() << "]\n";
+      if (CompoundSelector* compound = component->selector()) {
+
+        SelectorCombinatorVector leads;
+        if (n == 0) leads.insert(leads.end(),
+          leadingCombinators_.begin(),
+          leadingCombinators_.end());
+        auto tails(component->combinators());
+
+        //if (selectors.size() > 0) leads.clear();
+        // loosing postfix combinators of component?
+        sass::vector<ComplexSelectorObj> complexes =
+          compound->resolveParentSelectors2(parent, traces,
+            leads, tails, implicit_parent);
+
+        for (auto qwe : complexes) {
+          // std::cerr << "RESOL [" << qwe->inspect() << "]\n";
+        }
+
+        // for (auto sel : complexes) { sel->hasPreLineFeed(hasPreLineFeed()); }
+        if (complexes.size() > 0) {
+          selectors.emplace_back(complexes);
+        }
       }
       else {
-        modifier = ourModifier.empty() ? theirModifier : ourModifier;
-        type = ourType;
-        sass::vector<sass::string> f1(this->features());
-        sass::vector<sass::string> f2(other->features());
-        features.insert(features.end(), f1.begin(), f1.end());
-        features.insert(features.end(), f2.begin(), f2.end());
+        // component->hasPreLineFeed(hasPreLineFeed());
+        selectors.push_back({ component->wrapInComplex(leadingCombinators_) });
       }
     }
 
-    CssMediaQuery_Obj query = SASS_MEMORY_NEW(CssMediaQuery, pstate());
-    query->modifier(modifier == ourModifier ? this->modifier() : other->modifier());
-    query->type(ourType.empty() ? other->type() : this->type());
-    query->features(features);
-    return query;
-  }
+    // std::cerr << "permutate now\n";
 
-  CssMediaQuery::CssMediaQuery(const CssMediaQuery* ptr) :
-    AST_Node(*ptr),
-    modifier_(ptr->modifier_),
-    type_(ptr->type_),
-    features_(ptr->features_)
-  {
+    // Permutate through all paths
+    // for (auto s : selectors) { for (auto q : s) { std::cerr << "sel [" << q->inspect() << "]\n"; } }
+    selectors = permutateAlt(selectors);
+    // for (auto s : selectors) { for (auto q : s) { std::cerr << "perm [" << q->inspect() << "]\n"; } }
+
+    // Create final selectors from path permutations
+    sass::vector<ComplexSelectorObj> resolved;
+    for (sass::vector<ComplexSelectorObj>& append : selectors) {
+
+      if (append.empty()) continue;
+
+      ComplexSelectorObj front = SASS_MEMORY_COPY(append[0]);
+      // ToDo: this seems suspicious, why this logic?
+      if (hasPreLineFeed() && expl == nullptr) {
+        front->hasPreLineFeed(true);
+      }
+      // ToDo: remove once we know how to handle line feeds
+      // ToDo: currently a mash-up between ruby and dart sass
+      // if (has_real_parent_ref()) first->has_line_feed(false);
+      // first->has_line_break(first->has_line_break() || has_line_break());
+      front->chroots(true); // has been resolved by now
+
+      for (size_t i = 1; i < append.size(); i += 1) {
+        if (append[i]->hasPreLineFeed()) {
+          front->hasPreLineFeed(true);
+        }
+        for (auto tail : append[i]->elements()) {
+          // if (front->elements().size() > 0) {
+          //   SelectorCombinatorVector trails
+          //     = front->elements().back()->combinators();
+          //   //
+          //   trails.insert(trails.end(),
+          //     append[i]->leadingCombinators_.begin(),
+          //     append[i]->leadingCombinators_.end());
+          // 
+          //   front->elements().back()->combinators(trails);
+          // }
+          if (front->size() > 0 && append[i]->leadingCombinators_.size() > 0) {
+            front->elements().back() = SASS_MEMORY_NEW(CplxSelComponent, front->elements().back().ptr());
+            front->elements().back()->appendCombinators(append[i]->leadingCombinators_);
+          }
+          front->elements().push_back(tail);
+        }
+        // first->concat(items[i]);
+      }
+      // debug_ast(first, "resolved: ");
+     // std::cerr << " + [" << first->inspect() << "]\n";
+      resolved.emplace_back(front);
+    }
+
+    if (elements_.size() == 0) {
+      // Has no things to append
+      // Preserve component combinators
+      for (size_t i = 0; i < resolved.size(); i++) {
+        if (resolved[i]->size() == 0) {
+          std::cerr << "more weird edge case\n";
+        }
+        else {
+          resolved[i]->elements().back() = SASS_MEMORY_NEW(CplxSelComponent, resolved[i]->elements().back().ptr());
+          resolved[i]->elements().back()->appendCombinators(leadingCombinators_);
+        }
+      }
+    }
+
+    for (auto q : resolved) {
+      // std::cerr << "res => [" << q->inspect() << "]\n";
+    }
+
+    // std::cerr << "=> " << VecToString(resolved) << "\n";
+
+    return resolved;
   }
+  // EO ComplexSelector::resolveParentSelectors
 
   /////////////////////////////////////////////////////////////////////////
-  // ToDo: finalize specificity implementation
   /////////////////////////////////////////////////////////////////////////
 
-  size_t SelectorList::maxSpecificity() const
-  {
-    size_t specificity = 0;
-    for (auto complex : elements()) {
-      specificity = std::max(specificity, complex->maxSpecificity());
-    }
-    return specificity;
-  }
-
-  size_t SelectorList::minSpecificity() const
-  {
-    size_t specificity = 0;
-    for (auto complex : elements()) {
-      specificity = std::min(specificity, complex->minSpecificity());
-    }
-    return specificity;
-  }
-
-  size_t CompoundSelector::maxSpecificity() const
-  {
-    size_t specificity = 0;
-    for (auto simple : elements()) {
-      specificity += simple->maxSpecificity();
-    }
-    return specificity;
-  }
-
-  size_t CompoundSelector::minSpecificity() const
-  {
-    size_t specificity = 0;
-    for (auto simple : elements()) {
-      specificity += simple->minSpecificity();
-    }
-    return specificity;
-  }
-
-  size_t ComplexSelector::maxSpecificity() const
-  {
-    size_t specificity = 0;
-    for (auto component : elements()) {
-      specificity += component->maxSpecificity();
-    }
-    return specificity;
-  }
-
-  size_t ComplexSelector::minSpecificity() const
-  {
-    size_t specificity = 0;
-    for (auto component : elements()) {
-      specificity += component->minSpecificity();
-    }
-    return specificity;
-  }
-
-  /////////////////////////////////////////////////////////////////////////
-  // ToDo: this might be done easier with new selector format
-  /////////////////////////////////////////////////////////////////////////
+  // 
 
   sass::vector<ComplexSelectorObj>
-    CompoundSelector::resolve_parent_refs(SelectorStack pstack, Backtraces& traces, bool implicit_parent)
+    CompoundSelector::resolveParentSelectors2(
+      SelectorList* parents, BackTraces& traces,
+      SelectorCombinatorVector prefixes, // from complex selector
+      SelectorCombinatorVector tails, // From compound component
+      bool implicit_parent)
   {
 
-    auto parent = pstack.back();
+//    prefixes.clear();
+//    tails.clear();
+
+    // must add prefixes to parent's last selector combinators
+
     sass::vector<ComplexSelectorObj> rv;
 
-    for (SimpleSelectorObj simple : elements()) {
-      if (PseudoSelector * pseudo = Cast<PseudoSelector>(simple)) {
-        if (SelectorList* sel = Cast<SelectorList>(pseudo->selector())) {
-          if (parent && !parent->has_real_parent_ref()) {
-            pseudo->selector(sel->resolve_parent_refs(
-              pstack, traces, implicit_parent));
+    // Missing this->combinators
+
+    if (parents) {
+      for (SimpleSelectorObj simple : elements()) {
+        if (PseudoSelector* pseudo = simple->isaPseudoSelector()) {
+          if (SelectorList* sel = pseudo->selector()) {
+            auto asd = sel->resolveParentSelectors(
+              parents, traces, implicit_parent);
+            std::cerr << "Resolved [" << asd->inspect() << "]\n";
+            pseudo->selector(asd);
           }
         }
       }
     }
 
     // Mix with parents from stack
-    if (hasRealParent()) {
+    // Equivalent to dart-sass parent selector tail
+    if (withExplicitParent()) {
+      if (parents == nullptr) return { this->wrapInComplex(prefixes, tails) };
+      SASS_ASSERT(parents != nullptr, "Parent must be defined");
 
-      if (parent.isNull()) {
-        return { wrapInComplex() };
-      }
-      else {
-        for (auto complex : parent->elements()) {
-          // The parent complex selector has a compound selector
-          if (CompoundSelectorObj tail = Cast<CompoundSelector>(complex->last())) {
-            // Create a copy to alter it
-            complex = SASS_MEMORY_COPY(complex);
-            tail = SASS_MEMORY_COPY(tail);
+      for (auto parent1 : parents->elements()) {
+        // The parent complex selector has a compound selector
+        if (parent1->size() == 0) {
+          // Can't insert parent that ends with a combinator
+          // where the parent selector is followed by something
+          //callStackFrame frame(traces, complex->last()->pstate());
+          //if (size() > 0) { throw Exception::InvalidParent(parent, traces, this); }
+          // Just append ourself to results
+          //std::cerr << "have no parent\n";
+          rv.emplace_back(wrapInComplex(prefixes, tails));
+        }
+        else {
+          CplxSelComponent* cptail = parent1->last();
+
+          if (cptail->combinators().size() > 0) {
+            callStackFrame frame(traces, cptail->combinators().back()->pstate());
+            if (size() > 0) throw Exception::InvalidParent(parent1, traces, this);
+          }
+
+          cptail = SASS_MEMORY_NEW(CplxSelComponent, cptail);
+
+          // Add prefixes from incoming to parent
+//          cptail->appendCombinators(tails);
+          // ctail->combinators()
+
+          CompoundSelector* ptail = cptail->selector();
+          ptail = SASS_MEMORY_COPY(ptail);
+
+          if (ptail && ptail->size() > 0) {
+            // Create copies to alter them
+            ComplexSelectorObj parent = SASS_MEMORY_COPY(parent1);
 
             // Check if we can merge front with back
-            if (length() > 0 && tail->length() > 0) {
-              SimpleSelectorObj back = tail->last();
-              SimpleSelectorObj front = first();
-              auto simple_back = Cast<SimpleSelector>(back);
-              auto simple_front = Cast<TypeSelector>(front);
+            if (size() > 0 && ptail->size() > 0) {
+              SimpleSelector* front = first();
+              auto simple_back = ptail->last();
+              auto simple_front = front->isaTypeSelector();
+              // If they are type/simple selectors ...
               if (simple_front && simple_back) {
+                // ... we can combine the names into one
                 simple_back = SASS_MEMORY_COPY(simple_back);
                 auto name = simple_back->name();
                 name += simple_front->name();
                 simple_back->name(name);
-                tail->elements().back() = simple_back;
-                tail->elements().insert(tail->end(),
-                  begin() + 1, end());
+                // Replace with modified simple selector
+                ptail->setLast(simple_back);
+                // Append rest of selector components
+                ptail->concat({ begin() + 1, end() });
               }
               else {
-                tail->concat(this);
+                // Append us to parent
+                ptail->concat(this);
               }
             }
             else {
-              tail->concat(this);
+              // Append us to parent
+              ptail->concat(this);
             }
+            // Reset the parent selector tail with
+            // the combination of parent plus ourself
+            // complex->setLast(tail->wrapInComponent());
+            SelectorCombinatorVector pre;
 
-            complex->elements().back() = tail;
+            // pre.insert(pre.end(), prefixes.begin(), prefixes.end());
+
+            // complex->elements().back() = SASS_MEMORY_NEW(CplxSelComponent, complex->last());
+            //auto pres = complex->last()->combinators();
+            //cp.insert(cp.end(), pres.begin(), pres.end());
+            //cp.insert(cp.end(), tails.begin(), tails.end());
+            cptail->selector(ptail);
+            // cptail->appendCombinators(tails);
+            parent->setLast(cptail);
             // Append to results
-            rv.push_back(complex);
+
+            parent = parent->withAdditionalCombinators(tails);
+            prefixes.insert(prefixes.end(),
+              parent->leadingCombinators().begin(),
+              parent->leadingCombinators().end());
+            parent->leadingCombinators(prefixes);
+
+            rv.emplace_back(parent);
           }
+          // SelectorCombinator
           else {
+            //std::cerr << "last parent has only combinators\n";
             // Can't insert parent that ends with a combinator
             // where the parent selector is followed by something
-            if (parent && length() > 0) {
-              throw Exception::InvalidParent(parent, traces, this);
-            }
-            // Create a copy to alter it
-            complex = SASS_MEMORY_COPY(complex);
-            // Just append ourself
-            complex->append(this);
-            // Append to results
-            rv.push_back(complex);
+            callStackFrame frame(traces, parent1->last()->pstate());
+            if (size() > 0) { throw Exception::InvalidParent(parents, traces, this); }
+            // Just append ourself to results
+            rv.emplace_back(wrapInComplex(prefixes, tails));
           }
         }
       }
-    }
 
-    // No parents
+    }
+    // No parent
     else {
-      // Create a new wrapper to wrap ourself
-      auto complex = SASS_MEMORY_NEW(ComplexSelector, pstate());
-      // Just append ourself
-      complex->append(this);
-      // Append to results
-      rv.push_back(complex);
+      // Wrap and append compound selector
+      SelectorCombinatorVector trailing;
+      trailing.insert(trailing.end(),
+        tails.begin(), tails.end());
+      //trailing.insert(trailing.end(),
+      //  combinator().begin(), tails.end());
+
+      rv.emplace_back(wrapInComplex(prefixes, tails));
+    }
+
+    for (auto a : rv) {
+      // std::cerr << "final { " << a->inspect() << " }\n";
     }
 
     return rv;
 
   }
-
-  bool cmpSimpleSelectors(SimpleSelector* a, SimpleSelector* b)
-  {
-    return (a->getSortOrder() < b->getSortOrder());
-  }
-
-  void CompoundSelector::sortChildren()
-  {
-    std::sort(begin(), end(), cmpSimpleSelectors);
-  }
-
-  bool CompoundSelector::isInvalidCss() const
-  {
-    size_t current = 0, next = 0;
-    for (const SimpleSelector* sel : elements()) {
-      next = sel->getSortOrder();
-      // Must only have one type selector
-      if (current == 1 && next == 1) {
-        return true;
-      }
-      if (next < current) {
-        return true;
-      }
-      current = next;
-    }
-    return false;
-  }
-
-  /* better return sass::vector? only - is empty container anyway? */
-  SelectorList* ComplexSelector::resolve_parent_refs(
-    SelectorStack pstack, Backtraces& traces, bool implicit_parent)
-  {
-
-    sass::vector<sass::vector<ComplexSelectorObj>> vars;
-
-    auto parent = pstack.back();
-    auto hasRealParent = has_real_parent_ref();
-
-    if (hasRealParent && !parent) {
-      throw Exception::TopLevelParent(traces, pstate());
-    }
-
-    if (!chroots() && parent) {
-
-      if (!hasRealParent && !implicit_parent) {
-        SelectorList* retval = SASS_MEMORY_NEW(SelectorList, pstate(), 1);
-        retval->append(this);
-        return retval;
-      }
-
-      vars.push_back(parent->elements());
-    }
-
-    for (auto sel : elements()) {
-      if (CompoundSelectorObj comp = Cast<CompoundSelector>(sel)) {
-        auto asd = comp->resolve_parent_refs(pstack, traces, implicit_parent);
-        if (asd.size() > 0) vars.push_back(asd);
-      }
-      else {
-        // ToDo: merge together sequences whenever possible
-        auto cont = SASS_MEMORY_NEW(ComplexSelector, pstate());
-        cont->append(sel);
-        vars.push_back({ cont });
-      }
-    }
-
-    // Need complex selectors to preserve linefeeds
-    sass::vector<sass::vector<ComplexSelectorObj>> res = permutateAlt(vars);
-
-    // std::reverse(std::begin(res), std::end(res));
-
-    auto lst = SASS_MEMORY_NEW(SelectorList, pstate());
-    for (auto items : res) {
-      if (items.size() > 0) {
-        ComplexSelectorObj first = SASS_MEMORY_COPY(items[0]);
-        first->hasPreLineFeed(first->hasPreLineFeed() || (!hasRealParent && hasPreLineFeed()));
-        // ToDo: remove once we know how to handle line feeds
-        // ToDo: currently a mashup between ruby and dart sass
-        // if (hasRealParent) first->has_line_feed(false);
-        // first->has_line_break(first->has_line_break() || has_line_break());
-        first->chroots(true); // has been resolved by now
-        for (size_t i = 1; i < items.size(); i += 1) {
-          first->concat(items[i]);
-        }
-        lst->append(first);
-      }
-    }
-
-    return lst;
-
-  }
-
-  SelectorList* SelectorList::resolve_parent_refs(SelectorStack pstack, Backtraces& traces, bool implicit_parent)
-  {
-    SelectorList* rv = SASS_MEMORY_NEW(SelectorList, pstate());
-    for (auto sel : elements()) {
-      // Note: this one is tricky as we get back a pointer from resolve parents ...
-      SelectorListObj res = sel->resolve_parent_refs(pstack, traces, implicit_parent);
-      // Note: ... and concat will only append the items in elements
-      // Therefore by passing it directly, the container will leak!
-      rv->concat(res);
-    }
-    return rv;
-  }
+  // EO CompoundSelector::resolveParentSelectors
 
   /////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  IMPLEMENT_AST_OPERATORS(Selector_Schema);
-  IMPLEMENT_AST_OPERATORS(PlaceholderSelector);
-  IMPLEMENT_AST_OPERATORS(AttributeSelector);
-  IMPLEMENT_AST_OPERATORS(TypeSelector);
-  IMPLEMENT_AST_OPERATORS(ClassSelector);
-  IMPLEMENT_AST_OPERATORS(IDSelector);
-  IMPLEMENT_AST_OPERATORS(PseudoSelector);
-  IMPLEMENT_AST_OPERATORS(SelectorCombinator);
-  IMPLEMENT_AST_OPERATORS(CompoundSelector);
-  IMPLEMENT_AST_OPERATORS(ComplexSelector);
-  IMPLEMENT_AST_OPERATORS(SelectorList);
+  SelectorList* SelectorList::resolveParentSelectors(
+    SelectorList* parent, BackTraces& traces, bool implicit_parent)
+  {
+    sass::vector<sass::vector<ComplexSelectorObj>> lists;
+    for (ComplexSelector* sel : elements()) {
+      lists.emplace_back(sel->resolveParentSelectors
+      (parent, traces, implicit_parent));
+    }
+    return SASS_MEMORY_NEW(SelectorList, pstate(),
+      flattenVertically<ComplexSelectorObj>(lists));
+  }
+  // EO SelectorList::resolveParentSelectors
+
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
 
 }
+
+

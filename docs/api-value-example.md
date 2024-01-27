@@ -3,17 +3,17 @@
 ```C
 #include <stdio.h>
 #include <string.h>
-#include "sass/values.h"
+#include <sass/values.h>
 
 int main( int argc, const char* argv[] )
 {
 
   // create two new sass values to be added
-  union Sass_Value* string = sass_make_string("String");
-  union Sass_Value* number = sass_make_number(42, "nits");
+  struct SassValue* string = sass_make_string("prefix", false);
+  struct SassValue* number = sass_make_number(42, "nits");
 
   // invoke the add operation which returns a new sass value
-  union Sass_Value* total = sass_value_op(ADD, string, number);
+  struct SassValue* total = sass_value_op(ADD, string, number);
 
   // no further use for the two operands
   sass_delete_value(string);
@@ -25,7 +25,7 @@ int main( int argc, const char* argv[] )
   puts(sass_string_get_value(total));
 
   // invoke stringification (uncompressed with precision of 5)
-  union Sass_Value* result = sass_value_stringify(total, false, 5);
+  struct SassValue* result = sass_value_stringify(total, false, 5);
 
   // no further use for the sum
   sass_delete_value(total);
@@ -49,7 +49,7 @@ int main( int argc, const char* argv[] )
 ## Compile operation.c
 
 ```bash
-gcc -c operation.c -o operation.o
-gcc -o operation operation.o -lsass
-./operation # => String42nits
+gcc -c operation.c -o operation.o -Iinclude
+g++ -o operation operation.o -lsass -Llib
+./operation # => prefix42nits
 ```

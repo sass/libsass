@@ -1,8 +1,13 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup Label="LibSass Includes">{{includes}}</ItemGroup>
+  <ItemGroup Label="API Includes">{{api_includes}}</ItemGroup>
+  <ItemGroup Label="CAPI Headers">{{api_headers}}</ItemGroup>
+  <ItemGroup Label="CAPI Sources">{{api_sources}}</ItemGroup>
+  <ItemGroup Label="AST Headers">{{ast_headers}}</ItemGroup>
+  <ItemGroup Label="AST Sources">{{ast_sources}}</ItemGroup>
+  <ItemGroup Label="Parser Headers">{{parser_headers}}</ItemGroup>
+  <ItemGroup Label="Parser Sources">{{parser_sources}}</ItemGroup>
+  <ItemGroup Label="Function Headers">{{fn_headers}}</ItemGroup>
+  <ItemGroup Label="Function Sources">{{fn_sources}}</ItemGroup>
   <ItemGroup Label="LibSass Headers">{{headers}}</ItemGroup>
   <ItemGroup Label="LibSass Sources">{{sources}}</ItemGroup>
-  <ItemGroup Label="LibSass Compatibility">
-    <ClCompile Condition="$(VisualStudioVersion) &lt; 14.0" Include="$(LIBSASS_SRC_DIR)\c99func.c" />
-  </ItemGroup>
 </Project>

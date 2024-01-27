@@ -1,4 +1,5 @@
 ### Get the sources
+
 ```bash
 # using git is preferred
 git clone https://github.com/sass/libsass.git
@@ -9,7 +10,8 @@ git clone https://github.com/sass/sass-spec.git libsass/sass-spec
 
 ### Decide for static or shared library
 
-`libsass` can be built and linked as a `static` or as a `shared` library. The default is `static`. To change it you can set the `BUILD` environment variable:
+`libsass` can be built and linked as a `static` or as a `shared` library. The
+default is `static`. To change it you can set the `BUILD` environment variable:
 
 ```bash
 export BUILD="shared"
@@ -38,6 +40,7 @@ We recommend to use [autotools to install](build-with-autotools.md) libsass onto
 system, since that brings all the benefits of using libtools as the main install method.
 If you still want to install libsass via the makefile, you need to make sure that gnu
 `install` utility (or compatible) is installed on your system.
+
 ```bash
 yum install coreutils # RedHat Linux
 emerge -a coreutils # Gentoo Linux
@@ -48,7 +51,6 @@ You can set the install location by setting `PREFIX`
 ```bash
 PREFIX="/opt/local" make install
 ```
-
 
 ### Compling sassc
 
@@ -62,7 +64,7 @@ make -C libsass -j5 sassc
 ### Run the spec test-suite
 
 ```bash
-# needs ruby available
-# also gem install minitest
+# needs ruby available, plus
+# $ gem install hrx minitest
 make -C libsass -j5 test_build
 ```

@@ -1,320 +1,251 @@
-// sass.hpp must go before all system headers to get the
-// __EXTENSIONS__ fix on Solaris.
-#include "sass.hpp"
-
-#include "ast.hpp"
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
 #include "output.hpp"
-#include "util.hpp"
+
+#include "ast_css.hpp"
+#include "ast_values.hpp"
+#include "charcode.hpp"
+#include "character.hpp"
+#include "exceptions.hpp"
 
 namespace Sass {
 
-  Output::Output(Sass_Output_Options& opt)
-  : Inspect(Emitter(opt)),
-    charset(""),
-    top_nodes(0)
+  // Import some namespaces
+  using namespace Charcode;
+  using namespace Character;
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
+  // Value constructor
+  Output::Output(
+    OutputOptions& opt) :
+    Cssize(opt)
   {}
 
-  Output::~Output() { }
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
-  void Output::fallback_impl(AST_Node* n)
+  // Local helper function to right-trim multi-line text.
+  // Only the last line is right trimmed in an optimized way.
+  // Note: this is merely cosmetic to match dart-sass output.
+  void trim_trailing_lines(sass::string& text)
   {
-    return n->perform(this);
-  }
-
-  void Output::operator()(Number* n)
-  {
-    // check for a valid unit here
-    // includes result for reporting
-    if (!n->is_valid_css_unit()) {
-      // should be handle in check_expression
-      throw Exception::InvalidValue({}, *n);
+    auto start = text.begin();
+    auto lastlf = text.end();
+    auto end = lastlf - 1;
+    while (end != start) {
+      if (Character::isNewline(*end)) {
+        lastlf = end;
+        end--;
+      }
+      else if (Character::isWhitespace(*end)) {
+        end--;
+      }
+      else {
+        break;
+      }
     }
-    // use values to_string facility
-    sass::string res = n->to_string(opt);
-    // output the final token
-    append_token(res, n);
+    if (lastlf != text.end()) {
+      text = sass::string(start, lastlf) + " ";
+    }
   }
+  // EO string_trim_trailing_lines
 
-  void Output::operator()(Import* imp)
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
+  // Get the output buffer for what has been rendered.
+  // This will actually invoke quite a bit under the hood.
+  // First we will render the hoisted imports with comments.
+  // Then we will prepend this string to the already rendered one.
+  // This involves adjusting the source-map so mappings still match.
+  // Note: this is less complicated than one could initially think, as
+  // Note: source-maps are easy to manipulate with full lines only.
+  OutputBuffer Output::getBuffer(void)
   {
-    top_nodes.push_back(imp);
-  }
+    // Create an identical rendered for the hoisted part
+    Inspect inspect(outopt);
 
-  void Output::operator()(Map* m)
-  {
-    // should be handle in check_expression
-    throw Exception::InvalidValue({}, *m);
-  }
-
-  OutputBuffer Output::get_buffer(void)
-  {
-
-    Emitter emitter(opt);
-    Inspect inspect(emitter);
-
-    size_t size_nodes = top_nodes.size();
-    for (size_t i = 0; i < size_nodes; i++) {
-      top_nodes[i]->perform(&inspect);
+    // Render the hoisted imports with comments
+    for (size_t i = 0; i < imports.size(); i++) {
+      imports[i]->accept(&inspect);
       inspect.append_mandatory_linefeed();
     }
 
-    // flush scheduled outputs
     // maybe omit semicolon if possible
     inspect.finalize(wbuf.buffer.size() == 0);
     // prepend buffer on top
     prepend_output(inspect.output());
+    // flush trailing comments
+    flushCssComments();
+
     // make sure we end with a linefeed
-    if (!ends_with(wbuf.buffer, opt.linefeed)) {
+    if (!StringUtils::endsWith(wbuf.buffer, outopt.linefeed)) {
       // if the output is not completely empty
-      if (!wbuf.buffer.empty()) append_string(opt.linefeed);
+      if (!wbuf.buffer.empty()) append_string(outopt.linefeed);
     }
 
     // search for unicode char
-    for(const char& chr : wbuf.buffer) {
-      // skip all ascii chars
-      // static cast to unsigned to handle `char` being signed / unsigned
+    for (const char& chr : wbuf.buffer) {
+      // skip all ASCII chars
       if (static_cast<unsigned>(chr) < 128) continue;
       // declare the charset
-      if (output_style() != COMPRESSED)
+      if (output_style() != SASS_STYLE_COMPRESSED)
         charset = "@charset \"UTF-8\";"
-                + sass::string(opt.linefeed);
+        + sass::string(outopt.linefeed);
       else charset = "\xEF\xBB\xBF";
       // abort search
       break;
     }
 
     // add charset as first line, before comments and imports
+    // adding any unicode BOM should not alter source-maps
     if (!charset.empty()) prepend_string(charset);
 
-    return wbuf;
-
+    // pass the buffer back
+    return std::move(wbuf);
   }
+  // EO getBuffer
 
-  void Output::operator()(Comment* c)
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
+  // Helper function to append comment to output
+  void Output::printCssComment(CssComment* comment)
   {
-    // if (indentation && txt == "/**/") return;
-    bool important = c->is_important();
-    if (output_style() != COMPRESSED || important) {
-      if (buffer().size() == 0) {
-        top_nodes.push_back(c);
-      } else {
-        in_comment = true;
-        append_indentation();
-        c->text()->perform(this);
-        in_comment = false;
-        if (indentation == 0) {
-          append_mandatory_linefeed();
-        } else {
-          append_optional_linefeed();
-        }
-      }
+    // Ignore sourceMappingURL and sourceURL comments (ToDo: use regexp?).
+    if (StringUtils::startsWith(comment->text(), "/*# sourceMappingURL=")) return;
+    else if (StringUtils::startsWith(comment->text(), "/*# sourceURL=")) return;
+    bool important = comment->isPreserved();
+    if (output_style() == SASS_STYLE_COMPRESSED || output_style() == SASS_STYLE_COMPACT) {
+      if (!important) return;
     }
-  }
-
-  void Output::operator()(StyleRule* r)
-  {
-    Block_Obj b = r->block();
-    SelectorListObj s = r->selector();
-
-    if (!s || s->empty()) return;
-
-    // Filter out rulesets that aren't printable (process its children though)
-    if (!Util::isPrintable(r, output_style())) {
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        const Statement_Obj& stm = b->get(i);
-        if (Cast<ParentStatement>(stm)) {
-          if (!Cast<Declaration>(stm)) {
-            stm->perform(this);
-          }
-        }
-      }
-      return;
-    }
-
-    if (output_style() == NESTED) {
-      indentation += r->tabs();
-    }
-    if (opt.source_comments) {
-      sass::ostream ss;
+    if (output_style() != SASS_STYLE_COMPRESSED || important) {
       append_indentation();
-      sass::string path(File::abs2rel(r->pstate().getPath()));
-      ss << "/* line " << r->pstate().getLine() << ", " << path << " */";
-      append_string(ss.str());
-      append_optional_linefeed();
-    }
-    scheduled_crutch = s;
-    if (s) s->perform(this);
-    append_scope_opener(b);
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
-      Statement_Obj stm = b->get(i);
-      bool bPrintExpression = true;
-      // Check print conditions
-      if (Declaration* dec = Cast<Declaration>(stm)) {
-        if (const String_Constant* valConst = Cast<String_Constant>(dec->value())) {
-          const sass::string& val = valConst->value();
-          if (const String_Quoted* qstr = Cast<const String_Quoted>(valConst)) {
-            if (!qstr->quote_mark() && val.empty()) {
-              bPrintExpression = false;
-            }
-          }
-        }
-        else if (List* list = Cast<List>(dec->value())) {
-          bool all_invisible = true;
-          for (size_t list_i = 0, list_L = list->length(); list_i < list_L; ++list_i) {
-            Expression* item = list->get(list_i);
-            if (!item->is_invisible()) all_invisible = false;
-          }
-          if (all_invisible && !list->is_bracketed()) bPrintExpression = false;
-        }
+      append_string(comment->text());
+      if (indentation == 0) {
+        append_mandatory_linefeed();
       }
-      // Print if OK
-      if (bPrintExpression) {
-        stm->perform(this);
+      else {
+        append_optional_linefeed();
       }
     }
-    if (output_style() == NESTED) indentation -= r->tabs();
-    append_scope_closer(b);
-
   }
-  void Output::operator()(Keyframe_Rule* r)
+  // EO printCssComment
+
+  // Flushes all queued comments to output
+  // Also resets and clears the queue
+  void Output::flushCssComments()
   {
-    Block_Obj b = r->block();
-    Selector_Obj v = r->name();
-
-    if (!v.isNull()) {
-      v->perform(this);
+    for (CssComment* comment : comments) {
+      printCssComment(comment);
     }
-
-    if (!b) {
-      append_colon_separator();
-      return;
-    }
-
-    append_scope_opener();
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
-      Statement_Obj stm = b->get(i);
-      stm->perform(this);
-      if (i < L - 1) append_special_linefeed();
-    }
-    append_scope_closer();
+    comments.clear();
   }
+  // EO flushCssComments
 
-  void Output::operator()(SupportsRule* f)
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+
+  void Output::visitCssImport(CssImport* imp)
   {
-    if (f->is_invisible()) return;
-
-    SupportsConditionObj c = f->condition();
-    Block_Obj b              = f->block();
-
-    // Filter out feature blocks that aren't printable (process its children though)
-    if (!Util::isPrintable(f, output_style())) {
-      for (size_t i = 0, L = b->length(); i < L; ++i) {
-        Statement_Obj stm = b->get(i);
-        if (Cast<ParentStatement>(stm)) {
-          stm->perform(this);
-        }
-      }
-      return;
+    if (imp->outOfOrder()) {
+      imports.insert(imports.end(),
+        comments.begin(), comments.end());
+      imports.emplace_back(imp);
+      comments.clear();
     }
-
-    if (output_style() == NESTED) indentation += f->tabs();
-    append_indentation();
-    append_token("@supports", f);
-    append_mandatory_space();
-    c->perform(this);
-    append_scope_opener();
-
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
-      Statement_Obj stm = b->get(i);
-      stm->perform(this);
-      if (i < L - 1) append_special_linefeed();
+    else {
+      // This case is possible if an `@import` within
+      // an imported css file is inside a `CssStyleRule`.
+      flushCssComments();
+      Cssize::visitCssImport(imp);
     }
-
-    if (output_style() == NESTED) indentation -= f->tabs();
-
-    append_scope_closer();
-
   }
+  // EO visitCssImport
 
-  void Output::operator()(CssMediaRule* rule)
+  void Output::visitCssComment(CssComment* comment)
+  {
+    if (hoistComments) {
+      comments.emplace_back(comment);
+    }
+    else {
+      printCssComment(comment);
+    }
+  }
+  // EO visitCssComment
+
+  void Output::visitCssStyleRule(CssStyleRule* rule)
+  {
+    // Prepend previous comments
+    flushCssComments();
+    // Never hoist nested comments
+    RAII_FLAG(hoistComments, false);
+    // Let inspect do its magic
+    Cssize::visitCssStyleRule(rule);
+  }
+  // EO visitCssStyleRule
+
+  void Output::visitCssSupportsRule(CssSupportsRule* rule)
+  {
+    // Prepend previous comments
+    flushCssComments();
+    // Never hoist nested comments
+    RAII_FLAG(hoistComments, false);
+    // Let inspect do its magic
+    Cssize::visitCssSupportsRule(rule);
+  }
+  // EO visitCssSupportsRule
+
+  void Output::visitCssAtRule(CssAtRule* rule)
+  {
+    // Prepend previous comments
+    flushCssComments();
+    // Never hoist nested comments
+    RAII_FLAG(hoistComments, false);
+    // Let inspect do its magic
+    Cssize::visitCssAtRule(rule);
+  }
+  // EO visitCssAtRule
+
+  void Output::visitCssMediaRule(CssMediaRule* rule)
   {
     // Avoid null pointer exception
     if (rule == nullptr) return;
-    // Skip empty/invisible rule
-    if (rule->isInvisible()) return;
-    // Avoid null pointer exception
-    if (rule->block() == nullptr) return;
-    // Skip empty/invisible rule
-    if (rule->block()->isInvisible()) return;
-    // Skip if block is empty/invisible
-    if (Util::isPrintable(rule, output_style())) {
-      // Let inspect do its magic
-      Inspect::operator()(rule);
-    }
+    // Skip empty or invisible rule
+    if (rule->isInvisibleCss()) return;
+    // Prepend previous comments
+    flushCssComments();
+    // Never hoist nested comments
+    RAII_FLAG(hoistComments, false);
+    // Let inspect do its magic
+    Cssize::visitCssMediaRule(rule);
   }
+  // EO visitCssMediaRule
 
-  void Output::operator()(AtRule* a)
+  void Output::visitMap(Map* m)
   {
-    sass::string      kwd   = a->keyword();
-    Selector_Obj   s     = a->selector();
-    ExpressionObj v     = a->value();
-    Block_Obj      b     = a->block();
-
-    append_indentation();
-    append_token(kwd, a);
-    if (s) {
-      append_mandatory_space();
-      in_wrapped = true;
-      s->perform(this);
-      in_wrapped = false;
-    }
-    if (v) {
-      append_mandatory_space();
-      // ruby sass bug? should use options?
-      append_token(v->to_string(/* opt */), v);
-    }
-    if (!b) {
-      append_delimiter();
-      return;
-    }
-
-    if (b->is_invisible() || b->length() == 0) {
-      append_optional_space();
-      return append_string("{}");
-    }
-
-    append_scope_opener();
-
-    bool format = kwd != "@font-face";;
-
-    for (size_t i = 0, L = b->length(); i < L; ++i) {
-      Statement_Obj stm = b->get(i);
-      if (stm) stm->perform(this);
-      if (i < L - 1 && format) append_special_linefeed();
-    }
-
-    append_scope_closer();
+    // should be handle in check_expression
+    throw Exception::InvalidCssValue({}, *m);
   }
+  // EO visitMap
 
-  void Output::operator()(String_Quoted* s)
+  void Output::visitString(String* s)
   {
-    if (s->quote_mark()) {
-      append_token(quote(s->value(), s->quote_mark()), s);
-    } else if (!in_comment) {
-      append_token(string_to_output(s->value()), s);
-    } else {
-      append_token(s->value(), s);
+    if (!in_custom_property) {
+      Inspect::visitString(s);
     }
-  }
-
-  void Output::operator()(String_Constant* s)
-  {
-    sass::string value(s->value());
-    if (!in_comment && !in_custom_property) {
-      append_token(string_to_output(value), s);
-    } else {
+    else {
+      sass::string value(s->value());
+      trim_trailing_lines(value);
       append_token(value, s);
     }
   }
+  // EO visitString
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
 }

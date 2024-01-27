@@ -5,16 +5,60 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Headers">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+    <Filter Include="API Includes">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EB92}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;in;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Sources">
+    <Filter Include="CAPI Headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EB93}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;in;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="CAPI Sources">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="AST Headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EB94}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;in;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="AST Sources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2F4}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Parser Headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EB97}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;in;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Parser Sources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A274}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Function Headers">
+      <UniqueIdentifier>{93995380-89B2-4b04-88EB-625FBE52EB97}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;in;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Function Sources">
+      <UniqueIdentifier>{4FC737F1-C735-4376-A066-2A32D752A274}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="LibSass Headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;in;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="LibSass Sources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2F3}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
   </ItemGroup>
-  <ItemGroup Label="Includes">{{includes}}</ItemGroup>
-  <ItemGroup Label="Headers">{{headers}}</ItemGroup>
-  <ItemGroup Label="Sources">{{sources}}</ItemGroup>
+  <ItemGroup>{{api_includes}}</ItemGroup>
+  <ItemGroup>{{api_headers}}</ItemGroup>
+  <ItemGroup>{{api_sources}}</ItemGroup>
+  <ItemGroup>{{ast_headers}}</ItemGroup>
+  <ItemGroup>{{ast_sources}}</ItemGroup>
+  <ItemGroup>{{parser_headers}}</ItemGroup>
+  <ItemGroup>{{parser_sources}}</ItemGroup>
+  <ItemGroup>{{fn_headers}}</ItemGroup>
+  <ItemGroup>{{fn_sources}}</ItemGroup>
+  <ItemGroup>{{headers}}</ItemGroup>
+  <ItemGroup>{{sources}}</ItemGroup>
 </Project>

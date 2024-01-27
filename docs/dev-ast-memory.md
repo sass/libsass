@@ -5,7 +5,6 @@ by Boost or C++11. Implementation is a bit less modular since
 it was not needed. Various compile time debug options are
 available if you need to debug memory life-cycles.
 
-
 ## Memory Classes
 
 ### SharedObj
@@ -64,7 +63,6 @@ when the reference counted object goes out of scope, it will not
 free the attached memory. You are now again in charge of freeing
 the memory (just assign it to a reference counted object again).
 
-
 ## Circular references
 
 Reference counted memory implementations are prone to circular references.
@@ -79,7 +77,6 @@ extend code (Node handling). The easy way to avoid this is to only assign
 complete object clones to these members. If you know the objects lifetime
 is longer than the reference you create, you can also just store the raw
 pointer. Once needed this could be solved with weak pointers.
-
 
 ## Addressing the invalid covariant return types problems
 

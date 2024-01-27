@@ -1,140 +1,200 @@
 #ifndef SASS_AST_DEF_MACROS_H
 #define SASS_AST_DEF_MACROS_H
 
-// Helper class to switch a flag and revert once we go out of scope
+#include "memory_allocator.hpp"
+
+// Helper class to switch a flag
+// and revert once we go out of scope
 template <class T>
-class LocalOption {
+class LocalOption final {
   private:
     T* var; // pointer to original variable
     T orig; // copy of the original option
   public:
-    LocalOption(T& var)
+    LocalOption(T& var, T current) :
+      var(&var), orig(var)
     {
-      this->var = &var;
-      this->orig = var;
-    }
-    LocalOption(T& var, T orig)
-    {
-      this->var = &var;
-      this->orig = var;
-      *(this->var) = orig;
-    }
-    void reset()
-    {
-      *(this->var) = this->orig;
+      *(this->var) = current;
     }
     ~LocalOption() {
       *(this->var) = this->orig;
     }
 };
 
-#define LOCAL_FLAG(name,opt) LocalOption<bool> flag_##name(name, opt)
-#define LOCAL_COUNT(name,opt) LocalOption<size_t> cnt_##name(name, opt)
+// Helper class to put something on a vector
+// and revert once we go out of scope.
+template <class T>
+class LocalStack final {
+private:
+  sass::vector<T>& cnt; // container
+public:
+  LocalStack(sass::vector<T>& cnt, T push) :
+    cnt(cnt)
+  {
+    cnt.emplace_back(push);
+  }
+  ~LocalStack() {
+    cnt.pop_back();
+  }
+};
 
+// Macros to help create and maintain local and recursive flag states
+#define RAII_FLAG(name,opt) LocalOption<bool> flag_##name(name, opt)
+#define RAII_PTR(var,name,opt) LocalOption<var*> flag_##name(name, opt)
+#define RAII_SELECTOR(name,opt) LocalStack<SelectorListObj> stack_##name(name, opt)
+#define RAII_MODULE(name,opt) LocalStack<Root*> stack_##name(name, opt)
+
+// Macro to help impose maximum nesting to avoid stack overflow
 #define NESTING_GUARD(name) \
   LocalOption<size_t> cnt_##name(name, name + 1); \
-  if (name > MAX_NESTING) throw Exception::NestingLimitError(pstate, traces); \
+  if (name > SassMaxNesting) throw Exception::RecursionLimitError(); \
+
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+
+#define ADD_REF(type, name) \
+protected: \
+  type name##_; \
+public: \
+  type& name() { return name##_; } \
+  const type& name() const { return name##_; } \
+  void name(type&& name##__) { name##_ = std::move(name##__); } \
+  void name(const type& name##__) { name##_ = name##__; } \
+private:
+
+#define ADD_CONSTREF(type, name)\
+protected:\
+  type name##_;\
+public:\
+  const type& name() const { return name##_; } \
+  void name(type&& name##__) { name##_ = std::move(name##__); } \
+  void name(const type& name##__) { name##_ = name##__; } \
+private:
 
 #define ADD_PROPERTY(type, name)\
 protected:\
   type name##_;\
 public:\
-  type name() const        { return name##_; }\
-  type name(type name##__) { return name##_ = name##__; }\
+  type name() const { return name##_; }\
+  void name(type name##__) { name##_ = name##__; }\
 private:
 
-#define HASH_PROPERTY(type, name)\
-protected:\
-  type name##_;\
-public:\
-  type name() const        { return name##_; }\
-  type name(type name##__) { hash_ = 0; return name##_ = name##__; }\
-private:
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
-#define ADD_CONSTREF(type, name) \
-protected: \
-  type name##_; \
-public: \
-  const type& name() const { return name##_; } \
-  void name(type name##__) { name##_ = name##__; } \
-private:
+  #ifdef DEBUG_SHARED_PTR
 
-#define HASH_CONSTREF(type, name) \
-protected: \
-  type name##_; \
-public: \
-  const type& name() const { return name##_; } \
-  void name(type name##__) { hash_ = 0; name##_ = name##__; } \
-private:
+    #define SASS_MEMORY_PARAMS file, line,
+    #define SASS_MEMORY_PARAMS_VOID file, line
+    #define SASS_MEMORY_POS __FILE__, __LINE__
+    #define SASS_MEMORY_POS_VOID __FILE__, __LINE__
+    #define SASS_MEMORY_ARGS sass::string file, size_t line,
+    #define SASS_MEMORY_ARGS_VOID sass::string file, size_t line
 
-#ifdef DEBUG_SHARED_PTR
+  #else
 
-#define ATTACH_ABSTRACT_AST_OPERATIONS(klass) \
-  virtual klass* copy(sass::string, size_t) const = 0; \
-  virtual klass* clone(sass::string, size_t) const = 0; \
+    #define SASS_MEMORY_PARAMS
+    #define SASS_MEMORY_PARAMS_VOID
+    #define SASS_MEMORY_POS
+    #define SASS_MEMORY_POS_VOID
+    #define SASS_MEMORY_ARGS
+    #define SASS_MEMORY_ARGS_VOID
 
-#define ATTACH_VIRTUAL_AST_OPERATIONS(klass) \
-  klass(const klass* ptr); \
-  virtual klass* copy(sass::string, size_t) const override = 0; \
-  virtual klass* clone(sass::string, size_t) const override = 0; \
+  #endif
 
-#define ATTACH_AST_OPERATIONS(klass) \
-  klass(const klass* ptr); \
-  virtual klass* copy(sass::string, size_t) const override; \
-  virtual klass* clone(sass::string, size_t) const override; \
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
-#else
+  #define DECLARE_ISA_CASTER(klass) \
+    public: virtual klass* isa##klass() { return nullptr; } \
+    public: virtual const klass* isa##klass() const { return nullptr; } \
 
-#define ATTACH_ABSTRACT_AST_OPERATIONS(klass) \
-  virtual klass* copy() const = 0; \
-  virtual klass* clone() const = 0; \
+  #define IMPLEMENT_ISA_CASTER(klass) \
+    public: klass* isa##klass() final override { return this; } \
+    public: const klass* isa##klass() const final override { return this; } \
 
-#define ATTACH_VIRTUAL_AST_OPERATIONS(klass) \
-  klass(const klass* ptr); \
-  virtual klass* copy() const override = 0; \
-  virtual klass* clone() const override = 0; \
-
-#define ATTACH_AST_OPERATIONS(klass) \
-  klass(const klass* ptr); \
-  virtual klass* copy() const override; \
-  virtual klass* clone() const override; \
-
-#endif
-
-#define ATTACH_VIRTUAL_CMP_OPERATIONS(klass) \
-  virtual bool operator==(const klass& rhs) const = 0; \
-  virtual bool operator!=(const klass& rhs) const { return !(*this == rhs); }; \
-
-#define ATTACH_CMP_OPERATIONS(klass) \
-  virtual bool operator==(const klass& rhs) const; \
-  virtual bool operator!=(const klass& rhs) const { return !(*this == rhs); }; \
-
-#ifdef DEBUG_SHARED_PTR
-
-  #define IMPLEMENT_AST_OPERATORS(klass) \
-    klass* klass::copy(sass::string file, size_t line) const { \
-      klass* cpy = SASS_MEMORY_NEW(klass, this); \
-      cpy->trace(file, line); \
-      return cpy; \
-    } \
-    klass* klass::clone(sass::string file, size_t line) const { \
-      klass* cpy = copy(file, line); \
-      cpy->cloneChildren(); \
-      return cpy; \
+  #define IMPLEMENT_ACCEPT(type, visitor, klass) \
+    public: type accept(visitor##Visitor<type>* visitor) override final { \
+      return visitor->visit##klass(this); \
     } \
 
-#else
-
-  #define IMPLEMENT_AST_OPERATORS(klass) \
-    klass* klass::copy() const { \
-      return SASS_MEMORY_NEW(klass, this); \
+  #define IMPLEMENT_EQ_OPERATOR(subklass, klass) \
+    public: bool operator==(const subklass& rhs) const override final { \
+      auto sel = rhs.isa##klass(); \
+      return sel ? *this == *sel : false; \
     } \
-    klass* klass::clone() const { \
-      klass* cpy = copy(); \
-      cpy->cloneChildren(); \
-      return cpy; \
+    public: bool operator==(const klass& rhs) const; \
+
+  // Childless argument is passed to ctor
+  #define IMPLEMENT_SEL_COPY_CHILDREN(klass) \
+    public: klass* copy(SASS_MEMORY_ARGS bool childless) const override final { \
+      return SASS_MEMORY_NEW_DBG(klass, this, childless); \
     } \
 
-#endif
+  // Childless argument is ignored on ctor
+  #define IMPLEMENT_SEL_COPY_IGNORE(klass) \
+    public: klass* copy(SASS_MEMORY_ARGS bool childless) const override final { \
+      return SASS_MEMORY_NEW_DBG(klass, this); \
+    } \
+
+  /////////////////////////////////////////////////////////////////////////
+  /* Wrap c++ pointers for C-API to anon-structs */
+  /////////////////////////////////////////////////////////////////////////
+  #define CAPI_WRAPPER(klass, strukt) \
+  struct strukt* wrap() \
+  { \
+    /* This is a compile time cast and doesn't cost anything */ \
+    return reinterpret_cast<struct strukt*>(this); \
+  }; \
+  /* Wrap the pointer for C-API */ \
+  const struct strukt* wrap() const \
+  { \
+    /* This is a compile time cast and doesn't cost anything */ \
+    return reinterpret_cast<const struct strukt*>(this); \
+  }; \
+  /* Wrap the pointer for C-API */ \
+  static struct strukt* wrap(klass* unwrapped) \
+  { \
+    /* Ensure we at least catch the most obvious stuff */ \
+    if (unwrapped == nullptr) throw std::runtime_error( \
+      "Null-Pointer passed to " #klass "::unwrap"); \
+    /* Just delegate to wrap */ \
+    return unwrapped->wrap(); \
+  }; \
+  /* Wrap the pointer for C-API */ \
+  static const struct strukt* wrap(const klass* unwrapped) \
+  { \
+    /* Ensure we at least catch the most obvious stuff */ \
+    if (unwrapped == nullptr) throw std::runtime_error( \
+      "Null-Pointer passed to " #klass "::unwrap"); \
+    /* Just delegate to wrap */ \
+    return unwrapped->wrap(); \
+  }; \
+  /* Unwrap the pointer for C-API (potentially unsafe). */ \
+  /* You must pass in a pointer you've got via wrap API. */ \
+  /* Passing anything else will result in undefined behavior! */ \
+  static klass& unwrap(struct strukt* wrapped) \
+  { \
+    /* Ensure we at least catch the most obvious stuff */ \
+    if (wrapped == nullptr) throw std::runtime_error( \
+      "Null-Pointer passed to " #klass "::unwrap"); \
+    /* This is a compile time cast and doesn't cost anything */ \
+    return *reinterpret_cast<klass*>(wrapped); \
+  }; \
+  /* Unwrap the pointer for C-API (potentially unsafe). */ \
+  /* You must pass in a pointer you've got via wrap API. */ \
+  /* Passing anything else will result in undefined behavior! */ \
+  static const klass& unwrap(const struct strukt* wrapped) \
+  { \
+    /* Ensure we at least catch the most obvious stuff */ \
+    if (wrapped == nullptr) throw std::runtime_error( \
+      "Null-Pointer passed to " #klass "::unwrap"); \
+    /* This is a compile time cast and doesn't cost anything */ \
+    return *reinterpret_cast<const klass*>(wrapped); \
+  }; \
+
+
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
 
 #endif

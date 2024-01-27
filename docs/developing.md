@@ -2,10 +2,10 @@
 
 So far this is only a loose collection of developer relevant docs:
 
-- [Building LibSass](build.md)
-- [Profiling LibSass](dev-profiling.md)
 - [C-API documentation](api-doc.md)
-- [LibSass and Unicode](unicode.md)
-- [SourceMap internals](source-map-internals.md)
-- [Custom memory allocator](allocator.md)
+- [Building LibSass](build.md)
+- [LibSass Plugins](dev-plugins.md)
+- [Profiling LibSass](dev-profiling.md)
+- [LibSass and Unicode](dev-unicode.md)
+- [Custom memory allocator](dev-allocator.md)
 - [Smart pointer implementation](dev-ast-memory.md)
