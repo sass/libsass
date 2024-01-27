@@ -1,93 +1,81 @@
-#ifndef SASS_SOURCE_H
-#define SASS_SOURCE_H
+#ifndef SASS_SOURCE_HPP
+#define SASS_SOURCE_HPP
 
-#include "sass.hpp"
-#include "memory.hpp"
-#include "position.hpp"
-#include "source_data.hpp"
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
+
+#include "ast_def_macros.hpp"
 
 namespace Sass {
 
-  class SourceFile :
-    public SourceData {
+  class SourceSpan;
+
+  // SourceData is the base class to hold loaded sass content.
+  class SourceData : public RefCounted
+  {
   protected:
-    char* path;
-    char* data;
-    size_t length;
-    size_t srcid;
+
+    friend class SourceItpl;
+
+    // Returns the number of lines. On the first call it will
+    // calculate the linefeed lookup table.
+    virtual size_t countLines() = 0;
+
   public:
 
-    SourceFile(
-      const char* path,
-      const char* data,
-      size_t srcid);
+    // Constructor
+    SourceData();
 
-    ~SourceFile();
+    // The source id is uniquely assigned
+    virtual size_t getSrcIdx() const = 0;
 
-    const char* end() const override final;
-    const char* begin() const override final;
-    virtual const char* getRawData() const override;
-    virtual SourceSpan getSourceSpan() override;
+    // The source id is uniquely assigned
+    virtual void setSrcIdx(size_t idx) = 0;
 
-    size_t size() const override final {
-      return length;
+    // Return path as it was given for import
+    virtual const char* getImpPath() const = 0;
+
+    // Return path as it was given for import
+    virtual const char* getAbsPath() const = 0;
+
+    // Return only the filename part
+    const char* getFileName() const
+    {
+      const char* path = getImpPath();
+      const char* lastSlash = path;
+      while (path && *path != 0) {
+        if (*path == '/' || *path == '\\') {
+          lastSlash = path + 1;
+        }
+        path += 1;
+      }
+      return lastSlash;
     }
 
-    virtual const char* getPath() const override {
-      return path;
-    }
+    // Returns the requested line. Will take interpolations into
+    // account to show more accurate debug messages. Calling this
+    // can be rather expensive, so only use it for debugging.
+    virtual sass::string getLine(size_t line) = 0;
 
-    virtual size_t getSrcId() const override {
-      return srcid;
-    }
+    // Get raw iterator for raw source
+    virtual const char* content() const = 0;
+    virtual const char* srcmaps() const = 0;
 
-  };
+    // Get raw iterator for raw source
+    const char* contentStart() const { return content(); };
+    const char* srcmapsStart() const { return srcmaps(); };
+    const char* contentEnd() const { return content() + contentSize(); };
+    const char* srcmapsEnd() const { return srcmaps() + srcmapsSize(); };
 
-  class SynthFile :
-    public SourceData {
-  protected:
-    const char* path;
-  public:
+    // Return raw size in bytes
+    virtual size_t contentSize() const = 0;
+    virtual size_t srcmapsSize() const = 0;
 
-    SynthFile(
-      const char* path) :
-      path(path)
-    {}
+    // Returns adjusted source span regarding interpolation.
+    virtual SourceSpan adjustSourceSpan(SourceSpan& pstate) const;
 
-    ~SynthFile() {}
-
-    const char* end() const override final { return nullptr; }
-    const char* begin() const override final { return nullptr; };
-    virtual const char* getRawData() const override { return nullptr; };
-    virtual SourceSpan getSourceSpan() override { return SourceSpan(path); };
-
-    size_t size() const override final {
-      return 0;
-    }
-
-    virtual const char* getPath() const override {
-      return path;
-    }
-
-    virtual size_t getSrcId() const override {
-      return std::string::npos;
-    }
-
-  };
-  
-
-  class ItplFile :
-    public SourceFile {
-  private:
-    SourceSpan pstate;
-  public:
-
-    ItplFile(const char* data,
-      const SourceSpan& pstate);
-
-    // Offset getPosition() const override final;
-    const char* getRawData() const override final;
-    SourceSpan getSourceSpan() override final;
+    CAPI_WRAPPER(SourceData, SassSource);
   };
 
 }

@@ -3,7 +3,7 @@ In order to install and setup your local development environment, there are some
 
 * git
 * gcc/clang/llvm (Linux: build tools, Mac OS X: XCode w/ Command Line Tools)
-* ruby w/ bundler
+* ruby w/ bundler (only to run the spec-test suite)
 
 OS X:
 First you'll need to install XCode which you can now get from the AppStore installed on your mac. After you download that and run it, then run this on the command line:

@@ -1,90 +1,57 @@
 ## Building LibSass with Visual Studio
 
-### Requirements:
+The minimum requirement to build LibSass with Visual Studio is currently
+version 15.0 (Visual Studio 2017). Simply download and install [Visual
+Studio from Microsoft](https://visualstudio.microsoft.com/downloads/).
+The Community Edition is even free for open-source projects.
 
-The minimum requirement to build LibSass with Visual Studio is "Visual Studio 2013 Express for Desktop".
+Additionally, it is recommended to have `git` installed and available
+via `PATH` env-variable, in order to deduce the `libsass` version info.
+If `git` is not available, the LibSass version will be set to `[NA]`.
 
-Additionally, it is recommended to have `git` installed and available in `PATH`, so to deduce the `libsass` version information. For instance, if GitHub for Windows (https://windows.github.com/) is installed, the `PATH` will have an entry resembling: `X:\Users\<YOUR_NAME>\AppData\Local\GitHub\PortableGit_<SOME_GUID>\cmd\` (where `X` is the drive letter of system drive). If `git` is not available, inquiring the LibSass version will result in `[NA]`.
+Once installed simply load `win/libsass.sln` file into Visual Studio.
+Then build (Ctrl+Shift+B) any configuration you'd like.
 
-### Build Steps:
+[1]: https://visualstudio.microsoft.com/downloads/
 
-#### From Visual Studio:
+### Building on command prompt
 
-On opening the `win\libsass.sln` solution and build (Ctrl+Shift+B) to build `libsass.dll`.
+In order to build with MSVC on the command line, you either need to bring
+`msbuild.exe` into the common `PATH` folders or reference it via absolute path.
+The easiest way is to open the `VS201X Tools Command Prompt`, which should be
+a shortcuts installed alongside with Visual Studio.
 
-To Build LibSass as a static Library, it is recommended to set an environment variable `LIBSASS_STATIC_LIB` before launching the project:
-
-```cmd
-cd path\to\libsass
-SET LIBSASS_STATIC_LIB=1
-::
-:: or in PowerShell:
-:: $env:LIBSASS_STATIC_LIB=1
-::
-win\libsass.sln
-```
-
-Visual Studio will form the filtered source tree as shown below:
-
-![image](https://cloud.githubusercontent.com/assets/3840695/9298985/aae9e072-44bf-11e5-89eb-e7995c098085.png)
-
-`Header Files` contains the .h and .hpp files, while `Source Files` covers `.c` and `.cpp`. The other used headers/sources will appear under `External Dependencies`.
-
-If there is a LibSass code file appearing under External Dependencies, it can be changed by altering the `win\libsass.vcxproj.filters` file or dragging in Solution Explorer.
-
-#### From Command Prompt:
-
-Notice that in the following commands:
+It is normally located at `"%ProgramFiles(x86)%\MSBuild\15.0\Bin\MSBuild"`
 
 * If the platform is 32-bit Windows, replace `ProgramFiles(x86)` with `ProgramFiles`.
-* To build with Visual Studio 2015, replace `12.0` with `14.0` in the aforementioned command.
+* To build with Visual Studio 2019, replace `15.0` with `16.0` in the commands.
 
-Open a command prompt:
+Once the command is available you can build any configuration you need:
 
-To build dynamic/shared library (`libsass.dll`):
-
-```cmd
-:: debug build:
-"%ProgramFiles(x86)%\MSBuild\12.0\Bin\MSBuild" win\libsass.sln
-
-:: release build:
-"%ProgramFiles(x86)%\MSBuild\12.0\Bin\MSBuild" win\libsass.sln ^
-/p:Configuration=Release
+```bash
+MSBuild win\libsass.sln /p:Platform="x64" /p:Configuration="Release Shared" -t:Clean;Build
+MSBuild win\libsass.sln /p:Platform="x86" /p:Configuration="Debug Static" -t:Clean;Build
 ```
 
-To build static library (`libsass.lib`):
+The results can be found inside the `build` directory.
 
-```cmd
-:: debug build:
-"%ProgramFiles(x86)%\MSBuild\12.0\Bin\MSBuild" win\libsass.sln ^
-/p:LIBSASS_STATIC_LIB=1
+### Training LibSass for better performance
 
-:: release build:
-"%ProgramFiles(x86)%\MSBuild\12.0\Bin\MSBuild" win\libsass.sln ^
-/p:LIBSASS_STATIC_LIB=1 /p:Configuration=Release
+Visual Studio offers the possibility to train code via Profile Guided Optimizations.
+In order to achieve this we need to first create an "instrumented" build. This build
+will then generate statistics when being executed. Once enough data is generated,
+the code is linked once more to create the final optimized version. You can expect
+to get around 10% to 15% free performance.
+
+```bash
+# Build an instrumented version to gather statistics for later optimization
+MSBuild libsass.sln /p:Platform="x64" /p:Configuration="Release Shared" /p:PGO="Instrument"
+# Run the trainer against some heavy sass benchmark code
+# You may need to change into a different directory
+..\build\x86\Release\Shared\trainer bench.scss 1>nul
+# Build the final optimized version with the gathered profile statistics
+MSBuild libsass.sln /p:Platform="x64" /p:Configuration="Release Shared" /p:PGO="Instrument"
 ```
 
-#### From PowerShell:
+See [train.bat](win/train.bat) for a full example.
 
-To build dynamic/shared library (`libsass.dll`):
-
-```powershell
-# debug build:
-&"${env:ProgramFiles(x86)}\MSBuild\12.0\Bin\MSBuild" win\libsass.sln
-
-# release build:
-&"${env:ProgramFiles(x86)}\MSBuild\12.0\Bin\MSBuild" win\libsass.sln `
-/p:Configuration=Release
-```
-
-To build static library (`libsass.lib`):
-
-```powershell
-# build:
-&"${env:ProgramFiles(x86)}\MSBuild\12.0\Bin\MSBuild" win\libsass.sln `
-/p:LIBSASS_STATIC_LIB=1
-
-# release build:
-&"${env:ProgramFiles(x86)}\MSBuild\12.0\Bin\MSBuild" win\libsass.sln `
-/p:LIBSASS_STATIC_LIB=1 /p:Configuration=Release
-```

@@ -1,15 +1,17 @@
-//-----------------------------------------------------------------------------
-// MurmurHash2 was written by Austin Appleby, and is placed in the public
-// domain. The author hereby disclaims copyright to this source code.
-//-----------------------------------------------------------------------------
-// LibSass only needs MurmurHash2, so we made this header only
-//-----------------------------------------------------------------------------
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
+/* MurmurHash2 was written by Austin Appleby, and is placed in the public    */
+/* domain. The author hereby disclaims copyright to this source code.        */
+/*****************************************************************************/
+/* LibSass only needs MurmurHash2, so we made this header only               */
+/*****************************************************************************/
+#ifndef SASS_MURMURHASH2_HPP
+#define SASS_MURMURHASH2_HPP
 
-#ifndef _MURMURHASH2_H_
-#define _MURMURHASH2_H_
-
-//-----------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////
 // Platform-specific functions and macros
+/////////////////////////////////////////////////////////////////////////
 
 // Microsoft Visual Studio
 
@@ -23,11 +25,12 @@ typedef unsigned __int64 uint64_t;
 
 #else	// defined(_MSC_VER)
 
-#include <stdint.h>
+#include <cstdint>
 
 #endif // !defined(_MSC_VER)
 
-//-----------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
 
 inline uint32_t MurmurHash2 ( const void * key, int len, uint32_t seed )
 {
@@ -85,7 +88,8 @@ inline uint32_t MurmurHash2 ( const void * key, int len, uint32_t seed )
   return h;
 } 
 
-//-----------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
 
-#endif // _MURMURHASH2_H_
+#endif
 

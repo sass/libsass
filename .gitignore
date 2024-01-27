@@ -53,6 +53,10 @@ libsass/*
 *.lo
 *.so
 *.dll
+*.h.gch
+*.h.pch
+*.hpp.gch
+*.hpp.pch
 *.a
 *.suo
 *.sdf

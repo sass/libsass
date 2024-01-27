@@ -88,18 +88,23 @@ the --with-sass-spec-dir=<dir> argument.
   case $sass_spec_dir in
     /*)
       SASS_SPEC_PATH=`$RUBY -e "require 'pathname'; puts Pathname.new('$sass_spec_dir').relative_path_from(Pathname.new('$PWD')).to_s"`
+      SASS_SPEC_ROOT="$sass_spec_dir"
       ;;
     *)
       SASS_SPEC_PATH="$sass_spec_dir"
+      SASS_SPEC_ROOT="$sass_spec_dir"
       ;;
   esac
   AC_SUBST(SASS_SPEC_PATH)
+  AC_SUBST(SASS_SPEC_ROOT)
 else
   # we do not really need these paths for non test build
   # but automake may error if we do not define them here
   SASS_SPEC_PATH=sass-spec
+  SASS_SPEC_ROOT=sass-spec
   SASS_SASSC_PATH=sassc
   AC_SUBST(SASS_SPEC_PATH)
+  AC_SUBST(SASS_SPEC_ROOT)
   AC_SUBST(SASS_SASSC_PATH)
 fi
 

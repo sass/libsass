@@ -1,16 +1,77 @@
-#ifndef SASS_DART_HELPERS_H
-#define SASS_DART_HELPERS_H
+#ifndef SASS_DART_HELPERS_HPP
+#define SASS_DART_HELPERS_HPP
 
 #include <vector>
 #include <utility>
 #include <iterator>
 #include <functional>
+#include "ast_helpers.hpp"
 
 namespace Sass {
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+  template <typename T>
+  sass::string InspectVector(sass::vector<T> exts) {
+    sass::string msg = "[";
+    bool first = true;
+    for (auto& entry : exts) {
+      if (!first) msg += ", ";
+      msg += entry->inspect();
+      first = false;
+    }
+    return msg + "]";
+
+  }
+
+  template <typename T>
+  sass::string InspectSelector(sass::vector<T> exts) {
+    sass::string msg = "[";
+    bool first = true;
+    for (auto& entry : exts) {
+      if (!first) msg += ", ";
+      msg += entry.selector->inspect();
+      first = false;
+    }
+    return msg + "]";
+
+  }
+  /////////////////////////////////////////////////////////////////////////
+  // Returns a new list containing the elements between [start] and [end].
+  /////////////////////////////////////////////////////////////////////////
+  template <class T>
+  sass::vector<T> sublist(const sass::vector<T>& vec,
+    size_t start, size_t end = sass::string::npos)
+  {
+    if (end == sass::string::npos) { end = vec.size(); }
+    return sass::vector<T>(vec.begin() + start, vec.begin() + end);
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+  // Removes the objects in the range [start] inclusive to [end] exclusive.
+  /////////////////////////////////////////////////////////////////////////
+  template <class T>
+  void removeRange(sass::vector<T>& vec,
+    size_t start, size_t end = sass::string::npos)
+  { 
+    if (end == sass::string::npos) { end = vec.size(); }
+    vec.erase(vec.begin() + start, vec.begin() + end);
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+  template <class T, class V>
+  size_t indexOf(const sass::vector<T>& vec, const V& item)
+  {
+    for (size_t i = 0; i < vec.size(); i += 1) {
+      if (ObjEqualityFn<T>(vec[i], item)) return i;
+    }
+    return sass::string::npos;
+  }
+
+  /////////////////////////////////////////////////////////////////////////
   // Flatten `vector<vector<T>>` to `vector<T>`
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   template <class T>
   T flatten(const sass::vector<T>& all)
   {
@@ -22,12 +83,12 @@ namespace Sass {
     return flattened;
   }
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Expands each element of this Iterable into zero or more elements.
   // Calls a function on every element and ads all results to flat array
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Equivalent to dart `cnt.any`
-  // Pass additional closure variables to `fn`
+  // Passes additional closure variables to `fn`
   template <class T, class U, typename ...Args>
   T expand(const T& cnt, U fn, Args... args) {
     T flattened;
@@ -39,8 +100,8 @@ namespace Sass {
     return flattened;
   }
 
-  // ##########################################################################
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
   template <class T>
   T flattenInner(const sass::vector<T>& vec)
   {
@@ -52,10 +113,76 @@ namespace Sass {
   }
   // EO flattenInner
 
-  // ##########################################################################
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+  template <typename T>
+  sass::vector<T> flattenVertically(sass::vector<sass::vector<T>> lists)
+  {
+    sass::vector<T> result;
+    // Loop until all arrays are exhausted
+    size_t lvl = 0; bool consumed = false; do {
+      // aborts when nothing more can be consumed
+      consumed = false;
+      // loop over all arrays at the 1st level
+      for (size_t i = 0, iL = lists.size(); i < iL; ++i) {
+        // check for items to consume at 2nd level
+        if (lists[i].size() > lvl) {
+          // consume item at 2nd level depth
+          result.emplace_back(lists[i][lvl]);
+          // maybe we have some more
+          consumed = true;
+        }
+      }
+      // check next depth level
+      ++lvl;
+    }
+    // abort once nothing is consumed
+    while (consumed);
+    // return flat list
+    return result;
+  }
+  // EO flatVertically
+
+  /////////////////////////////////////////////////////////////////////////
+  // Implementation of [Map.addAll], but for LibSass.
+  /////////////////////////////////////////////////////////////////////////
+  template <class K1, class K2>
+  void mapAddAll(K1 dst, K2 source)
+  {
+    for (auto& src : source) {
+      dst[src.first] = src.second;
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+  // Like [Map.addAll], but for two-layer maps.
+  // This avoids copying inner maps from [source] if possible.
+  /////////////////////////////////////////////////////////////////////////
+  template <class K1, class K2>
+  void mapAddAll2(K1 dst, K2 source)
+  {
+    for (auto& src : source) {
+      mapAddAll(dst[src.first], src.second);
+    }
+  }
+
+  // Map<K1, Map<K2, V>> destination, Map<K1, Map<K2, V>> source) {
+  //   source.forEach((key, inner) {
+  //     var innerDestination = destination[key];
+  //     if (innerDestination != null) {
+  //       innerDestination.addAll(inner);
+  //     }
+  //     else {
+  //       destination[key] = inner;
+  //     }
+  //   });
+  // }
+
+  /////////////////////////////////////////////////////////////////////////
   // Equivalent to dart `cnt.any`
-  // Pass additional closure variables to `fn`
-  // ##########################################################################
+  // Passes additional closure variables to `fn`
+  /////////////////////////////////////////////////////////////////////////
   template <class T, class U, typename ...Args>
   bool hasAny(const T& cnt, U fn, Args... args) {
     for (const auto& sub : cnt) {
@@ -67,10 +194,10 @@ namespace Sass {
   }
   // EO hasAny
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Equivalent to dart `cnt.take(len).any`
-  // Pass additional closure variables to `fn`
-  // ##########################################################################
+  // Passes additional closure variables to `fn`
+  /////////////////////////////////////////////////////////////////////////
   template <class T, class U, typename ...Args>
   bool hasSubAny(const T& cnt, size_t len, U fn, Args... args) {
     for (size_t i = 0; i < len; i++) {
@@ -81,9 +208,9 @@ namespace Sass {
     return false;
   }
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Default predicate for lcs algorithm
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   template <class T>
   inline bool lcsIdentityCmp(const T& X, const T& Y, T& result)
   {
@@ -98,9 +225,9 @@ namespace Sass {
   }
   // EO lcsIdentityCmp
 
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   // Longest common subsequence with predicate
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
   template <class T>
   sass::vector<T> lcs(
     const sass::vector<T>& X, const sass::vector<T>& Y,
@@ -117,9 +244,9 @@ namespace Sass {
     // To circumvent, allocate one array on the heap
     // Then use a macro to access via double index
     // e.g. `size_t L[m][n]` is supported by gcc
-    size_t* len = new size_t[mm * nn + 1];
-    bool* acc = new bool[mm * nn + 1];
-    T* res = new T[mm * nn + 1];
+    size_t* len = new size_t[mm * nn + 8];
+    bool* acc = new bool[mm * nn + 8]{};
+    T* res = new T[mm * nn + 8];
 
     #define LEN(x, y) len[(x) * nn + (y)]
     #define ACC(x, y) acc[(x) * nn + (y)]
@@ -159,7 +286,7 @@ namespace Sass {
         // Note: we push instead of unshift
         // Note: reverse the vector later
         // ToDo: is deque more performant?
-        lcs.push_back(RES(i - 1, j - 1));
+        lcs.emplace_back(RES(i - 1, j - 1));
         // reduce values of i, j and index
         i -= 1; j -= 1; index -= 1;
       }
@@ -175,7 +302,7 @@ namespace Sass {
 
     }
 
-    // reverse now as we used push_back
+    // reverse now as we used emplace_back
     std::reverse(lcs.begin(), lcs.end());
 
     // Delete temp memory on heap
@@ -191,8 +318,8 @@ namespace Sass {
   }
   // EO lcs
 
-  // ##########################################################################
-  // ##########################################################################
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
 }
 

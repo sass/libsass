@@ -1,89 +1,89 @@
-// sass.hpp must go before all system headers to get the
-// __EXTENSIONS__ fix on Solaris.
-#include "sass.hpp"
-
-#include "ast.hpp"
-#include "prelexer.hpp"
-#include "backtrace.hpp"
 #include "error_handling.hpp"
 
-#include <iostream>
+#include "ast_selectors.hpp"
+#include "exceptions.hpp"
+#include "extension.hpp"
 
 namespace Sass {
 
+  StackTraces convertTraces(BackTraces traces)
+  {
+    // This will trigger StackTrace constructor
+    // Copies necessary stuff from BackTrace
+    return { traces.begin(), traces.end() };
+  }
+
   namespace Exception {
 
-    Base::Base(SourceSpan pstate, sass::string msg, Backtraces traces)
+    Base::Base(sass::string msg, BackTraces traces)
     : std::runtime_error(msg.c_str()), msg(msg),
-      prefix("Error"), pstate(pstate), traces(traces)
+      traces(traces.begin(), traces.end())
     { }
 
-    InvalidSass::InvalidSass(SourceSpan pstate, Backtraces traces, sass::string msg)
-    : Base(pstate, msg, traces)
+    Base::Base(sass::string msg, BackTraces traces, SourceSpan pstate)
+      : Base(msg, traces)
+    {
+      Base::traces.push_back(pstate);
+    }
+
+    SassRuntimeException2::SassRuntimeException2(
+      sass::string msg, BackTraces traces)
+      : Base(msg, traces) {}
+
+    SassRuntimeException2::SassRuntimeException2(
+      sass::string msg, BackTraces traces, SourceSpan pstate)
+      : Base(msg, traces, pstate) {}
+
+    InvalidParent::InvalidParent(Selector* parent, BackTraces traces, Selector* selector)
+    : Base(def_msg, traces, selector->pstate()), parent(parent), selector(selector)
+    {
+      msg = "Parent "
+        "\"" + parent->inspect() + "\""
+        " is incompatible with this selector.";
+    }
+
+    InvalidSyntax::InvalidSyntax(BackTraces traces, sass::string msg)
+      : Base(msg, traces)
     { }
 
-
-    InvalidParent::InvalidParent(Selector* parent, Backtraces traces, Selector* selector)
-    : Base(selector->pstate(), def_msg, traces), parent(parent), selector(selector)
-    {
-      msg = "Invalid parent selector for "
-        "\"" + selector->to_string(Sass_Inspect_Options()) + "\": "
-        "\"" + parent->to_string(Sass_Inspect_Options()) + "\"";
-    }
-
-    InvalidVarKwdType::InvalidVarKwdType(SourceSpan pstate, Backtraces traces, sass::string name, const Argument* arg)
-    : Base(pstate, def_msg, traces), name(name), arg(arg)
-    {
-      msg = "Variable keyword argument map must have string keys.\n" +
-        name + " is not a string in " + arg->to_string() + ".";
-    }
-
-    InvalidArgumentType::InvalidArgumentType(SourceSpan pstate, Backtraces traces, sass::string fn, sass::string arg, sass::string type, const Value* value)
-    : Base(pstate, def_msg, traces), fn(fn), arg(arg), type(type), value(value)
-    {
-      msg = arg + ": \"";
-      if (value) msg += value->to_string(Sass_Inspect_Options());
-      msg += "\" is not a " + type + " for `" + fn + "'";
-    }
-
-    MissingArgument::MissingArgument(SourceSpan pstate, Backtraces traces, sass::string fn, sass::string arg, sass::string fntype)
-    : Base(pstate, def_msg, traces), fn(fn), arg(arg), fntype(fntype)
-    {
-      msg = fntype + " " + fn + " is missing argument " + arg + ".";
-    }
-
-    InvalidSyntax::InvalidSyntax(SourceSpan pstate, Backtraces traces, sass::string msg)
-    : Base(pstate, msg, traces)
+    CustomImportError::CustomImportError(BackTraces traces, sass::string msg)
+      : Base(msg, traces)
     { }
 
-    NestingLimitError::NestingLimitError(SourceSpan pstate, Backtraces traces, sass::string msg)
-    : Base(pstate, msg, traces)
-    { }
-
-    DuplicateKeyError::DuplicateKeyError(Backtraces traces, const Map& dup, const Expression& org)
-    : Base(org.pstate(), def_msg, traces), dup(dup), org(org)
+    CustomImportNotFound::CustomImportNotFound(BackTraces traces, sass::string file)
+      : Base(def_msg, traces)
     {
-      msg = "Duplicate key " + dup.get_duplicate_key()->inspect() + " in map (" + org.inspect() + ").";
+      msg = "Can't find stylesheet \"" + file + "\".";
+      msg += "\nAs requested by custom importer.";
     }
 
-    TypeMismatch::TypeMismatch(Backtraces traces, const Expression& var, const sass::string type)
-    : Base(var.pstate(), def_msg, traces), var(var), type(type)
+    CustomImportAmbigous::CustomImportAmbigous(BackTraces traces, sass::string file)
+      : Base(def_msg, traces)
     {
-      msg = var.to_string() + " is not an " + type + ".";
+      msg = "CustomImportAmbigous \"" + file + "\".";
+      msg += "\nAs requested by custom importer.";
     }
 
-    InvalidValue::InvalidValue(Backtraces traces, const Expression& val)
-    : Base(val.pstate(), def_msg, traces), val(val)
+    CustomImportLoadError::CustomImportLoadError(BackTraces traces, sass::string file)
+      : Base(def_msg, traces)
     {
-      msg = val.to_string() + " isn't a valid CSS value.";
+      msg = "CustomImportLoadError \"" + file + "\".";
+      msg += "\nAs requested by custom importer.";
+    }
+    
+
+    RecursionLimitError::RecursionLimitError()
+      : Base(msg_recursion_limit, {}) {}
+
+    DuplicateKeyError::DuplicateKeyError(BackTraces traces, const Map& dup, const Value& org)
+    : Base(def_msg, traces), dup(dup), org(org)
+    {
+      // msg = "Duplicate key " + dup.get_duplicate_key()->inspect() + " in map (" + org.inspect() + ").";
+      msg = "Duplicate key."; // dart-sass keeps it simple ...
     }
 
-    StackError::StackError(Backtraces traces, const AST_Node& node)
-    : Base(node.pstate(), def_msg, traces), node(node)
-    {
-      msg = "stack level too deep";
-    }
-
+    EndlessExtendError::EndlessExtendError(Backtraces traces, const AST_Node& node)
+      : Base(node.pstate(), def_msg, traces), node(node)
     EndlessExtendError::EndlessExtendError(Backtraces traces, const AST_Node& node)
       : Base(node.pstate(), def_msg, traces), node(node)
     {
@@ -92,148 +92,222 @@ namespace Sass {
 
     IncompatibleUnits::IncompatibleUnits(const Units& lhs, const Units& rhs)
     {
-      msg = "Incompatible units: '" + rhs.unit() + "' and '" + lhs.unit() + "'.";
+      sass::string msg("No ");
+      msg += pluralize(Strings::argument, names.size());
+      msg += " named ";
+      msg += toSentence(names, Strings::_or_);
+      msg += ".";
+      return msg;
     }
 
-    IncompatibleUnits::IncompatibleUnits(const UnitType lhs, const UnitType rhs)
+    sass::string formatTooManyArguments(size_t given, size_t expected) {
+      sass::ostream msg;
+      msg << "Only " << expected << " ";
+      msg << pluralize("argument", expected);
+      msg << " allowed, but " << given << " ";
+      msg << pluralize("was", given, "were");
+      msg << " passed.";
+      return msg.str();
+    }
+
+    sass::string formatTooManyArguments(const EnvKeyFlatMap<ExpressionObj>& given, const Sass::EnvKeySet& expected) {
+      Sass::EnvKeySet superfluous;
+      for (auto pair : given) {
+        if (expected.count(pair.first) == 0) {
+          superfluous.insert(pair.first);
+        }
+      }
+      return "No argument named " +
+        toSentence(superfluous, "or") + ".";
+    }
+
+    sass::string formatTooManyArguments(const EnvKeyFlatMap<ValueObj>& given, const Sass::EnvKeySet& expected) {
+      Sass::EnvKeySet superfluous;
+      for (auto pair : given) {
+        if (expected.count(pair.first) == 0) {
+          superfluous.insert(pair.first);
+        }
+      }
+      return "No argument named " +
+        toSentence(superfluous, "or") + ".";
+    }
+
+    sass::string formatTooManyArguments(const EnvKeyFlatMap<ValueObj>& superfluous) {
+      return "No argument named " +
+        toSentence(superfluous, "or") + ".";
+    }
+
+    TooManyArguments::TooManyArguments(BackTraces traces, size_t given, size_t expected)
+      : Base(formatTooManyArguments(given, expected), traces)
+    {}
+
+    TooManyArguments::TooManyArguments(BackTraces traces, const EnvKeyFlatMap<ExpressionObj>& given, const Sass::EnvKeySet& expected)
+      : Base(formatTooManyArguments(given, expected), traces)
+    {}
+
+    TooManyArguments::TooManyArguments(BackTraces traces, const EnvKeyFlatMap<ValueObj>& superflous)
+      : Base(formatTooManyArguments(superflous), traces)
+    {}
+
+    MissingArgument::MissingArgument(BackTraces traces, const EnvKey& name)
+      : Base("Missing argument " + name.norm() + ".", traces)
+    {}
+
+    ArgumentGivenTwice::ArgumentGivenTwice(BackTraces traces, const EnvKey& name)
+      : Base("Argument " + name.norm() + " name was passed both by position and by name.", traces)
+    {}
+
+    UnknownNamedArgument::UnknownNamedArgument(SourceSpan pstate, BackTraces traces, EnvKeyFlatMap<ValueObj> names)
+      : Base(formatUnknownNamedArgument(names), traces, pstate)
     {
-      msg = sass::string("Incompatible units: '") + unit_to_string(rhs) + "' and '" + unit_to_string(lhs) + "'.";
     }
 
-    AlphaChannelsNotEqual::AlphaChannelsNotEqual(const Expression* lhs, const Expression* rhs, enum Sass_OP op)
-    : OperationError(), lhs(lhs), rhs(rhs), op(op)
+    UnknownNamedArgument2::UnknownNamedArgument2(BackTraces traces, EnvKeyFlatMap<ValueObj> names)
+      : Base(formatUnknownNamedArgument(names), traces)
     {
-      msg = "Alpha channels must be equal: " +
-        lhs->to_string({ NESTED, 5 }) +
-        " " + sass_op_to_name(op) + " " +
-        rhs->to_string({ NESTED, 5 }) + ".";
     }
 
-    ZeroDivisionError::ZeroDivisionError(const Expression& lhs, const Expression& rhs)
-    : OperationError(), lhs(lhs), rhs(rhs)
+    sass::string formatUnknownNamedArgument2(const EnvKeyFlatMap<ExpressionObj>& names)
     {
-      msg = "divided by 0";
+      sass::string msg("No ");
+      msg += pluralize(Strings::argument, names.size());
+      msg += " named ";
+      msg += toSentence(names, Strings::_or_);
+      msg += ".";
+      return msg;
     }
 
-    UndefinedOperation::UndefinedOperation(const Expression* lhs, const Expression* rhs, enum Sass_OP op)
-    : OperationError(), lhs(lhs), rhs(rhs), op(op)
-    {
-      msg = def_op_msg + ": \"" +
-        lhs->to_string({ NESTED, 5 }) +
-        " " + sass_op_to_name(op) + " " +
-        rhs->to_string({ TO_SASS, 5 }) +
-        "\".";
-    }
+    InvalidCssValue::InvalidCssValue(BackTraces traces, const Value& val)
+      : Base(val.inspect() + " isn't a valid CSS value.", traces, val.pstate())
+    {}
 
-    InvalidNullOperation::InvalidNullOperation(const Expression* lhs, const Expression* rhs, enum Sass_OP op)
-    : UndefinedOperation(lhs, rhs, op)
-    {
-      msg = def_op_null_msg + ": \"" + lhs->inspect() + " " + sass_op_to_name(op) + " " + rhs->inspect() + "\".";
-    }
+    InvalidCssValue2::InvalidCssValue2(BackTraces traces, const Value& val)
+      : Base(val.inspect() + " isn't a valid CSS value.", traces, val.pstate())
+    {}
 
-    SassValueError::SassValueError(Backtraces traces, SourceSpan pstate, OperationError& err)
-    : Base(pstate, err.what(), traces)
-    {
-      msg = err.what();
-      prefix = err.errtype();
-    }
+    // Thrown when a parent selector is used without any parent
+    TopLevelParent::TopLevelParent(BackTraces traces, SourceSpan pstate)
+      : Base("Top-level selectors may not contain the parent selector \"&\".", traces, pstate)
+    {}
 
-    TopLevelParent::TopLevelParent(Backtraces traces, SourceSpan pstate)
-      : Base(pstate, "Top-level selectors may not contain the parent selector \"&\".", traces)
-    {
+    // Thrown when a non-optional extend found nothing to extend
+    UnsatisfiedExtend::UnsatisfiedExtend(BackTraces traces, Extension extension)
+      : Base("The target selector was not found.\n"
+        // Calling inspect to the placeholder is visible
+        "Use \"@extend " + extension.target->inspect() +
+        " !optional\" to avoid this error.",
+        traces, extension.target->pstate())
+    {}
 
-    }
-
-    UnsatisfiedExtend::UnsatisfiedExtend(Backtraces traces, Extension extension)
-      : Base(extension.target->pstate(), "The target selector was not found.\n"
-        "Use \"@extend " + extension.target->to_string() + " !optional\" to avoid this error.", traces)
-    {
-
-    }
-
-    ExtendAcrossMedia::ExtendAcrossMedia(Backtraces traces, Extension extension)
-      : Base(extension.target->pstate(), "You may not @extend selectors across media queries.\n"
-        "Use \"@extend " + extension.target->to_string() + " !optional\" to avoid this error.", traces)
-    {
-
-    }
+    // Thrown when we extend across incompatible media contexts
+    ExtendAcrossMedia::ExtendAcrossMedia(BackTraces traces, Extension extension)
+      : Base("You may not @extend selectors across media queries.", traces)
+    {}
     
+    // Thrown when we find an unexpected UTF8 sequence
+    InvalidUnicode::InvalidUnicode(SourceSpan pstate, BackTraces traces)
+      : Base("Invalid UTF-8.", traces, pstate)
+    {}
 
-  }
+    SassScriptException::SassScriptException(sass::string msg,
+      BackTraces traces, SourceSpan pstate, sass::string name) :
+      Base(name.empty() ? msg : "$" + name + ": " + msg, traces)
+    {}
 
 
-  void warn(sass::string msg, SourceSpan pstate)
-  {
-    std::cerr << "Warning: " << msg << std::endl;
-  }
 
-  void warning(sass::string msg, SourceSpan pstate)
-  {
-    sass::string cwd(Sass::File::get_cwd());
-    sass::string abs_path(Sass::File::rel2abs(pstate.getPath(), cwd, cwd));
-    sass::string rel_path(Sass::File::abs2rel(pstate.getPath(), cwd, cwd));
-    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.getPath()));
 
-    std::cerr << "WARNING on line " << pstate.getLine() << ", column " << pstate.getColumn() << " of " << output_path << ":" << std::endl;
-    std::cerr << msg << std::endl << std::endl;
-  }
 
-  void warn(sass::string msg, SourceSpan pstate, Backtrace* bt)
-  {
-    warn(msg, pstate);
-  }
 
-  void deprecated_function(sass::string msg, SourceSpan pstate)
-  {
-    sass::string cwd(Sass::File::get_cwd());
-    sass::string abs_path(Sass::File::rel2abs(pstate.getPath(), cwd, cwd));
-    sass::string rel_path(Sass::File::abs2rel(pstate.getPath(), cwd, cwd));
-    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.getPath()));
 
-    std::cerr << "DEPRECATION WARNING: " << msg << std::endl;
-    std::cerr << "will be an error in future versions of Sass." << std::endl;
-    std::cerr << "        on line " << pstate.getLine() << " of " << output_path << std::endl;
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    // Various value operation errors
+    /////////////////////////////////////////////////////////////////////////
+
+    ZeroDivisionError::ZeroDivisionError(const Value& lhs, const Value& rhs)
+      : OperationError("divided by 0")
+    {}
+
+    IncompatibleUnits::IncompatibleUnits(const Units& lhs, const Units& rhs)
+      : OperationError("Incompatible units "
+        + rhs.unit() + " and "
+        + lhs.unit() + ".")
+    {}
+
+    AlphaChannelsNotEqual::AlphaChannelsNotEqual(const ColorRgba* lhs, const ColorRgba* rhs, enum SassOperator op)
+      : OperationError("Alpha channels must be equal: "
+        + lhs->inspect() + " "
+        + sass_op_to_name(op) + " "
+        + rhs->inspect() + ".")
+    {}
+
+
+    InvalidNullOperation::InvalidNullOperation(const Value* lhs, const Value* rhs, enum SassOperator op)
+      : OperationError("Invalid null operation: \""
+        + lhs->inspect() + " "
+        + sass_op_to_name(op) + " "
+        + rhs->inspect() + "\".")
+    {}
+
+    UndefinedOperation::UndefinedOperation(const Value* lhs, const Value* rhs, enum SassOperator op)
+      : OperationError("Undefined operation: \""
+        + lhs->inspect() + " "
+        + sass_op_separator(op) + " "
+        + rhs->inspect() + "\".")
+    {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
 
   void deprecated(sass::string msg, sass::string msg2, bool with_column, SourceSpan pstate)
   {
-    sass::string cwd(Sass::File::get_cwd());
-    sass::string abs_path(Sass::File::rel2abs(pstate.getPath(), cwd, cwd));
-    sass::string rel_path(Sass::File::abs2rel(pstate.getPath(), cwd, cwd));
-    sass::string output_path(Sass::File::path_for_console(rel_path, pstate.getPath(), pstate.getPath()));
-
+    sass::string output_path(pstate.getDebugPath());
     std::cerr << "DEPRECATION WARNING on line " << pstate.getLine();
-    // if (with_column) std::cerr << ", column " << pstate.column + pstate.offset.column + 1;
+    if (with_column) std::cerr << ", column " << pstate.getColumn();
     if (output_path.length()) std::cerr << " of " << output_path;
-    std::cerr << ":" << std::endl;
-    std::cerr << msg << std::endl;
-    if (msg2.length()) std::cerr << msg2 << std::endl;
-    std::cerr << std::endl;
+    std::cerr << ':' << STRMLF;
+    std::cerr << msg << STRMLF;
+    if (msg2.length()) std::cerr << msg2 << STRMLF;
+    std::cerr << STRMLF;
   }
 
-  void deprecated_bind(sass::string msg, SourceSpan pstate)
-  {
-    sass::string cwd(Sass::File::get_cwd());
-    sass::string abs_path(Sass::File::rel2abs(pstate.getPath(), cwd, cwd));
-    sass::string rel_path(Sass::File::abs2rel(pstate.getPath(), cwd, cwd));
-    sass::string output_path(Sass::File::path_for_console(rel_path, abs_path, pstate.getPath()));
 
-    std::cerr << "WARNING: " << msg << std::endl;
-    std::cerr << "        on line " << pstate.getLine() << " of " << output_path << std::endl;
-    std::cerr << "This will be an error in future versions of Sass." << std::endl;
-  }
-
-  // should be replaced with error with backtraces
-  void coreError(sass::string msg, SourceSpan pstate)
+  void error(const sass::string& msg, SourceSpan pstate, BackTraces& traces)
   {
-    Backtraces traces;
-    throw Exception::InvalidSyntax(pstate, traces, msg);
-  }
-
-  void error(sass::string msg, SourceSpan pstate, Backtraces& traces)
-  {
-    traces.push_back(Backtrace(pstate));
-    throw Exception::InvalidSyntax(pstate, traces, msg);
+    traces.push_back(BackTrace(pstate));
+    throw Exception::InvalidSyntax(traces, msg);
   }
 
 }

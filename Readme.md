@@ -1,3 +1,8 @@
+../../test/test.scss --precision 10
+sass-bench\bolt-bench.scss -I sass-bench
+
+\breeze-gtk\src
+
 LibSass - Sass compiler written in C++
 ======================================
 

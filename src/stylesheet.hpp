@@ -1,56 +1,46 @@
-#ifndef SASS_STYLESHEET_H
-#define SASS_STYLESHEET_H
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
+#ifndef SASS_STYLESHEET_HPP
+#define SASS_STYLESHEET_HPP
 
-// sass.hpp must go before all system headers to get the
-// __EXTENSIONS__ fix on Solaris.
-#include "sass.hpp"
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
 
-#include "ast_fwd_decl.hpp"
-#include "extender.hpp"
-#include "file.hpp"
+#include "ast_css.hpp"
+#include "modules.hpp"
+#include "import.hpp"
 
 namespace Sass {
 
   // parsed stylesheet from loaded resource
   // this should be a `Module` for sass 4.0
-  class StyleSheet : public Resource {
-    public:
+  class Root final : public AstNode,
+    public Vectorized<Statement>,
+    public Module
+  {
+  public:
 
-      // The canonical URL for this module's source file. This may be `null`
-      // if the module was loaded from a string without a URL provided.
-      // Uri get url;
+    // sass::vector<Root*> upstreams;
 
-      // Modules that this module uses.
-      // List<Module> get upstream;
+    // Import object through which this module was loaded.
+    // It also has the input type (css vs sass) attached
+    ImportObj import;
 
-      // The module's variables.
-      // Map<String, Value> get variables;
+    Root(const SourceSpan& pstate, size_t reserve = 0);
 
-      // The module's functions. Implementations must ensure
-      // that each [Callable] is stored under its own name.
-      // Map<String, Callable> get functions;
+    Root(const SourceSpan& pstate, StatementVector&& vec);
 
-      // The module's mixins. Implementations must ensure that
-      // each [Callable] is stored under its own name.
-      // Map<String, Callable> get mixins;
+    void addExtension(
+      const SelectorListObj& extender,
+      const SimpleSelectorObj& target,
+      const CssMediaRuleObj& mediaQueryContext,
+      const ExtendRuleObj& extend,
+      bool is_optional);
 
-      // The extensions defined in this module, which is also able to update
-      // [css]'s style rules in-place based on downstream extensions.
-      // Extender extender;
-
-      // The module's CSS tree.
-      Block_Obj root;
-
-    public:
-
-      // default argument constructor
-      StyleSheet(const Resource& res, Block_Obj root);
-
-      // Copy constructor
-      StyleSheet(const StyleSheet& res);
 
   };
-
 
 }
 

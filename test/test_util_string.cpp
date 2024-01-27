@@ -1,4 +1,5 @@
 #include "../src/util_string.hpp"
+#include "assert.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -6,104 +7,6 @@
 #include <vector>
 
 namespace {
-
-Sass::sass::string escape_string(const Sass::sass::string& str) {
-  Sass::sass::string out;
-  out.reserve(str.size());
-  for (char c : str) {
-    switch (c) {
-      case '\n':
-        out.append("\\n");
-        break;
-      case '\r':
-        out.append("\\r");
-        break;
-      case '\f':
-        out.append("\\f");
-        break;
-      default:
-        out += c;
-    }
-  }
-  return out;
-}
-
-#define ASSERT_TRUE(cond) \
-  if (!cond) { \
-    std::cerr << \
-      "Expected condition to be true at " << __FILE__ << ":" << __LINE__ << \
-      std::endl; \
-    return false; \
-  } \
-
-#define ASSERT_FALSE(cond) \
-  ASSERT_TRUE(!(cond)) \
-
-#define ASSERT_STR_EQ(a, b) \
-  if (a != b) { \
-    std::cerr << \
-      "Expected LHS == RHS at " << __FILE__ << ":" << __LINE__ << \
-      "\n  LHS: [" << escape_string(a) << "]" \
-      "\n  RHS: [" << escape_string(b) << "]" << \
-      std::endl; \
-    return false; \
-  } \
-
-bool TestNormalizeNewlinesNoNewline() {
-  Sass::sass::string input = "a";
-  Sass::sass::string normalized = Sass::Util::normalize_newlines(input);
-  ASSERT_STR_EQ(input, normalized);
-  return true;
-}
-
-bool TestNormalizeNewlinesLF() {
-  Sass::sass::string input = "a\nb";
-  Sass::sass::string normalized = Sass::Util::normalize_newlines(input);
-  ASSERT_STR_EQ(input, normalized);
-  return true;
-}
-
-bool TestNormalizeNewlinesCR() {
-  Sass::sass::string normalized = Sass::Util::normalize_newlines("a\rb");
-  ASSERT_STR_EQ("a\nb", normalized);
-  return true;
-}
-
-bool TestNormalizeNewlinesCRLF() {
-  Sass::sass::string normalized = Sass::Util::normalize_newlines("a\r\nb\r\n");
-  ASSERT_STR_EQ("a\nb\n", normalized);
-  return true;
-}
-
-bool TestNormalizeNewlinesFF() {
-  Sass::sass::string normalized = Sass::Util::normalize_newlines("a\fb\f");
-  ASSERT_STR_EQ("a\nb\n", normalized);
-  return true;
-}
-
-bool TestNormalizeNewlinesMixed() {
-  Sass::sass::string normalized = Sass::Util::normalize_newlines("a\fb\nc\rd\r\ne\ff");
-  ASSERT_STR_EQ("a\nb\nc\nd\ne\nf", normalized);
-  return true;
-}
-
-bool TestNormalizeUnderscores() {
-  Sass::sass::string normalized = Sass::Util::normalize_underscores("a_b_c");
-  ASSERT_STR_EQ("a-b-c", normalized);
-  return true;
-}
-
-bool TestNormalizeDecimalsLeadingZero() {
-  Sass::sass::string normalized = Sass::Util::normalize_decimals("0.5");
-  ASSERT_STR_EQ("0.5", normalized);
-  return true;
-}
-
-bool TestNormalizeDecimalsNoLeadingZero() {
-  Sass::sass::string normalized = Sass::Util::normalize_decimals(".5");
-  ASSERT_STR_EQ("0.5", normalized);
-  return true;
-}
 
 bool testEqualsLiteral() {
   ASSERT_TRUE(Sass::Util::equalsLiteral("moz", "moz"));
@@ -142,6 +45,33 @@ bool TestUnvendor() {
   return true;
 }
 
+bool TestSplitString1() {
+  Sass::sass::vector<Sass::sass::string> list =
+    Sass::Util::split_string("a,b,c", ',');
+  ASSERT_NR_EQ(3, list.size());
+  ASSERT_STR_EQ("a", list[0]);
+  ASSERT_STR_EQ("b", list[1]);
+  ASSERT_STR_EQ("c", list[2]);
+  return true;
+}
+
+bool TestSplitString2() {
+  Sass::sass::vector<Sass::sass::string> list =
+    Sass::Util::split_string("a,b,", ',');
+  ASSERT_NR_EQ(3, list.size());
+  ASSERT_STR_EQ("a", list[0]);
+  ASSERT_STR_EQ("b", list[1]);
+  ASSERT_STR_EQ("", list[2]);
+  return true;
+}
+
+bool TestSplitStringEmpty() {
+  Sass::sass::vector<Sass::sass::string> list =
+    Sass::Util::split_string("", ',');
+  ASSERT_NR_EQ(0, list.size());
+  return true;
+}
+
 bool Test_ascii_str_to_lower() {
   Sass::sass::string str = "A B";
   Sass::Util::ascii_str_tolower(&str);
@@ -151,6 +81,7 @@ bool Test_ascii_str_to_lower() {
 
 bool Test_ascii_str_to_upper() {
   Sass::sass::string str = "a b";
+  ASSERT_STR_EQ("A B", Sass::Util::ascii_str_toupper(str));
   Sass::Util::ascii_str_toupper(&str);
   ASSERT_STR_EQ("A B", str);
   return true;
@@ -181,37 +112,35 @@ bool Test_ascii_isspace() {
   return true;
 }
 
+bool TestEqualsIgnoreSeparator() {
+  ASSERT_TRUE(Sass::Util::ascii_str_equals_ignore_separator("fOo", "FoO"));
+  ASSERT_TRUE(Sass::Util::ascii_str_equals_ignore_separator("fOo-BaR", "FoO_bAr"));
+  ASSERT_TRUE(Sass::Util::ascii_str_equals_ignore_separator("FoO_bAr", "fOo-BaR"));
+  return true;
+}
+
+bool TestHashIgnoreSeparator() {
+  ASSERT_TRUE(Sass::Util::hash_ignore_separator("fOo") == Sass::Util::hash_ignore_separator("FoO"));
+  ASSERT_TRUE(Sass::Util::hash_ignore_separator("fOo-BaR") == Sass::Util::hash_ignore_separator("FoO_bAr"));
+  ASSERT_TRUE(Sass::Util::hash_ignore_separator("FoO_bAr") == Sass::Util::hash_ignore_separator("fOo-BaR"));
+  return true;
+}
+
 }  // namespace
 
-#define TEST(fn) \
-  if (fn()) { \
-    passed.push_back(#fn); \
-  } else { \
-    failed.push_back(#fn); \
-    std::cerr << "Failed: " #fn << std::endl; \
-  } \
-
 int main(int argc, char **argv) {
-  std::vector<std::string> passed;
-  std::vector<std::string> failed;
-  TEST(TestNormalizeNewlinesNoNewline);
-  TEST(TestNormalizeNewlinesLF);
-  TEST(TestNormalizeNewlinesCR);
-  TEST(TestNormalizeNewlinesCRLF);
-  TEST(TestNormalizeNewlinesFF);
-  TEST(TestNormalizeNewlinesMixed);
-  TEST(TestNormalizeUnderscores);
-  TEST(TestNormalizeDecimalsLeadingZero);
-  TEST(TestNormalizeDecimalsNoLeadingZero);
+  INIT_TEST_RESULTS;
   TEST(testEqualsLiteral);
   TEST(TestUnvendor);
+  TEST(TestSplitStringEmpty);
+  TEST(TestSplitString1);
+  TEST(TestSplitString2);
   TEST(Test_ascii_str_to_lower);
   TEST(Test_ascii_str_to_upper);
   TEST(Test_ascii_isalpha);
   TEST(Test_ascii_isxdigit);
   TEST(Test_ascii_isspace);
-  std::cerr << argv[0] << ": Passed: " << passed.size()
-            << ", failed: " << failed.size()
-            << "." << std::endl;
-  return failed.size();
+  TEST(TestEqualsIgnoreSeparator);
+  // TEST(TestHashIgnoreSeparator);
+  REPORT_TEST_RESULTS;
 }

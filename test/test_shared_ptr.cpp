@@ -1,23 +1,17 @@
-#include "../src/memory/allocator.hpp"
 #include "../src/memory/shared_ptr.hpp"
+#include "assert.hpp"
 
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
 
-#define ASSERT(cond) \
-  if (!(cond)) { \
-    std::cerr << "Assertion failed: " #cond " at " __FILE__ << ":" << __LINE__ << std::endl; \
-    return false; \
-  } \
-
 class TestObj : public Sass::SharedObj {
  public:
   TestObj(bool *destroyed) : destroyed_(destroyed) {}
   ~TestObj() { *destroyed_ = true; }
   Sass::sass::string to_string() const {
-    Sass::sass::ostream result;
+    Sass::sass::sstream result;
     result << "refcount=" << refcount << " destroyed=" << *destroyed_;
     return result.str();
   }
@@ -30,7 +24,7 @@ using SharedTestObj = Sass::SharedImpl<TestObj>;
 bool TestOneSharedPtr() {
   bool destroyed = false;
   {
-    SharedTestObj a = SASS_MEMORY_NEW(TestObj, &destroyed);
+    SharedTestObj a = new TestObj(&destroyed);
   }
   ASSERT(destroyed);
   return true;
@@ -39,7 +33,7 @@ bool TestOneSharedPtr() {
 bool TestTwoSharedPtrs() {
   bool destroyed = false;
   {
-    SharedTestObj a = SASS_MEMORY_NEW(TestObj, &destroyed);
+    SharedTestObj a = new TestObj(&destroyed);
     {
       SharedTestObj b = a;
     }
@@ -52,7 +46,7 @@ bool TestTwoSharedPtrs() {
 bool TestSelfAssignment() {
   bool destroyed = false;
   {
-    SharedTestObj a = SASS_MEMORY_NEW(TestObj, &destroyed);
+    SharedTestObj a = new TestObj(&destroyed);
     a = a;
     ASSERT(!destroyed);
   }
@@ -162,17 +156,8 @@ bool TestComparisonWithNullptr() {
   return true;
 }
 
-#define TEST(fn) \
-  if (fn()) { \
-    passed.push_back(#fn); \
-  } else { \
-    failed.push_back(#fn); \
-    std::cerr << "Failed: " #fn << std::endl; \
-  } \
-
 int main(int argc, char **argv) {
-  std::vector<std::string> passed;
-  std::vector<std::string> failed;
+  INIT_TEST_RESULTS;
   TEST(TestOneSharedPtr);
   TEST(TestTwoSharedPtrs);
   TEST(TestSelfAssignment);
@@ -184,8 +169,5 @@ int main(int argc, char **argv) {
   TEST(TestDetachNull);
   TEST(TestComparisonWithSharedPtr);
   TEST(TestComparisonWithNullptr);
-  std::cerr << argv[0] << ": Passed: " << passed.size()
-            << ", failed: " << failed.size()
-            << "." << std::endl;
-  return failed.size();
+  REPORT_TEST_RESULTS;
 }

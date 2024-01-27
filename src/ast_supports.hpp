@@ -1,120 +1,181 @@
-#ifndef SASS_AST_SUPPORTS_H
-#define SASS_AST_SUPPORTS_H
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
+#ifndef SASS_AST_SUPPORTS_HPP
+#define SASS_AST_SUPPORTS_HPP
 
-// sass.hpp must go before all system headers to get the
-// __EXTENSIONS__ fix on Solaris.
-#include "sass.hpp"
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
 
-#include <set>
-#include <deque>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <typeinfo>
-#include <algorithm>
-#include "sass/base.h"
-#include "ast_fwd_decl.hpp"
-
-#include "util.hpp"
-#include "units.hpp"
-#include "context.hpp"
-#include "position.hpp"
-#include "constants.hpp"
-#include "operation.hpp"
-#include "position.hpp"
-#include "inspect.hpp"
-#include "source_map.hpp"
-#include "environment.hpp"
-#include "error_handling.hpp"
-#include "ast_def_macros.hpp"
-#include "ast_fwd_decl.hpp"
-#include "source_map.hpp"
-#include "fn_utils.hpp"
-
-#include "sass.h"
+#include "ast_expressions.hpp"
 
 namespace Sass {
 
-  ////////////////////
-  // `@supports` rule.
-  ////////////////////
-  class SupportsRule : public ParentStatement {
-    ADD_PROPERTY(SupportsConditionObj, condition)
-  public:
-    SupportsRule(SourceSpan pstate, SupportsConditionObj condition, Block_Obj block = {});
-    bool bubbles() override;
-    ATTACH_AST_OPERATIONS(SupportsRule)
-    ATTACH_CRTP_PERFORM_METHODS()
-  };
-
-  //////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
   // The abstract superclass of all Supports conditions.
-  //////////////////////////////////////////////////////
-  class SupportsCondition : public Expression {
+  /////////////////////////////////////////////////////////////////////////
+
+  class SupportsCondition : public AstNode
+  {
   public:
-    SupportsCondition(SourceSpan pstate);
-    virtual bool needs_parens(SupportsConditionObj cond) const { return false; }
-    ATTACH_AST_OPERATIONS(SupportsCondition)
-    ATTACH_CRTP_PERFORM_METHODS()
+
+    // Value constructor
+    SupportsCondition(
+      const SourceSpan& pstate);
+
+    // Declare up-casting methods
+    DECLARE_ISA_CASTER(SupportsOperation);
+    DECLARE_ISA_CASTER(SupportsFunction);
+    DECLARE_ISA_CASTER(SupportsAnything);
+    DECLARE_ISA_CASTER(SupportsNegation);
+    DECLARE_ISA_CASTER(SupportsDeclaration);
+    DECLARE_ISA_CASTER(SupportsInterpolation);
   };
 
-  ////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
   // An operator condition (e.g. `CONDITION1 and CONDITION2`).
-  ////////////////////////////////////////////////////////////
-  class SupportsOperation : public SupportsCondition {
+  /////////////////////////////////////////////////////////////////////////
+
+  class SupportsOperation final : public SupportsCondition
+  {
   public:
+
     enum Operand { AND, OR };
+
   private:
-    ADD_PROPERTY(SupportsConditionObj, left);
-    ADD_PROPERTY(SupportsConditionObj, right);
-    ADD_PROPERTY(Operand, operand);
+
+    ADD_CONSTREF(SupportsConditionObj, left);
+    ADD_CONSTREF(SupportsConditionObj, right);
+    ADD_CONSTREF(Operand, operand);
+
   public:
-    SupportsOperation(SourceSpan pstate, SupportsConditionObj l, SupportsConditionObj r, Operand o);
-    virtual bool needs_parens(SupportsConditionObj cond) const override;
-    ATTACH_AST_OPERATIONS(SupportsOperation)
-    ATTACH_CRTP_PERFORM_METHODS()
+
+    // Value constructor
+    SupportsOperation(
+      const SourceSpan& pstate,
+      SupportsCondition* lhs,
+      SupportsCondition* rhs,
+      Operand operand);
+
+    // Implement final up-casting method
+    IMPLEMENT_ISA_CASTER(SupportsOperation);
   };
 
-  //////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+  // A supports function
+  /////////////////////////////////////////////////////////////////////////
+
+  class SupportsFunction final : public SupportsCondition
+  {
+  private:
+
+    ADD_CONSTREF(InterpolationObj, name);
+    ADD_CONSTREF(InterpolationObj, args);
+
+  public:
+
+    // Value constructor
+    SupportsFunction(
+      const SourceSpan& pstate,
+      Interpolation* name,
+      Interpolation* args);
+
+    // Implement final up-casting method
+    IMPLEMENT_ISA_CASTER(SupportsFunction);
+  };
+
+  /////////////////////////////////////////////////////////////////////////
+  // A supports anything condition
+  /////////////////////////////////////////////////////////////////////////
+
+  class SupportsAnything final : public SupportsCondition
+  {
+
+  private:
+
+    ADD_CONSTREF(InterpolationObj, contents);
+
+  public:
+
+    // Value constructor
+    SupportsAnything(
+      const SourceSpan& pstate,
+      Interpolation* contents);
+
+    // Implement final up-casting method
+    IMPLEMENT_ISA_CASTER(SupportsAnything);
+  };
+
+  /////////////////////////////////////////////////////////////////////////
   // A negation condition (`not CONDITION`).
-  //////////////////////////////////////////
-  class SupportsNegation : public SupportsCondition {
+  /////////////////////////////////////////////////////////////////////////
+
+  class SupportsNegation final : public SupportsCondition
+  {
+
   private:
-    ADD_PROPERTY(SupportsConditionObj, condition);
+
+    ADD_CONSTREF(SupportsConditionObj, condition);
+
   public:
-    SupportsNegation(SourceSpan pstate, SupportsConditionObj c);
-    virtual bool needs_parens(SupportsConditionObj cond) const override;
-    ATTACH_AST_OPERATIONS(SupportsNegation)
-    ATTACH_CRTP_PERFORM_METHODS()
+
+    // Value constructor
+    SupportsNegation(
+      const SourceSpan& pstate,
+      SupportsCondition* condition);
+
+    // Implement final up-casting method
+    IMPLEMENT_ISA_CASTER(SupportsNegation);
   };
 
-  /////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
   // A declaration condition (e.g. `(feature: value)`).
-  /////////////////////////////////////////////////////
-  class SupportsDeclaration : public SupportsCondition {
+  /////////////////////////////////////////////////////////////////////////
+  class SupportsDeclaration final : public SupportsCondition
+  {
   private:
-    ADD_PROPERTY(ExpressionObj, feature);
-    ADD_PROPERTY(ExpressionObj, value);
+
+    ADD_CONSTREF(ExpressionObj, feature);
+    ADD_CONSTREF(ExpressionObj, value);
+
   public:
-    SupportsDeclaration(SourceSpan pstate, ExpressionObj f, ExpressionObj v);
-    virtual bool needs_parens(SupportsConditionObj cond) const override;
-    ATTACH_AST_OPERATIONS(SupportsDeclaration)
-    ATTACH_CRTP_PERFORM_METHODS()
+
+    // Value constructor
+    SupportsDeclaration(
+      const SourceSpan& pstate,
+      Expression* feature,
+      Expression* value);
+
+    bool isCustomProperty() const;
+
+    // Implement final up-casting method
+    IMPLEMENT_ISA_CASTER(SupportsDeclaration);
   };
 
-  ///////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
   // An interpolation condition (e.g. `#{$var}`).
-  ///////////////////////////////////////////////
-  class Supports_Interpolation : public SupportsCondition {
+  /////////////////////////////////////////////////////////////////////////
+
+  class SupportsInterpolation final : public SupportsCondition
+  {
   private:
-    ADD_PROPERTY(ExpressionObj, value);
+
+    ADD_CONSTREF(ExpressionObj, value);
+
   public:
-    Supports_Interpolation(SourceSpan pstate, ExpressionObj v);
-    virtual bool needs_parens(SupportsConditionObj cond) const override;
-    ATTACH_AST_OPERATIONS(Supports_Interpolation)
-    ATTACH_CRTP_PERFORM_METHODS()
+
+    // Value constructor
+    SupportsInterpolation(
+      const SourceSpan& pstate,
+      Expression* value);
+
+    // Implement final up-casting method
+    IMPLEMENT_ISA_CASTER(SupportsInterpolation);
   };
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
 }
 

@@ -13,37 +13,41 @@ on:
 jobs:
 
   linux-and-mac:
+    name: Linux and MacOS build
     # if: ${{ false }}
     runs-on: ${{ matrix.config.os }}
-    name: ${{ matrix.config.os }} BUILD=${{ matrix.config.build }} CC=${{ matrix.config.cc }} CXX=${{ matrix.config.cxx }} AUTOTOOLS=${{ matrix.config.autotools }}
 
     strategy:
-      fail-fast: false
+      # fail-fast: false
       matrix:
         config:
           #- {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.4', cxx: 'g++-4.4', autotools: 'no', cppstd: 'gnu++0x'}
           #- {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.6', cxx: 'g++-4.6', autotools: 'no', cppstd: 'gnu++0x'}
-          - {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.7', cxx: 'g++-4.7', autotools: 'no', cppstd: 'gnu++11'}
-          - {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.8', cxx: 'g++-4.8', autotools: 'no', cppstd: 'c++11'}
+          #- {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.7', cxx: 'g++-4.7', autotools: 'no', cppstd: 'gnu++11'}
+          #- {os: ubuntu-16.04, build: 'static', cc: 'gcc-4.8', cxx: 'g++-4.8', autotools: 'no', cppstd: 'c++11'}
           - {os: ubuntu-16.04, build: 'static', cc: 'gcc-5', cxx: 'g++-5', autotools: 'no', cppstd: 'c++11'}
           - {os: ubuntu-16.04, build: 'static', cc: 'gcc-6', cxx: 'g++-6', autotools: 'no', cppstd: 'c++11'}
           - {os: ubuntu-latest, build: 'static', cc: 'gcc-7', cxx: 'g++-7', autotools: 'no', cppstd: 'c++11'}
-          - {os: ubuntu-latest, build: 'shared', cc: 'gcc', cxx: 'g++', autotools: 'yes', cppstd: 'c++11'}
-          - {os: ubuntu-latest, build: 'static', cc: 'gcc', cxx: 'g++', autotools: 'yes', cppstd: 'c++11'}
+          - {os: ubuntu-latest, build: 'shared', cc: 'gcc', cxx: 'g++', autotools: 'yes', cppstd: 'c++11', cflags: '-g -fsanitize=address'}
+          - {os: ubuntu-latest, build: 'static', cc: 'gcc', cxx: 'g++', autotools: 'yes', cppstd: 'c++11', cflags: '-g -fsanitize=address'}
           - {os: ubuntu-latest, build: 'shared', cc: 'gcc', cxx: 'g++', autotools: 'no', cppstd: 'c++11'}
           - {os: ubuntu-latest, build: 'static', cc: 'gcc', cxx: 'g++', autotools: 'no', cppstd: 'c++11'}
-          - {os: ubuntu-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11'}
-          - {os: ubuntu-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11'}
-          - {os: ubuntu-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11'}
-          - {os: ubuntu-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11'}
-          - {os: macOS-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11'}
-          - {os: macOS-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11'}
-          - {os: macOS-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11'}
-          - {os: macOS-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11'}
+          - {os: ubuntu-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11', cflags: '-g -fsanitize=address'}
+          - {os: ubuntu-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11', cflags: '-g -fsanitize=address'}
+          - {os: ubuntu-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11', cflags: '-g -fsanitize=address'}
+          - {os: ubuntu-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11', cflags: '-g -fsanitize=address'}
+          - {os: macOS-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11', cflags: '-g -fsanitize=address'}
+          - {os: macOS-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'yes', cppstd: 'c++11', cflags: '-g -fsanitize=address'}
+          - {os: macOS-latest, build: 'shared', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11', cflags: '-g -fsanitize=address'}
+          - {os: macOS-latest, build: 'static', cc: 'clang', cxx: 'clang++', autotools: 'no', cppstd: 'c++11', cflags: '-g -fsanitize=address'}
 
     env:
-      ASAN_OPTIONS: detect_odr_violation=0
+      ASAN_OPTIONS: ${{ matrix.config.asan }}
       AUTOTOOLS: ${{ matrix.config.autotools }}
+      EXTRA_CFLAGS: ${{ matrix.config.cflags }}
+      EXTRA_CXXFLAGS: ${{ matrix.config.cflags }}
+      EXTRA_LDFLAGS: ${{ matrix.config.cflags }}
+      SASS_LIBSASS_PATH: libsass
       COVERAGE: no
       BUILD: ${{ matrix.config.build }}
       CXX: ${{ matrix.config.cxx }}
@@ -125,20 +129,31 @@ jobs:
       env:
         MAKE_OPTS: LIBSASS_CPPSTD=${{ matrix.config.cppstd }}
       run: ./script/ci-build-libsass
+    - name: Call LibSass make install
+      run: sudo EXTRA_CFLAGS="$EXTRA_CFLAGS" EXTRA_CXXFLAGS="$EXTRA_CXXFLAGS" EXTRA_LDFLAGS="$EXTRA_LDFLAGS" make install
+    - name: Call SassC make install
+      run: sudo EXTRA_CFLAGS="$EXTRA_CFLAGS" EXTRA_CXXFLAGS="$EXTRA_CXXFLAGS" EXTRA_LDFLAGS="$EXTRA_LDFLAGS" make -C sassc install
+    - name: Check sassc help call
+      run: sassc --term-colors --help
 
 
   windows-msvc:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.config.os }}
     name: Windows MSVC build
+    # if: ${{ false }}
 
     strategy:
-      fail-fast: false
+      # fail-fast: false
       matrix:
         config:
-          - {build: Release, platform: Win64}
-          - {build: Debug, platform: Win64}
-          - {build: Release, platform: Win32}
-          - {build: Debug, platform: Win32}
+          - {os: 'windows-latest', build: Release, platform: Win64, version: 'latest'}
+          - {os: 'windows-latest', build: Debug, platform: Win64, version: 'latest'}
+          - {os: 'windows-latest', build: Release, platform: Win32, version: 'latest'}
+          - {os: 'windows-latest', build: Debug, platform: Win32, version: 'latest'}
+          - {os: 'windows-2016', build: Release, platform: Win64, version: '[15.0,16.0]'}
+          - {os: 'windows-2016', build: Debug, platform: Win64, version: '[15.0,16.0]'}
+          - {os: 'windows-2016', build: Release, platform: Win32, version: '[15.0,16.0]'}
+          - {os: 'windows-2016', build: Debug, platform: Win32, version: '[15.0,16.0]'}
 
     steps:
     - name: Change git config to preserve line-endings
@@ -156,13 +171,18 @@ jobs:
       run: gem install minitest
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
+      with:
+        vs-version: ${{ matrix.config.version }}
     - name: Clone and checkout sassc repository
-      run: git clone https://github.com/sass/sassc.git
+      run: git clone https://github.com/mgreter/sassc.git --branch refactor/libsass-4-alpha
     - name: Clone and checkout sass-spec repository
-      run: git clone https://github.com/sass/sass-spec.git
+      run: git clone https://github.com/mgreter/sass-spec.git --branch refactor/libsass-4-alpha
     - name: Compile libsass ${{ matrix.config.build }} build for ${{ matrix.config.platform }}
-      run: msbuild /m:4 /p:"Configuration=${{ matrix.config.build }};Platform=${{ matrix.config.platform }}" sassc\win\sassc.sln
+      run: msbuild /m:4 /p:Configuration=${{ matrix.config.build }} /p:Platform=${{ matrix.config.platform }} sassc\win\sassc.sln
+    - name: Check sassc help call
+      run: sassc\bin\sassc.exe --term-colors --help
     - name: Execute spec test runner
+      if: matrix.config.build != 'Debug'
       run: ruby sass-spec/sass-spec.rb --probe-todo --impl libsass -c sassc/bin/sassc.exe -s sass-spec/spec
 
   windows-mingw:
@@ -170,13 +190,20 @@ jobs:
     name: Windows MinGW build
 
     strategy:
-      fail-fast: false
+      # fail-fast: false
       matrix:
         config:
           - {build: shared, platform: x64}
           - {build: static, platform: x64}
           - {build: shared, platform: x86}
           - {build: static, platform: x86}
+
+    env:
+      ASAN_OPTIONS: ${{ matrix.config.asan }}
+      EXTRA_CFLAGS: ${{ matrix.config.cflags }}
+      EXTRA_CXXFLAGS: ${{ matrix.config.cflags }}
+      #SASS_LIBSASS_PATH: libsass
+      #COVERAGE: no
 
     steps:
     - name: Change git config to preserve line-endings
@@ -197,19 +224,20 @@ jobs:
     - name: Install ruby minitest module
       run: gem install minitest
     - name: Clone and checkout sassc repository
-      run: git clone https://github.com/sass/sassc.git
+      run: git clone https://github.com/mgreter/sassc.git --branch refactor/libsass-4-alpha
     - name: Clone and checkout sass-spec repository
-      run: git clone https://github.com/sass/sass-spec.git
-    - name: Add libsass library path to be found
-      if: matrix.config.build == 'shared'
-      run: echo "/d/a/libsass/libsass/lib" >> $GITHUB_PATH
+      run: git clone https://github.com/mgreter/sass-spec.git --branch refactor/libsass-4-alpha
     - name: Compile libsass ${{ matrix.config.build }} build for ${{ matrix.config.platform }}
-      run: make ${{ matrix.config.build }} BUILD=${{ matrix.config.build }}
+      run: make -j5 ${{ matrix.config.build }} BUILD=${{ matrix.config.build }} CC=gcc
+    - name: Listening results
+      run: dir lib
     - name: Copy library over to pass call test
       if: matrix.config.build == 'shared'
-      run: copy /a/libsass/libsass/lib/libsass.dll sassc/bin/
+      run: copy lib\libsass.dll sassc\bin
     - name: Compile sassc ${{ matrix.config.build }} build for ${{ matrix.config.platform }}
-      run: make sassc BUILD=${{ matrix.config.build }}
+      run: make -j5 sassc BUILD=${{ matrix.config.build }} CC=gcc
+    - name: Check sassc help call
+      run: sassc\bin\sassc.exe --term-colors --help
     - name: Execute spec test runner
       run: ruby sass-spec/sass-spec.rb --probe-todo --impl libsass -c sassc/bin/sassc.exe -s sass-spec/spec
 

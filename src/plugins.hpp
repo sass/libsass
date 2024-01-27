@@ -1,16 +1,20 @@
-#ifndef SASS_PLUGINS_H
-#define SASS_PLUGINS_H
+/*****************************************************************************/
+/* Part of LibSass, released under the MIT license (See LICENSE.txt).        */
+/*****************************************************************************/
+#ifndef SASS_PLUGINS_HPP
+#define SASS_PLUGINS_HPP
 
-#include <string>
-#include <vector>
-#include "utf8_string.hpp"
-#include "sass/functions.h"
+// sass.hpp must go before all system headers
+// to get the __EXTENSIONS__ fix on Solaris.
+#include "capi_sass.hpp"
+
+#include "ast_fwd_decl.hpp"
 
 #ifdef _WIN32
 
-  #define LOAD_LIB(var, path) HMODULE var = LoadLibraryW(UTF_8::convert_to_utf16(path).c_str())
+  #define LOAD_LIB(var, path) HMODULE var = LoadLibraryW(Unicode::utf8to16(path).c_str())
   #define LOAD_LIB_WCHR(var, path_wide_str) HMODULE var = LoadLibraryW(path_wide_str.c_str())
-  #define LOAD_LIB_FN(type, var, name) type var = (type) GetProcAddress(plugin, name)
+  #define LOAD_LIB_FN(type, var, name) type var = (type)(void*)GetProcAddress(plugin, name)
   #define CLOSE_LIB(var) FreeLibrary(var)
 
   #ifndef dlerror
@@ -27,28 +31,19 @@
 
 namespace Sass {
 
-
   class Plugins {
 
-    public: // c-tor
-      Plugins(void);
-      ~Plugins(void);
+  private:
+    // Associated compiler
+    Compiler& compiler;
 
-    public: // methods
-      // load one specific plugin
-      bool load_plugin(const sass::string& path);
-      // load all plugins from a directory
-      size_t load_plugins(const sass::string& path);
-
-    public: // public accessors
-      const sass::vector<Sass_Importer_Entry> get_headers(void) { return headers; }
-      const sass::vector<Sass_Importer_Entry> get_importers(void) { return importers; }
-      const sass::vector<Sass_Function_Entry> get_functions(void) { return functions; }
-
-    private: // private vars
-      sass::vector<Sass_Importer_Entry> headers;
-      sass::vector<Sass_Importer_Entry> importers;
-      sass::vector<Sass_Function_Entry> functions;
+  public:
+    // Value constructor
+    Plugins(Compiler& compiler);
+    // Load one specific plugin
+    bool load_plugin(const sass::string& path);
+    // Load all plugins from a directory
+    size_t load_plugins(const sass::string& path);
 
   };
 
