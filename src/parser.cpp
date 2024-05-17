@@ -1982,7 +1982,8 @@ namespace Sass {
     lex< identifier >();
     sass::string name(lexed);
 
-    if (Util::normalize_underscores(name) == "content-exists" && stack.back() != Scope::Mixin)
+    bool in_mixin = std::find(stack.begin(), stack.end(), Scope::Mixin) != stack.end();
+    if (Util::normalize_underscores(name) == "content-exists" && !in_mixin)
     { error("Cannot call content-exists() except within a mixin."); }
 
     SourceSpan call_pos = pstate;
