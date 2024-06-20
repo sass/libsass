@@ -13,7 +13,9 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
+#ifndef _WASM
 #include <dlfcn.h>
+#endif
 #endif
 
 namespace Sass {
@@ -57,7 +59,7 @@ namespace Sass {
   // load one specific plugin
   bool Plugins::load_plugin (const sass::string& path)
   {
-
+#ifdef ENABLE_LOAD_PLUGINS
     typedef const char* (*__plugin_version__)(void);
     typedef Sass_Function_List (*__plugin_load_fns__)(void);
     typedef Sass_Importer_List (*__plugin_load_imps__)(void);
@@ -107,6 +109,9 @@ namespace Sass {
       std::cerr << "failed loading plugin <" << path << ">" << std::endl;
       if (const char* dlopen_error = dlerror()) std::cerr << dlopen_error << std::endl;
     }
+#else
+    std::cerr << "plugins loading is unsupported <" << path << ">" << std::endl;
+#endif
 
     return false;
 
