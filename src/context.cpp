@@ -291,6 +291,8 @@ namespace Sass {
           stack += "\n    " + sass::string(File::abs2rel(import_stack[n]->abs_path, cwd, cwd)) +
             " imports " + sass::string(File::abs2rel(import_stack[n+1]->abs_path, cwd, cwd));
         }
+        sass_delete_import(import_stack.back());
+        delete source;
         // implement error throw directly until we
         // decided how to handle full stack traces
         throw Exception::InvalidSyntax(pstate, traces, stack);
