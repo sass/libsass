@@ -220,13 +220,13 @@ lib/libsass.dll: $(COBJECTS) $(OBJECTS) $(RCOBJECTS) | lib
 	-s -Wl,--subsystem,windows,--out-implib,lib/libsass.a
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $< -MMD -MP -MT $@
 
 %.o: %.rc
-	$(WINDRES) -i $< -o $@
+	$(WINDRES) -i $< -o $@ -MMD -MP -MT $@
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -c -o $@ $< -MMD -MP -MT $@
 
 %: %.o static
 	$(CXX) $(CXXFLAGS) -o $@ $+ $(LDFLAGS) $(LDLIBS)
@@ -384,3 +384,7 @@ lib-opts-shared:
         lib-file lib-file-shared lib-file-static \
         test test_build test_full test_probe
 .DELETE_ON_ERROR:
+
+-include $(OBJECTS:.o=.d)
+-include $(COBJECTS:.o=.d)
+-include $(RCOBJECTS:.o=.d)
