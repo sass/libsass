@@ -8,7 +8,7 @@ if ENABLE_COVERAGE
 	AM_COVLDFLAGS += -lgcov
 endif
 
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include
 AM_CFLAGS   = $(AM_COPT)
 AM_CXXFLAGS = $(AM_COPT)
 AM_LDFLAGS  = $(AM_COPT) $(AM_COVLDFLAGS)
@@ -45,6 +45,6 @@ sass_includedir = $(includedir)/sass
 
 sass_include_HEADERS = $(top_srcdir)/include/sass/base.h \
                        $(top_srcdir)/include/sass/values.h \
-                       $(top_srcdir)/include/sass/version.h \
+                       $(top_builddir)/include/sass/version.h \
                        $(top_srcdir)/include/sass/context.h \
                        $(top_srcdir)/include/sass/functions.h
