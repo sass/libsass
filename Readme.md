@@ -1,7 +1,7 @@
 LibSass - Sass compiler written in C++
 ======================================
 
-**[LibSass has reached its end of life](https://sass-lang.com/blog/libsass-is-end-of-life).
+**[LibSass has reached its end of life](https://sass-lang.com/blog/libsass-is-end-of-life).**
 It will no longer receive updates of any kind. Users should migrate to
 [Dart Sass](https://sass-lang.com/dart-sass) at their earliest convenience.
 
